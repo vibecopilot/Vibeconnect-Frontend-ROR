@@ -72,17 +72,6 @@ const CreateEvent = () => {
       try {
         const usersRes = await getSetupUsers();
         const unitsRes = await getBuildings();
-<<<<<<< HEAD
-
-        setUnits(unitsRes?.data || []);
-
-        const employeesList = (usersRes?.data || []).map((emp) => ({
-          id: emp.id,
-          name: `${emp.firstname || ""} ${emp.lastname || ""}`.trim(),
-          building_id: emp.building_id || emp.building?.id || null,
-          userSites: emp.user_sites || [],
-          building: emp.building || {},
-=======
         console.log("userSites", unitsRes);
         setUnits(unitsRes.data);
         console.log("usersRes", usersRes);
@@ -94,7 +83,6 @@ const CreateEvent = () => {
     building_id: emp.building_id || emp.building?.id || null,
     userSites: emp.user_sites || [],
     building: emp.building || {},
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
         }));
 
         setMembers(employeesList);
@@ -108,31 +96,6 @@ const CreateEvent = () => {
   }, []);
 
   const handleFilter = () => {
-<<<<<<< HEAD
-    const filtered = members.filter((member) => {
-      const buildingId = Number(member.building_id ?? member.building?.id);
-
-      if (!selectedUnit && !selectedOwnership) return true;
-
-      if (selectedUnit && !selectedOwnership) {
-        return buildingId === Number(selectedUnit);
-      }
-
-      if (!selectedUnit && selectedOwnership) {
-        return (member.userSites || []).some(
-          (site) =>
-            site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-        );
-      }
-
-      if (buildingId !== Number(selectedUnit)) return false;
-
-      return (member.userSites || []).some(
-        (site) =>
-          site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-      );
-    });
-=======
   const filtered = members.filter((member) => {
   if (!member.user_status) return false; // ❌ skip inactive users
 
@@ -153,7 +116,6 @@ const CreateEvent = () => {
 
   return buildingMatch && ownershipMatch;
 });
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
 
     setFilteredMembers(filtered);
 
@@ -224,14 +186,6 @@ const CreateEvent = () => {
     const selectedGroupObj = groups.find((group) => group.id === groupId);
 
     setSelectedGroup(event.target.value);
-<<<<<<< HEAD
-    setFormData((p) => ({
-      ...p,
-      group_id: groupId || null,
-      group_name: selectedGroupObj?.group_name || "",
-    }));
-
-=======
 
     setFormData((prev) => ({
       ...prev,
@@ -239,7 +193,6 @@ const CreateEvent = () => {
       group_name: selectedGroupObj?.group_name || "",
     }));
 
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
     setGroupMembers(selectedGroupObj?.group_members || []);
   };
 
@@ -268,72 +221,30 @@ const CreateEvent = () => {
         "event[end_date_time]",
         formatDateTime(formData.end_date_time)
       );
-<<<<<<< HEAD
-      formDataSend.append("event[venue]", formData.venue || "");
-      formDataSend.append("event[email_enabled]", formData.email_enabled ? "1" : "0");
-      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "1" : "0");
-      formDataSend.append("event[important]", formData.important ? "1" : "0");
-
-      // ✅ make payload consistent & avoid stale fields
-      if (share === "all") {
-        formDataSend.append("event[shared]", "all");
-        formDataSend.append("event[user_ids]", "");
-        formDataSend.append("event[group_id]", "");
-        formDataSend.append("event[group_name]", "");
-      } else if (share === "individual") {
-        formDataSend.append("event[shared]", "individual");
-        formDataSend.append("event[user_ids]", formData.user_ids || "");
-        formDataSend.append("event[group_id]", "");
-        formDataSend.append("event[group_name]", "");
-      } else if (share === "groups") {
-        formDataSend.append("event[shared]", "groups");
-        formDataSend.append("event[user_ids]", "");
-        formDataSend.append("event[group_id]", formData.group_id || "");
-        formDataSend.append("event[group_name]", formData.group_name || "");
-      }
-=======
       formDataSend.append("event[venue]", formData.venue);
-      formDataSend.append("event[user_ids]", formData.user_ids);
-      // formDataSend.append("event[shared]", share);
-      formDataSend.append("event[email_enabled]", formData.email_enabled);
-      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled);
-      formDataSend.append("event[important]", formData.important);
-      // if (share === "all") {
-      //   formDataSend.append("event[shared]", "all");
-      // } else if (share === "individual") {
-      //   formDataSend.append("event[shared]", "individual");
-      //   formDataSend.append("event[user_ids]", formData.user_ids);
-      // } else if (share === "groups") {
-      //   formDataSend.append("event[shared]", "groups");
-      //   formDataSend.append("event[group_id]", formData.group_id);
-      //   formDataSend.append("event[group_name]", formData.group_name);
-      // }
-      // formDataSend.append("event[important]", formData.important);
-
-      // formData.user_ids.forEach((user_id) => {
-      //   formDataSend.append("event[user_ids]", user_id);
-      // });
+      formDataSend.append("event[email_enabled]", formData.email_enabled ? "true" : "false");
+      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "true" : "false");
+      formDataSend.append("event[important]", formData.important ? "1" : "0");
       formDataSend.append("event[shared]", share);
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
 
       if (share === "individual") {
         formDataSend.append("event[user_ids]", formData.user_ids);
+        formDataSend.append("event[group_id]", "");
+      } else if (share === "groups") {
+        formDataSend.append("event[group_id]", formData.group_id);
+        formDataSend.append("event[user_ids]", "");
+      } else {
+        formDataSend.append("event[user_ids]", "");
+        formDataSend.append("event[group_id]", "");
       }
 
-      if (share === "groups") {
-        formDataSend.append("event[group_id]", formData.group_id);
-        formDataSend.append("event[group_name]", formData.group_name);
-      }
-      // Upload attachments
       if (formData.event_images && formData.event_images.length > 0) {
         formData.event_images.forEach((file) => {
-<<<<<<< HEAD
+          formDataSend.append("event[event_images][]", file);
+=======
           if (file instanceof File) {
             formDataSend.append("event[event_images][]", file);
-          }
-=======
-          formDataSend.append("event[event_images][]", file);
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
+          server
         });
       }
       console.log("Images before upload:", formData.event_images);
@@ -360,18 +271,6 @@ const CreateEvent = () => {
     }));
   };
 
-<<<<<<< HEAD
-  const handleFileAttachment = (input) => {
-    let files = [];
-    if (input && input.target && input.target.files) {
-      files = Array.from(input.target.files);
-    } else if (Array.isArray(input)) {
-      files = input;
-    } else if (input) {
-      files = [input];
-    }
-    setFormData((p) => ({ ...p, event_images: files }));
-=======
   const handleFileAttachment = (files) => {
     let fileArray = [];
 
@@ -425,7 +324,6 @@ const CreateEvent = () => {
       ...prevFormData,
       user_ids: selectedUserIds.join(","), // Store user IDs as a comma-separated string
     }));
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   };
 
   return (
@@ -716,11 +614,7 @@ const CreateEvent = () => {
               </h2>
               <FileInputBox
                 fieldName={"event_images"}
-<<<<<<< HEAD
-                handleChange={handleFileAttachment}
-=======
                 handleChange={handleFileAttachment} 
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
                 fileType="image/*"
                 onChange={(e) => handleChange(e.target.files)}
               />

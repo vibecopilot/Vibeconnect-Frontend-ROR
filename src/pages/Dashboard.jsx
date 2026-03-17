@@ -15,6 +15,8 @@ import ComplianceDashboard from "./SubPages/ComplianceDashboard";
 import PPMCalendarDashboard from "./SubPages/PPMCalendarDashboard";
 import VisitorsDashboard from "./SubPages/VisitorsDashboard";
 import VisitorsAnalyticsDashboard from "./SubPages/VisitorsAnalyticsDashboard";
+import StaffDashboard from "./SubPages/StaffDashboard";
+import StaffAnalyticsDashboard from "./SubPages/StaffAnalyticsDashboard";
 
 const SectionCard = ({ title, subtitle = "Analytics & overview", children }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5">
@@ -76,7 +78,7 @@ const Dashboard = () => {
  useEffect(() => {
   const fetchCalendar = async () => {
     try {
-      const res = await getVibeCalendar(vibeUserId);
+      // const res = await getVibeCalendar(vibeUserId);
 
       const allActivities = res?.data?.activities || [];
 
@@ -220,8 +222,16 @@ const Dashboard = () => {
             <VisitorsDashboard />
           </SectionCard> */}
 
-          <SectionCard title="Visitors Analytics">
+          <SectionCard title="Visitors Dashboard">
             <VisitorsAnalyticsDashboard />
+          </SectionCard>
+
+          {/* <SectionCard title="Staff Dashboard">
+            <StaffDashboard />
+          </SectionCard> */}
+
+          <SectionCard title="Staff Dashboard">
+            <StaffAnalyticsDashboard />
           </SectionCard>
 
           {feat.includes("compliance") && (

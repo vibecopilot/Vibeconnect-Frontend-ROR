@@ -74,8 +74,6 @@ const CreateBroadcast = () => {
       console.error("Error fetching setup users:", error);
     }
   };
-<<<<<<< HEAD
-=======
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -146,7 +144,6 @@ const filtered = members.filter((member) => {
   setFilteredMembers(filtered);
   toast.success("Filter applied");
 };
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
 
   const fetchGroups = async () => {
     try {
@@ -276,35 +273,36 @@ const handleFilter = () => {
         "notice[notice_discription]",
         formData.notice_discription
       );
-
-      const expiry =
+      formDataSend.append(
+        "notice[expiry_date]",
         formData.expiry_date instanceof Date
           ? formData.expiry_date.toISOString()
-          : formData.expiry_date;
-      formDataSend.append("notice[expiry_date]", expiry);
-
-      formDataSend.append("notice[important]", formData.important ? "1" : "0");
-      formDataSend.append("notice[shared]", formData.shared);
-      formDataSend.append(
-        "notice[send_email]",
-        formData.send_email ? "1" : "0"
+          : formData.expiry_date,
       );
 
-      // keep backend keys consistent (groups stored in notice[group_id] as comma-separated)
-      if (formData.shared === "individual") {
-        formDataSend.append("notice[user_ids]", formData.user_ids || "");
-        formDataSend.append("notice[group_id]", "");
-      } else if (formData.shared === "groups") {
-        formDataSend.append("notice[user_ids]", "");
-        formDataSend.append("notice[group_id]", formData.group_ids || "");
-      } else {
-        formDataSend.append("notice[user_ids]", "");
-        formDataSend.append("notice[group_id]", "");
+      formDataSend.append("notice[important]", formData.important ? "1" : "0");
+      formDataSend.append("notice[send_email]", formData.send_email ? "1" : "0");
+
+      if (share === "all") {
+        const allUserIds = users.map((user) => user.value).join(",");
+        formDataSend.append("notice[shared]", "all");
+        formDataSend.append("notice[user_ids]", allUserIds);
+      } else if (share === "individual") {
+        formDataSend.append("notice[shared]", "individual");
+        formDataSend.append("notice[user_ids]", formData.user_ids);
+      } else if (share === "groups") {
+        formDataSend.append("notice[shared]", "groups");
+        formDataSend.append("notice[group_id]", formData.group_id);
+        formDataSend.append("notice[group_name]", formData.group_name);
       }
 
-      (formData.notice_image || []).forEach((file) => {
-        formDataSend.append("attachfiles[]", file);
-      });
+      if (formData.notice_image && formData.notice_image.length > 0) {
+        formData.notice_image.forEach((file) => {
+          if (file instanceof File) {
+            formDataSend.append("attachfiles[]", file);
+          }
+        });
+      }
 
       await postBroadCast(formDataSend);
 

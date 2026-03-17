@@ -18,6 +18,7 @@ import AddRangeField from "./AddRangeField";
 import AddMultipleTextBoxesField from "./AddMultipleTextBoxesField"
 // import AddMultipleTextBoxesField from "./AddMultipleTextboxesField";
 import AddDateTimeField from "./AddDateTimeField";
+import { BlockPicker } from "react-color";
 
 // Map frontend question types to backend (rating, multiple_choice, single_choice, true_false, text, scale)
 const mapQuestionTypeToBackend = (frontendType) => {
@@ -55,6 +56,7 @@ const mapBackendToFrontendType = (backendType) => {
 
 function CreateScratchSurvey() {
   const { id: surveyId } = useParams();
+
   const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
   const isEditMode = !!surveyId;
@@ -62,6 +64,25 @@ function CreateScratchSurvey() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
+ const [clientLogo, setClientLogo] = useState(null);
+
+const [headerImage, setHeaderImage] = useState(null);
+const [headerText, setHeaderText] = useState("");
+
+const [footerImage, setFooterImage] = useState(null);
+const [footerText, setFooterText] = useState("");
+const [backgroundColor, setBackgroundColor] = useState("");
+const [formThemeColor, setFormThemeColor] = useState(themeColor || "#7C3AED");
+ const pastelColors = [
+    "#FFB3BA", // pastel pink
+    "#FFDFBA", // pastel orange
+    "#FFFFBA", // pastel yellow
+    "#BAFFC9", // pastel green
+    "#BAE1FF", // pastel blue
+    "#E0BBE4", // pastel purple
+    "#FDFD96", // pastel light yellow
+  ];
+const [backgroundImage, setBackgroundImage] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(isEditMode);
@@ -224,17 +245,22 @@ function CreateScratchSurvey() {
 
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
+
     if (!surveyTitle.trim()) {
       toast.error("Please enter a survey title.");
       return;
     }
+
     setSubmitting(true);
+
     try {
       const keptQuestions = questions
         .map((q, index) => {
           if (!q.question?.trim()) return null;
+
           const question_type = mapQuestionTypeToBackend(q.questionType);
           const options = buildOptions(q);
+
           const item = {
             q_title: q.question.trim(),
             question_type,
@@ -244,397 +270,456 @@ function CreateScratchSurvey() {
             max_value: question_type === "scale" ? 10 : null,
             ...(options.length ? { options } : {}),
           };
+
           if (q._qId) item.id = q._qId;
+
           return item;
         })
         .filter(Boolean);
-      const destroyedQuestions = (isEditMode ? deletedQuestionIds : []).map((id) => ({ id, _destroy: true }));
+
+    const destroyedQuestions = (isEditMode ? deletedQuestionIds : []).map(
+      (id) => ({ id, _destroy: true })
+    );
+
       const survey_questions = [...keptQuestions, ...destroyedQuestions];
 
-      const payload = {
-        survey: {
-          survey_title: surveyTitle.trim(),
-          description: description.trim() || null,
-          start_date: startDate || null,
-          end_date: endDate || null,
-          ...(isEditMode ? {} : { status: "draft" }),
-          survey_questions,
-        },
-      };
+    // FORM DATA FOR FILE UPLOAD
+    const formData = new FormData();
+
+    formData.append("survey[survey_title]", surveyTitle.trim());
+    formData.append("survey[description]", description.trim());
+    formData.append("survey[start_date]", startDate || "");
+    formData.append("survey[end_date]", endDate || "");
+    formData.append("survey[background_color]", backgroundColor);
+    if (backgroundImage) {
+  formData.append("survey[background_image]", backgroundImage);
+}
+
+    // HEADER & FOOTER TEXT
+    formData.append("survey[header_text]", headerText);
+    formData.append("survey[footer_text]", footerText);
+
+    // CLIENT BRANDING FILES
+    if (clientLogo) {
+      formData.append("survey[client_logo]", clientLogo);
+    }
+
+    if (headerImage) {
+      formData.append("survey[header_image]", headerImage);
+    }
+
+    if (footerImage) {
+      formData.append("survey[footer_image]", footerImage);
+    }
+
+    formData.append(
+      "survey[survey_questions]",
+      JSON.stringify(survey_questions)
+    );
 
       if (isEditMode) {
-        await updateSurvey(surveyId, payload);
+      await updateSurvey(surveyId, formData);
         toast.success("Survey updated.");
         navigate(`/admin/survey-details/${surveyId}`);
       } else {
-        const res = await createSurvey(payload);
+      const res = await createSurvey(formData);
         const id = res.data?.id;
+
         toast.success("Survey created successfully.");
+
         if (id) navigate(`/admin/survey-details/${id}`);
         else navigate("/admin/survey");
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.errors || err.message;
-      toast.error(Array.isArray(msg) ? msg.join(", ") : msg || (isEditMode ? "Failed to update survey." : "Failed to create survey."));
+    const msg =
+      err.response?.data?.message ||
+      err.response?.data?.errors ||
+      err.message;
+
+    toast.error(
+      Array.isArray(msg)
+        ? msg.join(", ")
+        : msg ||
+            (isEditMode
+              ? "Failed to update survey."
+              : "Failed to create survey.")
+    );
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="flex">
+  <div
+    className="flex min-h-screen"
+    style={{ backgroundColor: backgroundColor || "#f3e8ff" }}
+  >
       <div className="hidden md:block">
         <Navbar />
       </div>
       <div className="flex flex-col overflow-hidden w-full">
-        <h2
-          className="text-center text-lg font-bold my-5 p-2 rounded-md text-white mx-10"
-          style={{ background: themeColor }}
-        >
+        <div className="max-w-5xl mx-auto mt-6">
+          <div className="flex justify-center w-full px-6"></div>
+  <h2 className="text-3xl font-extrabold text-black">
           {isEditMode ? "Edit Survey" : "Add Survey"}
         </h2>
-        <div className="flex justify-center">
-          <div className="sm:border border-gray-400 p-1 md:px-10 rounded-lg w-4/5 mb-14">
+</div>
+       
+
             {/* Survey Form */}
-            <div className="md:grid grid-cols-3 gap-5 my-3">
+           {/* SECTION 1 : SURVEY INFO */}
+<div className="max-w-5xl mx-auto bg-gray-50 rounded-xl p-6 shadow-sm border mb-6">
+
+<h3 className="text-lg font-semibold mb-4">Survey Information</h3>
+
+<div className="grid md:grid-cols-3 gap-5">
+
               <div className="flex flex-col">
-                <label htmlFor="title" className="font-semibold my-2">
-                  Survey Title
-                </label>
+<label className="font-semibold mb-1">Survey Title</label>
                 <input
                   type="text"
                   name="title"
                   id="title"
                   placeholder="Enter Survey Title"
-                  className="border p-1 px-4 border-gray-500 rounded-md"
+className="border rounded-lg px-4 py-2"
                   value={surveyTitle}
-                  onChange={(e) => setSurveyTitle(e.target.value)}
+onChange={(e)=>setSurveyTitle(e.target.value)}
                 />
               </div>
+
               <div className="flex flex-col">
-                <label htmlFor="start_date" className="font-semibold my-2">
-                  Start Date
-                </label>
+<label className="font-semibold mb-1">Start Date</label>
                 <input
                   type="date"
-                  name="start_date"
-                  id="start_date"
-                  className="border p-1 px-4 border-gray-500 rounded-md"
+className="border rounded-lg px-4 py-2"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+onChange={(e)=>setStartDate(e.target.value)}
                 />
               </div>
+
               <div className="flex flex-col">
-                <label htmlFor="end_date" className="font-semibold my-2">
-                  End Date
-                </label>
+<label className="font-semibold mb-1">End Date</label>
                 <input
                   type="date"
-                  name="end_date"
-                  id="end_date"
-                  className="border p-1 px-4 border-gray-500 rounded-md"
+className="border rounded-lg px-4 py-2"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+onChange={(e)=>setEndDate(e.target.value)}
                 />
               </div>
-              <div className="flex flex-col col-span-3">
-                <label
-                  htmlFor="description"
-                  className="font-semibold my-2 mt-4"
-                >
-                  Description
-                </label>
+
+</div>
+
+<div className="flex flex-col mt-4">
+<label className="font-semibold mb-1">Description</label>
                 <textarea
-                  name="description"
-                  id="description"
-                  placeholder="Enter Survey Description"
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                  rows="3"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                ></textarea>
+  name="description"
+  id="description"
+  rows="3"
+  className="border rounded-lg px-4 py-2"
+  value={description}
+onChange={(e)=>setDescription(e.target.value)}
+  placeholder="Enter Survey Description"
+/>
+</div>
+
+</div>
+
+
+{/* SECTION 2 : CUSTOMIZE COLOR */}
+
+<div className="w-full max-w-5xl mx-auto bg-gray-50 rounded-xl p-6 shadow-sm border mb-6">
+
+<h3 className="text-lg font-semibold mb-4">
+Customize Appearance
+</h3>
+
+<label className="text-sm font-medium text-gray-600">
+Background Color
+</label>
+
+<div className="flex flex-wrap gap-3 mt-3 mb-4">
+
+{pastelColors.map((color)=>(
+<button
+key={color}
+type="button"
+onClick={()=>setBackgroundColor(color)}
+className={`w-10 h-10 rounded-lg border-2
+${backgroundColor===color ? "border-black scale-110" : "border-gray-300"}`}
+style={{backgroundColor:color}}
+/>
+))}
+
+</div>
+
+<button
+type="button"
+onClick={()=>{
+setBackgroundColor("")
+setFormThemeColor(themeColor || "#7C3AED")
+}}
+className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+>
+Reset Colors
+</button>
+
+</div>
+
+
+{/* SECTION 3 : BRANDING */}
+
+<div className="w-full max-w-5xl mx-auto bg-gray-50 rounded-xl p-6 shadow-sm border mb-6">
+<h3 className="text-lg font-semibold mb-4">
+Branding
+</h3>
+
+<div className="grid md:grid-cols-2 gap-5">
+
+<div className="flex flex-col">
+<label className="font-semibold mb-1">Background Image</label>
+<input
+type="file"
+accept="image/*"
+onChange={(e)=>setBackgroundImage(e.target.files[0])}
+className="border p-2 rounded-md"
+/>
+</div>
+
+<div className="flex flex-col">
+<label className="font-semibold mb-1">Client Logo</label>
+<input
+type="file"
+accept="image/*"
+onChange={(e)=>setClientLogo(e.target.files[0])}
+className="border p-2 rounded-md"
+/>
+</div>
+
+<div className="flex flex-col">
+<label className="font-semibold mb-1">Header Text</label>
+<input
+type="text"
+className="border rounded-lg px-4 py-2"
+value={headerText}
+onChange={(e)=>setHeaderText(e.target.value)}
+/>
+</div>
+
+<div className="flex flex-col">
+<label className="font-semibold mb-1">Header Image</label>
+<input
+type="file"
+accept="image/*"
+onChange={(e)=>setHeaderImage(e.target.files[0])}
+className="border p-2 rounded-md"
+/>
+</div>
+
+<div className="flex flex-col">
+<label className="font-semibold mb-1">Footer Text</label>
+<input
+type="text"
+className="border rounded-lg px-4 py-2"
+value={footerText}
+onChange={(e)=>setFooterText(e.target.value)}
+/>
+</div>
+
+<div className="flex flex-col">
+<label className="font-semibold mb-1">Footer Image</label>
+<input
+type="file"
+accept="image/*"
+onChange={(e)=>setFooterImage(e.target.files[0])}
+className="border p-2 rounded-md"
+/>
+</div>
+
               </div>
+
             </div>
 
             {/* Questions Section */}
-            <div className="my-5">
-              <h2 className="border-b border-gray-500 text-gray-950 text-xl">
-                Add Questions
-              </h2>
+<div className="max-w-5xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
+
+<h3 className="text-lg font-semibold mb-4">Add Questions</h3>
+
               {questions.map((question, index) => (
+
                 <div
                   key={index}
-                  className="md:grid grid-cols-3 gap-5 my-3 border p-5 rounded-md"
+className="border border-gray-200 rounded-xl p-5 mb-6 bg-white shadow-sm"
                 >
-                  <div className="flex flex-col col-span-2">
-                    <label
-                      htmlFor={`question-${index}`}
-                      className="font-semibold my-2"
-                    >
-                      Question
-                    </label>
+
+{/* Top Row */}
+<div className="flex items-center gap-4">
+
                     <input
                       type="text"
                       name="question"
-                      id={`question-${index}`}
-                      placeholder="Enter Question"
-                      className="border p-1 px-4 border-gray-500 rounded-md"
+placeholder={`Question ${index + 1}`}
+className="flex-1 border border-gray-300 rounded-lg px-4 py-2"
                       value={question.question}
                       onChange={(e) => handleQuestionChange(e, index)}
                     />
-                  </div>
-                  <div className="flex flex-col">
-                    <label
-                      htmlFor={`questionType-${index}`}
-                      className="font-semibold my-2"
-                    >
-                      Question Type
-                    </label>
+
                     <select
-                      name="questionType"
-                      id={`questionType-${index}`}
-                      className="border p-1 px-4 border-gray-500 rounded-md"
+className="border border-gray-300 rounded-lg px-4 py-2"
                       value={question.questionType}
                       onChange={(e) => handleQuestionTypeChange(e, index)}
                     >
-                      <option value="">Select Question Type</option>
-                      <option value="multiple-choice">Multiple choice</option>
-                      <option value="checkBoxes">CheckBoxes</option>
+<option value="">Text Answer</option>
+<option value="multiple-choice">Multiple Choice</option>
+<option value="checkBoxes">Checkbox</option>
                       <option value="star">Star</option>
                       <option value="bestWorstScale">Best Worst Scale</option>
                       <option value="fileUpload">File Upload</option>
                       <option value="singleTextBox">Single TextBox</option>
                       <option value="commentBox">Comment Box</option>
-                      <option value="matrixDropdown">
-                        Matrix Of Dropdown Menu
-                      </option>
+<option value="matrixDropdown">Matrix Of Dropdown Menu</option>
                       <option value="dropdown">Dropdown</option>
-                      <option value="matrixRatingScale">
-                        Matrix Rating Scale
-                      </option>
+<option value="matrixRatingScale">Matrix Rating Scale</option>
                       <option value="ranking">Ranking</option>
                       <option value="slider">Slider</option>
-                      <option value="multipleTextboxes">
-                        Multiple Textboxes
-                      </option>
+<option value="multipleTextboxes">Multiple Textboxes</option>
                       <option value="dateTime">Date/Time</option>
                     </select>
+
+<button
+type="button"
+onClick={() => removeQuestion(index)}
+className="text-gray-500 hover:text-red-500"
+>
+<FaTrash />
+</button>
+
                   </div>
-                  {/* Choices for Multiple Choice Questions */}
+
+{/* Multiple Choice */}
                   {question.questionType === "multiple-choice" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
+<div className="flex flex-col mt-4 space-y-3">
+
                       {question.choices.map((choice, choiceIndex) => (
-                        <div
-                          className="flex items-center gap-2"
-                          key={choiceIndex}
-                        >
-                          <label
-                            htmlFor={`choice-${choiceIndex}`}
-                            className="font-semibold w-32"
-                          >
-                            Option {choiceIndex + 1}
-                          </label>
+<div className="flex items-center gap-2" key={choiceIndex}>
+
                           <input
                             type="text"
-                            id={`choice-${choiceIndex}`}
-                            className="border p-1 px-4 border-gray-500 rounded-md w-full"
+className="border border-gray-300 rounded-md px-3 py-1 w-full"
                             value={choice}
-                            onChange={(e) =>
-                              handleChoiceChange(e, index, choiceIndex)
-                            }
-                            placeholder="Enter an Answer option"
-                          />
-                          {isChecked && (
-                            <div className="flex items-center">
-                              <span className="text-gray-500 mr-2">Points</span>
-                              <button className="w-8 h-8 flex items-center justify-center border border-gray-200 hover:bg-gray-50">
-                                <FiMinus className="w-4 h-4 text-gray-600" />
-                              </button>
-                              <input
-                                type="number"
-                                className="w-12 h-8 text-center border-t border-b border-gray-200"
-                                placeholder="0"
-                              />
-                              <button className="w-8 h-8 flex items-center justify-center border border-gray-200 hover:bg-gray-50">
-                                <FiPlus className="w-4 h-4 text-gray-600" />
-                              </button>
-                            </div>
-                          )}
+onChange={(e)=>handleChoiceChange(e,index,choiceIndex)}
+placeholder={`Option ${choiceIndex+1}`}
+/>
+
                           <button
                             type="button"
-                            onClick={() => removeChoice(index, choiceIndex)}
+onClick={()=>removeChoice(index,choiceIndex)}
                             className="text-red-500"
                           >
-                            <FaTrash size={20} />
+<FaTrash size={18}/>
                           </button>
+
                         </div>
                       ))}
-                      <div className="col-span-4 flex items-center justify-start mt-3">
-                        <input
-                          type="checkbox"
-                          id="scoreThisQuestion"
-                          className="mr-2"
-                          checked={isChecked}
-                          onChange={handleCheckboxChange}
-                        />
-                        <label
-                          htmlFor="scoreThisQuestion"
-                          className="text-lg text-gray-700"
-                        >
-                          Score this question
-                        </label>
-                      </div>
-                      {/* Add New Choice Button */}
-                      <div>
+
                         {question.choices.length < 6 && (
                           <button
                             type="button"
-                            onClick={() => addChoice(index)}
-                            className="border border-gray-500 text-black px-4 py-1 rounded-md mt-2"
+onClick={()=>addChoice(index)}
+className="border border-gray-400 px-3 py-1 rounded-md w-fit"
                           >
-                            <BsPlusCircle />
+Add Option
                           </button>
                         )}
-                      </div>
+
                     </div>
                   )}
+
+{/* Checkboxes */}
                   {question.questionType === "checkBoxes" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
+<div className="flex flex-col mt-4 space-y-3">
+
                       {question.checkBox.map((box, checkBoxIndex) => (
-                        <div
-                          className="flex items-center gap-2"
-                          key={checkBoxIndex}
-                        >
-                          <div className="flex items-center gap-2 w-full">
-                            <input
-                              type="checkbox"
-                              id={`checkbox-${checkBoxIndex}`}
-                              className="border-gray-500 rounded-md"
-                              checked={isChecked}
-                              onChange={(e) =>
-                                handleCheckboxChange(e, index, checkBoxIndex)
-                              }
-                            />
+<div className="flex items-center gap-2" key={checkBoxIndex}>
+
+<input type="checkbox"/>
+
                             <input
                               type="text"
-                              id={`box-${checkBoxIndex}`}
-                              className="border p-1 px-4 border-gray-500 rounded-md w-full"
+className="border border-gray-300 rounded-md px-3 py-1 w-full"
                               value={box}
-                              onChange={(e) =>
-                                handleChangeCheckBox(e, index, checkBoxIndex)
-                              }
-                              placeholder={`Enter an answer choice ${
-                                checkBoxIndex + 1
-                              }`}
+onChange={(e)=>handleChangeCheckBox(e,index,checkBoxIndex)}
+placeholder={`Option ${checkBoxIndex+1}`}
                             />
-                          </div>
+
                           <button
                             type="button"
-                            onClick={() => removeCheckBox(index, checkBoxIndex)}
+onClick={()=>removeCheckBox(index,checkBoxIndex)}
                             className="text-red-500"
                           >
-                            <FaTrash size={20} />
+<FaTrash size={18}/>
                           </button>
+
                         </div>
                       ))}
-                      <div>
+
                         {question.checkBox.length < 6 && (
                           <button
                             type="button"
-                            onClick={() => addCheckBox(index)}
-                            className="border border-gray-500 text-black px-4 py-1 rounded-md mt-2"
+onClick={()=>addCheckBox(index)}
+className="border border-gray-400 px-3 py-1 rounded-md w-fit"
                           >
-                            <BsPlusCircle />
+Add Option
                           </button>
                         )}
-                      </div>
+
                     </div>
                   )}
-                  {question.questionType === "star" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <AddStarField />
-                    </div>
-                  )}
-                  {question.questionType === "bestWorstScale" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <BestWorstScale />
-                    </div>
-                  )}
-                  {question.questionType === "fileUpload" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <FileUploadSurvey />
-                    </div>
-                  )}
-                  {question.questionType === "matrixDropdown" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <MatrixDropdownMenuSurvey />
-                    </div>
-                  )}
-                  {question.questionType === "dropdown" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <AddDropdownField />
-                    </div>
-                  )}
-                  {question.questionType === "matrixRatingScale" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <MatrixRatingScale />
-                    </div>
-                  )}
-                  {question.questionType === "ranking" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <AddRankingField />
-                    </div>
-                  )}
-                  {question.questionType === "slider" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <AddRangeField />
-                    </div>
-                  )}
-                  {question.questionType === "multipleTextboxes" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <AddMultipleTextBoxesField />
-                    </div>
-                  )}
-                  {question.questionType === "dateTime" && (
-                    <div className="flex flex-col col-span-3 mt-4 space-y-3">
-                      <AddDateTimeField />
-                    </div>
-                  )}
-                  {/* Remove Question Button */}
-                  <div className="flex col-span-3 justify-end mt-2">
-                    <button
-                      type="button"
-                      onClick={() => removeQuestion(index)}
-                      className="text-red-500 font-semibold border rounded-md p-1 px-4"
-                    >
-                      Remove Question
-                    </button>
-                  </div>
+
+{/* Other Question Components */}
+{question.questionType === "star" && <AddStarField />}
+{question.questionType === "bestWorstScale" && <BestWorstScale />}
+{question.questionType === "fileUpload" && <FileUploadSurvey />}
+{question.questionType === "matrixDropdown" && <MatrixDropdownMenuSurvey />}
+{question.questionType === "dropdown" && <AddDropdownField />}
+{question.questionType === "matrixRatingScale" && <MatrixRatingScale />}
+{question.questionType === "ranking" && <AddRankingField />}
+{question.questionType === "slider" && <AddRangeField />}
+{question.questionType === "multipleTextboxes" && <AddMultipleTextBoxesField />}
+{question.questionType === "dateTime" && <AddDateTimeField />}
+
                 </div>
+
               ))}
-              <div className="flex justify-start my-3 gap-3">
+
+{/* Bottom Buttons */}
+<div className="flex gap-3 mt-4">
+
                 <button
                   type="button"
                   onClick={addQuestion}
-                  className="border border-gray-500 rounded-md px-4 py-1"
+className="bg-violet-600 hover:bg-violet-700 text-white px-5 py-2 rounded-lg"
                 >
                   Add Question
                 </button>
+
                 <button
                   type="button"
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="px-4 py-2 text-white rounded-md disabled:opacity-50"
-                  style={{ background: themeColor }}
+className="px-6 py-2 rounded-lg text-white"
+style={{background:themeColor}}
                 >
-                  {submitting ? "Saving…" : isEditMode ? "Save changes" : "Create Survey"}
+{submitting ? "Saving…" : isEditMode ? "Save Changes" : "Create Survey"}
                 </button>
+
+</div>
+
               </div>
+              
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+        
+      
   );
 }
 

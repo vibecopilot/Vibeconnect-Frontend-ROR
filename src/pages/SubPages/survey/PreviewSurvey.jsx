@@ -298,6 +298,45 @@ case "scale": {
             {survey.description && (
               <p className="text-gray-600">{survey.description}</p>
             )}
+
+            {/* Default client details preview */}
+            <div className="mt-4 bg-white rounded-xl border border-gray-200 p-5 max-w-3xl space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-gray-500">
+                    Company name
+                  </span>
+                  <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-gray-500">
+                    Floor / Unit
+                  </span>
+                  <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-gray-500">
+                    Feedback date
+                  </span>
+                  <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50 flex items-center px-3 text-xs text-gray-500">
+                    {new Date().toISOString().split("T")[0]}
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-gray-500">
+                    Feedback given by (name)
+                  </span>
+                  <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50" />
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-gray-500">
+                  Contact details
+                </span>
+                <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50" />
+              </div>
+            </div>
+
             {questions.map((q, idx) => (
               <div key={q.id}>
                 <h2 className="text-lg text-gray-900">

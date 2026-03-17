@@ -56,13 +56,34 @@ export const postTodoList = async (data) =>
 //   });
 // };
 // dashboard
-export const getTicketDashboard = async (siteId) =>
-  axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
+export const getTicketDashboard = async (options = {}) => {
+  // Supports both getTicketDashboard(siteId) and getTicketDashboard({siteId, start_date_eq, end_date_eq, count_type, count_value, record_page})
+  const paramsObj =
+    options && typeof options === "object" && !Array.isArray(options)
+      ? options
+      : { siteId: options };
+
+  const {
+    siteId,
+    start_date_eq,
+    end_date_eq,
+    count_type,
+    count_value,
+    record_page,
+  } = paramsObj;
+
+  return axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
     params: {
       token: getItemInLocalStorage("TOKEN"),
       ...(siteId && { site_id: siteId }),
+      ...(start_date_eq && { start_date_eq }),
+      ...(end_date_eq && { end_date_eq }),
+      ...(count_type && { count_type }),
+      ...(count_value && { count_value }),
+      ...(record_page && { record_page }),
     },
   });
+};
 //Assets
 export const getPerPageSiteAsset = async (page, perPage) =>
   axiosInstance.get(`/site_assets.json?per_page=${perPage}&page=${page}`, {
@@ -774,14 +795,16 @@ export const postHelpDeskStatusSetup = async (data) =>
 export const getAdminComplaints = async (
   page = 1,
   perPage = 10,
-  search = ""
+  search = "",
+  status = ""
 ) =>
   axiosInstance.get("/pms/admin/complaints.json", {
     params: {
       token: token,
       page: page,
       per_page: perPage,
-      "q[search_cont]": search,   // 🔥 important
+      "q[search_cont]": search,
+      ...(status && status !== "all" ? { "q[issue_status_eq]": status } : {}),
     },
   });
 
@@ -805,6 +828,15 @@ export const getAdminExport = async (searchValue) =>
     },
     responseType: "blob",
   });
+
+  export const getSetupAmenityExport = async (siteId) =>
+    axiosInstance.get("amenities/export.xlsx", {
+      params: {
+        "q[site_id_eq]": siteId,
+        token: token,
+      },
+      responseType: "blob",
+    });
 
 export const getCARItems = async (ticketId) =>
   axiosInstance.get(
@@ -1893,6 +1925,11 @@ export const putSetupUser = async (userId, data) =>
     },
   });
 
+  export const updateUserAdminApproval = async (id, payload, token) =>
+  axiosInstance.patch(`users/${id}/update_status.json`, payload, {
+    params: { token },
+  });
+  
 export const addUserToAnotherFlat = async (payload) => {
   axiosInstance.post("/users/add-flat", payload);
 };
@@ -2025,13 +2062,79 @@ export const postNewGoods = async (data) =>
       token: token,
     },
   });
-export const getStaff = async () =>
+export const getStaff = async (
+  page = 1,
+  perPage = 10,
+  staffInOut = null
+) => {
+  const params = {
+    token: token,
+    page,
+    per_page: perPage,
+  };
+
+  if (staffInOut === "IN") {
+    params["q[staff_in_out_eq]"] = "IN";
+  } else if (staffInOut === "OUT") {
+    params["q[staff_in_out_eq]"] = "OUT";
+  } else if (staffInOut === true) {
+    // backward compatibility: if boolean was used, treat true as OUT
+    params["q[staff_in_out_eq]"] = "OUT";
+  } else if (staffInOut === false) {
+    // backward compatibility: false as IN
+    params["q[staff_in_out_eq]"] = "IN";
+  }
+
+  return axiosInstance.get("/staffs.json", {
+    params,
+  });
+};
+
+export const getStaffIn = async (page = 1, perPage = 10) =>
+  getStaff(page, perPage, "IN");
+
+export const getStaffOut = async (page = 1, perPage = 10) =>
+  getStaff(page, perPage, "OUT");
+
+export const downloadStaffQrCodes = async (staffIds = []) =>
+  axiosInstance.post(
+    "/staffs/qr_codes_download.json",
+    { staff_ids: staffIds },
+    {
+      params: {
+        token: token,
+      },
+      responseType: "blob",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  export const exportStaffWithDate = async (start_date, end_date) =>
+  axiosInstance.get(`/staffs/export_staffs.xlsx`, {
+    params: {
+      token: token,
+      start_date: start_date,
+      end_date: end_date,
+    },
+    responseType: "blob",
+  });
+
+  export const getPendingStaff = async () =>
   axiosInstance.get("/staffs.json", {
+    params: {
+      token: token,
+      "q[status_type_eq]": "Pending",
+    },
+  });
+
+  export const putStaffApproval = async (id, data) =>
+  axiosInstance.put(`/staffs/${id}.json`, data, {
     params: {
       token: token,
     },
   });
-
 /** Fetch staff list for dashboard drill-down */
 export const getStaffDrill = async (siteId, limit = 100) =>
   axiosInstance.get("/staffs.json", {
@@ -2217,17 +2320,11 @@ export const editEventDetails = async (id, data) =>
     params: {
       token: token,
     },
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
   });
 export const postEvents = async (data) => {
   return axiosInstance.post("/events.json", data, {
     params: {
       token: token,
-    },
-    headers: {
-      "Content-Type": "multipart/form-data",
     },
   });
 };
@@ -10021,67 +10118,81 @@ export const updateComment = async (forumId) =>
   });
 //////////////////////////////////////////////////////////////////
 
-export const downloadAsset = async () =>
+export const downloadAsset = async (startDate, endDate) =>
   axiosInstance.get(`/site_assets/export.xlsx/`, {
     params: {
       token: token,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getBreakdownDownload = async () =>
+export const getBreakdownDownload = async (startDate, endDate) =>
   axiosInstance.get(`/site_assets/export.xlsx`, {
     params: {
       token: token,
       "q[breakdown_eq]": 1,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
-export const getAssetInDownload = async () =>
+export const getAssetInDownload = async (startDate, endDate) =>
   axiosInstance.get(`/site_assets/export.xlsx`, {
     params: {
       token: token,
       "q[breakdown_eq]": false,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getScheduledDownload = async () =>
+export const getScheduledDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       scheduled: true,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getPPMOverDueDownload = async () =>
+export const getPPMOverDueDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       overdue: true,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getPPMPendingDownload = async () =>
+export const getPPMPendingDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       pending: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getPPMcompleteDownload = async () =>
+export const getPPMcompleteDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       complete: true,
+      ...(startDate && { start_time: startDate }),
+      ...(endDate   && { end_time:   endDate   }),
     },
     responseType: "blob",
   });
@@ -10151,41 +10262,49 @@ export const getPPMCompleteCount = async (ids) =>
     },
   });
 
-export const getRoutineScheduledDownload = async () =>
+export const getRoutineScheduledDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       scheduled: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getRoutineOverdueDownload = async () =>
+export const getRoutineOverdueDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       overdue: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
-export const getRoutineCompleteDownload = async () =>
+export const getRoutineCompleteDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       complete: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
 
-export const getRoutinePendingDownload = async () =>
+export const getRoutinePendingDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       pending: true,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate   && { end_date:   endDate   }),
     },
     responseType: "blob",
   });
@@ -11609,14 +11728,43 @@ export const getVisitorsDrill = async (filter, siteId, limit = 50) =>
       ...(siteId && { site_id: siteId }),
     },
   });
-export const getComplaintsDrill = async (filterType, filterValue, siteId, limit = 50) =>
-  axiosInstance.get("/pms/admin/complaints/complaints_drill.json", {
+
+export const getVisitorsDashboardDrill = async (
+  countType,
+  countValue,
+  siteId,
+  page = 1,
+  startDate,
+  endDate
+) =>
+  axiosInstance.get("/visitors/visitors_dashboard.json", {
     params: {
       token: getItemInLocalStorage("TOKEN"),
-      filter_type: filterType,
-      filter_value: filterValue,
-      limit,
+      count_type: countType,
+      count_value: countValue,
+      record_page: page,
       ...(siteId && { site_id: siteId }),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
+    },
+  });
+export const getComplaintsDrill = async (
+  countType,
+  countValue,
+  siteId,
+  perPage,
+  startDate,
+  endDate
+) =>
+  axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
+    params: {
+      token: getItemInLocalStorage("TOKEN"),
+      ...(countType !== undefined && { count_type: countType }),
+      ...(countValue !== undefined && { count_value: countValue }),
+      ...(perPage !== undefined && { record_page: perPage }),
+      ...(siteId && { site_id: siteId }),
+      ...(startDate && { start_date_eq: startDate }),
+      ...(endDate && { end_date_eq: endDate }),
     },
   });
 export const getExportVisitors = async (
@@ -11647,3 +11795,24 @@ export const getExportVisitors = async (
     responseType: "blob",
   });
 };
+
+/** Staff dashboard – summary counts + by_* breakdowns + optional drill-down */
+export const getStaffDashboard = async (
+  siteId,
+  countType,
+  countValue,
+  page = 1,
+  startDate,
+  endDate
+) =>
+  axiosInstance.get("/staffs/staff_dashboard.json", {
+    params: {
+      token: getItemInLocalStorage("TOKEN"),
+      ...(siteId     && { site_id:     siteId     }),
+      ...(countType  && { count_type:  countType  }),
+      ...(countValue && { count_value: countValue }),
+      record_page: page,
+      ...(startDate  && { start_date:  startDate  }),
+      ...(endDate    && { end_date:    endDate    }),
+    },
+  });
