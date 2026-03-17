@@ -2095,6 +2095,17 @@ export const postVisitorCheckInCheckOut = async (visitorId, data) =>
     },
   );
 
+  // Visitors API
+export const getSecurityGuardVisitors = async (page = 1, perpage = 10) =>
+  axiosInstance.get("/visitors.json", {
+    params: {
+      token: token,
+      page: page,
+      per_page: perpage,
+      "q[user_type_eq]": "security_guard",
+    },
+  });
+
 export const sendMailToUsers = async (userId) =>
   axiosInstance.get(`/users/send_welcome_email.json?id=${userId}`, {
     params: {
@@ -11446,9 +11457,6 @@ export const getAmenitiesBooking = async (
     },
   });
 };
-
-<<<<<<< HEAD
-=======
 export const getAmenityExport = (startDate, endDate, siteId) => {
   return axiosInstance.get("/amenity/export.xlsx", {
     params: {
@@ -11461,7 +11469,7 @@ export const getAmenityExport = (startDate, endDate, siteId) => {
   });
 };
 
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
+
 // Polls API
 
 // 🔹 Get all polls with pagination
