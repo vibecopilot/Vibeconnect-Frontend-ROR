@@ -543,183 +543,166 @@ const EditIncident = () => {
     });
   };
 
- const handleSave = async () => {
-  try {
-    if (!(formData.supportRequired && formData.read_fact_state)) {
-      toast.error(
-        "Please check the support required and read fact state checkboxes before saving."
-      );
-      return;
-    }
-
+  const handleSave = async () => {
     const sendData = new FormData();
 
-    const appendIfExists = (key, value) => {
-      if (value !== undefined && value !== null && value !== "") {
-        sendData.append(key, value);
-      }
-    };
+    sendData.append("incident[time_and_date]", formData.date_time);
 
-    appendIfExists(
-      "incident[time_and_date]",
-      formData.date_time ? new Date(formData.date_time).toISOString() : ""
-    );
-
-    appendIfExists("incident[insured_by_id]", userId);
-    appendIfExists("incident[building_id]", formData.buildingId);
-
-    appendIfExists(
+    sendData.append("incident[insured_by_id]", userId);
+    sendData.append(
       "incident[primary_incident_category]",
       formData.primaryCategory
     );
-    appendIfExists(
+    sendData.append(
       "incident[primary_incident_sub_category]",
       formData.primarySubCategory
     );
-    appendIfExists(
+    sendData.append(
       "incident[primary_incident_sub_sub_category]",
       formData.primarySubSubCategory
     );
 
-    appendIfExists(
+    sendData.append(
       "incident[secondary_incident_category]",
       formData.secondaryCategory
     );
-    appendIfExists(
+
+    sendData.append(
       "incident[secondary_incident_sub_category]",
       formData.secondarySubCategory
     );
-    appendIfExists(
+    sendData.append(
       "incident[secondary_incident_sub_sub_category]",
       formData.secondarySubSubCategory
     );
-
-    appendIfExists("incident[incident_level]", formData.level);
-    appendIfExists("incident[incident_severity]", formData.severity);
-    appendIfExists("incident[probability]", formData.probability);
-    appendIfExists("incident[description]", formData.description);
-
-    appendIfExists(
-      "incident[property_damage]",
-      String(formData.propertyDamage)
-    );
-
-    appendIfExists(
-      "incident[damage_coverd_under_insurance]",
-      String(formData.insuranceCovered)
-    );
-
-    appendIfExists(
-      "incident[support_required]",
-      String(formData.supportRequired)
-    );
-
-    appendIfExists(
-      "incident[read_fact_state]",
-      String(formData.read_fact_state)
-    );
-
-    appendIfExists(
+    sendData.append("incident[support_required]", formData.supportRequired);
+    sendData.append(
       "incident[first_aid_provided_employee]",
-      String(formData.first_aid_provided_employee)
+      formData.first_aid_provided_employee
+    );
+    sendData.append("incident[read_fact_state]", formData.read_fact_state);
+
+    sendData.append("incident[insured_by]", formData.insured_by);
+    sendData.append(
+      "incident[property_damage_category]",
+      formData.damage_category
     );
 
-    appendIfExists("incident[first_aid_attendant]", formData.first_aid_attendant);
-    appendIfExists("incident[insured_by]", formData.insured_by);
-    appendIfExists("incident[property_damage_category]", formData.damage_category);
-
-    appendIfExists("incident[preventive_action]", formData.preventiveAction);
-    appendIfExists("incident[corrective_action]", formData.correctiveAction);
-
-    appendIfExists("incident[rca]", formData.Rca);
-    appendIfExists(
-      "incident[primary_root_cause_category]",
-      formData.primaryRootCauseCategory
+    sendData.append(
+      "incident[damage_coverd_under_insurance]",
+      formData.insuranceCovered
     );
 
-    appendIfExists(
-      "incident[sent_medical_treatment]",
-      String(formData.sent_medical_treatment)
+    sendData.append(
+      "incident[first_aid_attendant]",
+      formData.first_aid_attendant
     );
-
-    appendIfExists("incident[treatment_facility]", formData.treatment_facility);
-    appendIfExists(
-      "incident[attending_physician]",
-      formData.attending_physician
-    );
-
-    appendIfExists("incident[status]", formData.buildingStatus);
-
-    // COSTS
-    appendIfExists(
+    console.log(formData);
+    console.log(costs);
+    sendData.append(
       "incident[cost_of_incident_attributes][equipment_property_cost]",
       costs.equipmentCost
     );
-    appendIfExists(
+    sendData.append(
       "incident[cost_of_incident_attributes][production_loss]",
       costs.productionLoss
     );
-    appendIfExists(
+    sendData.append(
       "incident[cost_of_incident_attributes][treatment_cost]",
       costs.treatmentCost
     );
-    appendIfExists(
+    sendData.append(
       "incident[cost_of_incident_attributes][absenteeism_cost]",
       costs.absenteeismCost
     );
-    appendIfExists(
+    sendData.append(
       "incident[cost_of_incident_attributes][other_cost]",
       costs.otherCost
     );
-    appendIfExists(
+    sendData.append(
       "incident[cost_of_incident_attributes][total_cost]",
       costs.totalCost
     );
+    sendData.append("incident[status]", formData.buildingStatus);
 
-    // WITNESSES
-    incident.forEach((w, index) => {
-      appendIfExists(
+    incident.forEach((incident1, index) => {
+      sendData.append(
         `incident[witnesses_attributes][${index}][name]`,
-        w.name
+        incident1.name
       );
-      appendIfExists(
+      sendData.append(
         `incident[witnesses_attributes][${index}][mobile]`,
-        w.mobile
+        incident1.mobile
       );
     });
 
-    // INVESTIGATION TEAM
     investigation.forEach((team, index) => {
-      appendIfExists(
+      sendData.append(
         `incident[investigation_teams_attributes][${index}][name]`,
         team.name1
       );
-      appendIfExists(
+      sendData.append(
         `incident[investigation_teams_attributes][${index}][mobile]`,
         team.mobile1
       );
-      appendIfExists(
+      sendData.append(
         `incident[investigation_teams_attributes][${index}][designation]`,
         team.designation
       );
     });
 
-    // ATTACHMENTS
-    if (formData.attachment && formData.attachment.length > 0) {
-      formData.attachment.forEach((file) => {
+    sendData.append(
+      "incident[attending_physician]",
+      formData.attending_physician
+    );
+    sendData.append("incident[preventive_action]", formData.preventiveAction);
+    sendData.append("incident[corrective_action]", formData.correctiveAction);
+    sendData.append(
+      "incident[primary_root_cause_category]",
+      formData.primaryRootCauseCategory
+    );
+
+    sendData.append(
+      "incident[treatment_facility]",
+      formData.treatment_facility
+    );
+    sendData.append("incident[incident_severity]", formData.severity);
+    sendData.append("incident[sent_medical_treatment]", formData.sent_medical_treatment);
+    sendData.append("incident[first_aid_attendant]", formData.first_aid_attendant);
+
+    sendData.append("incident[rca]", formData.Rca);
+    sendData.append("incident[property_damage]", formData.propertyDamage);
+    sendData.append("incident[incident_level]", formData.level);
+    sendData.append("incident[building_id]", formData.buildingId);
+    sendData.append("incident[probability]", formData.probability);
+    sendData.append("incident[description]", formData.description);
+    sendData.append("incident[created_by_id]", userId);
+
+    if (formData.attachment && Array.isArray(formData.attachment)) {
+      formData.attachment.forEach((file, index) => {
         sendData.append(`incident[attachments_attributes][][file]`, file);
       });
     }
-
-    const res = await updateIncidents(id, sendData);
-
-    toast.success("Incident updated successfully");
-    navigate("/admin/incidents");
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to update incident");
-  }
-};
+    try {
+      if (
+        !(
+          formData.supportRequired === true && formData.read_fact_state === true
+        )
+      ) {
+        toast.error(
+          "Please check the support required and read fact state checkboxes before saving."
+        );
+        return;
+      } else {
+        // handleSave();
+      }
+      const res = await updateIncidents(id, sendData);
+      toast.success("incident update successfully");
+      navigate("/admin/incidents");
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   console.log(buildings);
   return (

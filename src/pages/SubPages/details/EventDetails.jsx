@@ -440,27 +440,27 @@ const EventDetails = () => {
               )}
             </div>
 
-            <div>
-              <h1 className="text-xl font-semibold">Feedback</h1>
-              <div className="border-dotted border-2 rounded-md border-gray-400 p-2 text-black">
-                {showValue(
-                  eventDetails?.feedback ||
-                    eventDetails?.event_feedback ||
-                    eventDetails?.event?.feedback ||
-                    eventDetails?.event?.event_feedback ||
-                    (eventDetails?.event_feedbacks?.length > 0
-                      ? eventDetails.event_feedbacks
-                          .map((f) => f.comment || f.feedback)
-                          .join(", ")
-                      : null) ||
-                    (eventDetails?.event?.event_feedbacks?.length > 0
-                      ? eventDetails.event.event_feedbacks
-                          .map((f) => f.comment || f.feedback)
-                          .join(", ")
-                      : null),
-                )}
-              </div>
-            </div>
+           <div>
+  <h1 className="text-xl font-semibold">Feedback</h1>
+  <div className="border-dotted border-2 rounded-md border-gray-400 p-2 text-black">
+    {showValue(
+      eventDetails?.feedback ||
+      eventDetails?.event_feedback ||
+      eventDetails?.event?.feedback ||
+      eventDetails?.event?.event_feedback ||
+      (eventDetails?.event_feedbacks?.length > 0
+        ? eventDetails.event_feedbacks
+            .map((f) => f.comment || f.feedback)
+            .join(", ")
+        : null) ||
+      (eventDetails?.event?.event_feedbacks?.length > 0
+        ? eventDetails.event.event_feedbacks
+            .map((f) => f.comment || f.feedback)
+            .join(", ")
+        : null)
+    )}
+  </div>
+</div>
           </div>
         </div>
       </div>

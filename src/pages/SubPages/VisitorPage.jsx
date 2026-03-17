@@ -13,6 +13,7 @@ import {
   postVisitorLogFromDevice,
   postVisitorLogToBackend,
   visitorApproval,
+  getSecurityGuardVisitors
 } from "../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
@@ -42,6 +43,7 @@ const VisitorPage = () => {
   const [histories, setHistories] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [securityVisitors, setSecurityVisitors] = useState([]);
  
   // Pagination (All / In / Out)
   const [currentPage, setCurrentPage] = useState(1);
@@ -330,6 +332,37 @@ const VisitorPage = () => {
 
   setCurrentPage(1);
 };
+
+
+
+useEffect(() => {
+  console.log("Security visitors useEffect running...");
+
+  const fetchSecurityVisitors = async () => {
+    try {
+      const res = await getSecurityGuardVisitors(1, 10);
+
+      console.log("Security Visitors API:", res);
+
+      let data = [];
+
+      if (Array.isArray(res.data)) {
+        data = res.data;
+      } else if (res.data.visitors) {
+        data = res.data.visitors;
+      } else if (res.data.data) {
+        data = res.data.data;
+      }
+
+      setSecurityVisitors(data);
+
+    } catch (error) {
+      console.log("Security visitor API error:", error);
+    }
+  };
+
+  fetchSecurityVisitors();
+}, []);
 
 useEffect(() => {
   const fetchBuildings = async () => {
@@ -1398,7 +1431,8 @@ data={
               <Table
                 columns={VisitorColumns}
                 // data={FilteredUnexpectedVisitor}
-                data={searchText ? FilteredUnexpectedVisitor : unexpectedVisitor}
+                // data={searchText ? FilteredUnexpectedVisitor : unexpectedVisitor}
+                data={securityVisitors}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}

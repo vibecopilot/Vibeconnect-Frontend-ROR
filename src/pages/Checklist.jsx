@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
-import {
-  API_URL,
-  ChecklistImport,
+import { API_URL, ChecklistImport,
   downloadSampleChecklist,
   exportChecklist,
   getChecklist,
   getChecklistTemplate,
-  getVibeBackground,
-} from "../api";
+  getVibeBackground } from "../api";
 import Table from "../components/table/Table";
 import { BiEdit } from "react-icons/bi";
-import { MdClose, MdDeleteForever, MdFileDownload } from "react-icons/md";
+import { MdDeleteForever } from "react-icons/md";
 import AssetNav from "../components/navbars/AssetNav";
 import Navbar from "../components/Navbar";
 import { getItemInLocalStorage } from "../utils/localStorage";
@@ -23,13 +20,13 @@ import FileInputBox from "../containers/Inputs/FileInputBox";
 import { FiDownload, FiUpload } from "react-icons/fi";
 import { FaCopy, FaDownload } from "react-icons/fa";
 import Switch from "../Buttons/Switch";
-import DatePicker from "react-datepicker";
+import DatePicker from 'react-datepicker';
 import { BsEye } from "react-icons/bs";
 
 const Checklist = () => {
   const [checklists, setChecklists] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [searchText, setSearchText] = useState("");
+  const [filteredData, setFilteredData] = useState([])
+  const [searchText, setSearchText] = useState("")
   const [showImport, setShowImportModal] = useState(false); // FIXED: Proper state name
   const [showDownload, setShowDownloadModal] = useState(false); // FIXED: Proper state name
   const openModalImport = () => setShowImportModal(true);
@@ -73,9 +70,7 @@ const Checklist = () => {
   const handleDownload = async () => {
     try {
       const response = await downloadSampleChecklist();
-      const blob = new Blob([response.data], {
-        type: response.headers["content-type"],
-      });
+      const blob = new Blob([response.data], { type: response.headers["content-type"] });
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -87,22 +82,20 @@ const Checklist = () => {
       alert("Error exporting checklist. Please try again.");
     }
   };
-
+  
   const themeColor = useSelector((state) => state.theme.color);
 
   useEffect(() => {
     const fetchChecklist = async () => {
       try {
         const checklist = await getChecklist();
-
+        
         // FIXED: Filter only ctype: "routine" (opposite of PPMActivity)
         const routineChecklistsOnly = checklist.data.checklists.filter(
-          (checklist) => checklist.ctype === "routine",
+          (checklist) => checklist.ctype === "routine"
         );
-
-        const sortedChecklists = routineChecklistsOnly.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at),
-        );
+        
+        const sortedChecklists = routineChecklistsOnly.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         setChecklists(sortedChecklists);
         setFilteredData(sortedChecklists);
         console.log("Routine Checklists:", sortedChecklists);
@@ -113,12 +106,10 @@ const Checklist = () => {
     fetchChecklist();
   }, []);
 
+
   const columns = [
-    {
-      name: "Name",
-      selector: (row) => row.name,
-      sortable: true,
-      width: "300px",
+    { name: "Name", selector: (row) => row.name, sortable: true ,
+      width: "400px",
     },
     {
       name: "frequency",
@@ -136,12 +127,7 @@ const Checklist = () => {
       name: "Associations",
       selector: (row) => (
         <div>
-          <Link
-            to={`/assets/associate-checklist/${row.id}`}
-            className=" px-4 bg-green-400 text-white rounded-full"
-          >
-            Associate
-          </Link>
+          <Link to={`/assets/associate-checklist/${row.id}`} className=" px-4 bg-green-400 text-white rounded-full">Associate</Link>
         </div>
       ),
       sortable: true,
@@ -154,7 +140,7 @@ const Checklist = () => {
             <BsEye size={15} />
           </Link>
           <Link to={`/admin/copy-checklist/${row.id}`}>
-            <FaCopy size={15} />
+            <FaCopy size={15}/>
           </Link>
         </div>
       ),
@@ -194,8 +180,8 @@ const Checklist = () => {
       setFilteredData(checklists);
     } else {
       // FIXED: Filter from checklists (full routine list)
-      const filteredResults = checklists.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase()),
+      const filteredResults = checklists.filter(
+        (item) => item.name.toLowerCase().includes(searchValue.toLowerCase())
       );
       setFilteredData(filteredResults);
     }
@@ -207,34 +193,18 @@ const Checklist = () => {
   };
 
   const handleExport = async () => {
-    if (!startDate || !endDate) {
-      alert("Please select start date and end date");
-      return;
-    }
-
     try {
-      const formattedStart = startDate.toISOString().split("T")[0];
-      const formattedEnd = endDate.toISOString().split("T")[0];
-
-      const response = await exportChecklist(formattedStart, formattedEnd);
-
-      const blob = new Blob([response.data], {
-        type: response.headers["content-type"],
-      });
-
+      const response = await exportChecklist();
+      const blob = new Blob([response.data], { type: response.headers["content-type"] });
       const downloadUrl = window.URL.createObjectURL(blob);
-
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = "checklist_report.xlsx";
+      link.download = "export_checklist.xlsx";
       link.click();
-
       window.URL.revokeObjectURL(downloadUrl);
-
-      closeModalDownload();
     } catch (error) {
       console.error("Failed to export checklist:", error);
-      alert("Error exporting checklist");
+      alert("Error exporting checklist. Please try again.");
     }
   };
 
@@ -270,20 +240,19 @@ const Checklist = () => {
               onClick={openModalImport}
               style={{ background: themeColor }}
             >
-              <FiDownload size={15} /> Import
+              <FiDownload size={15}/> Import
             </button>
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2"
-              onClick={openModalDownload}
+              onClick={handleExport}
               style={{ background: themeColor }}
             >
               <FiUpload size={15} /> Export
             </button>
           </div>
         </div>
-        {checklists.length !== 0 ? (
-          <Table columns={columns} data={filteredData} isPagination={true} />
-        ) : (
+        {checklists.length !== 0 ? <Table columns={columns} data={filteredData} isPagination={true} /> 
+        : (
           <div className="flex justify-center items-center h-full">
             <DNA
               visible={true}
@@ -300,11 +269,7 @@ const Checklist = () => {
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
           <div className="bg-white p-6 rounded shadow-lg w-1/2">
             <h2 className="text-xl font-bold text-center mb-4">Bulk Upload</h2>
-            <FileInputBox
-              handleChange={handleFileChange}
-              fieldName="checklist"
-              isMulti={true}
-            />
+            <FileInputBox handleChange={handleFileChange} fieldName="checklist" isMulti={true}/>
             <div className="mt-4 flex justify-end space-x-4">
               <button
                 onClick={handleDownload}
@@ -335,53 +300,31 @@ const Checklist = () => {
       {showDownload && ( // FIXED: Use correct state variable
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
           <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h2 className="text-lg fw-bold mb-4 text-center">
-              <b>Export Checklist Report</b>{" "}
-            </h2>
-            <div className="flex gap-4 mt-8">
-              <div className="flex flex-col">
-                <label className="text-sm font-semibold mb-1">
-                  Start Date :
-                </label>
-                <DatePicker
-                  selected={startDate}
-                  onChange={(date) => setDateRange([date, endDate])}
-                  selectsStart
-                  startDate={startDate}
-                  endDate={endDate}
-                  placeholderText="dd/mm/yyyy"
-                  className="border p-2 rounded w-40"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-sm font-semibold mb-1">End Date :</label>
-                <DatePicker
-                  selected={endDate}
-                  onChange={(date) => setDateRange([startDate, date])}
-                  selectsEnd
-                  startDate={startDate}
-                  endDate={endDate}
-                  minDate={startDate}
-                  placeholderText="dd/mm/yyyy"
-                  className="border p-2 rounded w-40"
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end space-x-4">
+            <h2 className="text-xl mb-4">Report</h2>
+            <DatePicker
+              selectsRange={true}
+              startDate={startDate}
+              endDate={endDate}
+              onChange={(update) => {
+                setDateRange(update);
+              }}
+              isClearable={true}
+              placeholderText="Enter Date"
+              className="border p-1 px-4 border-gray-500 w-64 rounded-md" 
+            />
+            <div className="mt-4 flex justify-end space-x-4">
               <button
                 onClick={closeModalDownload}
-                className="bg-red-500 text-white px-4 py-3 rounded-lg flex"
+                className="bg-red-500 text-white px-4 py-2 rounded"
                 style={{ background: themeColor }}
               >
-                <MdClose className="h-5 w-5 mx-1"/> Cancel
+                Cancel
               </button>
               <button
-                onClick={handleExport}
-                className="bg-green-500 text-white px-4 py-3 rounded-lg flex"
+                className="bg-green-500 text-white px-4 py-2 rounded"
                 style={{ background: themeColor }}
               >
-                <MdFileDownload className="h-5 w-5 mx-1"/> Export
+                Export
               </button>
             </div>
           </div>

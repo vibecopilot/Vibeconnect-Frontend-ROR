@@ -74,90 +74,6 @@ const AddMasters = () => {
     unit: "",
     cost: "",
   });
-
-    useEffect(() => {
-    const fetchAssets = async () => {
-      try {
-        const res = await getSiteAsset();
-        const assetList = res.data.site_assets.map((a) => ({
-          value: a.id,
-          label: a.name,
-        }));
-        setAssets(assetList);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    fetchAssets();
-  }, []);
-
-  /* ---------------- FETCH GROUPS ---------------- */
-
-  useEffect(() => {
-    const fetchGroups = async () => {
-      try {
-        const res = await getAssetGroups();
-        setAssetGroups(res.data);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    fetchGroups();
-  }, []);
-
-  /* ---------------- FETCH SUB GROUPS ---------------- */
-
-  const fetchSubGroups = async (groupId) => {
-    try {
-      const res = await getAssetSubGroups(groupId);
-
-      const subGroups = res.data.map((item) => ({
-        id: item.id,
-        name: item.name,
-      }));
-
-      setAssetSubGroups(subGroups);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-   const validateForm = () => {
-    if (!formData.name) {
-      toast.error("Name is required");
-      return false;
-    }
-
-    if (!formData.asset_id) {
-      toast.error("Asset Name is required");
-      return false;
-    }
-
-    if (!formData.asset_group_id) {
-      toast.error("Asset Group is required");
-      return false;
-    }
-
-    if (!formData.asset_sub_group_id) {
-      toast.error("Asset Sub Group is required");
-      return false;
-    }
-
-    if (!formData.quantity) {
-      toast.error("Quantity is required");
-      return false;
-    }
-
-    if (!formData.cost) {
-      toast.error("Cost is required");
-      return false;
-    }
-
-    return true;
-  };
-
   const handleChange = async (e) => {
     const fetchSubGroups = async (groupId) => {
       try {
@@ -192,13 +108,8 @@ const AddMasters = () => {
     }
   };
   const navigate = useNavigate();
-
-  
   const handleMasters = async () => {
-    if (!validateForm()) return;
-
     const sendData = new FormData();
-
     sendData.append("inventory[name]", formData.name);
     sendData.append(
       "inventory[inventory_type]",
@@ -209,9 +120,11 @@ const AddMasters = () => {
       "inventory[criticality]",
       criticalvalue === "critical" ? 1 : 2
     );
-
     sendData.append("inventory[asset_group_id]", formData.asset_group_id);
-    sendData.append("inventory[asset_sub_group_id]", formData.asset_sub_group_id);
+    sendData.append(
+      "inventory[asset_sub_group_id]",
+      formData.asset_sub_group_id
+    );
     sendData.append("inventory[category]", formData.category);
     sendData.append("inventory[asset_id]", formData.asset_id);
     sendData.append("inventory[code]", formData.code);
@@ -228,18 +141,14 @@ const AddMasters = () => {
     sendData.append("inventory[cost]", formData.cost);
 
     try {
-      await postMasters(sendData);
-
+      const mastersResp = await postMasters(sendData);
       toast.success("Masters Added Successfully");
-
       navigate("/assets/stock-items");
+      console.log("Hotel request Response", mastersResp);
     } catch (error) {
       console.log(error);
-      toast.error("Failed to add master");
     }
   };
-
-
   return (
     <div className="flex ">
       <div className="hidden md:block">
@@ -614,15 +523,9 @@ const AddMasters = () => {
             </div>
           </div>
 
-          <div className="sm:flex justify-end grid gap-2 my-5 ">
-             <button 
-             className="bg-black text-white p-2 px-4 rounded-md font-medium"
-             onClick={()=>navigate("/assets/stock-items")}>
-              Cancel
-             </button>
-
+          <div className="sm:flex justify-center grid gap-2 my-5 ">
             <button
-              className="bg-blue-700 text-white p-2 px-4 rounded-md font-medium"
+              className="bg-black text-white p-2 px-4 rounded-md font-medium"
               onClick={handleMasters}
             >
               Submit

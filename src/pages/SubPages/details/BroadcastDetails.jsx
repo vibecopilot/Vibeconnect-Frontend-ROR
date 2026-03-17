@@ -334,7 +334,7 @@ useEffect(() => {
     "";
 
   const statusType =
-    broadcastDetails?.status ||
+    broadcastDetails?.status_type ||
     broadcastDetails?.type ||
     broadcastDetails?.notice_type ||
     "";

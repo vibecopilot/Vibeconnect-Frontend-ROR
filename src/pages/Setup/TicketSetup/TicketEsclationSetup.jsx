@@ -91,9 +91,9 @@ const TicketEscalationSetup = () => {
   const [page, setPage] = useState("Response");
   const themeColor = useSelector((state) => state.theme.color);
   const [categories, setCategories] = useState([]);
-  const [resEscalationAdded, setResEscalationAdded] = useState(false);
-  const [resolutionEscalationAdded, setResolutionEscalationAdded] =
-    useState(false);
+  // const [resEscalationAdded, setResEscalationAdded] = useState(false);
+  // const [resolutionEscalationAdded, setResolutionEscalationAdded] =
+  //   useState(false);
   const [selectedOptions, setSelectedOptions] = useState({
     categories: [],
     escalations: {
@@ -137,6 +137,7 @@ const TicketEscalationSetup = () => {
   };
 
   useEffect(() => {
+    
     const fetchAllCategories = async () => {
       try {
         const catResp = await getHelpDeskCategoriesSetup();
@@ -150,20 +151,22 @@ const TicketEscalationSetup = () => {
       }
     };
 
-    const fetchSetupUsers = async () => {
-      try {
-        const UsersResp = await getSetupUsers();
-        const filteredUser = UsersResp.data;
-        const transformedUsers = filteredUser.map((user) => ({
-          value: Number(user.id),
-          label: `${user.firstname} ${user.lastname}`,
-        }));
-        setUsers(transformedUsers);
-      } catch (error) {
-        console.log(error);
-      }
-    };
+ const fetchSetupUsers = async () => {
+  try {
+    const UsersResp = await getSetupUsers();
 
+    const usersData = UsersResp?.data?.users || UsersResp?.data || [];
+
+    const transformedUsers = usersData.map((user) => ({
+      value: Number(user.id),
+      label: `${user.firstname} ${user.lastname}`,
+    }));
+
+    setUsers(transformedUsers);
+  } catch (error) {
+    console.log(error);
+  }
+};
     const fetchEscalation = async () => {
       try {
         const escResp = await getHelpDeskEscalationSetup();
@@ -180,16 +183,16 @@ const TicketEscalationSetup = () => {
       }
     };
 
-    if (resEscalationAdded || resolutionEscalationAdded) {
-      fetchEscalation();
-      setResEscalationAdded(false);
-      setResolutionEscalationAdded(false);
-    }
+    // if (resEscalationAdded || resolutionEscalationAdded) {
+    //   fetchEscalation();
+    //   setResEscalationAdded(true);
+    //   setResolutionEscalationAdded(false);
+    // }
 
     fetchAllCategories();
     fetchEscalation();
     fetchSetupUsers();
-  }, [resEscalationAdded, resolutionEscalationAdded]);
+  }, []);
 
   const openEditModal = (rule) => {
     setEditingRule(rule);
@@ -422,7 +425,7 @@ const TicketEscalationSetup = () => {
 
     try {
       await postHelpDeskEscalationSetup(formData);
-      setResEscalationAdded(true);
+      await fetchEscalation();
       toast.dismiss();
       toast.success("Response Escalation Created Successfully");
       // Reset form options
@@ -470,7 +473,7 @@ const TicketEscalationSetup = () => {
     try {
       // Assuming postHelpDeskEscalationSetup handles PUT/PATCH when ID is present
       await postHelpDeskEscalationSetup(formData);
-      setResEscalationAdded(true);
+      await fetchEscalation();
       closeEditModal();
       toast.dismiss();
       toast.success("Response Escalation Updated Successfully");
@@ -530,7 +533,7 @@ const TicketEscalationSetup = () => {
 
     try {
       await postHelpDeskResolutionEscalationSetup(formData);
-      setResolutionEscalationAdded(true);
+    await fetchEscalation();
       toast.dismiss();
       toast.success("Resolution Escalation Created Successfully");
       // Reset form options
@@ -596,7 +599,7 @@ const TicketEscalationSetup = () => {
     try {
       // Assuming postHelpDeskResolutionEscalationSetup handles PUT/PATCH when ID is present
       await postHelpDeskResolutionEscalationSetup(formData);
-      setResolutionEscalationAdded(true);
+     await fetchEscalation();
       closeResolutionEditModal();
       toast.dismiss();
       toast.success("Resolution Escalation Updated Successfully");
@@ -617,7 +620,7 @@ const TicketEscalationSetup = () => {
       toast.loading("Deleting Escalation Rule. Please wait!");
       await deleteEscalationRule(id);
       toast.dismiss();
-      setResEscalationAdded(true); // Trigger re-fetch
+      await fetchEscalation();// Trigger re-fetch
       toast.success("Escalation Rule Deleted Successfully");
     } catch (error) {
       console.error(error);

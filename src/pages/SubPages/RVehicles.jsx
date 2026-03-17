@@ -4,9 +4,11 @@ import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
 import { getRegisteredVehicle, getVehicleHistory } from "../../api";
 import { FaSearch } from "react-icons/fa";
-import { IoAddCircleOutline } from "react-icons/io5";
+import { IoAddCircleOutline, IoCloudUploadOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+
+
 
 /** ---------------- Token helpers ---------------- */
 const normalizeToken = (raw) => {
@@ -353,6 +355,38 @@ const RVehicles = () => {
     }
   };
 
+
+const handleBulkUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const token =
+      normalizeToken(tokens?.queryToken) ||
+      normalizeToken(tokens?.bearerToken);
+
+    const res = await axiosInstance.post(
+      `/registered_vehicles/bulk_upload.json?token=${token}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    alert("Bulk upload successful");
+
+    setRefreshTick((prev) => prev + 1); // refresh table
+  } catch (err) {
+    console.error(err);
+    alert("Upload failed");
+  }
+};
+
   /** ---------------- Main fetch ---------------- */
   useEffect(() => {
     const controller = new AbortController();
@@ -364,9 +398,9 @@ const RVehicles = () => {
       try {
         let params = { page: currentPageNum, per_page: PER_PAGE };
 
-        if (searchTerm.trim()) {
-          params["q[name_or_vehicle_number_cont]"] = searchTerm.trim();
-        }
+      if (searchTerm.trim()) {
+        params["q[vehicle_number_or_registered_user_cont]"] = searchTerm.trim();
+      }
 
         let response;
         let data = {};
@@ -387,27 +421,26 @@ const RVehicles = () => {
           data = response?.data || {};
           list = data.vehicle_logs || [];
         } else if (page === "History") {
-          response = await getVehicleHistory(params);
-          data = response?.data || {};
-          list = data.vehicle_logs || [];
+  response = await getVehicleHistory(params);
+  data = response?.data || {};
+  list = data.vehicle_logs || [];
 
-          // ✅ merge persisted local recentHistory on top + dedupe
-          const merged = [...(recentHistory || []), ...(list || [])];
-          const seen = new Set();
-          const unique = merged.filter((x) => {
-            const key =
-              x?.id ||
-              `${x?.registered_vehicle_id}-${x?.check_in}-${x?.check_out}-${x?.created_at}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
+  const merged = [...(recentHistory || []), ...(list || [])];
 
-          setVehicles(unique);
-          setTotalPages(data?.total_pages || 1);
-          setLoading(false);
-          return;
-        } else if (page === "Approvals") {
+  const seen = new Set();
+  const unique = merged.filter((x) => {
+    const key =
+      x?.id ||
+      `${x?.registered_vehicle_id}-${x?.check_in}-${x?.check_out}-${x?.created_at}`;
+
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  list = unique; // ✅ important so search + sort runs later
+}
+ else if (page === "Approvals") {
           const t = requireApprovalsTokenOrSetError();
           if (!t) {
             setVehicles([]);
@@ -464,7 +497,31 @@ const RVehicles = () => {
           return;
         }
 
-        const sorted = [...list].sort((a, b) => {
+      let filteredList = list;
+
+if (searchTerm.trim()) {
+  const term = searchTerm.toLowerCase();
+
+  filteredList = list.filter((item) => {
+    const name =
+      item?.registered_user ||
+      item?.created_by ||
+      item?.name ||
+      "";
+
+    const vehicle =
+      item?.vehicle_number ||
+      item?.registered_vehicle?.vehicle_number ||
+      "";
+
+    return (
+      name.toLowerCase().includes(term) ||
+      vehicle.toLowerCase().includes(term)
+    );
+    });
+   }
+
+          const sorted = [...filteredList].sort((a, b) => {
           const da = a?.created_at ? new Date(a.created_at).getTime() : 0;
           const db = b?.created_at ? new Date(b.created_at).getTime() : 0;
           return db - da;
@@ -485,14 +542,14 @@ const RVehicles = () => {
     fetchData();
     return () => controller.abort();
   }, [
-    page,
-    currentPageNum,
-    searchTerm,
-    BASE_URL,
-    requireApprovalsTokenOrSetError,
-    refreshTick,
-    recentHistory,
-  ]);
+        page,
+        currentPageNum,
+        searchTerm,
+        BASE_URL,
+        requireApprovalsTokenOrSetError,
+        refreshTick,
+        recentHistory,
+      ]);
 
   return (
     <div className="visitors-page">
@@ -502,18 +559,30 @@ const RVehicles = () => {
         <div className="w-full flex mx-3 flex-col overflow-hidden">
           <Passes />
 
-          <div className="flex justify-between items-center px-2 mt-2">
-            <h2 className="font-semibold text-lg">Registered Vehicles</h2>
+          <div className="flex gap-3">
 
-            <button
-              onClick={() => navigate("/admin/add-rvehicles")}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-            >
-              <IoAddCircleOutline size={20} />
-              Add Vehicle
-            </button>
-          </div>
+  {/* Bulk Upload */}
+  <label className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition">
+    <IoCloudUploadOutline size={20} />
+    Bulk Upload
+    <input
+      type="file"
+      accept=".csv,.xlsx"
+      onChange={handleBulkUpload}
+      hidden
+    />
+  </label>
 
+  {/* Add Vehicle */}
+  <button
+    onClick={() => navigate("/admin/add-rvehicles")}
+    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+  >
+    <IoAddCircleOutline size={20} />
+    Add Vehicle
+  </button>
+
+</div>
           <div className="flex justify-between items-end border-b border-gray-300 m-2">
             <div className="flex -mb-px">
               {["All", "Vehicle In", "Vehicle Out", "Approvals", "History"].map((tab) => (
@@ -553,7 +622,7 @@ const RVehicles = () => {
 
           <RVehiclesTable
             data={vehicles}
-            loading={loading}
+            loading={loading} 
             error={error}
             currentPageNum={currentPageNum}
             pageType={page}

@@ -85,23 +85,12 @@ export const getTicketDashboard = async (options = {}) => {
   });
 };
 //Assets
-export const getPerPageSiteAsset = (
-  page,
-  perPage,
-  building,
-  floor,
-  unit
-) => {
-  return axiosInstance.get(`/site_assets.json`, {
+export const getPerPageSiteAsset = async (page, perPage) =>
+  axiosInstance.get(`/site_assets.json?per_page=${perPage}&page=${page}`, {
     params: {
-      page,
-      per_page: perPage,
-      building_id: building,
-      floor_id: floor,
-      unit_id: unit,
+      token: token,
     },
   });
-};
 export const downloadQrCode = async (ids) =>
   axiosInstance.get(`/site_assets/print_qr_codes?asset_ids=${ids}`, {
     responseType: "blob",
@@ -122,6 +111,30 @@ export const softServiceDownloadQrCode = async (soft_service_ids) => {
     responseType: "blob", // important to handle PDF download
   });
 };
+
+// export const getSoftServiceGroups = async () =>
+//   axiosInstance.get("/generic_infos.json", {
+//     params: {
+//       token: token,
+//       "q[info_type_eq]": "soft_service",
+//     },
+//   });
+
+
+export const getGenericInfos = async () =>
+  axiosInstance.get("/generic_infos.json", {
+    params: {
+      token: token,
+    },
+  });
+
+export const getGenericSubInfos = async () =>
+  axiosInstance.get("/generic_sub_infos.json", {
+    params: {
+      token: token,
+    },
+  });
+
 export const getSiteAsset = async (page) =>
   axiosInstance.get(`/site_assets.json`, {
     params: {
@@ -715,13 +728,64 @@ export const getHelpDeskStatusDetailsSetup = async (id) =>
       },
     },
   );
-export const editHelpDeskStatusDetailsSetup = async (id, data) =>
-  axiosInstance.patch(`/pms/admin/modify_complaint_status/${id}.json`, data, {
+// export const editHelpDeskStatusDetailsSetup = async (id, data) =>
+//   axiosInstance.patch(`/pms/admin/modify_complaint_status/${id}.json`, data, {
+//     params: {
+//       token: token,
+//     },
+//   });
+
+// export const editHelpDeskStatusDetailsSetup = (id, payload) => {
+//   const token = localStorage.getItem("token");   // or where your token is stored
+//   return axios.put(`/pms/admin/complaint_statuses/${id}.json?token=${token}`, payload);
+// };
+// // HelpDesk Status API
+
+export const getHelpDeskStatuses = async () =>
+  axiosInstance.get("/pms/admin/helpdesk_categories/complaint_statuses.json", {
     params: {
       token: token,
     },
   });
 
+export const getHelpDeskStatusById = async (id) =>
+   
+  axiosInstance.get(`/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postHelpDeskStatus = async (formData) =>
+  
+  axiosInstance.post(`/pms/admin/helpdesk_categories/complaint_statuses.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const updateHelpDeskStatus = async (id, formData) => {
+ 
+
+  return axiosInstance.put(
+    `/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`,
+    formData,
+    {
+      params: { token },
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+};
+// HelpDesk Status API
+
+// export const updateHelpDeskStatus = async (id, formData) =>
+//   axiosInstance.put(`/pms/admin/modify_complaint_status/${id}.json?token=${token}`, formData, {
+//     headers: {
+//       "Content-Type": "multipart/form-data",
+//     },
+//   });
 export const postHelpDeskStatusSetup = async (data) =>
   axiosInstance.post(`/pms/admin/create_complaint_statuses.json`, data, {
     params: {
@@ -914,7 +978,7 @@ export const getfloorsType = async (buildId) =>
   });
 
 export const postComplaintsDetails = async (data) => {
-  try {
+  
     const response = await axiosInstance.post(
       `/pms/complaints.json?token=${token}`,
       data,
@@ -925,22 +989,22 @@ export const postComplaintsDetails = async (data) => {
       },
     );
     return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
+  } 
+    
+  
+
 
 export const editComplaintsDetails = async (data) => {
-  try {
+
     const response = await axiosInstance.post(
       `/complaint_logs.json?token=${token}`,
       data,
     );
     return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
+  } 
+  
+  
+
 
 export const resetPassword = async (data) =>
   axiosInstance.post("/users/change_password.json", data, {
@@ -983,11 +1047,22 @@ export const getTotalAssetCount = async (start_date) =>
   });
 
 export const getAssetGroups = async () =>
-  axiosInstance.get("/asset_groups.json?q[group_for_eq]=asset", {
+  axiosInstance.get("/asset_groups.json", {
+    params: {
+      token: token,
+      "q[group_for_eq]": "asset",
+    },
+  });
+
+  // Sub Groups API
+export const getSubGroups = async () =>
+  axiosInstance.get("/sub_groups.json", {
     params: {
       token: token,
     },
   });
+
+
 export const getAssetGroupsDetails = async (id) =>
   axiosInstance.get(`/asset_groups/${id}.json?q[group_for_eq]=asset`, {
     params: {
@@ -1099,13 +1174,11 @@ export const getEditAMCDetails = async (id) =>
     },
   });
 
-export const EditAMCDetails = async (id, data) =>
+export const EditAMCDetails = async (data, id) =>
   axiosInstance.put(`/asset_amcs/${id}.json`, data, {
     params: {
       token: token,
-    },
-    headers: {
-      "Content-Type": "multipart/form-data",
+      // asset_id: assetId,
     },
   });
 export const getSubGroupsList = async () =>
@@ -1177,12 +1250,10 @@ export const getMasterChecklist = async () =>
       token: token,
     },
   });
-export const exportChecklist = async (start_date, end_date) =>
+export const exportChecklist = async () =>
   axiosInstance.get("/export_checklist.xlsx", {
     params: {
       token: token,
-      start_date: start_date,
-      end_date: end_date
     },
     responseType: "blob",
   });
@@ -1362,16 +1433,11 @@ export const getRoutineTaskStatus = async (
   status = null,
   startDate = null,
   endDate = null,
-  page = 1,
-  perPage = 10
 ) => {
-
   const token = localStorage.getItem("token");
 
   const params = {
     token,
-    page,
-    per_page: perPage,
   };
 
   if (status) {
@@ -1388,7 +1454,7 @@ export const getRoutineTaskStatus = async (
 
   const response = await axiosInstance.get(
     "/activities/routine_task_counts.json",
-    { params }
+    { params },
   );
 
   return response.data;
@@ -2132,6 +2198,17 @@ export const postVisitorCheckInCheckOut = async (visitorId, data) =>
     },
   );
 
+  // Visitors API
+export const getSecurityGuardVisitors = async (page = 1, perpage = 10) =>
+  axiosInstance.get("/visitors.json", {
+    params: {
+      token: token,
+      page: page,
+      per_page: perpage,
+      "q[user_type_eq]": "security_guard",
+    },
+  });
+
 export const sendMailToUsers = async (userId) =>
   axiosInstance.get(`/users/send_welcome_email.json?id=${userId}`, {
     params: {
@@ -2226,12 +2303,10 @@ export const updateEventEnableStatus = (id, enabled) =>
     },
   );
 
-export const getEvents = async (page,per_page) =>
+export const getEvents = async () =>
   axiosInstance.get("/events.json", {
     params: {
       token: token,
-      page:page,
-      per_page:per_page,
     },
   });
 export const getEventsDetails = async (id) =>
@@ -2417,12 +2492,12 @@ export const getSoftServiceSchedule = async (sid) =>
       token: token,
     },
   });
-export const getSoftserviceActivityDetails = async (id) =>
-  axiosInstance.get(`/soft_services/${id}/softservices_log_show.json?`, {
-    params: {
-      token: token,
-    },
-  });
+// export const getSoftserviceActivityDetails = async (id) =>
+//   axiosInstance.get(`/soft_services/${id}/softservices_log_show.json?`, {
+//     params: {
+//       token: token,
+//     },
+//   });
 export const deleteAssociationList = async (
   checklistId,
   assignedto,
@@ -2446,6 +2521,14 @@ export const postServiceAssociation = async (data) =>
 
 export const getSoftServices = async () =>
   axiosInstance.get("/soft_services.json", {
+    params: {
+      token: token,
+    },
+  });
+
+  // Soft Service Logs API
+export const getSoftServiceLogs = async (id) =>
+  axiosInstance.get(`/soft_services/${id}/softservices_log_show.json`, {
     params: {
       token: token,
     },
@@ -3514,6 +3597,10 @@ export const postSite = async (data) =>
 //       token: token,
 //     },
 //   });
+
+
+
+
 export const getAllFloors = async () =>
   axiosInstance.get(`/floors.json`, {
     params: {
@@ -10451,13 +10538,12 @@ export const editIncidentCatDetails = async (id, data) =>
       token: token,
     },
   });
-export const getIncidents = async (page = 1, search = "") =>
+export const getIncidents = async (page = 1) =>
   axiosInstance.get(`/incidents.json`, {
     params: {
       token: token,
       page: page,
       per_page: 10,
-      "q[search_cont]": search,
     },
   });
 export const getIncidentDetails = async (incidentId) =>
@@ -11472,6 +11558,7 @@ export const getVehicleSetups = async (siteId = 47) =>
 //   });
 
 // Amenity Bookings API
+// Amenity Bookings API
 export const getAmenitiesBooking = async (
   page = 1,
   perPage = 10,
@@ -11484,12 +11571,11 @@ export const getAmenitiesBooking = async (
       page,
       per_page: perPage,
       site_id: siteId,
-      "q[search_cont]":search, 
+      search, // add this
       _t: new Date().getTime(),
     },
   });
 };
-
 export const getAmenityExport = (startDate, endDate, siteId) => {
   return axiosInstance.get("/amenity/export.xlsx", {
     params: {
@@ -11501,6 +11587,7 @@ export const getAmenityExport = (startDate, endDate, siteId) => {
     responseType: "blob",
   });
 };
+
 
 // Polls API
 

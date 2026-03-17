@@ -24,7 +24,6 @@ import Cron from "react-js-cron";
 import "react-js-cron/dist/styles.css";
 import { FaTrash } from "react-icons/fa";
 import { useParams } from "react-router-dom";
-import { MdClose } from "react-icons/md";
 
 const EditChecklist = () => {
   const { id } = useParams();
@@ -494,7 +493,7 @@ const EditChecklist = () => {
         setSuppliers(supplierResp.data); // Set the fetched suppliers in state
       } catch (error) {
         console.error("Error fetching suppliers:", error);
-        // toast.error("Failed to load suppliers");
+        toast.error("Failed to load suppliers");
       }
     };
 
@@ -513,7 +512,7 @@ const EditChecklist = () => {
         setMasters(mastershow);
       } catch (error) {
         console.error("Error fetching suppliers:", error);
-        // toast.error("Failed to load suppliers");
+        toast.error("Failed to load suppliers");
       }
     };
 
@@ -562,13 +561,7 @@ const EditChecklist = () => {
           {isEditing ? " Edit  Checklist" : "Routine Checklist Details"}
         </h2>
         <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
-          <div className="flex justify-end gap-2">
-            <button
-                className="flex items-center gap-2 font-medium p-1 px-4 rounded-full border-2 border-black"
-                onClick={()=>navigate("/assets/checklist")}
-              >
-                <MdClose /> Cancel
-              </button>
+          <div className="flex justify-end">
             {!isEditing ? (
               <button
                 className="flex items-center gap-2 font-medium p-1 px-4 rounded-full border-2 border-black"
