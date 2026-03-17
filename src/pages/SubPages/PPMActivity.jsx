@@ -124,6 +124,11 @@ const PPMActivity = () => {
       selector: (row) => row?.groups?.length,
       sortable: true,
     },
+     {
+      name: "Created At",
+      selector: (row) => row?.created_at,
+      sortable: true,
+    },
     {
       name: "Associations",
       selector: (row) => (

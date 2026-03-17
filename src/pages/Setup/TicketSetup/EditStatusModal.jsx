@@ -4,13 +4,13 @@ import { BiEditAlt } from "react-icons/bi";
 import { useSelector } from "react-redux";
 import { ColorPicker } from "antd";
 import {
-  editHelpDeskStatusDetailsSetup,
+  updateHelpDeskStatus,
   getHelpDeskStatusDetailsSetup,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
 
-const EditStatusModal = ({ onClose, id, setStatusAdded }) => {
+const EditStatusModal = ({ onClose, id, onUpdated }) => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const [formData, setFormData] = useState({
@@ -59,61 +59,44 @@ const EditStatusModal = ({ onClose, id, setStatusAdded }) => {
     fetchStatusDetails();
   }, [id]);
 
-  const handleEditStatus = async () => {
-    console.log("Save clicked", { id, formData, siteID }); // Enhanced debug
+const handleEditStatus = async () => {
+  if (!id) {
+    toast.error("Invalid Status ID");
+    return;
+  }
 
-    if (!id) {
-      toast.error("Invalid Status ID");
-      return;
+  setLoading(true);
+
+  const payload = new FormData();
+
+  payload.append("complaint_status[name]", formData.status);
+  payload.append("complaint_status[fixed_state]", formData.fixedState);
+  payload.append("complaint_status[color_code]", formData.color);
+  payload.append("complaint_status[position]", formData.order);
+  payload.append("complaint_status[of_phase]", "pms");
+  payload.append("complaint_status[society_id]", siteID);
+
+  try {
+    await updateHelpDeskStatus(id, payload);
+
+    toast.success("Status updated successfully");
+
+    if (onUpdated) {
+      onUpdated();
     }
 
-    if (!formData.status.trim()) {
-      toast.error("Status name is required");
-      return;
-    }
+    onClose();
+  } catch (error) {
+    console.error(error);
+    toast.error("Update failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
-    setLoading(true);
-
-    const payload = {
-      complaint_status: {
-        of_phase: "pms",
-        society_id: siteID,
-        name: formData.status,
-        fixed_state: formData.fixedState,
-        color_code: formData.color,
-        position: parseInt(formData.order) || 0, // Ensure number
-      },
-    };
-
-    try {
-      const res = await editHelpDeskStatusDetailsSetup(id, payload);
-      console.log("Update success:", res);
-
-      toast.success("Status updated successfully");
-      setStatusAdded(true);
-      onClose();
-    } catch (error) {
-      console.error("Update Error Details:", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
-      });
-
-      const errorMsg = error.response?.data?.errors 
-        ? JSON.stringify(error.response.data.errors)
-        : error.response?.status === 404 
-          ? "Status not found or update endpoint unavailable"
-          : "Update failed";
-
-      toast.error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
-    <ModalWrapper onclose={onClose}>
+   <ModalWrapper onClose={onClose}>
       <div>
         <h2 className="font-medium text-xl flex items-center gap-4 border-b border-gray-300 pb-2">
           <BiEditAlt /> Edit Status

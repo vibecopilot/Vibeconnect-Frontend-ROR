@@ -4,7 +4,7 @@ import Events from "./SubPages/Events";
 import Broadcast from "./SubPages/Broadcast";
 import Polls from "./SubPages/Polls";
 import Notification from "./SubPages/Notification";
-import {  NavLink } from "react-router-dom";
+import { Navigate, NavLink, useLocation } from "react-router-dom";
 
 // import Forum from "./SubPages/Forum";
 
@@ -18,7 +18,13 @@ import CommunicationDashboard from "./SubPages/CommunicationDashboard";
 
 const Communication = () => {
   const themeColor = useSelector((state) => state.theme.color);
-  
+  const location = useLocation();
+
+  // default route for /communication
+  if (location.pathname === "/communication") {
+    return <Navigate to="/communication/broadcast" replace />;
+  }
+
   // const [page, setPage] = useState("event");
   return (
     <section className="flex">
@@ -26,6 +32,16 @@ const Communication = () => {
       <div className="w-full flex mx-3 flex-col overflow-hidden">
       <div className="flex lg:flex-row flex-col gap-2 relative items-center justify-center w-full">
       <div className="sm:flex grid grid-cols-2 flex-wrap text-sm md:text-base sm:flex-row gap-5 font-medium p-2 xl:rounded-full rounded-md opacity-90 bg-gray-200 ">
+             <NavLink
+          to={"/communication/broadcast"}
+          className={({ isActive }) =>
+            `  md:rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
+              isActive && "bg-white text-blue-500 shadow-custom-all-sides"
+            }`
+          }
+        >
+          Broadcast
+        </NavLink>
           <NavLink
           to={"/communication/events"}
           className={({ isActive }) =>
@@ -36,16 +52,7 @@ const Communication = () => {
         >
           Events
         </NavLink>
-        <NavLink
-          to={"/communication/broadcast"}
-          className={({ isActive }) =>
-            `  md:rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear ${
-              isActive && "bg-white text-blue-500 shadow-custom-all-sides"
-            }`
-          }
-        >
-          Broadcast
-        </NavLink>
+     
         <NavLink
           to={"/communication/polls"}
           className={({ isActive }) =>

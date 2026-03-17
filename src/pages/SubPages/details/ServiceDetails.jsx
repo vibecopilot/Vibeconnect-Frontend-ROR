@@ -5,7 +5,8 @@ import { Link, useParams } from "react-router-dom";
 import {
   getSoftServicesDetails,
   getSoftServiceSchedule,
-  getSoftserviceActivityDetails,
+  getSoftServiceLogs,
+    getGenericSubInfos,
 } from "../../../api";
 import { FaQrcode, FaRegFileAlt } from "react-icons/fa";
 import Table from "../../../components/table/Table";
@@ -16,6 +17,7 @@ import { BsEye } from "react-icons/bs";
 import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
 import SoftServiceQr from "./assetSubDetails/SoftServiceQr";
 
+
 const ServiceDetails = () => {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -23,7 +25,7 @@ const ServiceDetails = () => {
   const [serviceFor, setserviceFor] = useState("schedule");
 
   const themeColor = useSelector((state) => state.theme.color);
-  const [details, setDetails] = useState([]);
+  const [details, setDetails] = useState({});
   const [qrCode, setQrCode] = useState(false);
   const { id } = useParams();
   const [logsDetails, setlogsDetails] = useState([]);
@@ -31,51 +33,94 @@ const ServiceDetails = () => {
   const [filteredScheduleData, setFilteredScheduleData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [genericSubInfos, setGenericSubInfos] = useState([]);
   useEffect(() => {
     const fetchServiceDetails = async () => {
       const ServiceDetailsResponse = await getSoftServicesDetails(id);
-      setDetails(ServiceDetailsResponse.data);
+      setDetails(ServiceDetailsResponse.data.soft_service || ServiceDetailsResponse.data);
       console.log(ServiceDetailsResponse);
+      console.log("Service Details API:", ServiceDetailsResponse.data);
+
     };
     fetchServiceDetails();
   }, []);
-  const fetchScheduleData = async () => {
+ const fetchScheduleData = async () => {
+  try {
+    const scheduleRes = await getSoftServiceSchedule(id);
+
+    const activities =
+      scheduleRes?.data?.activities ||
+      scheduleRes?.data?.data?.activities ||
+      scheduleRes?.data?.data ||
+      [];
+
+    setScheduleData(activities);
+    setFilteredScheduleData(activities);
+
+    console.log("Schedule table", activities);
+  } catch (error) {
+    console.log(error);
+  }
+};
+ const fetchLogsDetails = async () => {
+  try {
+    const logsDetailsResp = await getSoftServiceLogs(id);
+
+    const activities =
+      logsDetailsResp?.data?.activities ||
+      logsDetailsResp?.data?.data?.activities ||
+      logsDetailsResp?.data?.data ||
+      [];
+
+    const filteredData = activities.filter((activity) => {
+      const activityDate = new Date(activity.start_time);
+
+      const activityLocalDate =
+        activityDate.getFullYear() +
+        "-" +
+        String(activityDate.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(activityDate.getDate()).padStart(2, "0");
+
+      return (
+        activityLocalDate === selectedDate &&
+        activity.status !== "pending" &&
+        activity.status !== "overdue"
+      );
+    });
+
+    console.log("Filtered Logs:", filteredData);
+
+    setlogsDetails(filteredData);
+  } catch (error) {
+    console.error("Error fetching logs:", error);
+  }
+};
+useEffect(() => {
+
+  const fetchGenericSubInfos = async () => {
     try {
-      const scheduleRes = await getSoftServiceSchedule(id);
-      setFilteredScheduleData(scheduleRes.data.activities);
-      setScheduleData(scheduleRes.data.activities);
-      console.log("Schedule table", scheduleRes.data.activities);
+
+      const res = await getGenericSubInfos();
+
+      const data =
+        res?.data?.generic_sub_infos ||
+        res?.data?.data ||
+        res?.data ||
+        [];
+
+      setGenericSubInfos(data);
+
+      console.log("Generic Sub Infos:", data);
+
     } catch (error) {
       console.log(error);
     }
   };
 
-  const fetchLogsDetails = async () => {
-  try {
-    const logsDetailsResp = await getSoftserviceActivityDetails(id);
+  fetchGenericSubInfos();
 
-   const filteredData = logsDetailsResp.data.activities.filter((activity) => {
-  const activityDate = new Date(activity.start_time);
-  const activityLocalDate = activityDate.getFullYear() + "-" +
-    String(activityDate.getMonth() + 1).padStart(2, "0") + "-" +
-    String(activityDate.getDate()).padStart(2, "0");
-
-  return (
-    activityLocalDate === selectedDate &&
-    activity.status !== "pending" &&
-    activity.status !== "overdue"
-  );
-});
-
-console.log("Filtered Logs for date", selectedDate, filteredData);
-
-
-    setlogsDetails(filteredData);
-  } catch (error) {
-    console.error("Error fetching logs details:", error);
-  }
-};
-
+}, []);
 
   useEffect(() => {
     fetchScheduleData();
@@ -115,7 +160,7 @@ console.log("Filtered Logs for date", selectedDate, filteredData);
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
-    if (searchText.trim() === "") {
+   if (searchValue.trim() === "") {
       setFilteredScheduleData(ScheduleData);
     } else {
       const filteredResult = ScheduleData.filter((item) =>
@@ -161,39 +206,104 @@ console.log("Filtered Logs for date", selectedDate, filteredData);
     }
     return data;
   };
-  const ScheduleColumn = [
-    {
-      name: "View",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/soft-service/schedule-task-details/${id}/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-        </div>
-      ),
-      maxWidth: "2rem",
-    },
-    {
-      name: "Checklist",
-      selector: (row) => row.checklist?.name,
-      sortable: true,
-    },
-    {
-      name: "Start Date",
-      selector: (row) => dateFormat(row.start_time),
-      sortable: true,
-    },
-    {
-      name: "Status",
-      selector: (row) => row.status,
-      sortable: true,
-    },
-    {
-      name: "Assigned To",
-      selector: (row) => row.assigned_name,
-      sortable: true,
-    },
-  ];
+ const ScheduleColumn = [
+  {
+    name: "View",
+    cell: (row) => (
+      <div className="flex items-center gap-4">
+        <Link to={`/soft-service/schedule-task-details/${id}/${row.id}`}>
+          <BsEye size={15} />
+        </Link>
+      </div>
+    ),
+    maxWidth: "2rem",
+  },
+  {
+    name: "Checklist",
+    selector: (row) => row.checklist?.name,
+    sortable: true,
+  },
+  {
+    name: "Start Date",
+    selector: (row) => dateFormat(row.start_time),
+    sortable: true,
+  },
+  {
+    name: "Status",
+    selector: (row) => row.status,
+    sortable: true,
+  },
+  {
+    name: "Assigned To",
+    selector: (row) => row.assigned_name,
+    sortable: true,
+  },
+];
+
+const attachments =
+  details?.attachments ??
+  details?.documents ??
+  details?.files ??
+  details?.service_attachments ??
+  details?.soft_service_attachments ??
+  [];
+
+console.log("Attachments array:", attachments);
+const selectedSubInfo = genericSubInfos.find(
+  (item) => item.id === details.generic_sub_info_id
+);
+
+const handleDownload = (type = "pdf") => {
+  if (!ScheduleData || ScheduleData.length === 0) {
+    alert("No data available to download");
+    return;
+  }
+
+  const headers = ["Checklist", "Start Date", "Status", "Assigned To"];
+
+  const rows = ScheduleData.map((row) => [
+    row.checklist?.name || "",
+    dateFormat(row.start_time),
+    row.status || "",
+    row.assigned_name || "",
+  ]);
+
+  // CSV DOWNLOAD
+  if (type === "csv") {
+    const csvData = [headers, ...rows]
+      .map((row) => row.join(","))
+      .join("\n");
+
+    const blob = new Blob([csvData], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "soft_service_schedule.csv";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // PDF DOWNLOAD
+  if (type === "pdf") {
+    const doc = new jsPDF();
+
+    doc.text("Soft Service Schedule", 14, 15);
+
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 20,
+    });
+
+    doc.save("soft_service_schedule.pdf");
+  }
+};
   return (
     <section>
       <div className="m-2">
@@ -210,6 +320,17 @@ console.log("Filtered Logs for date", selectedDate, filteredData);
               onClick={() => setQrCode(true)}
             >
               <FaQrcode /> QR Code
+            </button>
+
+            <button
+              onClick={() => handleDownload("pdf")}
+              className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white transition-all duration-300"
+                >
+              Download PDF
+            </button>
+
+            <button onClick={() => handleDownload("csv")}>
+             Download CSV
             </button>
             <Link
               to={`/services/edit-service/${id}`}
@@ -243,6 +364,11 @@ console.log("Filtered Logs for date", selectedDate, filteredData);
               </div>
             </div>
 
+            <div className="grid grid-cols-2">
+  <p>Sub Info :</p>
+  <p className="text-sm">{selectedSubInfo?.name || "N/A"}</p>
+</div>
+
             {/* <p>Wing:</p>
             <p>Area:</p> */}
             {/* <p>Created By:</p> */}
@@ -258,36 +384,36 @@ console.log("Filtered Logs for date", selectedDate, filteredData);
           <h1 className="border-b border-black font-semibold my-5">
             Attachments
           </h1>
-          <div className="flex gap-4 flex-wrap my-4 items-center  text-center">
-            {details.attachments && details.attachments.length > 0 ? (
-              details.attachments.map((doc, index) => (
-                <div key={doc.id} className="">
-                  {isImage(domainPrefix + doc.document) ? (
-                    <img
-                      src={domainPrefix + doc.document}
-                      alt={`Attachment ${index + 1}`}
-                      className="w-40 h-28 object-cover rounded-md"
-                      onClick={() =>
-                        window.open(domainPrefix + doc.document, "_blank")
-                      }
-                    />
-                  ) : (
-                    <a
-                      href={domainPrefix + doc.document}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className=" hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center"
-                    >
-                      <FaRegFileAlt size={50} />
-                      {getFileName(doc.document)}
-                    </a>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="text-center w-full">No Attachments</p>
-            )}
-          </div>
+         <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+  {attachments.length > 0 ? (
+    attachments.map((doc, index) => (
+      <div key={doc.id || index}>
+        {isImage(domainPrefix + doc.document) ? (
+          <img
+            src={domainPrefix + doc.document}
+            alt={`Attachment ${index + 1}`}
+            className="w-40 h-28 object-cover rounded-md"
+            onClick={() =>
+              window.open(domainPrefix + doc.document, "_blank")
+            }
+          />
+        ) : (
+          <a
+            href={domainPrefix + doc.document}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-400 transition-all duration-300 flex flex-col items-center"
+          >
+            <FaRegFileAlt size={50} />
+            {getFileName(doc.document)}
+          </a>
+        )}
+      </div>
+    ))
+  ) : (
+    <p className="text-center w-full">No Attachments</p>
+  )}
+</div>
 
           <div className="flex justify-center items-center  md:p-0 p-2">
             <div className="w-full my-2">
@@ -341,7 +467,7 @@ console.log("Filtered Logs for date", selectedDate, filteredData);
                   className="p-2 border-gray-300 rounded-md w-64  my-2 outline-none border"
                 />
               </div>
-              <Table columns={ScheduleColumn} data={filteredScheduleData} />
+             <Table columns={ScheduleColumn} data={filteredScheduleData || []} />
             </div>
           )}
           {serviceFor === "logs" && (
@@ -370,9 +496,10 @@ console.log("Filtered Logs for date", selectedDate, filteredData);
               </div>
 
              <div>
-  {logsDetails.map((task) => {
-    // Get submissions safely
-    const submissions = task.activity_log?.submissions || [];
+       {logsDetails.map((task) => {
+       // Get submissions safely
+        const submissions = task.activity_log?.submissions || [];
+    
 
     return (
       <div

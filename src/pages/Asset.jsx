@@ -106,6 +106,7 @@ const Asset = () => {
       name: "Asset Name",
       selector: (row) => row.name,
       sortable: true,
+      width: "350px",
     },
 
     {
@@ -261,46 +262,36 @@ const Asset = () => {
   // };
 
   const handleSearch = async (e) => {
-  const searchValue = e.target.value;
-  setSearchText(searchValue);
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
 
-  try {
-    // if search empty → reload paginated data
-    if (!searchValue.trim()) {
-      const response = await getPerPageSiteAsset(pageNo, perPage);
-
-      setFilteredData(response.data.site_assets);
-      setAssets(response.data.site_assets);
-      setTotal(response.data.total_count);
-      return;
-    }
-
-    const response = await getSiteSearchedAsset(searchValue);
-
-    setFilteredData(response.data.site_assets);
-    setTotal(response.data.total_count);
-  } catch (error) {
-    console.error("Search error:", error);
-  }
-};
-useEffect(() => {
-  const fetchData = async () => {
     try {
-      // don't refetch when searching
-      if (searchText.trim()) return;
-
-      const response = await getPerPageSiteAsset(pageNo, perPage);
+      const response = await getSiteSearchedAsset(searchValue);
 
       setFilteredData(response.data.site_assets);
-      setAssets(response.data.site_assets);
       setTotal(response.data.total_count);
+      console.log(response);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching search data:", error);
     }
   };
 
-  fetchData();
-}, [pageNo, perPage, searchText]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getPerPageSiteAsset(pageNo, perPage);
+
+        setFilteredData(response.data.site_assets);
+
+        setAssets(response.data.site_assets);
+        setTotal(response.data.total_count);
+        console.log(response);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, [pageNo, perPage]);
 
   const handlePageChange = (page, pageSize) => {
     setPageNo(page);
@@ -352,36 +343,37 @@ useEffect(() => {
 
   const buildings = getItemInLocalStorage("Building");
 
- const handleFilterApply = () => {
-  let filteredResults = [...assets];
+  const handleFilterApply = () => {
+    let filteredResults = [...filteredData];
 
-  if (selectedBuilding) {
-    filteredResults = filteredResults.filter(
-      (item) => item.building_id === Number(selectedBuilding)
-    );
-  }
+    if (selectedBuilding) {
+      filteredResults = filteredResults.filter(
+        (item) => item.building_id === parseInt(selectedBuilding, 10)
+      );
+    }
 
-  if (selectedFloor) {
-    filteredResults = filteredResults.filter(
-      (item) => item.floor_id === Number(selectedFloor)
-    );
-  }
+    if (selectedFloor) {
+      filteredResults = filteredResults.filter(
+        (item) => item.floor_id === parseInt(selectedFloor, 10)
+      );
+    }
 
-  if (selectedUnit) {
-    filteredResults = filteredResults.filter(
-      (item) => item.unit_id === Number(selectedUnit)
-    );
-  }
+    if (selectedUnit) {
+      filteredResults = filteredResults.filter(
+        (item) => item.unit_id === parseInt(selectedUnit, 10)
+      );
+    }
 
-  setFilteredData(filteredResults);
-};
+    setFilteredData(filteredResults);
+    console.log("Filtered Results:", filteredResults);
+  };
 
   const handleFilterReset = () => {
-  setSelectedBuilding("");
-  setSelectedFloor("");
-  setSelectedUnit("");
-  setFilteredData(assets);
-};
+    setSelectedBuilding("");
+    setSelectedFloor("");
+    setSelectedUnit("");
+    setFilteredData(assets);
+  };
 
   const handleBuildingChange = async (e) => {
     const buildingId = e.target.value;
@@ -652,7 +644,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {filteredData.length !== 0 ? (
+        {assets.length !== 0 ? (
           <>
             <Table
               selectableRows

@@ -5,7 +5,10 @@ import { BiEdit } from "react-icons/bi";
 import { FaCheck, FaTimes } from "react-icons/fa";
 import Table from "../../components/table/Table";
 
+import { useNavigate } from "react-router-dom";
+
 const RVehiclesTable = ({
+  
   data = [],
   loading,
   error,
@@ -14,6 +17,7 @@ const RVehiclesTable = ({
   onApprove,
   onReject,
 }) => {
+  const navigate = useNavigate();
   const isApproval = pageType === "Approvals";
   const isHistory =
     pageType === "History" ||
@@ -111,11 +115,20 @@ const RVehiclesTable = ({
       ]
     : isHistory
     ? [
-        {
-          name: "Sr. No",
-          cell: (_, index) => (currentPageNum - 1) * 10 + index + 1,
-          width: "80px",
-        },
+       {
+  name: "View",
+  cell: (row) => (
+    <button
+      onClick={() =>
+        navigate(`/admin/rvehicles/view/${row.registered_vehicle_id || row.id}`)
+      }
+      className="text-blue-600 hover:text-blue-800"
+    >
+      <BsEye size={18} />
+    </button>
+  ),
+  width: "80px",
+},
         {
           name: "Vehicle Number",
           selector: (row) =>

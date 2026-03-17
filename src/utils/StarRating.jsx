@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
-const StarRating = ({ rating, onRatingChange, readOnly = false, scale = 5 }) => {
+const StarRating = ({ rating, onRatingChange, readOnly = false }) => {
   const [hoverRating, setHoverRating] = useState(0);
 
   const handleClick = (value) => {
@@ -23,12 +23,12 @@ const StarRating = ({ rating, onRatingChange, readOnly = false, scale = 5 }) => 
 
   return (
     <div className="star-rating">
-      {Array.from({ length: scale }, (_, i) => i + 1).map((star) => (
+      {[1, 2, 3, 4, 5].map((star) => (
         <span
           key={star}
           className={`star ${
-            star <= (hoverRating || rating) ? "filled" : ""
-          } ${!readOnly ? "clickable" : ""}`}
+            star <= (hoverRating || rating) ? 'filled' : ''
+          } ${!readOnly ? 'clickable' : ''}`}
           onClick={() => handleClick(star)}
           onMouseEnter={() => handleMouseEnter(star)}
           onMouseLeave={handleMouseLeave}
