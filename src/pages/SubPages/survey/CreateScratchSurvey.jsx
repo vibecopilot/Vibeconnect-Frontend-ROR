@@ -349,6 +349,9 @@ const [backgroundImage, setBackgroundImage] = useState(null);
     }
   };
 
+  const containerClass = "w-full max-w-4xl mx-auto px-4";
+  const sectionClass = "w-full bg-gray-50 rounded-xl p-6 shadow-sm border";
+
   return (
   <div
     className="flex min-h-screen"
@@ -358,17 +361,16 @@ const [backgroundImage, setBackgroundImage] = useState(null);
         <Navbar />
       </div>
       <div className="flex flex-col overflow-hidden w-full">
-        <div className="max-w-5xl mx-auto mt-6">
-          <div className="flex justify-center w-full px-6"></div>
-  <h2 className="text-3xl font-extrabold text-black">
-          {isEditMode ? "Edit Survey" : "Add Survey"}
-        </h2>
-</div>
-       
+        <div className={`${containerClass} mt-6`}>
+          <h2 className="text-3xl font-extrabold text-black text-center">
+            {isEditMode ? "Edit Survey" : "Add Survey"}
+          </h2>
+        </div>
 
-            {/* Survey Form */}
+        {/* Survey Form - centered, equal-width sections */}
+        <div className={`${containerClass} flex flex-col gap-6 py-6`}>
            {/* SECTION 1 : SURVEY INFO */}
-<div className="max-w-5xl mx-auto bg-gray-50 rounded-xl p-6 shadow-sm border mb-6">
+<div className={`${sectionClass}`}>
 
 <h3 className="text-lg font-semibold mb-4">Survey Information</h3>
 
@@ -424,10 +426,8 @@ onChange={(e)=>setDescription(e.target.value)}
 
 </div>
 
-
 {/* SECTION 2 : CUSTOMIZE COLOR */}
-
-<div className="w-full max-w-5xl mx-auto bg-gray-50 rounded-xl p-6 shadow-sm border mb-6">
+<div className={`${sectionClass}`}>
 
 <h3 className="text-lg font-semibold mb-4">
 Customize Appearance
@@ -465,10 +465,8 @@ Reset Colors
 
 </div>
 
-
 {/* SECTION 3 : BRANDING */}
-
-<div className="w-full max-w-5xl mx-auto bg-gray-50 rounded-xl p-6 shadow-sm border mb-6">
+<div className={`${sectionClass}`}>
 <h3 className="text-lg font-semibold mb-4">
 Branding
 </h3>
@@ -509,6 +507,7 @@ onChange={(e)=>setHeaderText(e.target.value)}
 <label className="font-semibold mb-1">Header Image</label>
 <input
 type="file"
+
 accept="image/*"
 onChange={(e)=>setHeaderImage(e.target.files[0])}
 className="border p-2 rounded-md"
@@ -534,13 +533,12 @@ onChange={(e)=>setFooterImage(e.target.files[0])}
 className="border p-2 rounded-md"
 />
 </div>
-
               </div>
 
             </div>
 
-            {/* Questions Section */}
-<div className="max-w-5xl mx-auto bg-white rounded-2xl border border-gray-200 shadow-sm p-6 mb-8">
+{/* SECTION 4 : Questions */}
+<div className={`${sectionClass} bg-white`}>
 
 <h3 className="text-lg font-semibold mb-4">Add Questions</h3>
 
@@ -715,11 +713,9 @@ style={{background:themeColor}}
 </div>
 
               </div>
-              
             </div>
           </div>
-        
-      
+      </div>
   );
 }
 
