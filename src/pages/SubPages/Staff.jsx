@@ -1,40 +1,109 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
-import { useSelector } from "react-redux";
 import { BiEdit } from "react-icons/bi";
+import { IoClose } from "react-icons/io5";
+import { FaCheck } from "react-icons/fa6";
 import Table from "../../components/table/Table";
 import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
-import { domainPrefix, getStaff } from "../../api";
+import Switch from "../../Buttons/Switch";
+import { toast } from "react-toastify";
+import {
+  domainPrefix,
+  getStaff,
+  getStaffIn,
+  getStaffOut,
+  getPendingStaff,
+  putStaffApproval,
+  exportStaffWithDate,
+  editStaffDetails,
+  downloadStaffQrCodes,
+} from "../../api";
 import { dateFormat } from "../../utils/dateUtils";
 import image from "/profile.png";
-import { exportStaffByDate } from "../../api";
+import { color } from "highcharts";
 import { MdQrCode } from "react-icons/md";
-
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Staff = () => {
-  const themeColor = useSelector((state) => state.theme.color);
-
-  // 🧠 State
   const [staffs, setStaffs] = useState([]);
+  const [historyStaff, setHistoryStaff] = useState([]);
   const [filteredStaff, setFilteredStaff] = useState([]);
+  const [FilteredApproval, setFilteredApproval] = useState([]);
+  const [approvalStatusChanged, setApprovalStatusChanged] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
-
-  // 📄 Pagination (DON'T CHANGE - as you requested)
+  const [page, setPage] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+    const [totalRecords, setTotalRecords] = useState(0);
+      const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [selectAll, setSelectAll] = useState(false);
 
-const [showExportModal, setShowExportModal] = useState(false);
-const [startDate, setStartDate] = useState("");
-const [endDate, setEndDate] = useState("");
+  // Approval pagination states
+  const [approvalCurrentPage, setApprovalCurrentPage] = useState(1);
+  const [approvalRowsPerPage, setApprovalRowsPerPage] = useState(10);
+  const [approvalTotalCount, setApprovalTotalCount] = useState(0);
 
+  const [showFilter, setShowFilter] = useState(false);
+  const [filters, setFilters] = useState({
+    mobile_no: "",
+    firstname: "",
+    lastname: "",
+    building_name: "",
+  });
 
+  const applyFilters = () => {
+    const filtered = staffs.filter((item) => {
+      return (
+        (filters.mobile_no === "" ||
+          item.mobile_no
+            ?.toLowerCase()
+            .includes(filters.mobile_no.toLowerCase())) &&
+        (filters.firstname === "" ||
+          item.firstname
+            ?.toLowerCase()
+            .includes(filters.firstname.toLowerCase())) &&
+        (filters.lastname === "" ||
+          item.lastname
+            ?.toLowerCase()
+            .includes(filters.lastname.toLowerCase())) &&
+        (filters.building_name === "" ||
+          item.building_name
+            ?.toLowerCase()
+            .includes(filters.building_name.toLowerCase()))
+      );
+    });
+
+    setFilteredStaff(filtered);
+    setShowFilter(false);
+  };
+
+  const customTableStyles = {
+    headCells: {
+      style: {
+        paddingLeft: "20px",
+        paddingRight: "20px",
+        backgroundColor: "#000207",
+        color: "white",
+        fontSize: "12px",
+        textTransform: "uppercase",
+      },
+    },
+    cells: {
+      style: {
+        paddingLeft: "20px",
+        paddingRight: "20px",
+      },
+    },
+  };
 
   // ✅ CSV helpers
   const csvEscape = (v) => {
@@ -54,39 +123,102 @@ const [endDate, setEndDate] = useState("");
     a.click();
     window.URL.revokeObjectURL(url);
   };
+  const handleDateExport = async () => {
+    if (!startDate || !endDate) {
+      toast.error("Please select both dates");
+      return;
+    }
 
-  const handleExportByDate = async () => {
-  if (!startDate || !endDate) {
-    alert("Please select start and end date");
+    try {
+      const response = await exportStaffWithDate(startDate, endDate);
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "staff_export.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setShowExportModal(false);
+      setStartDate("");
+      setEndDate("");
+
+      toast.success("Export successful");
+    } catch (error) {
+      console.error(error);
+      toast.error("Export failed");
+    }
+  };
+
+  const handleQrCodeDownload = async () => {
+    if (!selectedRows || selectedRows.length === 0) {
+    toast.error("Please select at least one staff");
     return;
   }
 
-  if (endDate < startDate) {
-    alert("End date cannot be before start date");
-    return;
-  }
+    try {
+      const response = await downloadStaffQrCodes(selectedRows);
+
+      const contentType =
+        response?.headers?.["content-type"] || "application/pdf";
+      const ext = contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        ? "xlsx"
+        : contentType.includes("application/pdf")
+        ? "pdf"
+        : "bin";
+
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `staff_qr_codes.${ext}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("QR code download started");
+    } catch (error) {
+      console.error("QR code download failed", error);
+      toast.error("Failed to download QR codes");
+    }
+  };
+
+  const handleStatusToggle = async (row) => {
+  const newStatus = !row.status;
 
   try {
-    const response = await exportStaffByDate(startDate, endDate);
-
-    const blob = new Blob([response.data], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    await editStaffDetails(row.id, {
+      staff: { status: newStatus },
     });
 
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "staff_export.xlsx";
-    a.click();
-    window.URL.revokeObjectURL(url);
+    setStaffs((prev) =>
+      prev.map((staff) =>
+        staff.id === row.id ? { ...staff, status: newStatus } : staff
+      )
+    );
 
-    setShowExportModal(false);
+    setFilteredStaff((prev) =>
+      prev.map((staff) =>
+        staff.id === row.id ? { ...staff, status: newStatus } : staff
+      )
+    );
+
+    if (newStatus) {
+      toast.success("Staff Activated Successfully");
+    } else {
+      toast.success("Staff Deactivated Successfully");
+    }
   } catch (error) {
-    console.error("Export failed:", error);
-    alert("Export failed");
+    console.error("Status update failed", error);
+    toast.error("Failed to update status");
   }
 };
-
 
   // ✅ Export ALL staff data (fetch all pages from API)
   const exportStaffToCSVAll = async () => {
@@ -97,7 +229,7 @@ const [endDate, setEndDate] = useState("");
       let totalPagesFromApi = 1;
 
       // fetch first page
-      const firstRes = await getStaff(page, EXPORT_PER_PAGE);
+      const firstRes = await getStaff();
       const firstData = firstRes?.data || {};
       const firstList = Array.isArray(firstData.staffs) ? firstData.staffs : [];
       allRows = allRows.concat(firstList);
@@ -106,7 +238,8 @@ const [endDate, setEndDate] = useState("");
       if (firstData.total_pages) {
         totalPagesFromApi = firstData.total_pages;
       } else if (firstData.total_count) {
-        totalPagesFromApi = Math.ceil(firstData.total_count / EXPORT_PER_PAGE) || 1;
+        totalPagesFromApi =
+          Math.ceil(firstData.total_count / EXPORT_PER_PAGE) || 1;
       }
 
       // fetch remaining pages
@@ -178,8 +311,94 @@ const [endDate, setEndDate] = useState("");
     }
   };
 
-  // 🚀 Fetch Staff (Server Pagination compatible) - unchanged
-  const fetchStaff = async (page = 1, perPage = rowsPerPage) => {
+    const paginatedData = filteredStaff.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+
+  const fetchHistory = async () => {
+    try {
+      const res = await getStaff();
+
+      const staffArray = res.data.staffs || [];
+
+      const historyData = staffArray.filter(
+        (item) =>
+          item.status_type === "Approved" || item.status_type === "Rejected"
+      );
+
+      setHistoryStaff(historyData);
+    } catch (error) {
+      console.error("History fetch failed", error);
+    }
+  };
+
+  const fetchStaffIn = async (page = 1, perPage = rowsPerPage) => {
+    try {
+      const res = await getStaffIn(page, perPage);
+      const apiData = res.data;
+      const staffList = Array.isArray(apiData.staffs) ? apiData.staffs : [];
+      setStaffs(staffList);
+      if (searchText.trim()) {
+        const filtered = staffList.filter((item) => {
+          const fullName = `${item.firstname} ${item.lastname}`.toLowerCase();
+          return (
+            fullName.includes(searchText) ||
+            item.unit_name?.toLowerCase().includes(searchText) ||
+            item.mobile_no?.toLowerCase().includes(searchText)
+          );
+        });
+        setFilteredStaff(filtered);
+      } else {
+        setFilteredStaff(staffList);
+      }
+      setTotalRecords(apiData.total_count || staffList.length);
+      setCurrentPage(apiData.current_page || page);
+      setTotalPages(apiData.total_pages || 1);
+      setSelectedRows([]);
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Error fetching staff in:", error);
+    }
+  };
+
+  const fetchStaffOut = async (page = 1, perPage = rowsPerPage) => {
+    try {
+      const res = await getStaffOut(page, perPage);
+      const apiData = res.data;
+      const staffList = Array.isArray(apiData.staffs) ? apiData.staffs : [];
+      setStaffs(staffList);
+      if (searchText.trim()) {
+        const filtered = staffList.filter((item) => {
+          const fullName = `${item.firstname} ${item.lastname}`.toLowerCase();
+          return (
+            fullName.includes(searchText) ||
+            item.unit_name?.toLowerCase().includes(searchText) ||
+            item.mobile_no?.toLowerCase().includes(searchText)
+          );
+        });
+        setFilteredStaff(filtered);
+      } else {
+        setFilteredStaff(staffList);
+      }
+      setTotalRecords(apiData.total_count || staffList.length);
+      setCurrentPage(apiData.current_page || page);
+      setTotalPages(apiData.total_pages || 1);
+      setSelectedRows([]);
+      setSelectAll(false);
+    } catch (error) {
+      console.error("Error fetching staff out:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (page === "history") {
+      fetchHistory();
+    }
+  }, [page]);
+
+    const fetchStaff = async (page = 1, perPage = rowsPerPage) => {
     try {
       const res = await getStaff(page, perPage);
       const apiData = res.data;
@@ -217,60 +436,191 @@ const [endDate, setEndDate] = useState("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, rowsPerPage]);
 
-  // 🔍 Search handler - unchanged
   const handleSearch = (e) => {
-    const value = e.target.value.toLowerCase();
-    setSearchText(value);
-
-    if (!value.trim()) {
+    const searchValue = e.target.value.toLowerCase();
+    setSearchText(searchValue);
+    if (!searchValue.trim()) {
       setFilteredStaff(staffs);
     } else {
-      const filtered = staffs.filter((item) => {
+      const filteredResult = staffs.filter((item) => {
         const fullName = `${item.firstname} ${item.lastname}`.toLowerCase();
         return (
-          fullName.includes(value) ||
-          item.unit_name?.toLowerCase().includes(value) ||
-          item.mobile_no?.toLowerCase().includes(value)
+          fullName.includes(searchValue) ||
+          item.unit_name?.toLowerCase().includes(searchValue) ||
+          item.mobile_no?.toLowerCase().includes(searchValue)
         );
       });
-      setFilteredStaff(filtered);
+      setFilteredStaff(filteredResult);
     }
   };
 
-  // 🧾 Table Columns - unchanged
-  const columns = [
-   {
-  name: (
-    <input
-      type="checkbox"
-      checked={selectAll}
-      onChange={(e) => {
-        const checked = e.target.checked;
-        setSelectAll(checked);
+  const fetchPending = async () => {
+    try {
+      const res = await getPendingStaff();
+      const staffArray = res.data.staffs || res.data || [];
+      setFilteredApproval(staffArray);
+      setApprovalTotalCount(staffArray.length);
+    } catch (err) {
+      toast.error("Failed to fetch pending staff");
+      console.error(err);
+    }
+  };
 
-        if (checked) {
-          setSelectedRows(filteredStaff.map((item) => item.id));
-        } else {
-          setSelectedRows([]);
-        }
-      }}
-    />
+  useEffect(() => {
+    if (page === "approval") {
+      const timer = setTimeout(() => {
+        fetchPending();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [page, approvalStatusChanged]);
+
+  useEffect(() => {
+    if (page === "all") {
+      fetchStaff(currentPage, rowsPerPage);
+    } else if (page === "staffin") {
+      fetchStaffIn(currentPage, rowsPerPage);
+    } else if (page === "staffout") {
+      fetchStaffOut(currentPage, rowsPerPage);
+    }
+  }, [page, currentPage, rowsPerPage, searchText]);
+
+  // Reset pagination when switching tabs
+  useEffect(() => {
+    setCurrentPage(1);
+    setApprovalCurrentPage(1);
+  }, [page]);
+
+  useEffect(() => {
+    if (currentPage > Math.ceil(totalCount / rowsPerPage)) {
+      setCurrentPage(1); // reset to valid page
+    }
+  }, [totalCount, currentPage, rowsPerPage]);
+
+  const handleApproval = async (staffId, decision) => {
+    try {
+      await putStaffApproval(staffId, {
+        status_type: decision ? "Approved" : "Rejected",
+      });
+      toast.success(decision ? "Approved" : "Rejected");
+
+      setApprovalStatusChanged((prev) => !prev); // triggers useEffect
+    } catch (error) {
+      toast.error("Approval failed");
+      console.error(error);
+    }
+  };
+
+  const dateTimeFormat = (date) => {
+    if (!date) return "-";
+
+    return new Date(date).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+  const historyColumns = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={`/admin/passes/staff-details/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
+        </div>
+      ),
+    },
+    {
+      name: "Staff ID",
+      selector: (row) => row.id,
+    },
+    {
+      name: "Profile",
+      selector: (row) =>
+        row.profile_picture?.url ? (
+          <img
+            src={domainPrefix + row.profile_picture.url}
+            alt="Profile"
+            className="w-10 h-10 rounded-full cursor-pointer"
+            onClick={() =>
+              window.open(domainPrefix + row.profile_picture.url, "_blank")
+            }
+          />
+        ) : (
+          <img src={image} alt="Default" className="w-10 h-10 rounded-full" />
+        ),
+      sortable: true,
+    },
+    {
+      name: "Name",
+      selector: (row) => `${row.firstname} ${row.lastname}`,
+    },
+    {
+      name: "Mobile",
+      selector: (row) => row.mobile_no,
+    },
+    {
+      name: "Work Type",
+      selector: (row) => row.work_type || "-",
+    },
+    {
+      name: "Check In",
+      selector: (row) =>
+        row.attendances?.length
+          ? dateTimeFormat(row.attendances[0].punched_in_at)
+          : "-",
+    },
+    {
+      name: "Check Out",
+      selector: (row) =>
+        row.attendances?.length && row.attendances[0].punched_out_at
+          ? dateTimeFormat(row.attendances[0].punched_out_at)
+          : "-",
+    },
+    {
+      name: "Created At",
+      selector: (row) => dateTimeFormat(row.created_at),
+    },
+  ];
+
+  const columns = [
+{
+  name: (
+    <div className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        checked={selectAll}
+        onChange={(e) => {
+          const checked = e.target.checked;
+          setSelectAll(checked);
+
+          if (checked) {
+            setSelectedRows(filteredStaff.map((item) => item.id));
+          } else {
+            setSelectedRows([]);
+          }
+        }}
+      />
+      <span>Action</span>
+    </div>
   ),
+
   cell: (row) => (
     <div className="flex items-center gap-3">
-
       {/* Row Checkbox */}
       <input
         type="checkbox"
         checked={selectedRows.includes(row.id)}
         onChange={(e) => {
-          if (e.target.checked) {
-            setSelectedRows([...selectedRows, row.id]);
+          const checked = e.target.checked;
+
+          if (checked) {
+            setSelectedRows((prev) => [...prev, row.id]);
           } else {
-            setSelectedRows(
-              selectedRows.filter((id) => id !== row.id)
-            );
-            setSelectAll(false);
+            setSelectedRows((prev) => prev.filter((id) => id !== row.id));
           }
         }}
       />
@@ -284,14 +634,13 @@ const [endDate, setEndDate] = useState("");
       <Link to={`/admin/edit-staff/${row.id}`}>
         <BiEdit size={15} />
       </Link>
-
     </div>
   ),
 },
     {
       name: "Profile",
       selector: (row) =>
-        row.profile_picture && row.profile_picture.url ? (
+        row.profile_picture?.url ? (
           <img
             src={domainPrefix + row.profile_picture.url}
             alt="Profile"
@@ -303,93 +652,255 @@ const [endDate, setEndDate] = useState("");
         ) : (
           <img src={image} alt="Default" className="w-10 h-10 rounded-full" />
         ),
-      sortable: false,
+      sortable: true,
     },
-    { name: "ID", selector: (row) => row.id },
+    {
+      name: "ID",
+      selector: (row) => row.id,
+      sortable: true,
+    },
     {
       name: "Name",
       selector: (row) => `${row.firstname} ${row.lastname}`,
       sortable: true,
     },
-    { name: "Unit", selector: (row) => row.unit_name || "—" },
-    { name: "Email", selector: (row) => row.email || "—" },
-    { name: "Mobile", selector: (row) => row.mobile_no || "—" },
-    { name: "Work Type", selector: (row) => row.work_type || "—" },
-    { name: "Vendor", selector: (row) => row.vendor_name || "—" },
-    { name: "From", selector: (row) => dateFormat(row.valid_from) },
-    { name: "Till", selector: (row) => dateFormat(row.valid_till) },
+    {
+      name: "Unit",
+      selector: (row) => row.unit_name,
+      sortable: true,
+    },
+    {
+      name: "Email",
+      selector: (row) => row.email,
+      sortable: true,
+    },
+    {
+      name: "Mobile",
+      selector: (row) => row.mobile_no,
+      sortable: true,
+    },
+    {
+      name: "Work Type",
+      selector: (row) => row.work_type,
+      sortable: true,
+    },
+    {
+      name: "Vendor name",
+      selector: (row) => row.vendor_name,
+      sortable: true,
+    },
+    {
+      name: "From",
+      selector: (row) => dateFormat(row.valid_from),
+      sortable: true,
+    },
+    {
+      name: "Till",
+      selector: (row) => dateFormat(row.valid_till),
+      sortable: true,
+    },
     {
       name: "Status",
-      selector: (row) =>
-        row.status ? (
-          <p className="text-green-400">Active</p>
-        ) : (
-          <p className="text-red-400">Inactive</p>
-        ),
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          {/* <span className={row.status ? "text-green-500" : "text-red-500"}>
+        {row.status ? "Active" : "Inactive"}
+      </span> */}
+
+       <Switch
+  checked={row.status}
+  onChange={(e) => {
+    e.stopPropagation();
+    handleStatusToggle(row);
+  }}
+/>
+        </div>
+      ),
     },
   ];
 
-  // ✅ KEEP your pagination logic exactly as-is
-  const paginatedData = filteredStaff.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
-
-  return (
-    <section className="flex">
-      <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden mb-10">
-        <Passes />
-
-        {/* 🔍 Search + Add + Export */}
-        <div className="flex md:flex-row flex-col gap-5 justify-between my-2">
-          <input
-            type="text"
-            value={searchText}
-            onChange={handleSearch}
-            className="border border-gray-300 rounded-md w-full px-2 placeholder:text-sm"
-            placeholder="Search by name, unit, or mobile"
-          />
-          <span className="flex gap-4"></span>
-
-            <button
-    onClick={() => {
-      if (!selectedRows.length) {
-        alert("Please select at least one staff");
-        return;
-      }
-
-      console.log("Selected Staff IDs:", selectedRows);
-      // 👉 Call your QR API here
-    }}
-    className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-purple-50 cursor-pointer flex items-center gap-2 justify-center"
-  >
-    <MdQrCode size={18} />
-    QR Code
-  </button>
-
-          <span className="flex gap-4">
-            {/* ✅ Export button */}
-          <button
-  onClick={() => setShowExportModal(true)}
-  className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-blue-50 cursor-pointer text-center flex items-center gap-2 justify-center"
->
-  Export
-</button>
-
-            <Link
-              to={"/admin/passes/add-staff"}
-              style={{ background: themeColor }}
-              className="border-2 font-semibold transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
-            >
-              <PiPlusCircle size={20} />
-              Add
-            </Link>
-          </span>
+  const approvalColumn = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={`/admin/passes/staff-details/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
         </div>
+      ),
+    },
+    {
+      name: "ID",
+      selector: (row) => row.id,
+      sortable: true,
+    },
+    {
+      name: "Name",
+      selector: (row) => `${row.firstname} ${row.lastname}`,
+      sortable: true,
+    },
+    {
+      name: "Email",
+      selector: (row) => row.email,
+      sortable: true,
+    },
+    {
+      name: "Mobile",
+      selector: (row) => row.mobile_no,
+      sortable: true,
+    },
+    {
+      name: "Work Type",
+      selector: (row) => row.work_type,
+      sortable: true,
+    },
+    {
+      name: "From",
+      selector: (row) => dateFormat(row.valid_from),
+      sortable: true,
+    },
+    {
+      name: "Till",
+      selector: (row) => dateFormat(row.valid_till),
+      sortable: true,
+    },
+    {
+      name: "Approval Status",
+      selector: (row) => (
+        <div className="flex gap-2">
+          <button
+            className="text-white bg-green-400 rounded-full p-1"
+            onClick={() => handleApproval(row.id, true)}
+          >
+            <FaCheck size={20} />{" "}
+          </button>
+          <button
+            className="text-white bg-red-400 rounded-full p-1"
+            onClick={() => handleApproval(row.id, false)}
+          >
+            <IoClose size={20} />{" "}
+          </button>
+        </div>
+      ),
+      sortable: true,
+    },
+  ];
+  return (
+    <>
+      <section className="flex">
+        <Navbar />
+        <ToastContainer position="top-right" autoClose={3000} />
+        <div className="w-full flex mx-3 flex-col overflow-hidden">
+          <Passes />
 
-        {/* 🧾 Staff Table */}
-        <Table
+          <div className="flex w-full m-2">
+            <div className="flex w-full md:flex-row flex-col space-x-4 border-b border-gray-400">
+              <h2
+                className={`p-2 px-4 ${
+                  page === "all"
+                    ? "text-blue-500 font-medium shadow-custom-all-sides"
+                    : "text-black"
+                } rounded-t-md cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                onClick={() => setPage("all")}
+              >
+                All
+              </h2>
+              <h2
+                className={`p-2 ${page === "staffin"
+                  ? "text-blue-500 font-medium shadow-custom-all-sides"
+                  : "text-black"
+                  } rounded-t-md cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                onClick={() => setPage("staffin")}
+              >
+                Staff In
+              </h2>
+              <h2
+                className={`p-2 ${page === "staffout"
+                  ? "text-blue-500 font-medium shadow-custom-all-sides"
+                  : "text-black"
+                  } rounded-t-md cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                onClick={() => setPage("staffout")}
+              >
+                Staff Out
+              </h2>
+              <h2
+                className={`p-2 ${
+                  page === "approval"
+                    ? "text-blue-500 font-medium shadow-custom-all-sides"
+                    : "text-black"
+                } rounded-t-md cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                onClick={() => setPage("approval")}
+              >
+                Staff Approvals
+              </h2>
+              <h2
+                className={`p-2 ${
+                  page === "history"
+                    ? "text-blue-500 font-medium shadow-custom-all-sides"
+                    : "text-black"
+                } rounded-t-md cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
+                onClick={() => setPage("history")}
+              >
+                History
+              </h2>
+            </div>
+          </div>
+
+        {(page === "all" || page === "staffin" || page === "staffout") && (
+  <div className="flex md:flex-row flex-col gap-5 justify-between my-2">
+    <input
+      type="text"
+      value={searchText}
+      onChange={handleSearch}
+      className="border border-gray-300 rounded-md px-2 placeholder:text-sm w-[500px]"
+      placeholder="Search by name, unit, mobile"
+    />
+
+    <span className="flex gap-4">
+      {/* QR Button */}
+      <button
+        onClick={handleQrCodeDownload}
+        className="border-2 border-blue-600 text-blue-600 font-semibold transition-all p-2 rounded-md hover:bg-purple-50 cursor-pointer flex items-center gap-2 justify-center"
+      >
+        <MdQrCode size={18} />
+        QR Code
+      </button>
+
+
+      {/* Only show in ALL tab */}
+      {page === "all" && (
+        <>
+
+      {/* Export Button */}
+      <button
+        onClick={() => setShowExportModal(true)}
+        className="border-2 border-blue-600 text-blue-600 font-semibold px-4 rounded-md hover:bg-blue-700 hover:text-white transition-all"
+      >
+        Export
+      </button>
+          <button
+            onClick={() => setShowFilter(true)}
+            className="border-2 border-gray-700 text-gray-700 font-semibold px-4 rounded-md hover:bg-gray-800 hover:text-white transition-all"
+          >
+            Filter
+          </button>
+
+          <Link
+            to={"/admin/passes/add-staff"}
+            style={{ background: "rgb(3 19 37)" }}
+            className="border-2 font-semibold py-2.5 px-3 rounded-md text-white flex items-center gap-2"
+          >
+            <PiPlusCircle size={20} />
+            Add
+          </Link>
+        </>
+      )}
+    </span>
+  </div>
+)}
+          {(page === "all" || page === "staffin" || page === "staffout") && (
+          <Table
           columns={columns}
           data={paginatedData}
           paginationServer
@@ -400,59 +911,182 @@ const [endDate, setEndDate] = useState("");
             setCurrentPage(1);
           }}
         />
+          )}
+
+          {page === "approval" && (
+            <Table
+              columns={approvalColumn}
+              data={FilteredApproval}
+              customStyles={customTableStyles}
+              pagination
+              paginationPerPage={approvalRowsPerPage}
+              paginationTotalRows={approvalTotalCount}
+              currentPage={approvalCurrentPage}
+              onChangePage={setApprovalCurrentPage}
+              onChangeRowsPerPage={(newPerPage) => {
+                setApprovalRowsPerPage(newPerPage);
+                setApprovalCurrentPage(1);
+              }}
+            />
+          )}
+          {page === "history" && (
+            <Table
+              columns={historyColumns}
+              data={historyStaff}
+              customStyles={customTableStyles}
+              pagination
+            />
+          )}
+        </div>
+        {showFilter && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-xl w-[420px] shadow-xl">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-semibold">Filter Staff</h2>
+                <button onClick={() => setShowFilter(false)}>
+                  <IoClose size={22} />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  placeholder="Mobile Number"
+                  value={filters.mobile_no}
+                  onChange={(e) =>
+                    setFilters({ ...filters, mobile_no: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md"
+                />
+
+                <input
+                  type="text"
+                  placeholder="First Name"
+                  value={filters.firstname}
+                  onChange={(e) =>
+                    setFilters({ ...filters, firstname: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Last Name"
+                  value={filters.lastname}
+                  onChange={(e) =>
+                    setFilters({ ...filters, lastname: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Building Name"
+                  value={filters.building_name}
+                  onChange={(e) =>
+                    setFilters({ ...filters, building_name: e.target.value })
+                  }
+                  className="w-full border px-3 py-2 rounded-md"
+                />
+              </div>
+
+              <div className="flex gap-3 mt-5">
+                <button
+                  onClick={applyFilters}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md w-full"
+                >
+                  Apply Filter
+                </button>
+
+                <button
+                  onClick={() => {
+                    setFilters({
+                      mobile_no: "",
+                      firstname: "",
+                      lastname: "",
+                      building_name: "",
+                    });
+                    setFilteredStaff(staffs);
+                    setShowFilter(false);
+                  }}
+                  className="bg-gray-400 text-white px-4 py-2 rounded-md w-full"
+                >
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* ✅ Export Modal */}
       {showExportModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded-lg w-96 shadow-lg relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[420px] shadow-xl animate-fadeIn">
+            <div className="flex justify-between gap-2">
+              {/* Header */}
+              <h2 className="text-xl font-semibold mb-5 text-left ">
+                Export Staff Data
+              </h2>
+              {/* Close Icon */}
+              <button
+                onClick={() => setShowExportModal(false)}
+                className=" text-gray-900 text-2xl mb-6"
+              >
+                <IoClose />
+              </button>
+            </div>
 
-      <h2 className="text-lg font-semibold mb-4 text-center">
-        Export Staff Data
-      </h2>
+            {/* Date Section */}
+            <div className="space-y-4">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-      <label className="block mb-1 font-medium">From Date</label>
-      <input
-        type="date"
-        value={startDate}
-        onChange={(e) => setStartDate(e.target.value)}
-        className="w-full border p-2 rounded mb-3"
-      />
+              <div className="flex flex-col">
+                <label className="text-sm font-medium mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
 
-      <label className="block mb-1 font-medium">To Date</label>
-      <input
-        type="date"
-        value={endDate}
-        onChange={(e) => setEndDate(e.target.value)}
-        className="w-full border p-2 rounded mb-4"
-      />
+            {/* Buttons */}
+            <div className="mt-6 space-y-3">
+              <button
+                onClick={handleDateExport}
+                className="bg-blue-600 hover:bg-blue-700 transition-all text-white font-semibold px-4 py-2 rounded-md w-full"
+              >
+                Export by Date
+              </button>
 
-      <button
-        onClick={handleExportByDate}
-        className="w-full bg-purple-600 text-white p-2 rounded mb-2"
-      >
-        Export by Date
-      </button>
+              <button
+                onClick={exportStaffToCSVAll}
+                className="bg-green-600 hover:bg-green-700 transition-all text-white font-semibold px-4 py-2 rounded-md w-full"
+              >
+                Export All Staffs
+              </button>
 
-
-
-      <button
-        onClick={exportStaffToCSVAll}
-        className="w-full bg-green-500 text-white p-2 rounded"
-      >
-        Export All to CSV
-      </button>
-
-      <button
-        onClick={() => setShowExportModal(false)}
-        className="absolute top-2 right-3 text-gray-500 text-xl"
-      >
-        ×
-      </button>
-    </div>
-  </div>
-)}
-
-
-      </div>
-    </section>
+              {/* <button
+                onClick={() => setShowExportModal(false)}
+                className="bg-gray-400 hover:bg-gray-500 transition-all text-white font-semibold px-4 py-2 rounded-md w-full"
+              >
+                Cancel
+              </button> */}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

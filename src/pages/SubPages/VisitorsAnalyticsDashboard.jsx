@@ -1,12 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+/* eslint-disable react/prop-types */
+import { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import {
-  getVisitorDashboard,
   getStaffCount,
   getRegisteredVehicleDashboard,
   getVisitorAnalytics,
   getVisitorsDrill,
+  getVisitorsDashboardDrill,
   getStaffDrill,
   getStaffPunchedInToday,
   getStaffPunchedOutToday,
@@ -335,13 +336,16 @@ const shouldColorByPoint = (type) => type === "column" || type === "bar";
 
 const VisitorsAnalyticsDashboard = () => {
   const [loading, setLoading] = useState(true);
-  const [selectedChart, setSelectedChart] = useState("visitor_type");
+  const [selectedChart, setSelectedChart] = useState("");
   const [chartType, setChartType] = useState("pie");
   const [filterOpen, setFilterOpen] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [tempFromDate, setTempFromDate] = useState("");
   const [tempToDate, setTempToDate] = useState("");
+  const [byData, setByData] = useState({});
+  const [hourlyData, setHourlyData] = useState({});
+  const [monthlyData, setMonthlyData] = useState({});
   const [detailPopup, setDetailPopup] = useState({
     open: false,
     title: "",
@@ -349,6 +353,9 @@ const VisitorsAnalyticsDashboard = () => {
     loading: false,
     columns: null,
   });
+  const [detailPage, setDetailPage] = useState(1);
+  const [detailTotalPages, setDetailTotalPages] = useState(1);
+  const [detailFilter, setDetailFilter] = useState({ byKey: "", countValue: "" });
 
   const [staffData, setStaffData] = useState({
     total: 0,
@@ -368,6 +375,7 @@ const VisitorsAnalyticsDashboard = () => {
 
   const [dashboardData, setDashboardData] = useState({
     total: 0,
+    today: 0,
     today_in: 0,
     today_out: 0,
     in: 0,
@@ -392,10 +400,18 @@ const VisitorsAnalyticsDashboard = () => {
   const expectedLabel = isCompany55 ? "Planned" : "Expected";
   const unexpectedLabel = isCompany55 ? "Unplanned" : "Unexpected";
 
+  const formatDateForApi = (isoDate) => {
+    if (!isoDate) return null;
+    const [year, month, day] = isoDate.split("-");
+    if (!year || !month || !day) return null;
+    return `${day}/${month}/${year}`;
+  };
+
   useEffect(() => {
     fetchVisitorAnalytics();
     fetchStaffAnalytics();
     fetchVehicleAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromDate, toDate, siteId]);
 
   const fetchVisitorAnalytics = async (retry = 0) => {
@@ -403,6 +419,7 @@ const VisitorsAnalyticsDashboard = () => {
       setLoading(true);
       setDashboardData({
         total: 0,
+        today: 0,
         today_in: 0,
         today_out: 0,
         in: 0,
@@ -421,13 +438,14 @@ const VisitorsAnalyticsDashboard = () => {
         weekly_trend: {},
       });
 
-      const rangeFrom = fromDate || null;
-      const rangeTo = toDate || null;
+      const rangeFrom = formatDateForApi(fromDate);
+      const rangeTo = formatDateForApi(toDate);
       const response = await getVisitorAnalytics(rangeFrom, rangeTo, siteId);
       const apiData = response?.data || {};
 
       setDashboardData({
         total: apiData.total ?? 0,
+        today: apiData.today ?? 0,
         today_in: apiData.today_in ?? 0,
         today_out: apiData.today_out ?? 0,
         in: apiData.in ?? 0,
@@ -438,19 +456,35 @@ const VisitorsAnalyticsDashboard = () => {
         staff_in: apiData.staff_in ?? 0,
         staff_out: apiData.staff_out ?? 0,
         vehicles: apiData.vehicles ?? 0,
-        delivery_breakdown: apiData.delivery_breakdown ?? apiData.delivery_by_platform ?? {},
-        purpose_breakdown: apiData.purpose_breakdown ?? {
-          Meeting: apiData.meeting_count ?? 0,
-          Delivery: apiData.delivery_count ?? 0,
-          Interview: apiData.interview_count ?? 0,
-          "Site Visit": apiData.site_visit_count ?? 0,
-          Maintenance: apiData.maintenance_count ?? 0,
-          Other: apiData.other_count ?? 0,
-        },
-        hourly_visits: apiData.hourly_visits ?? apiData.hourly_trend ?? {},
-        monthly_visits: apiData.monthly_visits ?? apiData.monthly_trend ?? {},
-        visitor_type_breakdown: apiData.visitor_type_breakdown ?? apiData.by_visitor_type ?? {},
-        weekly_trend: apiData.weekly_trend ?? {},
+        delivery_breakdown: {},
+        purpose_breakdown: {},
+        hourly_visits: {},
+        monthly_visits: {},
+        visitor_type_breakdown: {},
+        weekly_trend: {},
+      });
+
+      /* ── Extract all by_* keys from API → chart tabs ─────────────────────── */
+      const newByData = {};
+      Object.keys(apiData).forEach((k) => {
+        if (k.startsWith("by_") && apiData[k] && typeof apiData[k] === "object") {
+          /* Flatten: values may be plain counts or nested {count, records} objects */
+          const flat = {};
+          Object.entries(apiData[k]).forEach(([name, val]) => {
+            flat[name] = typeof val === "object" && val !== null ? (val.count ?? 0) : Number(val) || 0;
+          });
+          newByData[k] = flat;
+        }
+      });
+      setByData(newByData);
+      setHourlyData(apiData.hourly_visits ?? apiData.hourly_trend ?? {});
+      setMonthlyData(apiData.monthly_visits ?? apiData.monthly_trend ?? {});
+
+      /* Auto-select first tab on first load */
+      setSelectedChart((prev) => {
+        if (prev && (newByData[prev] || prev === "hourly" || prev === "monthly")) return prev;
+        const firstKey = Object.keys(newByData)[0];
+        return firstKey || prev;
       });
     } catch (error) {
       if (retry < 1) {
@@ -498,6 +532,40 @@ const VisitorsAnalyticsDashboard = () => {
     }
   };
 
+  const handleChartPointClick = async (byKey, countValue, page = 1) => {
+    if (!byKey || !countValue) return;
+
+    const countType = byKeyToCountType(byKey);
+    const title = `${formatByLabel(byKey)}: ${countValue}`;
+    const rangeFrom = formatDateForApi(fromDate);
+    const rangeTo   = formatDateForApi(toDate);
+
+    setDetailFilter({ byKey, countValue });
+    setDetailPage(page);
+    setDetailPopup({ open: true, title, records: [], loading: true, columns: visitorColumns });
+
+    try {
+      const res     = await getVisitorsDashboardDrill(countType, countValue, siteId, page, rangeFrom, rangeTo);
+      const bucket  = res?.data?.[byKey]?.[countValue];
+      const records = Array.isArray(bucket?.records) ? bucket.records : [];
+      const total   = bucket?.count ?? bucket?.total ?? records.length;
+      const perPage = bucket?.per_page ?? 10;
+      const pages   = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+
+      setDetailTotalPages(pages);
+      setDetailPopup({ open: true, title, records, loading: false, columns: visitorColumns });
+    } catch (err) {
+      console.error("Chart drill error", err);
+      toast.error("Failed to load details.");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  const onDetailPageChange = async (nextPage) => {
+    if (nextPage < 1 || nextPage > detailTotalPages) return;
+    await handleChartPointClick(detailFilter.byKey, detailFilter.countValue, nextPage);
+  };
+
   // ─── Column definitions ───────────────────────────────────────────────────
 
   const visitorColumns = [
@@ -506,7 +574,7 @@ const VisitorsAnalyticsDashboard = () => {
       key: "company_name",
       label: "Company",
       accessor: (r) =>
-        r.company_name ?? r.company?.name ?? (typeof r.company === "string" ? r.company : null) ?? "—",
+         r.company_name,
     },
     { key: "contact_no", label: "Contact", accessor: (r) => r.contact_no },
     { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
@@ -646,154 +714,95 @@ const VisitorsAnalyticsDashboard = () => {
     }
   };
 
-  // ─── Chart data maps ──────────────────────────────────────────────────────
+  /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
-  const visitorTypeMap = useMemo(() => {
-    const m = dashboardData.visitor_type_breakdown || {};
-    if (Object.keys(m).length > 0) {
-      const remap = {};
-      Object.entries(m).forEach(([k, v]) => {
-        if (k === "Expected") remap[expectedLabel] = v;
-        else if (k === "Unexpected") remap[unexpectedLabel] = v;
-        else remap[k] = v;
-      });
-      return remap;
-    }
-    return {
-      [expectedLabel]: dashboardData.expected ?? 0,
-      [unexpectedLabel]: dashboardData.unexpected ?? 0,
+  /** "by_visit_type" → "Visit Type" */
+  const formatByLabel = (key) => {
+    if (key === "hourly") return "Hourly Trend";
+    if (key === "monthly") return "Monthly Trend";
+    return key.replace(/^by_/, "").split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  };
+
+  /** Derive count_type from a by_* key: "by_visit_type" → "visit_type" */
+  const byKeyToCountType = (key) => key.replace(/^by_/, "");
+
+  /** Icon for each chart tab */
+  const getTabIcon = (key) => {
+    const map = {
+      by_in_out:      "🔄",
+      by_entry_type:  "🚪",
+      by_visit_type:  "👤",
+      by_purpose:     "📝",
+      by_frequency:   "📊",
+      by_created_by:  "👥",
+      hourly:         "📈",
+      monthly:        "📅",
     };
-  }, [dashboardData.visitor_type_breakdown, dashboardData.expected, dashboardData.unexpected, expectedLabel, unexpectedLabel]);
+    return map[key] ?? "📋";
+  };
 
-  const inOutMap = useMemo(
-    () => ({
-      "Currently In": dashboardData.in ?? 0,
-      "Currently Out": dashboardData.out ?? 0,
-    }),
-    [dashboardData.in, dashboardData.out],
-  );
-
-  const staffMap = useMemo(
-    () => ({ "Staff In": staffData.in, "Staff Out": staffData.out }),
-    [staffData],
-  );
-
-  const deliveryMap = useMemo(
-    () => dashboardData.delivery_breakdown || {},
-    [dashboardData.delivery_breakdown],
-  );
-
-  const purposeMap = useMemo(
-    () => dashboardData.purpose_breakdown || {},
-    [dashboardData.purpose_breakdown],
-  );
-
-  const hourlyMap = useMemo(
-    () => dashboardData.hourly_visits || {},
-    [dashboardData.hourly_visits],
-  );
-
-  const monthlyMap = useMemo(
-    () => dashboardData.monthly_visits || {},
-    [dashboardData.monthly_visits],
-  );
-
-  // ─── Chart options ────────────────────────────────────────────────────────
-
+  /* ── Generic chart options (by_* tabs + hourly/monthly) ──────────────────── */
   const selectedChartOptions = useMemo(() => {
-    if (selectedChart === "visitor_type") {
-      if (chartType === "pie") {
-        return buildPieOptions({
-          title: "Visitor Type Distribution",
-          dataMap: visitorTypeMap,
-          colorsMap: { [expectedLabel]: "#F59E0B", [unexpectedLabel]: "#EAB308" },
-        });
-      }
-      const entries = toSortedEntries(visitorTypeMap, "desc");
-      return buildXYOptions({
-        title: "Visitor Type Distribution",
+    let dataMap;
+    if (selectedChart === "hourly") {
+      dataMap = hourlyData;
+    } else if (selectedChart === "monthly") {
+      dataMap = monthlyData;
+    } else {
+      dataMap = byData[selectedChart] || {};
+    }
+    const chartTitle = selectedChart ? formatByLabel(selectedChart) : "";
+
+    const addClickEvents = (options) => {
+      if (!options?.plotOptions) return options;
+      const clickHandler = function () {
+        const itemName = this.name ?? this.category ?? String(this.x ?? "");
+        handleChartPointClick(selectedChart, itemName);
+      };
+      const evt = { events: { click: clickHandler } };
+      return {
+        ...options,
+        plotOptions: {
+          ...options.plotOptions,
+          series: { ...(options.plotOptions.series || {}), point: { ...(options.plotOptions.series?.point || {}), ...evt } },
+          pie:    { ...(options.plotOptions.pie    || {}), point: { ...(options.plotOptions.pie?.point    || {}), ...evt } },
+        },
+      };
+    };
+
+    /* Hourly/monthly use ascending order for time-series feel */
+    const order = (selectedChart === "hourly" || selectedChart === "monthly") ? "asc" : "desc";
+
+    let options;
+    if (chartType === "pie") {
+      options = buildPieOptions({ title: chartTitle, dataMap });
+    } else {
+      const entries = toSortedEntries(dataMap, order);
+      options = buildXYOptions({
+        title: chartTitle,
         type: chartType,
         categories: entries.map(([k]) => k),
         values: entries.map(([, v]) => v),
         colorByPoint: shouldColorByPoint(chartType),
       });
     }
+    return addClickEvents(options);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChart, chartType, byData, hourlyData, monthlyData]);
 
-    if (selectedChart === "in_out") {
-      return buildPieOptions({
-        title: "Visitor In/Out Status",
-        dataMap: inOutMap,
-        colorsMap: { "Currently In": "#3B82F6", "Currently Out": "#8B5CF6" },
-      });
-    }
-
-    if (selectedChart === "staff") {
-      return buildPieOptions({
-        title: "Staff In/Out Distribution",
-        dataMap: staffMap,
-        colorsMap: { "Staff In": "#10B981", "Staff Out": "#EF4444" },
-      });
-    }
-
-    if (selectedChart === "delivery") {
-      const entries = toSortedEntries(deliveryMap, "desc");
-      return buildXYOptions({
-        title: "Delivery Visitors by Platform",
-        type: "column",
-        categories: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v),
-        colorByPoint: true,
-      });
-    }
-
-    if (selectedChart === "purpose") {
-      const entries = toSortedEntries(purposeMap, "desc");
-      return buildXYOptions({
-        title: "Visitor Purpose Distribution",
-        type: "bar",
-        categories: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v),
-        colorByPoint: true,
-      });
-    }
-
-    if (selectedChart === "hourly") {
-      const entries = toSortedEntries(hourlyMap, "asc");
-      return buildXYOptions({
-        title: "Hourly Visitor Trend (Today)",
-        type: "area",
-        categories: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v),
-        colorByPoint: false,
-      });
-    }
-
-    if (selectedChart === "monthly") {
-      const entries = toSortedEntries(monthlyMap, "asc");
-      return buildXYOptions({
-        title: "Monthly Visitor Trend (Current Year)",
-        type: "column",
-        categories: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v),
-        colorByPoint: true,
-      });
-    }
-
-    return buildPieOptions({ title: "Visitor Type Distribution", dataMap: visitorTypeMap });
-  }, [
-    selectedChart, chartType, visitorTypeMap, inOutMap,
-    staffMap, deliveryMap, purposeMap, hourlyMap, monthlyMap,
-  ]);
-
-  const chartButtons = [
-    { id: "visitor_type", label: "Visitor Type", icon: "📊" },
-    { id: "in_out", label: "In/Out Status", icon: "🔄" },
-    { id: "staff", label: "Staff Distribution", icon: "👥" },
-    { id: "delivery", label: "Delivery Platforms", icon: "📦" },
-    { id: "purpose", label: "Visit Purpose", icon: "📝" },
-    { id: "hourly", label: "Hourly Trend", icon: "📈" },
-    { id: "monthly", label: "Monthly Trend", icon: "📅" },
-  ];
+  /* ── Chart buttons: dynamic by_* from API + always-on hourly/monthly ─────── */
+  const chartButtons = useMemo(
+    () => [
+      ...Object.keys(byData).map((key) => ({
+        id: key,
+        label: formatByLabel(key),
+        icon: getTabIcon(key),
+      })),
+      { id: "hourly",  label: "Hourly Trend",  icon: "📈" },
+      { id: "monthly", label: "Monthly Trend",  icon: "📅" },
+    ],
+    [byData],
+  );
 
   if (loading) {
     return (
@@ -806,61 +815,79 @@ const VisitorsAnalyticsDashboard = () => {
   return (
     <div className="w-full px-3 pb-4 space-y-6">
       {/* ── Top bar ── */}
-      <div className="flex items-center gap-2 justify-end">
-        <IconBtn
-          title="Filter"
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
           onClick={() => {
             setTempFromDate(fromDate);
             setTempToDate(toDate);
             setFilterOpen(true);
           }}
+          className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
         >
-          <FaCalendarAlt />
-        </IconBtn>
-        <IconBtn title="Refresh" onClick={() => fetchVisitorAnalytics(0)}>
-          ↻
-        </IconBtn>
+          Filter by Date
+        </button>
+        <button
+          type="button"
+          onClick={() => { setFromDate(""); setToDate(""); }}
+          className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+        >
+          Clear Filter
+        </button>
       </div>
 
       {/* ── Date filter modal ── */}
       {filterOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Filter Visitors</h3>
-            <div className="space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
+            <h3 className="text-lg font-semibold text-gray-900">Filter Visitors by Date</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Choose start and end date to refresh dashboard.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
               <div>
-                <label className="text-xs text-gray-500">From Date</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  Start Date
+                </label>
                 <input
                   type="date"
                   value={tempFromDate}
                   onChange={(e) => setTempFromDate(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
               <div>
-                <label className="text-xs text-gray-500">To Date</label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  End Date
+                </label>
                 <input
                   type="date"
                   value={tempToDate}
                   onChange={(e) => setTempToDate(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="mt-4 flex gap-2 justify-end">
               <button
+                type="button"
                 onClick={() => setFilterOpen(false)}
-                className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold"
+                className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => {
+                  if (!tempFromDate || !tempToDate) {
+                    toast.error("Please select both start and end dates.");
+                    return;
+                  }
                   setFromDate(tempFromDate);
                   setToDate(tempToDate);
                   setFilterOpen(false);
                 }}
-                className="px-4 py-2 rounded-lg bg-purple-700 text-white text-sm font-semibold"
+                className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
               >
                 Apply Filter
               </button>
@@ -869,48 +896,30 @@ const VisitorsAnalyticsDashboard = () => {
         </div>
       )}
 
-      {/* ── Visitor stat cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <StatCard
-          title="Total Visitors"
-          value={dashboardData.total}
-          icon={<FaUsers />}
-          accent={CHART_PALETTE[0]}
-          note="All time visitors"
-          onClick={() => handleStatClick("total", "Total Visitors")}
-        />
-        <StatCard
-          title="Total In"
-          value={dashboardData.in}
-          icon={<FaUserCheck />}
-          accent={CHART_PALETTE[1]}
-          note="Currently inside"
-          onClick={() => handleStatClick("in", "Visitors Currently In")}
-        />
-        <StatCard
-          title="Total Out"
-          value={dashboardData.out}
-          icon={<FaUserClock />}
-          accent={CHART_PALETTE[2]}
-          note="Currently out"
-          onClick={() => handleStatClick("out", "Visitors Currently Out")}
-        />
-        <StatCard
-          title={expectedLabel}
-          value={dashboardData.expected}
-          icon={<FaUserClock />}
-          accent={CHART_PALETTE[9]}
-          note="Pre-registered visitors"
-          onClick={() => handleStatClick("expected", `${expectedLabel} Visitors`)}
-        />
-        <StatCard
-          title={unexpectedLabel}
-          value={dashboardData.unexpected}
-          icon={<FaUsers />}
-          accent={CHART_PALETTE[4]}
-          note="Walk-in visitors"
-          onClick={() => handleStatClick("unexpected", `${unexpectedLabel} Visitors`)}
-        />
+      {/* ── Visitor stat cards (dynamic – all API fields) ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {[
+          { key: "total",    title: "Total Visitors",  note: "All time visitors",   accent: CHART_PALETTE[0],  icon: <FaUsers />     },
+          { key: "in",       title: "Total In",         note: "Currently inside",    accent: CHART_PALETTE[1],  icon: <FaUserCheck /> },
+          { key: "out",      title: "Total Out",        note: "Currently out",       accent: CHART_PALETTE[2],  icon: <FaUserClock /> },
+          { key: "today",    title: "Today's Visitors", note: "Today",               accent: CHART_PALETTE[5],  icon: <FaUsers />     },
+          { key: "today_in", title: "Today's In",       note: "Today check-in",      accent: CHART_PALETTE[6],  icon: <FaUserCheck /> },
+          { key: "today_out",title: "Today's Out",      note: "Today check-out",     accent: CHART_PALETTE[3],  icon: <FaUserClock /> },
+          { key: "expected", title: expectedLabel,      note: "Pre-registered",      accent: CHART_PALETTE[9],  icon: <FaUserClock /> },
+          { key: "unexpected",title: unexpectedLabel,   note: "Walk-in visitors",    accent: CHART_PALETTE[4],  icon: <FaUsers />     },
+        ]
+          .filter(({ key }) => dashboardData[key] !== undefined)
+          .map(({ key, title, note, accent, icon }) => (
+            <StatCard
+              key={key}
+              title={title}
+              value={dashboardData[key]}
+              icon={icon}
+              accent={accent}
+              note={note}
+            />
+          ))
+        }
       </div>
 
       {/* ── Chart selector ── */}
@@ -924,20 +933,20 @@ const VisitorsAnalyticsDashboard = () => {
           </div>
         }
       >
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3 mt-1">
           {chartButtons.map((opt) => (
             <button
               key={opt.id}
               type="button"
               onClick={() => setSelectedChart(opt.id)}
               className={[
-                "px-4 py-2 rounded-xl text-sm font-semibold transition",
+                "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition",
                 selectedChart === opt.id
                   ? "bg-gray-900 text-white shadow"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200",
               ].join(" ")}
             >
-              <span className="mr-2">{opt.icon}</span>
+              <span className="text-base leading-none">{opt.icon}</span>
               {opt.label}
             </button>
           ))}
@@ -946,8 +955,8 @@ const VisitorsAnalyticsDashboard = () => {
 
       {/* ── Chart ── */}
       <Card
-        title="Chart"
-        subtitle={selectedChart === "visitor_type" ? `Chart Type: ${chartType}` : "Overview"}
+        title={selectedChart ? formatByLabel(selectedChart) : "Chart"}
+        subtitle={`Chart type: ${chartType}`}
       >
         <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
       </Card>
@@ -994,6 +1003,9 @@ const VisitorsAnalyticsDashboard = () => {
         records={detailPopup.records}
         loading={detailPopup.loading}
         columns={detailPopup.columns || visitorColumns}
+        page={detailPage}
+        totalPages={detailTotalPages}
+        onPageChange={onDetailPageChange}
       />
     </div>
   );

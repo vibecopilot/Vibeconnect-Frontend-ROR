@@ -130,23 +130,55 @@
   try {
     const user_id = getItemInLocalStorage("VIBEUSERID");
 
-<<<<<<< HEAD
-    const data = await getVibeBackground(user_id);
-
-    if (data.success) {
-      const imagePath = API_URL + data.data.image;
-
-      setSelectedImage(imagePath);
-      setSelectedIndex(data.data.index);
-=======
     if (searchText) {
       url += `&q[search_cont]=${searchText}`;
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
     }
-  } catch (err) {
-    console.error("Background error:", err);
+
+    /* STATUS FILTER FROM API */
+
+    if (selectedStatus !== "all") {
+      url += `&q[status_eq]=${selectedStatus}`;
+    }
+
+    /* MONTH FILTER */
+if (selectedMonth) {
+  const start = new Date(selectedMonth + "-01");
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
+
+  const startDate = start.toISOString();
+  const endDate = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate(),
+    23,
+    59,
+    59
+  ).toISOString();
+
+  url += `&q[start_time_gteq]=${startDate}`;
+  url += `&q[start_time_lteq]=${endDate}`;
+}
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+const activities = data.activities?.filter((a) => a.asset_name) || [];
+    setTasks(activities);
+
+    setTotal(data.total_count || 0);
+
+  } catch (error) {
+    console.log(error);
+    toast.error("Failed to fetch tasks");
   }
 };
+useEffect(() => {
+  const delay = setTimeout(() => {
+    fetchPPMTask();
+  }, 400);
+
+  return () => clearTimeout(delay);
+}, [page, rowsPerPage, selectedStatus, selectedMonth, searchText]);
 
     useEffect(() => {
       // Call the function to get the background image when the component mounts
@@ -220,43 +252,6 @@
               </div>
 
 
-<<<<<<< HEAD
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="pending"
-                  name="status"
-                  checked={selectedStatus === "pending"}
-                  onChange={() => handleStatusChange("pending")}
-                />
-                <label htmlFor="pending" className="text-sm">
-                  Pending
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="completed"
-                  name="status"
-                  checked={selectedStatus === "complete"}
-                  onChange={() => handleStatusChange("complete")}
-                />
-                <label htmlFor="completed" className="text-sm">
-                  Completed
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="overdue"
-                  name="status"
-                  checked={selectedStatus === "overdue"}
-                  onChange={() => handleStatusChange("overdue")}
-                />
-                <label htmlFor="completed" className="text-sm">
-                  Overdue
-                </label>
-=======
       const status = task.status?.toLowerCase();
 
       if (status === "pending") counts.pending++;
@@ -270,9 +265,9 @@
   }
 };
 
- useEffect(() => {
-  fetchPPMTask();
-}, [page, rowsPerPage, selectedStatus, selectedMonth]);
+//  useEffect(() => {
+//   fetchPPMTask();
+// }, [page, rowsPerPage, selectedStatus, selectedMonth]);
 
 useEffect(() => {
   fetchStatusCounts();
@@ -343,6 +338,12 @@ useEffect(() => {
     {
       name: "Assigned To",
       selector: (row) => row.assigned_to_name,
+      sortable: true,
+    },
+
+    {
+      name: "Start Time",
+      selector: (row) => row.start_time,
       sortable: true,
     },
 
@@ -539,7 +540,6 @@ useEffect(() => {
                 >
                   Close
                 </button>
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
               </div>
             </div>
             <div  className="flex lg:flex-row flex-col gap-2">

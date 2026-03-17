@@ -22,7 +22,10 @@ import { DNA } from "react-loader-spinner";
 import TicketFilterModal from "../containers/modals/TicketFilterModal";
 import { IoIosArrowDown } from "react-icons/io";
 import { color } from "highcharts";
+import { FaInbox } from "react-icons/fa";
 const Ticket = () => {
+
+  const siteId=getItemInLocalStorage("SITEID");
   const [filteredData, setFilteredData] = useState([]);
   const [filterSearch, setFilterSearch] = useState([]);
 
@@ -30,6 +33,7 @@ const Ticket = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [ticketTypeCounts, setTicketTypeCounts] = useState({});
   const [ticketStatusCounts, setTicketStatusCounts] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
   const [exportAllTickets, setExportAllTickets] = useState([]);
   const allTicketTypes = ["Complaint", "Request", "Suggestion"];
   // const [filterSearch, setFilter] = useState([]);
@@ -226,9 +230,10 @@ const Ticket = () => {
     },
   };
 
- const fetchData = async (page, perPage, search = "") => {
+ const fetchData = async (page, perPage, search = "", status = "all") => {
+  setIsLoading(true);
   try {
-    const response = await getAdminComplaints(page, perPage, search);
+    const response = await getAdminComplaints(page, perPage, search, status);
 
     const complaints = response?.data?.complaints || [];
     const totalCount = response?.data?.count || 0;
@@ -250,28 +255,38 @@ const Ticket = () => {
     setTicketTypeCounts(typeCounts);
   } catch (error) {
     console.error("Error fetching data:", error);
+  } finally {
+    setIsLoading(false);
   }
 };
 
   useEffect(() => {
-  fetchData(currentPage, perPage, searchText);
-}, [currentPage, perPage, searchText]);
+    const apiStatus = getApiStatus(selectedStatus);
+    fetchData(currentPage, perPage, searchText, apiStatus);
+  }, [currentPage, perPage, searchText, selectedStatus]);
 
 
   const [ticketTypes, setTicketsTypes] = useState({});
   const [statusData, setStatusData] = useState({});
 
-  const dashboardCards = [
-    { key: "Total Tickets", value: statusData.total || 0, color: " border border-blue-300 border-4" },
-    { key: "Pending", value: statusData.Pending || 0, color: "border border-4 border-red-300" },
-    { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-4" },
-    { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-4" },
-    { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-4" },
-    { key: "Received", value: statusData.received || 0, color: "border-green-300 border border-4" },
-    { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-4" },
-    { key: "Completed", value: statusData["Development Done"] || 0, color: "border-pink-300 border border-4" },
-    // { key: "Complete", value: statusData.complete || 0, color: "bg-teal-300 border border-4" },
-  ];
+const allDashboardCards = [
+  { key: "Total Tickets", value: statusData.total || 0, color: "border border-blue-300 border-4" },
+  { key: "Pending", value: statusData.Pending || 0, color: "border border-4 border-red-300" },
+  { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-4" },
+  { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-4" },
+  { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-4" },
+  { key: "Received", value: statusData.received || 0, color: "border-green-300 border border-4" },
+  { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-4" },
+  { key: "Completed", value:siteId === 74?  statusData.Completed :statusData["Development Done"] || 0, color: "border-pink-300 border border-4" },
+  { key: "Work in Progress",value: statusData["Work In Progress"] || statusData["Work in Progress"] || 0, color: "border-purple-300 border border-4" },
+];
+
+const dashboardCards =
+  siteId === 74
+    ? allDashboardCards.filter(card =>
+        ["Total Tickets", "Pending", "Completed", "Work in Progress"].includes(card.key)
+      )
+    : allDashboardCards;
 
   const ticketTypeCards = [
     { key: "Complaint", value: ticketTypes.Complaint || 0, color: "border-red-300 border border-4" },
@@ -333,47 +348,33 @@ const Ticket = () => {
 
 
 const handleSearch = (e) => {
-  const value = e.target.value.toLowerCase();
+  const value = e.target.value;
   setSearchText(value);
-
-  if (!value) {
-    setFilteredData(complaints);
-    return;
-  }
-
-  const filtered = complaints.filter((item) => {
-    return (
-      item.ticket_number?.toString().toLowerCase().includes(value) ||
-      item.category_type?.toLowerCase().includes(value) ||
-      item.issue_type?.toLowerCase().includes(value) ||
-      item.heading?.toLowerCase().includes(value) ||
-      item.priority?.toLowerCase().includes(value) ||
-      item.unit?.toLowerCase().includes(value)
-    );
-  });
-
-  setFilteredData(filtered);
-setCurrentPage(1); 
+  setCurrentPage(1);
 };
 
-
-
-  useEffect(() => {
-    fetchData(currentPage, perPage);
-  }, [currentPage, perPage]);
-
+  const getApiStatus = (status) => {
+    switch (status) {
+      case "open":
+        return "Open";
+      case "closed":
+        return "Closed";
+      case "pending":
+        return "Pending";
+      case "Development Done":
+        return "Development Done";
+      default:
+        return "all";
+    }
+  };
+  
 
   const handleStatusChange = (status) => {
     setSelectedStatus(status);
-
-    if (status === "all") {
-      setFilteredData(complaints);
-    } else {
-      const filtered = complaints.filter(
-        (item) => item.issue_status?.toLowerCase() === status.toLowerCase()
-      );
-      setFilteredData(filtered);
-    }
+    setCurrentPage(1);
+    setIsLoading(true);
+    setFilteredData([]);
+    // API fetch will run via useEffect; the result updates filteredData and isLoading.
   };
 
   // const exportAllToExcel = async () => {
@@ -595,7 +596,7 @@ setCurrentPage(1);
           </div>
         </div>
 
-        {complaints.length === 0 ? (
+        {isLoading ? (
           <div className="flex justify-center items-center h-full">
             <DNA
               visible={true}
@@ -606,26 +607,38 @@ setCurrentPage(1);
               wrapperClass="dna-wrapper"
             />
           </div>
+        ) : filteredData.length === 0 ? (
+       <div className="flex items-center justify-center h-full py-10">
+  <div className="flex flex-col items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-8 py-6 shadow-sm">
+    
+    <FaInbox className="text-4xl text-gray-400" />
+
+    <p className="text-gray-600 text-sm font-medium">
+      No submissions here
+    </p>
+
+    <p className="text-gray-400 text-xs">
+      Once submissions are available, they will appear here.
+    </p>
+
+  </div>
+</div>
         ) : (
-          <>
-            <DataTable
-              responsive
-              columns={columns.filter(
-                (column) => columnVisibility[column.name]
-              )}
-              data={filteredData}
-              customStyles={customStyle}
-              fixedHeader
-              fixedHeaderScrollHeight="500px"
-              pagination
-              paginationServer
-              paginationTotalRows={totalRows}
-              paginationPerPage={perPage}
-              paginationRowsPerPageOptions={[10, 20, 30, 50]}
-              onChangePage={(page) => setCurrentPage(page)}
-              onChangeRowsPerPage={handlePerRowsChange}
-            />
-          </>
+          <DataTable
+            responsive
+            columns={columns.filter((column) => columnVisibility[column.name])}
+            data={filteredData}
+            customStyles={customStyle}
+            fixedHeader
+            fixedHeaderScrollHeight="500px"
+            pagination
+            paginationServer
+            paginationTotalRows={totalRows}
+            paginationPerPage={perPage}
+            paginationRowsPerPageOptions={[10, 20, 30, 50]}
+            onChangePage={(page) => setCurrentPage(page)}
+            onChangeRowsPerPage={handlePerRowsChange}
+          />
         )}
         {/* </div> */}
 

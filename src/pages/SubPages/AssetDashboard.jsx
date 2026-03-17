@@ -20,7 +20,7 @@ import {
 import { RiPieChartFill } from "react-icons/ri";
 import { FiBarChart2, FiAlertTriangle, FiBriefcase } from "react-icons/fi";
 import { TbUsers } from "react-icons/tb";
-import { FaRegCheckCircle, FaRegCalendar } from "react-icons/fa";
+import { FaRegCheckCircle, FaRegCalendar, FaSyncAlt } from "react-icons/fa";
 
 import {
   downloadAsset,
@@ -384,6 +384,23 @@ function AssetDashboard() {
   const [breakCount, setBreakCount] = useState("");
   const [inUseCount, setInUseCount] = useState("");
   const [totalAssetCount, setTotalAssetCount] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+const [filterType, setFilterType] = useState("");
+
+const [customStartDate, setCustomStartDate] = useState(null);
+const [customEndDate, setCustomEndDate] = useState(null);
+
+const [activeStartDate, setActiveStartDate] = useState(null);
+const [activeEndDate, setActiveEndDate] = useState(null);
+const [refreshing, setRefreshing] = useState(false);
+
+const fmtDate = (d) => {
+  if (!d) return null;
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+};
   const [ppmSchedule, setPPMSchedule] = useState("");
   const [ppmOverDue, setPPMOverDue] = useState("");
   const [ppmPending, setPPMPending] = useState("");
@@ -424,7 +441,47 @@ const fetchAssetSummaryByDate = async (date) => {
 };
 
 
+const applyDateFilter = (type) => {
+  const today = new Date();
+  let start = new Date();
+  let end = new Date();
 
+  switch (type) {
+    case "today": {
+      start = new Date(today);
+      end = new Date(today);
+      break;
+    }
+    case "week": {
+      const firstDay = today.getDate() - today.getDay();
+      start = new Date(new Date().setDate(firstDay));
+      end = new Date();
+      break;
+    }
+    case "month": {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = new Date();
+      break;
+    }
+    case "quarter": {
+      const quarter = Math.floor(today.getMonth() / 3);
+      start = new Date(today.getFullYear(), quarter * 3, 1);
+      end = new Date();
+      break;
+    }
+    case "year": {
+      start = new Date(today.getFullYear(), 0, 1);
+      end = new Date();
+      break;
+    }
+    default:
+      return;
+  }
+
+  setActiveStartDate(start);
+  setActiveEndDate(end);
+  fetchAssetSummaryByDate(start);
+};
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -444,7 +501,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handleTotalAssetDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await downloadAsset();
+      const response = await downloadAsset(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -465,7 +522,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handleTotalBreakdownDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getBreakdownDownload();
+      const response = await getBreakdownDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -486,7 +543,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const assetInUseDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getAssetInDownload();
+      const response = await getAssetInDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -507,7 +564,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handleScheduledDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getScheduledDownload();
+      const response = await getScheduledDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -528,7 +585,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handlePPMOverDueDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getPPMOverDueDownload();
+      const response = await getPPMOverDueDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -549,7 +606,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handlePPMPendingDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getPPMPendingDownload();
+      const response = await getPPMPendingDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -570,7 +627,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handlePPMCompleteDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getPPMcompleteDownload();
+      const response = await getPPMcompleteDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -591,7 +648,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handleRoutineScheduledDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getRoutineScheduledDownload();
+      const response = await getRoutineScheduledDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -612,7 +669,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handleRoutineOverDueDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getRoutineOverdueDownload();
+      const response = await getRoutineOverdueDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -633,7 +690,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handleRoutinePendingDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getRoutinePendingDownload();
+      const response = await getRoutinePendingDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -654,7 +711,7 @@ const fetchAssetSummaryByDate = async (date) => {
   const handleRoutineCompleteDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
-      const response = await getRoutineCompleteDownload();
+      const response = await getRoutineCompleteDownload(fmtDate(activeStartDate), fmtDate(activeEndDate));
       const url = window.URL.createObjectURL(
         new Blob([response.data], { type: response.headers["content-type"] })
       );
@@ -805,6 +862,24 @@ const fetchAssetSummaryByDate = async (date) => {
     fetchRoutineCompleteCount();
     fetchPPMScheduleCount();
     fetchRoutinePendingCount();
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.allSettled([
+      fetchTotalBreakdownCount(),
+      fetchAssetTotalCount(),
+      fetchPPMOverDueCount(),
+      fetchPPMpendingCount(),
+      fetchPPMCompleteCount(),
+      fetchInUseAssetBreakDownCount(),
+      fetchRoutineScheduledCount(),
+      fetchRoutineOverdueCount(),
+      fetchRoutineCompleteCount(),
+      fetchPPMScheduleCount(),
+      fetchRoutinePendingCount(),
+    ]);
+    setRefreshing(false);
   };
 
   /** chart options */
@@ -969,35 +1044,11 @@ const fetchAssetSummaryByDate = async (date) => {
 
   return (
     <div className="w-full overflow-hidden flex flex-col">
-      {/* Top Controls - Wrapped in flex row */}
+      {/* Top Controls */}
       <div className="w-full flex items-center justify-between mb-4">
 
-        {/* Left Group: Filter + Select Site */}
-        <div className="flex items-center gap-3 ">
-          {/* Filter + Calendar */}
-          <div className="relative">
-            <button
-              onClick={() => setShowCalendar((p) => !p)}
-              className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm"
-            >
-              <FaRegCalendar /> Filter
-            </button>
-
-            {showCalendar && (
-              <div className="absolute left-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg z-30 p-3">
-                <DatePicker
-                  selected={selectedDate}
-                  onChange={(date) => {
-                    setSelectedDate(date);
-                    fetchAssetSummaryByDate(date); // 🔥 API CALL
-                    setShowCalendar(false);
-                  }}
-                  inline
-                />
-              </div>
-            )}
-          </div>
-
+        {/* Left Group: Select Site + Assets */}
+        <div className="flex items-center gap-3">
           {/* Site dropdown */}
           <div className="relative">
             <button
@@ -1010,17 +1061,13 @@ const fetchAssetSummaryByDate = async (date) => {
               {site ? <FaChevronUp size={14} /> : <FaChevronDown size={14} />}
             </button>
 
-
             {site && (
-              <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 w-60 overflow-y-auto z-10 px-3 py-2 space-y-2">
+              <div className="absolute left-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 w-60 overflow-y-auto z-10 px-3 py-2 space-y-2">
                 <div className="flex items-center space-x-2 px-2">
                   <input
                     type="checkbox"
                     id="selectAll"
-                    checked={
-                      siteData.length > 0 &&
-                      selectedSites.length === siteData.length
-                    }
+                    checked={siteData.length > 0 && selectedSites.length === siteData.length}
                     onChange={handleSelectAll}
                   />
                   <label htmlFor="selectAll" className="cursor-pointer text-sm">
@@ -1029,10 +1076,7 @@ const fetchAssetSummaryByDate = async (date) => {
                 </div>
 
                 {siteData.map((s) => (
-                  <label
-                    key={s.id}
-                    className="flex items-center gap-2 px-2 py-1 text-sm"
-                  >
+                  <label key={s.id} className="flex items-center gap-2 px-2 py-1 text-sm">
                     <input
                       type="checkbox"
                       checked={selectedSites.includes(s.id)}
@@ -1043,10 +1087,7 @@ const fetchAssetSummaryByDate = async (date) => {
                 ))}
 
                 <button
-                  onClick={() => {
-                    applySelection();
-                    setSite(false);
-                  }}
+                  onClick={() => { applySelection(); setSite(false); }}
                   className="w-full bg-gray-800 text-white py-2 mt-2 rounded-xl hover:bg-gray-900 text-sm"
                 >
                   Apply
@@ -1066,12 +1107,9 @@ const fetchAssetSummaryByDate = async (date) => {
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute top-12 right-0 w-64 rounded-xl shadow-lg bg-white border border-gray-200 z-10">
+              <div className="absolute top-12 left-0 w-64 rounded-xl shadow-lg bg-white border border-gray-200 z-10">
                 {cardData.map((card) => (
-                  <label
-                    key={card.title}
-                    className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer"
-                  >
+                  <label key={card.title} className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedTitles.includes(card.title)}
@@ -1084,6 +1122,83 @@ const fetchAssetSummaryByDate = async (date) => {
             )}
           </div>
         </div>
+
+        {/* Right: Refresh + Filter */}
+        <div className="flex items-center gap-2">
+
+        {/* Refresh button */}
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          title="Reload data"
+          className="bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-xl flex items-center shadow-sm hover:bg-gray-50 disabled:opacity-50"
+        >
+          <FaSyncAlt className={refreshing ? "animate-spin" : ""} />
+        </button>
+
+        {/* Filter Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setFilterOpen((p) => !p)}
+            className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm"
+          >
+            <FaRegCalendar />
+            {activeStartDate
+              ? `${fmtDate(activeStartDate)}${activeEndDate ? ` – ${fmtDate(activeEndDate)}` : ""}`
+              : "Filter"}
+            {filterOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+          </button>
+
+          {filterOpen && (
+            <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg w-52 z-30">
+              <button onClick={() => { applyDateFilter("today"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">Today</button>
+              <button onClick={() => { applyDateFilter("week"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Week</button>
+              <button onClick={() => { applyDateFilter("month"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Month</button>
+              <button onClick={() => { applyDateFilter("quarter"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Quarter</button>
+              <button onClick={() => { applyDateFilter("year"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Year</button>
+              <button onClick={() => setFilterType("custom")} className="block w-full text-left px-4 py-2 hover:bg-gray-50">Custom Range</button>
+              {activeStartDate && (
+                <button
+                  onClick={() => { setActiveStartDate(null); setActiveEndDate(null); setFilterType(""); setFilterOpen(false); }}
+                  className="block w-full text-left px-4 py-2 text-red-500 hover:bg-red-50"
+                >
+                  Clear Filter
+                </button>
+              )}
+
+              {filterType === "custom" && (
+                <div className="p-3 border-t">
+                  <DatePicker
+                    selected={customStartDate}
+                    onChange={(date) => setCustomStartDate(date)}
+                    placeholderText="Start Date"
+                    className="border p-2 w-full rounded mb-2"
+                  />
+                  <DatePicker
+                    selected={customEndDate}
+                    onChange={(date) => setCustomEndDate(date)}
+                    placeholderText="End Date"
+                    className="border p-2 w-full rounded mb-2"
+                  />
+                  <button
+                    onClick={() => {
+                      if (customStartDate) {
+                        setActiveStartDate(customStartDate);
+                        setActiveEndDate(customEndDate || new Date());
+                        fetchAssetSummaryByDate(customStartDate);
+                      }
+                      setFilterOpen(false);
+                    }}
+                    className="w-full bg-black text-white py-2 rounded"
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        </div>{/* end right group */}
       </div>
 
       {/* Top Stat Cards */}
