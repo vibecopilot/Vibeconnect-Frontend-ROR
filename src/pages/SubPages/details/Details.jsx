@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Detail from "../../../containers/Detail";
 import {
+  domainPrefix,
   editComplaintsDetails,
   getCARItems,
   getComplaintsDetails,
@@ -131,7 +132,7 @@ const TicketDetails = () => {
     { name: "Name", selector: (row) => row.item_name, sortable: true },
     { name: "Rate", selector: (row) => row.rate, sortable: true },
   ];
-  const domainPrefix = "https://admin.vibecopilot.ai";
+  // const domainPrefix = "https://admin.vibecopilot.ai";
 
   console.log(ticketinfo);
   const themeColor = useSelector((state) => state.theme.color);
@@ -233,7 +234,7 @@ const TicketDetails = () => {
         {feat.includes("items") && (
           <div className="m-2">
             <h2 className="font-medium ">Approval Requests</h2>
-            <Table columns={ItemColumn} data={items} />
+            <Table columns={ItemColumn} data={items} />``
           </div>
         )}
         <h2

@@ -6,6 +6,7 @@ import Passes from "../Passes";
 import { useSelector } from "react-redux";
 import Table from "../../components/table/Table";
 import {
+  domainPrefix,
   getAllVisitorLogs,
   getExpectedVisitor,
   getVisitorApprovals,
@@ -22,6 +23,7 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 import { IoClose } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
 import toast from "react-hot-toast";
+import image from "/profile.png";
 import SelfRegistration from "./SelfRegistration";
 import { getBuildings } from "../../api";
 
@@ -94,10 +96,18 @@ const VisitorPage = () => {
   const expectedTimeLabel = isCompany55 ? "Planned Time" : "Expected Time";
   const expectedDateRangeLabel = isCompany55 ? "Planned Date Range" : "Expected Date Range";
 
-  const dateFormat = (dateString) => {
-    const date = new Date(dateString);
-    return date.toDateString();
-  };
+const dateFormat = (date) => {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
   const dateTimeFormat = (dateString) => {
     const date = new Date(dateString);
@@ -671,6 +681,7 @@ const res = await getVisitorHistory(
   historyStatus
 ]);
 
+
   const VisitorColumns = [
     {
       name: "Action",
@@ -685,6 +696,29 @@ const res = await getVisitorHistory(
         </div>
       ),
     },
+        { name: "ID", selector: (row) => row.id, sortable: true },
+    {
+          name: "Profile",
+          selector: (row) => {
+            const profileUrl = row.profile_picture?.url
+              ? domainPrefix + row.profile_picture.url
+              : row.qr_code_image_url
+              // ? domainPrefix + row.qr_code_image_url
+              // : null;
+
+            return profileUrl ? (
+              <img
+                src={profileUrl}
+                alt="Profile"
+                className="w-10 h-10 rounded-full cursor-pointer"
+                onClick={() => window.open(profileUrl, "_blank")}
+              />
+            ) : (
+              <img src={image} alt="Default" className="w-10 h-10 rounded-full" />
+            );
+          },
+          sortable: true,
+        },
     { name: "Visitor Type", selector: (row) => row.visit_type, sortable: true },
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Contact No.", selector: (row) => row.contact_no, sortable: true },
@@ -693,11 +727,28 @@ const res = await getVisitorHistory(
     { name: expectedDateLabel, selector: (row) => row.expected_date, sortable: true },
     { name: expectedTimeLabel, selector: (row) => row.expected_time, sortable: true },
     { name: "Vehicle No.", selector: (row) => row.vehicle_number, sortable: true },
-    {
-      name: "Host Approval",
-      selector: (row) => (row.skip_host_approval ? "Not Required" : "Required"),
-      sortable: true,
-    },
+{
+  name: "Host Approval",
+  cell: (row) => {
+    let status = "Pending";
+    let colorClass = "text-yellow-600";
+
+    if (row.skip_host_approval === true) {
+      status = "Approved";
+      colorClass = "text-green-600 ";
+    } else if (row.skip_host_approval === false) {
+      status = "Rejected";
+      colorClass = "text-red-600 ";
+    }
+
+    return (
+      <span className={`px-2 py-1 rounded text-sm font-medium ${colorClass}`}>
+        {status}
+      </span>
+    );
+  },
+  sortable: true,
+},
     {
       name: "Pass Start",
       selector: (row) => (row.start_pass ? dateFormat(row.start_pass) : ""),
@@ -737,6 +788,30 @@ const res = await getVisitorHistory(
         "No Host",
       sortable: true,
     },
+{
+  name: "Check In",
+  selector: (row) =>
+    row.visits_log?.[0]?.check_in
+      ? dateFormat(row.visits_log[0].check_in)
+      : "-",
+  sortable: true,
+},
+
+{
+  name: "Check Out",
+  selector: (row) =>
+    row.visits_log?.[0]?.check_out
+      ? dateFormat(row.visits_log[0].check_out)
+      : "-",
+  sortable: true,
+},
+
+{
+  name: "Created At",
+  selector: (row) =>
+    row.created_at ? dateFormat(row.created_at) : "-",
+  sortable: true,
+},
   ];
 
   const [searchText, setSearchText] = useState("");
@@ -924,23 +999,23 @@ const handleSearchAll = (e) => {
       selector: (row) => row.contact_no || "--",
       sortable: true,
     },
-  {
+{
   name: "Check In",
   selector: (row) =>
-    row.visitor_logs?.[0]?.check_in
-      ? new Date(row.visitor_logs[0].check_in).toLocaleString()
+    row.visitor_logs?.check_in
+      ? new Date(row.visitor_logs.check_in).toLocaleString()
       : "--",
 },
-   {
+{
   name: "Check Out",
   selector: (row) =>
-    row.visitor_logs?.[0]?.check_out
-      ? new Date(row.visitor_logs[0].check_out).toLocaleString()
+    row.visitor_logs?.check_out
+      ? new Date(row.visitor_logs.check_out).toLocaleString()
       : "--",
 },
     {
       name: "Approval Date",
-      selector: (row) => dateTimeFormat(row.approvaldate),
+      selector: (row) => dateTimeFormat(row.approval_date),
       sortable: true,
     },
     {

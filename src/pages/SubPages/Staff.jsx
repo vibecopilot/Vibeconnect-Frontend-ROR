@@ -59,6 +59,7 @@ const Staff = () => {
     lastname: "",
     building_name: "",
   });
+  const [exporting, setExporting] = useState(false);
 
   const applyFilters = () => {
     const filtered = staffs.filter((item) => {
@@ -129,6 +130,9 @@ const Staff = () => {
       return;
     }
 
+    setExporting(true);
+    const toastId = toast.loading("Downloading staff export. Please wait...");
+
     try {
       const response = await exportStaffWithDate(startDate, endDate);
 
@@ -148,10 +152,13 @@ const Staff = () => {
       setStartDate("");
       setEndDate("");
 
-      toast.success("Export successful");
+      toast.success("Export successful", { id: toastId });
     } catch (error) {
       console.error(error);
-      toast.error("Export failed");
+      toast.error("Export failed", { id: toastId });
+    } finally {
+      toast.dismiss(toastId);
+      setExporting(false);
     }
   };
 
@@ -222,6 +229,9 @@ const Staff = () => {
 
   // ✅ Export ALL staff data (fetch all pages from API)
   const exportStaffToCSVAll = async () => {
+    setExporting(true);
+    const toastId = toast.loading("Downloading staff export. Please wait...");
+
     try {
       const EXPORT_PER_PAGE = 200; // can increase if backend allows
       let page = 1;
@@ -265,7 +275,7 @@ const Staff = () => {
       }
 
       if (!exportRows.length) {
-        alert("No data to export");
+        toast.info("No data to export", { id: toastId });
         return;
       }
 
@@ -305,9 +315,13 @@ const Staff = () => {
       });
 
       downloadCSV(headers, rows, "staff_export.csv");
+      toast.success("Export successful", { id: toastId });
     } catch (error) {
       console.error("Export failed:", error);
-      alert("Export failed");
+      toast.error("Export failed", { id: toastId });
+    } finally {
+      toast.dismiss(toastId);
+      setExporting(false);
     }
   };
 
@@ -699,7 +713,26 @@ const Staff = () => {
       selector: (row) => dateFormat(row.valid_till),
       sortable: true,
     },
+ 
+      {
+      name: "Check In",
+      selector: (row) =>
+        row.attendances?.length
+          ? dateTimeFormat(row.attendances[0].punched_in_at)
+          : "-",
+    },
     {
+      name: "Check Out",
+      selector: (row) =>
+        row.attendances?.length && row.attendances[0].punched_out_at
+          ? dateTimeFormat(row.attendances[0].punched_out_at)
+          : "-",
+    },
+    {
+      name: "Created At",
+      selector: (row) => dateTimeFormat(row.created_at),
+    },
+       {
       name: "Status",
       cell: (row) => (
         <div className="flex items-center gap-2">
@@ -876,8 +909,9 @@ const Staff = () => {
       <button
         onClick={() => setShowExportModal(true)}
         className="border-2 border-blue-600 text-blue-600 font-semibold px-4 rounded-md hover:bg-blue-700 hover:text-white transition-all"
+        disabled={exporting}
       >
-        Export
+        {exporting ? "Preparing..." : "Export"}
       </button>
           <button
             onClick={() => setShowFilter(true)}
@@ -1065,15 +1099,17 @@ const Staff = () => {
               <button
                 onClick={handleDateExport}
                 className="bg-blue-600 hover:bg-blue-700 transition-all text-white font-semibold px-4 py-2 rounded-md w-full"
+                disabled={exporting}
               >
-                Export by Date
+                {exporting ? "Please wait..." : "Export by Date"}
               </button>
 
               <button
                 onClick={exportStaffToCSVAll}
                 className="bg-green-600 hover:bg-green-700 transition-all text-white font-semibold px-4 py-2 rounded-md w-full"
+                disabled={exporting}
               >
-                Export All Staffs
+                {exporting ? "Please wait..." : "Export All Staffs"}
               </button>
 
               {/* <button
