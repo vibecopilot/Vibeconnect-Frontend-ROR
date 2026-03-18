@@ -353,7 +353,7 @@ Survey Team`,
         </div>
 
         {/* Response Chart */}
-        <div className="bg-white rounded-xl border shadow-sm p-8">
+      {/*  <div className="bg-white rounded-xl border shadow-sm p-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold">Response Overview 123</h2>
             {responseCount > 0 && (
@@ -361,9 +361,9 @@ Survey Team`,
                 {responseCount} response{responseCount !== 1 ? "s" : ""}
               </span>
             )}
-          </div>
+          </div>*/}
 
-          {responseCount === 0 ? (
+         {/* {responseCount === 0 ? (
             <div className="flex flex-col items-center py-10 text-gray-400 gap-2">
               <span className="text-4xl">📊</span>
               <p className="text-sm">
@@ -372,7 +372,6 @@ Survey Team`,
             </div>
           ) : (
             <>
-              {/* Donut: answered counts per question */}
               <div className="w-full max-w-sm mx-auto">
                 <Chart
                   options={overviewChartOptions}
@@ -381,9 +380,8 @@ Survey Team`,
                   height={280}
                 />
               </div>
-
-              {/* Per-question breakdown */}
-              {questionStats.length > 0 && (
+*/}
+            {/*  {questionStats.length > 0 && (
                 <div className="mt-8 space-y-6">
                   {questionStats.map((stat, idx) => (
                     <div
@@ -450,7 +448,7 @@ Survey Team`,
               )}
             </>
           )}
-        </div>
+        </div>*/}
 
         <div className="grid grid-cols-12 gap-5 mt-5">
           <div className="flex justify-end gap-3 mx-5 col-span-12">
