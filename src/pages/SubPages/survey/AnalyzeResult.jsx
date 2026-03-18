@@ -113,16 +113,17 @@ function AnalyzeResult() {
   const handleDownloadCSV = () => {
     if (!survey?.survey_questions?.length || !responses.length) return;
     const questions = survey.survey_questions;
-    const headers = ["#", "Respondent", "Submitted At", ...questions.map((q) => q.q_title || "Q")];
+    const headers = ["#", "Respondent", "Contact Details" ,"Submitted At", ...questions.map((q) => q.q_title || "Q")];
     const rows = responses.map((r, i) => {
-      const respondent = r.response_by || r.user?.name || "Anonymous";
+      const respondent = r.response_by || r.feedback_given_by || "Anonymous";
+      const contactDetails = r.contact_details || "—";
       const date = r.created_at ? new Date(r.created_at).toLocaleString() : "";
       const answerCols = questions.map((q) => {
         const ans = r.survey_answers?.find((a) => Number(a.survey_question_id) === Number(q.id));
         const val = formatAnswer(q, ans);
         return `"${String(val).replace(/"/g, '""')}"`;
       });
-      return [i + 1, `"${respondent.replace(/"/g, '""')}"`, `"${date}"`, ...answerCols].join(",");
+      return [i + 1, `"${respondent.replace(/"/g, '""')}"`, `"${contactDetails.replace(/"/g, '""')}"`, `"${date}"`, ...answerCols].join(",");
     });
     const csv = [headers.join(","), ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -273,6 +274,7 @@ function AnalyzeResult() {
                       <tr className="border-b bg-gray-50">
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">#</th>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">Respondent</th>
+                        <th className="text-left py-2 px-3 font-semibold text-gray-700">Contact Details</th>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">Submitted</th>
                         {survey.survey_questions.map((q, i) => (
                           <th key={q.id} className="text-left py-2 px-3 font-semibold text-gray-700 max-w-[200px]">
@@ -284,12 +286,13 @@ function AnalyzeResult() {
                     <tbody>
                       {paginatedResponses.map((r, idx) => {
                         const globalIndex = (page - 1) * PER_PAGE + idx;
-                        const respondent = r.response_by || r.user?.name || "Anonymous";
+                        const respondent = r.response_by || r.feedback_given_by || "Anonymous";
                         const submitted = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
                         return (
                           <tr key={r.id || globalIndex} className="border-b hover:bg-gray-50">
                             <td className="py-2 px-3 text-gray-600">{globalIndex + 1}</td>
                             <td className="py-2 px-3 font-medium">{respondent}</td>
+                            <td className="py-2 px-3 text-gray-500">{r.contact_details || "—"}</td>
                             <td className="py-2 px-3 text-gray-500">{submitted}</td>
                             {survey.survey_questions.map((q) => {
                               const ans = r.survey_answers?.find((a) => Number(a.survey_question_id) === Number(q.id));
