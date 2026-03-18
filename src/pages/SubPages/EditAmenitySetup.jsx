@@ -14,6 +14,7 @@ import { BiPlusCircle } from "react-icons/bi";
 import { id } from "date-fns/locale";
 import toast from "react-hot-toast";
 
+
 const EditAmenitySetup = () => {
   const { id } = useParams();
   const [allowMultipleSlots, setAllowMultipleSlots] = useState("no");
@@ -27,6 +28,50 @@ const EditAmenitySetup = () => {
       advance_booking: "",
     },
   });
+
+    const daysList = [
+    { label: "Sunday", value: 0 },
+    { label: "Monday", value: 1 },
+    { label: "Tuesday", value: 2 },
+    { label: "Wednesday", value: 3 },
+    { label: "Thursday", value: 4 },
+    { label: "Friday", value: 5 },
+    { label: "Saturday", value: 6 },
+  ];
+
+   const [days, setDays] = useState(
+      daysList.map((day) => ({
+        ...day,
+        is_active: false,
+        start_time: "",
+        end_time: "",
+      })),
+    );
+  
+    // ✅ Handle checkbox
+    const handleCheck = (index) => {
+      const updated = [...days];
+      updated[index].is_active = !updated[index].is_active;
+      setDays(updated);
+    };
+  
+    // ✅ Handle time change
+    const handleTimeChange1 = (index, field, value) => {
+      const updated = [...days];
+      updated[index][field] = value;
+      setDays(updated);
+    };
+  
+    // ✅ Convert UI → API payload
+    const getPayload = () => {
+      return days.map((d) => ({
+        day_of_week: d.value,
+        start_time: d.start_time || "",
+        end_time: d.end_time || "",
+        is_active: d.is_active,
+      }));
+    };
+
   const handleSelectChange = (e) => {
     setAllowMultipleSlots(e.target.value);
   };
@@ -58,6 +103,15 @@ const EditAmenitySetup = () => {
       min_people: "",
       max_people: "",
       cancel_before: "",
+      book_before_days: "",
+      book_before_hours: "",
+      book_before_mins: "",
+      advance_days: "",
+      advance_hours: "",
+      advance_mins: "",
+      cancel_before_days: "",
+      cancel_before_hours: "",
+      cancel_before_mins: "",
       prepaid: null,
       postpaid: null,
       pay_on_facility: null,
@@ -103,12 +157,6 @@ const EditAmenitySetup = () => {
       console.log("facility", facility);
 
       if (facility) {
-        const bookBeforeStr =
-          facility.book_before?.toString().padStart(6, "0") || "000000"; // Ensure it's 6 characters long
-        const book_before_days = parseInt(bookBeforeStr.slice(0, 2), 10);
-        const book_before_hours = parseInt(bookBeforeStr.slice(2, 4), 10);
-        const book_before_mins = parseInt(bookBeforeStr.slice(4, 6), 10);
-
         setDates({
           amenity: {
             book_before: facility.book_before || "",
@@ -116,79 +164,173 @@ const EditAmenitySetup = () => {
             advance_booking: facility.advance_booking || "",
           },
         });
-        if (facility.amenity_slots && facility.amenity_slots.length > 0) {
-          const slot = facility.amenity_slots[0];
+        const normalizeDurationField = (duration) => {
+          if (!duration) return { raw: [], days: "", hours: "", mins: "" };
+          if (Array.isArray(duration)) {
+            const raw = duration;
+            const parsed = duration[1] && typeof duration[1] === "object" ? duration[1] : {};
+            return {
+              raw,
+              days: parsed.days ?? "",
+              hours: parsed.hours ?? "",
+              mins: parsed.minutes ?? "",
+            };
+          }
+          if (typeof duration === "object") {
+            return {
+              raw: ["", duration, ""],
+              days: duration.days ?? "",
+              hours: duration.hours ?? "",
+              mins: duration.minutes ?? "",
+            };
+          }
+          return { raw: [duration], days: "", hours: "", mins: "" };
+        };
 
-          setSlotData({
-            startHour: String(slot.start_hr).padStart(2, "0"),
-            startMinute: String(slot.start_min).padStart(2, "0"),
-            breakStartHour: "00", // if backend gives break later map here
-            breakStartMinute: "00",
-            breakEndHour: "00",
-            breakEndMinute: "00",
-            endHour: String(slot.end_hr).padStart(2, "0"),
-            endMinute: String(slot.end_min).padStart(2, "0"),
-            concurrentSlots: "",
-          });
-          setFormData({
-            amenity: {
-              site_id: facility.site_id || "",
-              fac_type: facility.fac_type || "",
-              fac_name: facility.fac_name || "",
-              member_charges: facility.member_charges || "",
-              book_before: facility.book_before[2] || "",
-              disclaimer: facility.disclaimer || "",
-              cancellation_policy: facility.cancellation_policy || "",
-              cutoff_min: facility.cutoff_min || "",
-              return_percentage: facility.return_percentage || "",
-              create_by: facility.create_by || "",
-              active: facility.active || true,
-              member_price_adult: facility.member_price_adult || "",
-              member_price_child: facility.member_price_child || "",
-              guest_price_adult: facility.guest_price_adult || "",
-              guest_price_child: facility.guest_price_child || "",
-              tenant_price_child: facility.tenant_price_child || "",
-              tenant_price_adult: facility.tenant_price_adult || "",
-              min_people: facility.min_people || "",
-              max_people: facility.max_people || "",
-              cancel_before: facility.cancel_before[2] || "",
-              terms: facility.terms || "",
-              gst_no: facility.gst_no || "",
-              advance_booking: facility.advance_booking[2] || "",
-              deposit: facility.deposit || "",
-              description: facility.description || "",
-              max_slots: facility.max_slots || "",
-              member: facility.member ?? null,
-              is_member_adult: facility.is_member_adult ?? true, // Fetch from API
-              is_member_child: facility.is_member_child ?? false,
-              guest: facility.guest ?? null,
-              is_guest_adult: facility.is_guest_adult ?? true, // Fetch from API
-              is_guest_child: facility.is_guest_child ?? false,
-              tenant: facility.tenant ?? null,
-              is_tenant_adult: facility.is_tenant_adult ?? true, // Fetch from API
-              is_tenant_child: facility.is_tenant_child ?? false,
-              fixed_amount: facility.fixed_amount || null,
-              prepaid: facility.prepaid || null,
-              postpaid: facility.postpaid || null,
-              status: facility.status || "",
-              payment_methods: facility.payment_methods || [],
-              complimentary: facility.complimentary || null,
-              pay_on_facility: facility.pay_on_facility || null,
-            },
-            covers: facility.covers || [],
-            attachments: facility.attachments || [],
-            slots: facility.amenity_slots.map((slot) => ({
-              id: slot.id || null,
-              amenity_id: slot.amenity_id || null,
-              start_hr: String(slot.start_hr).padStart(2, "0"),
-              start_min: String(slot.start_min).padStart(2, "0"),
-              end_hr: String(slot.end_hr).padStart(2, "0"),
-              end_min: String(slot.end_min).padStart(2, "0"),
-            })),
-          });
-        } else {
-          setError("Facility not found.");
-        }
+        const bookBeforeInfo = normalizeDurationField(facility.book_before);
+        const cancelBeforeInfo = normalizeDurationField(facility.cancel_before);
+        const advanceBookingInfo = normalizeDurationField(facility.advance_booking);
+
+        setSlotData({
+          startHour: facility.amenity_slots?.[0]?.start_hr
+            ? String(facility.amenity_slots[0].start_hr).padStart(2, "0")
+            : "09",
+          startMinute: facility.amenity_slots?.[0]?.start_min
+            ? String(facility.amenity_slots[0].start_min).padStart(2, "0")
+            : "00",
+          breakStartHour: "00",
+          breakStartMinute: "00",
+          breakEndHour: "00",
+          breakEndMinute: "00",
+          endHour: facility.amenity_slots?.[0]?.end_hr
+            ? String(facility.amenity_slots[0].end_hr).padStart(2, "0")
+            : "16",
+          endMinute: facility.amenity_slots?.[0]?.end_min
+            ? String(facility.amenity_slots[0].end_min).padStart(2, "0")
+            : "00",
+          concurrentSlots: facility.amenity_slots?.[0]?.concurrent_slots || "",
+        });
+
+        setSlotBy(facility.slot_by || "");
+
+        setDays(
+          daysList.map((day) => {
+            const op = facility.operational_days?.find(
+              (x) => Number(x.day_of_week) === Number(day.value),
+            );
+            return {
+              ...day,
+              is_active: op?.is_active ?? false,
+              start_time: op?.start_time || "",
+              end_time: op?.end_time || "",
+            };
+          }),
+        );
+
+        setRules(
+          facility.amenity_rules?.length
+            ? facility.amenity_rules.map((rule) => ({
+                id: rule.id || Date.now(),
+                enumerator: rule.enumerator ?? "daily_limit",
+                duration: rule.duration?.toString() || "60",
+                level: rule.level || "user",
+                times: rule.times_per_day?.toString() || "",
+                period_type: rule.period_type || "day",
+                enabled:
+                  rule.active ??
+                  rule.facility_can_be_booked ??
+                  rule.enabled ??
+                  true,
+                primeTime:
+                  rule.prime_time && Array.isArray(rule.prime_time)
+                    ? rule.prime_time
+                        .map((p) => `${p.start_time || ""} - ${p.end_time || ""}`)
+                        .join(" / ")
+                    : rule.primeTime || "",
+              }))
+            : rules,
+        );
+
+        setFormData({
+          amenity: {
+            site_id: facility.site_id || "",
+            fac_type: facility.fac_type || "",
+            fac_name: facility.fac_name || "",
+            member_charges: facility.member_charges || "",
+            book_before: facility.book_before || [],
+            book_before_days: bookBeforeInfo.days,
+            book_before_hours: bookBeforeInfo.hours,
+            book_before_mins: bookBeforeInfo.mins,
+            cancel_before: facility.cancel_before || [],
+            cancel_before_days: cancelBeforeInfo.days,
+            cancel_before_hours: cancelBeforeInfo.hours,
+            cancel_before_mins: cancelBeforeInfo.mins,
+            advance_booking: facility.advance_booking || [],
+            advance_days: advanceBookingInfo.days,
+            advance_hours: advanceBookingInfo.hours,
+            advance_mins: advanceBookingInfo.mins,
+            disclaimer: facility.disclaimer || "",
+            cancellation_policy: facility.cancellation_policy || "",
+            cutoff_min: facility.cutoff_min || "",
+            return_percentage: facility.return_percentage || "",
+            create_by: facility.create_by || "",
+            active: facility.active ?? true,
+            member_price_adult: facility.member_price_adult || "",
+            member_price_child: facility.member_price_child || "",
+            guest_price_adult: facility.guest_price_adult || "",
+            guest_price_child: facility.guest_price_child || "",
+            tenant_price_child: facility.tenant_price_child || "",
+            tenant_price_adult: facility.tenant_price_adult || "",
+            min_people: facility.min_people || "",
+            max_people: facility.max_people || "",
+            terms: facility.terms || "",
+            gst_no: facility.gst_no || facility.gst || "",
+            deposit: facility.deposit || "",
+            description: facility.description || "",
+            max_slots: facility.max_slots || "",
+            member: facility.member ?? null,
+            is_member_adult: facility.is_member_adult ?? true,
+            is_member_child: facility.is_member_child ?? false,
+            guest: facility.guest ?? null,
+            is_guest_adult: facility.is_guest_adult ?? true,
+            is_guest_child: facility.is_guest_child ?? false,
+            tenant: facility.tenant ?? null,
+            is_tenant_adult: facility.is_tenant_adult ?? true,
+            is_tenant_child: facility.is_tenant_child ?? false,
+            fixed_amount: facility.fixed_amount || null,
+            prepaid: facility.prepaid ?? null,
+            postpaid: facility.postpaid ?? null,
+            status: facility.status || "",
+            payment_methods: facility.payment_methods || [],
+            complimentary: facility.complimentary ?? null,
+            pay_on_facility: facility.pay_on_facility ?? null,
+            shreable: facility.shareable ?? facility.shreable ?? null,
+            link_to_building: facility.link_to_building ?? false,
+            slot_by: facility.slot_by || "",
+            consecutive_slot_allowed: facility.consecutive_slot_allowed ?? false,
+            is_fixed: facility.is_fixed ?? false,
+          },
+          covers: facility.covers || [],
+          attachments: facility.attachments || [],
+          slots: facility.amenity_slots?.length
+            ? facility.amenity_slots.map((slot) => ({
+                id: slot.id || null,
+                amenity_id: slot.amenity_id || null,
+                start_hr: String(slot.start_hr).padStart(2, "0"),
+                start_min: String(slot.start_min).padStart(2, "0"),
+                end_hr: String(slot.end_hr).padStart(2, "0"),
+                end_min: String(slot.end_min).padStart(2, "0"),
+              }))
+            : [
+                {
+                  start_hr: "",
+                  start_min: "",
+                  end_hr: "",
+                  end_min: "",
+                },
+              ],
+        });
+        setError(null);
       }
     } catch (error) {
       console.error("Error fetching facility details:", error);
@@ -268,6 +410,58 @@ const EditAmenitySetup = () => {
         );
       });
     });
+
+    // Append Slot By and detection flags
+    if (formData.amenity.slot_by !== undefined) {
+      postData.append("amenity[slot_by]", formData.amenity.slot_by || slotBy || "");
+    }
+
+    // Append operational days
+    if (days && days.length > 0) {
+      days.forEach((day, index) => {
+        postData.append(
+          `amenity[amenity_operational_days_attributes][${index}][day_of_week]`,
+          day.value,
+        );
+        postData.append(
+          `amenity[amenity_operational_days_attributes][${index}][is_active]`,
+          day.is_active ? "true" : "false",
+        );
+        postData.append(
+          `amenity[amenity_operational_days_attributes][${index}][start_time]`,
+          day.start_time || "",
+        );
+        postData.append(
+          `amenity[amenity_operational_days_attributes][${index}][end_time]`,
+          day.end_time || "",
+        );
+      });
+    }
+
+    // Append rules
+    if (rules && rules.length > 0) {
+      rules.forEach((rule, index) => {
+        const ruleAttr = `amenity[amenity_booking_rules_attributes][${index}]`;
+        postData.append(`${ruleAttr}[enumerator]`, rule.enumerator || "daily_limit");
+        postData.append(`${ruleAttr}[duration]`, rule.duration || "60");
+        postData.append(`${ruleAttr}[level]`, rule.level || "user");
+        postData.append(`${ruleAttr}[times_per_day]`, rule.times || "");
+        postData.append(`${ruleAttr}[period_type]`, rule.period_type || "day");
+        postData.append(
+          `${ruleAttr}[facility_can_be_booked]`,
+          rule.enabled ? "true" : "false",
+        );
+
+        if (rule.primeTime) {
+          const primeParts = rule.primeTime.split("/").map((item) => item.trim());
+          primeParts.forEach((part, pIndex) => {
+            const [start, end] = part.split("-").map((v) => v.trim());
+            postData.append(`${ruleAttr}[prime_times_attributes][${pIndex}][start_time]`, start || "");
+            postData.append(`${ruleAttr}[prime_times_attributes][${pIndex}][end_time]`, end || "");
+          });
+        }
+      });
+    }
 
     // Append payment methods as an array
     if (
@@ -755,30 +949,49 @@ const EditAmenitySetup = () => {
           </div>
         </div>
         <div className="my-4">
-          <div className="flex gap-4 border-b border-black items-center mt-4">
-            <span className="text-lg text-gray-800 ml-2">
-              Prepaid
-              <input
-                type="radio"
-                className="ml-2"
-                name="payment_type"
-                value="prepaid"
-                checked={formData.amenity.prepaid === true} // Bind state for prepaid
-                onChange={handelPayemntRadioChange}
-              />
-            </span>
-            <span className="text-lg text-gray-800 ml-2">
-              Postpaid
-              <input
-                type="radio"
-                className="ml-2"
-                name="payment_type"
-                value="postpaid"
-                checked={formData.amenity.postpaid === true} // Bind state for postpaid
-                onChange={handelPayemntRadioChange}
-              />
-            </span>
-          </div>
+         <div className="flex gap-4  border-black items-center mt-6">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="postpaid"
+              checked={formData.amenity.postpaid}
+              onChange={handlePaymentCheckbox}
+            />
+            Postpaid
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="prepaid"
+              checked={formData.amenity.prepaid}
+              onChange={handlePaymentCheckbox}
+            />
+            Prepaid
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="pay_on_facility"
+              checked={formData.amenity.pay_on_facility}
+              onChange={handlePaymentCheckbox}
+            />
+            Pay on facility
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="complimentary"
+              checked={formData.amenity.complimentary}
+              onChange={handlePaymentCheckbox}
+            />
+            Complimentary
+          </label>
+
+        </div>
+
         </div>
         <div className="my-4">
           <h2 className="border-b border-black font-medium text-lg">
@@ -858,8 +1071,22 @@ const EditAmenitySetup = () => {
               </div>
 
               {/* Flat */}
-              <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
+            <div className="flex justify-center my-2">
+                {/* Checkbox */}
                 <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_fixed || false}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      is_fixed: e.target.checked,
+                      fixed_amount: e.target.checked ? formData.fixed_amount : ""
+                    })
+                  }
+                />
+
+                 <input
                   type="text"
                   value={formData.amenity.fixed_amount || ""}
                   onChange={(e) =>
@@ -868,8 +1095,9 @@ const EditAmenitySetup = () => {
                   className="border border-gray-400 rounded p-2 outline-none"
                   placeholder="₹100"
                 />
+            
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                {/* <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -909,75 +1137,75 @@ const EditAmenitySetup = () => {
                     />
                     Complimentary
                   </label>
-                </div>
+                </div> */}
               </div>
             </div>
 
             {/* Non-Member Section */}
-            <div className="grid grid-cols-4 items-center border-b">
-              <div className="flex justify-center my-2">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.amenity.non_member === true}
-                    onChange={() => handleCheckboxChange("non_member")}
-                  />
-                  Non-Member
-                </label>
-              </div>
+           <div className="grid grid-cols-4 items-center border-b">
+  
+  {/* Non Member */}
+  <div className="flex justify-center my-2">
+    <label className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        checked={formData.non_member === true}
+        onChange={() => handleCheckboxChange("non_member")}
+      />
+      Non-Member
+    </label>
+  </div>
 
-              {/* Adult */}
-              <div className="flex justify-center my-2">
-                <input
-                  type="checkbox"
-                  className="mx-2"
-                  checked={formData.amenity.is_non_member_adult}
-                  disabled={!formData.amenity.non_member}
-                  onChange={() => handleChildToggle("is_non_member_adult")}
-                />
+  {/* Adult */}
+  <div className="flex justify-center my-2">
+    <input
+      type="checkbox"
+      className="mx-2"
+      checked={formData.is_non_member_adult}
+      disabled={!formData.non_member}
+      onChange={() => handleChildToggle("is_non_member_adult")}
+    />
 
-                <input
-                  type="text"
-                  disabled={
-                    !formData.amenity.non_member ||
-                    !formData.amenity.is_non_member_adult
-                  }
-                  value={formData.amenity.non_member_price_adult || ""}
-                  onChange={(e) =>
-                    handlePriceChange("non_member_price_adult", e.target.value)
-                  }
-                  className="border border-gray-400 rounded p-2 outline-none"
-                  placeholder="₹100"
-                />
-              </div>
+    <input
+      type="text"
+      disabled={
+        !formData.non_member || !formData.is_non_member_adult
+      }
+      value={formData.non_member_price_adult || ""}
+      onChange={(e) =>
+        handlePriceChange("non_member_price_adult", e.target.value)
+      }
+      className="border border-gray-400 rounded p-2 outline-none"
+      placeholder="₹100"
+    />
+  </div>
 
-              {/* Child */}
-              <div className="flex justify-center my-2">
-                <input
-                  type="checkbox"
-                  className="mx-2"
-                  checked={formData.amenity.is_non_member_child}
-                  disabled={!formData.amenity.non_member}
-                  onChange={() => handleChildToggle("is_non_member_child")}
-                />
+  {/* Child */}
+  <div className="flex justify-center my-2">
+    <input
+      type="checkbox"
+      className="mx-2"
+      checked={formData.is_non_member_child}
+      disabled={!formData.non_member}
+      onChange={() => handleChildToggle("is_non_member_child")}
+    />
 
-                <input
-                  type="text"
-                  disabled={
-                    !formData.amenity.non_member ||
-                    !formData.amenity.is_non_member_child
-                  }
-                  value={formData.amenity.non_member_price_child || ""}
-                  onChange={(e) =>
-                    handlePriceChange("non_member_price_child", e.target.value)
-                  }
-                  className="border border-gray-400 rounded p-2 outline-none"
-                  placeholder="₹100"
-                />
-              </div>
+    <input
+      type="text"
+      disabled={
+        !formData.non_member || !formData.is_non_member_child
+      }
+      value={formData.non_member_price_child || ""}
+      onChange={(e) =>
+        handlePriceChange("non_member_price_child", e.target.value)
+      }
+      className="border border-gray-400 rounded p-2 outline-none"
+      placeholder="₹100"
+    />
+  </div>
 
-              <div>
-                <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
+              {/* <div> */}
+                {/* <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
                   <div className="grid grid-cols-2 gap-x-4 text-sm">
                     <label className="flex items-center gap-2">
                       <input
@@ -1019,8 +1247,8 @@ const EditAmenitySetup = () => {
                       Complimentary
                     </label>
                   </div>
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
             </div>
 
             {/* Guest Section */}
@@ -1086,7 +1314,7 @@ const EditAmenitySetup = () => {
                 />
               </div>
               <div>
-                <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
+                {/* <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
                   <div className="grid grid-cols-2 gap-x-4 text-sm">
                     <label className="flex items-center gap-2">
                       <input
@@ -1128,7 +1356,7 @@ const EditAmenitySetup = () => {
                       Complimentary
                     </label>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -1197,7 +1425,7 @@ const EditAmenitySetup = () => {
                 />
               </div>
               <div>
-                <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
+                {/* <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
                   <div className="grid grid-cols-2 gap-x-4 text-sm">
                     <label className="flex items-center gap-2">
                       <input
@@ -1239,7 +1467,7 @@ const EditAmenitySetup = () => {
                       Complimentary
                     </label>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -1361,36 +1589,36 @@ const EditAmenitySetup = () => {
               <input
                 type="text"
                 name="advance_days"
-                value={formData?.amenity?.advance_booking[1]?.days}
-                onBlur={validateInput} // Validate on losing focus
+                value={formData?.amenity?.advance_days || ""}
+                onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Day"
-                maxLength="2" // Restrict input to a maximum of 2 characters
+                maxLength="2"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
                 type="text"
                 name="advance_hours"
-                value={formData.amenity.advance_booking[1]?.hours}
-                onBlur={validateInput} // Validate on losing focus
+                value={formData.amenity.advance_hours || ""}
+                onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Hour"
-                maxLength="2" // Restrict input to a maximum of 2 characters
+                maxLength="2"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
                 type="text"
                 name="advance_mins"
-                value={formData.amenity.advance_booking[1]?.minutes}
-                onBlur={validateInput} // Validate on losing focus
+                value={formData.amenity.advance_mins || ""}
+                onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Mins"
-                maxLength="2" // Restrict input to a maximum of 2 characters
+                maxLength="2"
               />
             </div>
           </div>
@@ -1410,139 +1638,150 @@ const EditAmenitySetup = () => {
               <input
                 type="text"
                 name="cancel_before_days"
-                value={formData.amenity.cancel_before[1]?.days}
-                onBlur={validateInput} // Validate on losing focus
+                value={formData.amenity.cancel_before_days || ""}
+                onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Day"
-                maxLength="2" // Restrict input to a maximum of 2 characters
+                maxLength="2"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
                 type="text"
                 name="cancel_before_hours"
-                value={formData.amenity.cancel_before[1]?.hours}
-                onBlur={validateInput} // Validate on losing focus
+                value={formData.amenity.cancel_before_hours || ""}
+                onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Hour"
-                maxLength="2" // Restrict input to a maximum of 2 characters
+                maxLength="2"
               />
             </div>
             <div className="flex justify-center my-2 w-full">
               <input
                 type="text"
                 name="cancel_before_mins"
-                value={formData.amenity.cancel_before[1]?.minutes}
-                onBlur={validateInput} // Validate on losing focus
+                value={formData.amenity.cancel_before_mins || ""}
+                onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
                 placeholder="Mins"
-                maxLength="2" // Restrict input to a maximum of 2 characters
+                maxLength="2"
               />
             </div>
           </div>
         </div>
         {/* Booking Rule */}
         <div className="border rounded-md mt-6">
-          <div className="bg-gray-100 px-4 py-2 font-semibold text-gray-700 border-b">
-            Booking Rule
-          </div>
-
-          {rules.map((rule, index) => (
-            <div
-              key={rule.id}
-              className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
-            >
-              {/* Checkbox */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={rule.enabled || false}
-                  onChange={(e) =>
-                    handleChange1(rule.id, "enabled", e.target.checked)
-                  }
-                  className="w-4 h-4"
-                />
-                <span className="text-sm">Facility can be Booked</span>
-              </div>
-
-              {/* Times Input */}
-              <input
-                type="number"
-                placeholder="Enter"
-                value={rule.times || ""}
-                onChange={(e) =>
-                  handleChange1(rule.id, "times", e.target.value)
-                }
-                className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
-              />
-
-              {/* Select Slots For */}
-              <select
-                value={rule.type || ""}
-                onChange={(e) =>
-                  handleChange1(rule.id, "type", e.target.value)
-                }
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="">Select Slots For</option>
-                <option value="Day">Day</option>
-                <option value="Week">Week</option>
-                <option value="Month">Month</option>
-                <option value="Year">Year</option>
-              </select>
-
-              {/* Prime Time Label */}
-              <span className="text-sm font-medium text-gray-700">
-                Prime Time
-              </span>
-
-              {/* Prime Time Editable Input */}
-              <input
-                type="text"
-                value={rule.primeTime || ""}
-                onChange={(e) =>
-                  handleChange1(rule.id, "primeTime", e.target.value)
-                }
-                placeholder="e.g. 6:00 AM - 10:00AM / 5:00 PM - 8:00PM"
-                className="border border-gray-300 bg-gray-50 rounded px-3 py-1 text-sm w-[300px]"
-              />
-
-              {/* Sub Facility */}
-              <div className="flex items-center gap-2">
-                {/* <input
-                  type="checkbox"
-                  checked={subFacilityAvailable}
-                  onChange={(e) => setSubFacilityAvailable(e.target.checked)}
-                /> */}
-                <span className="text-sm">Sub Facility</span>
-              </div>
-
-              {/* Delete Button (shown for all rows) */}
-              {rules.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveRule(rule.id)}
-                  className="text-red-500 hover:text-red-700 ml-auto"
-                  title="Remove rule"
-                >
-                  <FaTrash size={14} />
-                </button>
-              )}
-            </div>
-          ))}
-
-          {/* Add Button */}
-          <button
-            type="button"
-            onClick={handleAddRule}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm mx-4 mt-3 mb-3"
-          >
-            Add
-          </button>
-        </div>
+                  <div className="bg-gray-100 px-4 py-2 font-semibold text-gray-700 border-b">
+                    Booking Rule
+                  </div>
+        
+                  {rules.map((rule, index) => (
+                    <div
+                      key={rule.id}
+                      className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
+                    >
+                      {/* Checkbox */}
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={rule.enabled || false}
+                          onChange={(e) =>
+                            handleChange2(rule.id, "enabled", e.target.checked)
+                          }
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">Facility can be Booked</span>
+                      </div>
+        
+                      {/* Times Input */}
+                      <input
+                        type="number"
+                        placeholder="Enter"
+                        value={rule.times || ""}
+                        onChange={(e) =>
+                          handleChange2(rule.id, "times", e.target.value)
+                        }
+                        className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
+                      />
+                      {/* Select Time per day */}
+                      <span className="text-sm">times per day by </span>
+                      <select
+                        value={rule.level || ""}
+                        onChange={(e) => handleChange2(rule.id, "level", e.target.value)}
+                        className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
+                      >
+                        <option value="">Select</option>
+                        <option value="user">User</option>
+                        <option value="flat">Flat</option>
+                        <option value="owner">Owner</option>
+                        <option value="tenant">Tenant</option>
+                      </select>
+        
+                      {/* Select Period */}
+                      <select
+                        value={rule.period_type || ""}
+                        onChange={(e) => handleChange2(rule.id, "period_type", e.target.value)}
+                        className="border border-gray-300 rounded px-2 py-1 text-sm"
+                      >
+                        <option value="">Select Slots For</option>
+                        <option value="Day">Day</option>
+                        <option value="Week">Week</option>
+                        <option value="Month">Month</option>
+                        <option value="Year">Year</option>
+                      </select>
+        
+                      {/* Prime Time Label */}
+                      <span className="text-sm font-medium text-gray-700">
+                        Prime Time
+                      </span>
+        
+                      {/* Prime Time Editable Input */}
+                      <input
+                        type="text"
+                        value={rule.primeTime || ""}
+                        onChange={(e) =>
+                          handleChange2(rule.id, "primeTime", e.target.value)
+                        }
+                        placeholder="e.g. 6:00 AM - 10:00AM / 5:00 PM - 8:00PM"
+                        className="border border-gray-300 bg-gray-50 rounded px-3 py-1 text-sm w-[300px]"
+                      />
+        
+                      {/* Sub Facility */}
+                      <div className="flex items-center gap-2">
+                        {/* <input
+                                  type="checkbox"
+                                  checked={subFacilityAvailable}
+                                  onChange={(e) => setSubFacilityAvailable(e.target.checked)}
+                                /> */}
+                        <span className="text-sm">Sub Facility</span>
+                      </div>
+        
+                      {/* Delete Button (shown for all rows) */}
+                      {rules.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRule(rule.id)}
+                          className="text-red-500 hover:text-red-700 ml-auto"
+                          title="Remove rule"
+                        >
+                          <FaTrash size={14} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+        
+                  {/* Add Button */}
+                  <button
+                    type="button"
+                    onClick={handleAddRule}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm mx-4 mt-3 mb-3"
+                  >
+                    Add
+                  </button>
+                </div>
 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
   {/* ================= COVER IMAGES ================= */}
@@ -1887,6 +2126,56 @@ const EditAmenitySetup = () => {
         </div> */}
 
         <div></div>
+         <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
+        <div className="border rounded mt-3">
+
+          {/* Header */}
+          <div className="grid grid-cols-4 bg-gradient-to-r from-purple-600 to-orange-400 text-white p-2 font-semibold">
+            <div></div>
+            <div>Day</div>
+            <div>Start</div>
+            <div>End</div>
+          </div>
+
+          {/* Rows */}
+          {days.map((day, index) => (
+            <div
+              key={day.day_of_week}
+              className="grid grid-cols-4 items-center border-b p-2"
+            >
+              {/* Checkbox */}
+              <input
+                type="checkbox"
+                checked={day.is_active}
+                onChange={() => handleCheck(index)}
+              />
+
+              {/* Day */}
+              <div>{day.label}</div>
+
+              {/* Start Time */}
+              <input
+                type="time"
+                value={day.start_time}
+                disabled={!day.is_active}
+                onChange={(e) =>
+                  handleTimeChange1(index, "start_time", e.target.value)
+                }
+              />
+
+              {/* End Time */}
+              <input
+                type="time"
+                value={day.end_time}
+                disabled={!day.is_active}
+                onChange={(e) =>
+                  handleTimeChange1(index, "end_time", e.target.value)
+                }
+              />
+            </div>
+          ))}
+        </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <div className="flex flex-col mt-4">
