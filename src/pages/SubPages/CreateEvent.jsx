@@ -241,11 +241,11 @@ const CreateEvent = () => {
       if (formData.event_images && formData.event_images.length > 0) {
         formData.event_images.forEach((file) => {
           formDataSend.append("event[event_images][]", file);
-=======
           if (file instanceof File) {
             formDataSend.append("event[event_images][]", file);
           server
-        });
+        }
+      });
       }
       console.log("Images before upload:", formData.event_images);
 
@@ -314,17 +314,17 @@ const CreateEvent = () => {
     });
   };
 
-  const handleSelectEdit = (selectedOption) => {
-    setSelectedMembers(selectedOption); // Update state for selected members
+  // const handleSelectEdit = (selectedOption) => {
+  //   setSelectedMembers(selectedOption); // Update state for selected members
 
-    const selectedUserIds = selectedOption.map((option) => option.value); // Extract user IDs
-    console.log("akshay", selectedUserIds);
+  //   const selectedUserIds = selectedOption.map((option) => option.value); // Extract user IDs
+  //   console.log("akshay", selectedUserIds);
 
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      user_ids: selectedUserIds.join(","), // Store user IDs as a comma-separated string
-    }));
-  };
+  //   setFormData((prevFormData) => ({
+  //     ...prevFormData,
+  //     user_ids: selectedUserIds.join(","), // Store user IDs as a comma-separated string
+  //   }));
+  // };
 
   return (
     <section className="flex">

@@ -447,13 +447,10 @@ const AddUser = () => {
               </div>
 
               <div>
-<<<<<<< HEAD
                 <label className="text-sm font-medium block mb-1">Unit No *</label>
-=======
                 <label className="text-sm font-medium block mb-1">
                   Unit ID *
                 </label>
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
 
                 <select
                   className="w-full border border-gray-300 rounded-md px-3 py-2"

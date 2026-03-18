@@ -327,6 +327,9 @@ const dateFormat = (date) => {
 
   const handleApplyFilters = () => {
     setCurrentPage(1);
+    setApprovalPage(1);
+    setHistoryPage(1);
+    setRefetchTrigger((prev) => prev + 1);
   };
 
  const handleClearFilters = () => {
@@ -334,6 +337,8 @@ const dateFormat = (date) => {
   setFilterDateTo("");
   setFilterMobile("");
   setFilterHost("");
+  setFilterBuilding("");
+  setFilterApproval("");
 
   setHistoryDateFrom("");
   setHistoryDateTo("");
@@ -341,6 +346,9 @@ const dateFormat = (date) => {
   setHistoryStatus("");
 
   setCurrentPage(1);
+  setApprovalPage(1);
+  setHistoryPage(1);
+  setRefetchTrigger((prev) => prev + 1);
 };
 
 
@@ -434,6 +442,11 @@ useEffect(() => {
         if (filterDateTo) filters.dateTo = filterDateTo;
         if (filterMobile) filters.mobile = filterMobile;
         if (filterHost) filters.host = filterHost;
+        if (filterBuilding) filters.building_id = filterBuilding;
+        if (filterApproval) {
+          if (filterApproval === "approved") filters.skip_host_approval = true;
+          else if (filterApproval === "denied") filters.skip_host_approval = false;
+        }
 
         const visitorResp = await getExpectedVisitor(
           currentPage,
@@ -673,6 +686,8 @@ const res = await getVisitorHistory(
   filterDateTo,
   filterMobile,
   filterHost,
+  filterBuilding,
+  filterApproval,
 
   // ✅ ADD THESE
   historyDateFrom,
@@ -1164,12 +1179,12 @@ const handleSearchAll = (e) => {
     { name: "Name", selector: (row) => row.name, sortable: true },
     {
       name: "Check in",
-      selector: (row) => (row.intime ? dateTimeFormat(row.intime) : ""),
+      selector: (row) => (row.in_time ? dateTimeFormat(row.in_time) : ""),
       sortable: true,
     },
     {
       name: "Check out",
-      selector: (row) => (row.outtime ? dateTimeFormat(row.outtime) : null),
+      selector: (row) => (row.out_time ? dateTimeFormat(row.out_time) : null),
       sortable: true,
     },
   ];
@@ -1544,7 +1559,6 @@ data={
             )}
           </div>
         </div>
-        {/* ================= FILTER DRAWER POPUP ================= */}
        {/* ================= FILTER DRAWER POPUP ================= */}
 {showFilters && (
   <>
@@ -1574,15 +1588,23 @@ data={
         <div className="flex gap-2">
           <input
             type="date"
-            value={historyDateFrom}
-            onChange={(e) => setHistoryDateFrom(e.target.value)}
+            value={page === "History" ? historyDateFrom : filterDateFrom}
+            onChange={(e) =>
+              page === "History"
+                ? setHistoryDateFrom(e.target.value)
+                : setFilterDateFrom(e.target.value)
+            }
             className="border p-2 rounded-md w-full"
           />
 
           <input
             type="date"
-            value={historyDateTo}
-            onChange={(e) => setHistoryDateTo(e.target.value)}
+            value={page === "History" ? historyDateTo : filterDateTo}
+            onChange={(e) =>
+              page === "History"
+                ? setHistoryDateTo(e.target.value)
+                : setFilterDateTo(e.target.value)
+            }
             className="border p-2 rounded-md w-full"
           />
         </div>
@@ -1597,8 +1619,12 @@ data={
         <input
           type="text"
           placeholder="Enter mobile number"
-          value={historyMobile}
-          onChange={(e) => setHistoryMobile(e.target.value)}
+          value={page === "History" ? historyMobile : filterMobile}
+          onChange={(e) =>
+            page === "History"
+              ? setHistoryMobile(e.target.value)
+              : setFilterMobile(e.target.value)
+          }
           className="border p-2 rounded-md w-full"
         />
       </div>
@@ -1631,8 +1657,12 @@ data={
         </label>
 
         <select
-          value={historyStatus}
-          onChange={(e) => setHistoryStatus(e.target.value)}
+          value={page === "History" ? historyStatus : filterApproval}
+          onChange={(e) =>
+            page === "History"
+              ? setHistoryStatus(e.target.value)
+              : setFilterApproval(e.target.value)
+          }
           className="border p-2 rounded-md w-full"
         >
           <option value="">All</option>
@@ -1670,10 +1700,3 @@ data={
 };
 
 export default VisitorPage;
-
-
-
-
-
-
-

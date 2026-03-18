@@ -3105,6 +3105,13 @@ export const getExpectedVisitor = async (
     params["q[host_user_firstname_or_host_user_lastname_cont]"] = filters.host;
   }
 
+  // Support direct q[...] object keys from VisitorFilters
+  Object.keys(filters).forEach((key) => {
+    if (key.startsWith("q[")) {
+      params[key] = filters[key];
+    }
+  });
+
   return axiosInstance.get(`/visitors.json`, { params });
 };
 
@@ -3353,6 +3360,63 @@ export const getVisitorAlertConfig = async () =>
 
 export const updateVisitorAlertConfig = async (data) =>
   axiosInstance.post("/visitor_alert_config.json", data, {
+    params: {
+      token: token,
+    },
+  });
+
+  export const getVisitorByNumber = async (mobile) =>
+  axiosInstance.get("/visitors/get_visitor.json", {
+    params: {
+      mobile: mobile,
+      token: token,
+    },
+  });
+
+  export const getSetupUsersByBuilding = async (type, building_id) =>
+  axiosInstance.get("users/user_dropdown.json", {
+    params: {
+      token: token,
+      type,
+      building_id,
+    },
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+  });
+
+  export const getSetupUsersByFloor = async (type, floor_id) =>
+  axiosInstance.get("users/user_dropdown.json", {
+    params: {
+      token: token,
+      type,
+      floor_id,
+    },
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+  });
+
+  export const getSetupUsersByUnit = async (type, unit_id) =>
+  axiosInstance.get("users/user_dropdown.json", {
+    params: {
+      token: token,
+      type,
+      unit_id,
+    },
+    headers: {
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+  });
+
+  export const getVisitorPurposes = async () =>
+  axiosInstance.get(`/generic_infos.json?q[info_type_eq]=VisitorPurpose`, {
     params: {
       token: token,
     },
