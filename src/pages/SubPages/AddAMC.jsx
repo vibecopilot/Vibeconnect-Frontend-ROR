@@ -1,28 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { getVendors, getSiteAsset, getSoftServices, postAMC } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const AddAMC = () => {
+  const navigate = useNavigate();
   const [amcFor, setAmcFor] = useState("asset");
-<<<<<<< HEAD
+
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   const formattedDate = `${year}-${month}-${day}`;
-=======
-  // const today = new Date();
-  // const year = today.getFullYear();
-  // const month = String(today.getMonth() + 1).padStart(2, "0");
-  // const day = String(today.getDate()).padStart(2, "0");
-  // const formattedDate = `${year}-${month}-${day}`;
+
   const [vendors, setVendors] = useState([]);
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
-   const [contactFiles, setContactFiles] = useState([]);
+  const [contactFiles, setContactFiles] = useState([]);
   const [invoiceFiles, setInvoiceFiles] = useState([]);
-    const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
 
-  
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   const [formData, setFormData] = useState({
     asset: "",
     service: "",
@@ -33,15 +32,6 @@ const AddAMC = () => {
   });
 
   const handleChange = (e) => {
-<<<<<<< HEAD
-  const { name, value } = e.target;
-
-  setFormData((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
-=======
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -60,7 +50,7 @@ const AddAMC = () => {
     }
   };
 
-   const fetchVendors = async () => {
+  const fetchVendors = async () => {
     try {
       const siteId = getItemInLocalStorage("SITEID");
       if (!siteId) return;
@@ -182,7 +172,6 @@ const AddAMC = () => {
       toast.error("Failed to Save AMC");
     }
   };
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   return (
     <section>
       <div className="m-2">

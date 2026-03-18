@@ -1,8 +1,79 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiShield, FiFileText, FiHome } from "react-icons/fi";
-import { getPublicSurvey, createPublicSurveyResponse } from "../../../api";
-import StarRating from "./AddStarField";
+import {
+  FiShield, FiFileText, FiHome, FiDroplet, FiTool,
+  FiHeart, FiMessageSquare, FiStar, FiClipboard,
+  FiUsers, FiSettings, FiCheckCircle,
+} from "react-icons/fi";
+import { FaStar } from "react-icons/fa";
+import { IoSend } from "react-icons/io5";
+import { getPublicSurvey, createPublicSurveyResponse, domainPrefix } from "../../../api";
+
+/* ── Star-rating widget ── */
+function StarRatingInput({ rating = 0, onRatingChange, scale = 5 }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex gap-1.5">
+      {Array.from({ length: scale }, (_, i) => i + 1).map((n) => (
+        <button
+          key={n}
+          type="button"
+          onMouseEnter={() => setHovered(n)}
+          onMouseLeave={() => setHovered(0)}
+          onClick={() => onRatingChange(n)}
+          className="focus:outline-none transition-transform hover:scale-110 active:scale-95"
+        >
+          <FaStar
+            size={26}
+            className={`transition-colors ${n <= (hovered || rating) ? "text-yellow-400" : "text-gray-300"}`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ── Icon + colour palette per question index ── */
+const ICON_PALETTE = [
+  { Icon: FiShield, bg: "bg-purple-100", text: "text-purple-600" },
+  { Icon: FiClipboard, bg: "bg-blue-100", text: "text-blue-600" },
+  { Icon: FiHome, bg: "bg-emerald-100", text: "text-emerald-600" },
+  { Icon: FiDroplet, bg: "bg-cyan-100", text: "text-cyan-600" },
+  { Icon: FiTool, bg: "bg-orange-100", text: "text-orange-600" },
+  { Icon: FiStar, bg: "bg-amber-100", text: "text-amber-600" },
+  { Icon: FiSettings, bg: "bg-slate-100", text: "text-slate-600" },
+  { Icon: FiHeart, bg: "bg-rose-100", text: "text-rose-600" },
+  { Icon: FiMessageSquare, bg: "bg-indigo-100", text: "text-indigo-600" },
+  { Icon: FiUsers, bg: "bg-teal-100", text: "text-teal-600" },
+  { Icon: FiCheckCircle, bg: "bg-lime-100", text: "text-lime-600" },
+  { Icon: FiFileText, bg: "bg-pink-100", text: "text-pink-600" },
+];
+const getIconStyle = (idx) => ICON_PALETTE[idx % ICON_PALETTE.length];
+
+/* ── Category label from question title keywords ── */
+const CATEGORY_KEYWORDS = [
+  { keywords: ["security", "guard", "cctv", "surveillance"], label: "SECURITY" },
+  { keywords: ["facility", "facilities", "lobby", "atrium", "building", "elevator", "lift", "parking"], label: "FACILITIES" },
+  { keywords: ["hygiene", "clean", "housekeep", "washroom", "sanit", "janitor"], label: "HYGIENE" },
+  { keywords: ["staff", "courtesy", "professionalism", "employee", "personnel"], label: "STAFF" },
+  { keywords: ["service", "reception", "front desk", "concierge", "helpdesk"], label: "SERVICES" },
+  { keywords: ["plumb", "electric", "hvac", "air condition", "maintenance", "repair"], label: "MAINTENANCE" },
+  { keywords: ["comment", "suggestion", "feedback", "additional", "general", "other"], label: "GENERAL" },
+];
+const getCategoryFromTitle = (title) => {
+  const lower = (title || "").toLowerCase();
+  for (const { keywords, label } of CATEGORY_KEYWORDS) {
+    if (keywords.some((kw) => lower.includes(kw))) return label;
+  }
+  return "DETAILS";
+};
+const getQuestionCategory = (q) => {
+  const fromTitle = getCategoryFromTitle(q.q_title);
+  if (fromTitle !== "DETAILS") return fromTitle;
+  if (q.question_type === "rating" || q.question_type === "scale") return "RATING";
+  if (q.question_type === "text") return "FEEDBACK";
+  return "DETAILS";
+};
 
 function TakeSurvey() {
   const { id } = useParams();
@@ -21,10 +92,7 @@ function TakeSurvey() {
   const [contactDetails, setContactDetails] = useState("");
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+    if (!id) { setLoading(false); return; }
     getPublicSurvey(id)
       .then((res) => setSurvey(res.data))
       .catch((err) => {
@@ -41,20 +109,16 @@ function TakeSurvey() {
     if (q.question_type === "multiple_choice") return Array.isArray(v) && v.length > 0;
     return v !== undefined && v !== null && v !== "";
   }).length;
-  const percentage = total ? (answeredCount / total) * 100 : 0;
 
-  const setAnswer = (questionId, value) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
-  };
-
-  const setMultiAnswer = (questionId, optionLabel, checked) => {
-    setAnswers((prev) => {
-      const arr = prev[questionId] || [];
-      const next = checked ? [...arr, optionLabel] : arr.filter((x) => x !== optionLabel);
-      return { ...prev, [questionId]: next };
+  const setAnswer = (qid, val) => setAnswers((p) => ({ ...p, [qid]: val }));
+  const setMultiAnswer = (qid, label, checked) => {
+    setAnswers((p) => {
+      const arr = p[qid] || [];
+      return { ...p, [qid]: checked ? [...arr, label] : arr.filter((x) => x !== label) };
     });
   };
 
+  /* ── Submit ── */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!id || !survey) return;
@@ -68,7 +132,10 @@ function TakeSurvey() {
           attrs.text_value = typeof v === "string" ? v : "";
         } else if (q.question_type === "rating" || q.question_type === "scale") {
           attrs.numeric_value = v != null ? Number(v) : null;
-        } else if ((q.question_type === "single_choice" || q.question_type === "multiple_choice") && q.options?.length) {
+        } else if (
+          (q.question_type === "single_choice" || q.question_type === "multiple_choice") &&
+          q.options?.length
+        ) {
           const optionIds = q.options
             .filter((o) => (Array.isArray(v) ? v.includes(o.label) : v === o.label))
             .map((o) => o.id);
@@ -81,17 +148,27 @@ function TakeSurvey() {
       await createPublicSurveyResponse(id, {
         survey_response: {
           user_id: null,
+          company_name: companyName.trim(),
+          floor_unit: floorUnit.trim(),
+          feedback_date: feedbackDate || null,
+          feedback_given_by: feedbackGivenBy.trim(),
+          contact_details: contactDetails.trim(),
           survey_answers_attributes,
         },
       });
       navigate(`/survey/${id}/thank-you`, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.errors ? Object.values(err.response.data.errors).flat().join(" ") : "Failed to submit. Please try again.");
+      setError(
+        err.response?.data?.errors
+          ? Object.values(err.response.data.errors).flat().join(" ")
+          : "Failed to submit. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
+  /* ── Render question input ── */
   const renderQuestionInput = (q) => {
     const opts = q.options || [];
     const value = answers[q.id];
@@ -99,49 +176,42 @@ function TakeSurvey() {
     switch (q.question_type) {
       case "single_choice":
         return (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
             {opts.map((opt) => (
               <label
                 key={opt.id || opt.label}
-                className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  value === opt.label ? "bg-violet-50 border-violet-500 border-2" : "border-gray-200 hover:border-gray-300"
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
+                  value === opt.label
+                    ? "bg-violet-50 border-violet-400 shadow-sm"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                 }`}
               >
-                <input
-                  type="radio"
-                  name={`q-${q.id}`}
-                  value={opt.label}
-                  checked={value === opt.label}
-                  onChange={() => setAnswer(q.id, opt.label)}
-                  className="sr-only"
-                />
+                <input type="radio" name={`q-${q.id}`} value={opt.label} checked={value === opt.label} onChange={() => setAnswer(q.id, opt.label)} className="sr-only" />
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${value === opt.label ? "border-violet-600" : "border-gray-400"}`}>
                   {value === opt.label && <div className="w-2.5 h-2.5 bg-violet-600 rounded-full" />}
                 </div>
-                <span>{opt.label}</span>
+                <span className="text-sm text-gray-700">{opt.label}</span>
               </label>
             ))}
           </div>
         );
+
       case "multiple_choice":
         return (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
             {opts.map((opt) => {
               const arr = Array.isArray(value) ? value : [];
               const checked = arr.includes(opt.label);
               return (
                 <label
                   key={opt.id || opt.label}
-                  className={`flex items-center gap-2 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    checked ? "bg-violet-50 border-violet-500 border-2" : "border-gray-200 hover:border-gray-300"
+                  className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
+                    checked
+                      ? "bg-violet-50 border-violet-400 shadow-sm"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => setMultiAnswer(q.id, opt.label, e.target.checked)}
-                    className="sr-only"
-                  />
+                  <input type="checkbox" checked={checked} onChange={(e) => setMultiAnswer(q.id, opt.label, e.target.checked)} className="sr-only" />
                   <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${checked ? "border-violet-600 bg-violet-600" : "border-gray-400"}`}>
                     {checked && (
                       <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -149,246 +219,260 @@ function TakeSurvey() {
                       </svg>
                     )}
                   </div>
-                  <span>{opt.label}</span>
+                  <span className="text-sm text-gray-700">{opt.label}</span>
                 </label>
               );
             })}
           </div>
         );
+
       case "rating":
-  return (
-    <StarRating
-      rating={value || 0}
-      onRatingChange={(val) => setAnswer(q.id, val)}
-      scale={5}
-    />
-  );
+        return <StarRatingInput rating={value || 0} onRatingChange={(val) => setAnswer(q.id, val)} scale={5} />;
 
-case "scale": {
-  const min = q.min_value ?? 0;
-  const max = q.max_value ?? 10;
-  const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+      case "scale": {
+        const min = q.min_value ?? 0;
+        const max = q.max_value ?? 10;
+        const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+        return (
+          <div className="flex flex-wrap gap-2">
+            {range.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setAnswer(q.id, n)}
+                className={`min-w-[2.5rem] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                  value === n
+                    ? "bg-violet-600 text-white border-violet-600"
+                    : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
+                }`}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        );
+      }
 
-  return (
-    <div className="flex flex-wrap gap-2">
-      {range.map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => setAnswer(q.id, n)}
-          className={`min-w-[2.5rem] px-3 py-2 rounded-lg border font-medium transition-colors ${
-            value === n
-              ? "bg-violet-600 text-white border-violet-600"
-              : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
-          }`}
-        >
-          {n}
-        </button>
-      ))}
-    </div>
-  );
-}
       case "text":
       default:
         return (
           <textarea
-            className="w-full min-w-[180px] max-w-md px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 placeholder:text-gray-400"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500 placeholder:text-gray-400 text-sm resize-none"
             placeholder="Share your thoughts..."
             value={value ?? ""}
             onChange={(e) => setAnswer(q.id, e.target.value)}
-            rows={2}
+            rows={3}
           />
         );
     }
   };
 
+  /* ── Loading / Error states ── */
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <p className="text-gray-600">Loading survey…</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-3 border-violet-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-500 text-sm">Loading survey...</p>
+        </div>
       </div>
     );
   }
   if (!id || error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-md text-center">
-          <p className="text-gray-700">{error || "Survey not found."}</p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 max-w-md text-center">
+          <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FiShield className="w-7 h-7 text-red-400" />
+          </div>
+          <p className="text-gray-700 font-medium">{error || "Survey not found."}</p>
           <p className="text-sm text-gray-500 mt-2">The link may be invalid or the survey may no longer be available.</p>
         </div>
       </div>
     );
   }
-  if (!survey) {
-    return null;
-  }
-
-  const accentColor = survey?.background_color || "#7C3AED";
+  if (!survey) return null;
+  const accentColor = "#7C3AED";
   const defaultFieldsCount = 5;
   const totalWithDefaults = total + defaultFieldsCount;
   const defaultFieldsFilled = [
-    !!companyName.trim(),
-    !!floorUnit.trim(),
-    !!feedbackDate,
-    !!feedbackGivenBy.trim(),
-    !!contactDetails.trim(),
+    !!companyName.trim(), !!floorUnit.trim(), !!feedbackDate, !!feedbackGivenBy.trim(), !!contactDetails.trim(),
   ].filter(Boolean).length;
   const progressCompleted = defaultFieldsFilled + answeredCount;
   const progressTotal = totalWithDefaults;
   const progressPct = progressTotal ? (progressCompleted / progressTotal) * 100 : 0;
 
-  const getQuestionIcon = (q) => {
-    if (q.question_type === "text") return FiFileText;
-    if (q.question_type === "rating" || q.question_type === "scale") return FiShield;
-    return FiHome;
-  };
-
-  const getQuestionCategory = (q) => {
-    if (q.question_type === "rating" || q.question_type === "scale") return "RATING";
-    if (q.question_type === "text") return "FEEDBACK";
-    return "DETAILS";
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Purple header banner */}
+    <div
+      className="min-h-screen pb-10"
+      style={{
+        background: survey.background_image
+          ? `url(${domainPrefix + survey.background_image}) center/cover fixed no-repeat`
+          : "linear-gradient(to bottom, #f3f4f6, #f9fafb)",
+      }}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-5">
+
+        {/* ── Header Banner ── */}
         <div
-          className="rounded-2xl px-8 py-10 text-center text-white shadow-sm overflow-hidden relative"
+          className="rounded-2xl px-6 sm:px-10 py-10 sm:py-14 text-center text-white shadow-lg overflow-hidden relative"
           style={{
             background: `linear-gradient(135deg, ${accentColor}, #a855f7)`,
           }}
         >
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            {survey.survey_title}
-          </h1>
-          {survey.description && (
-            <p className="mt-1.5 text-sm sm:text-base text-violet-100">
-              {survey.description}
-            </p>
-          )}
+          {/* Decorative circles */}
+          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
+          <div className="absolute top-6 right-12 w-16 h-16 rounded-full bg-white/5 pointer-events-none" />
+
+          <div className="relative z-10">
+            {survey.client_logo && (
+              <img src={domainPrefix + survey.client_logo} alt="Logo" className="h-10 sm:h-12 mx-auto mb-4 object-contain drop-shadow" />
+            )}
+            {survey.header_image && (
+              <img src={domainPrefix + survey.header_image} alt="Header" className="max-h-20 sm:max-h-24 mx-auto mb-4 object-contain rounded-lg" />
+            )}
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{survey.survey_title}</h1>
+            {survey.description && (
+              <p className="mt-2 text-sm sm:text-base text-white/80 max-w-lg mx-auto">{survey.description}</p>
+            )}
+            {survey.header_text && (
+              <p className="mt-2 text-xs sm:text-sm text-white/60">{survey.header_text}</p>
+            )}
+          </div>
         </div>
 
-        {/* Progress bar card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <span className="text-base font-medium text-gray-800">Your Progress</span>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium" style={{ color: accentColor }}>
+        {/* ── Progress Bar ── */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold text-gray-800">Your Progress</span>
+            <span className="text-sm font-semibold" style={{ color: accentColor }}>
               {progressCompleted} of {progressTotal} completed
             </span>
-            <div className="w-24 sm:w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div
-                className="h-full transition-all duration-300 rounded-full"
-                style={{ width: `${progressPct}%`, backgroundColor: accentColor }}
-              />
-            </div>
+          </div>
+          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full transition-all duration-500 ease-out rounded-full"
+              style={{ width: `${progressPct}%`, background: `linear-gradient(90deg, ${accentColor}, #a855f7)` }}
+            />
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Default client details card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                <FiFileText className="w-5 h-5 text-gray-500" />
+          {/* ── Client Details ── */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center shrink-0">
+                <FiFileText className="w-5 h-5 text-violet-600" />
               </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Client details</span>
-                <p className="text-base font-medium text-gray-800 mt-0.5">Contact & Feedback Information</p>
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-violet-600">Client Details</span>
+                <p className="text-sm font-semibold text-gray-800">Contact & Feedback Information</p>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Company name</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  placeholder="Enter company name"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                />
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Company name</label>
+                <input type="text" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" placeholder="Enter company name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Floor / Unit</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  placeholder="Enter floor or unit"
-                  value={floorUnit}
-                  onChange={(e) => setFloorUnit(e.target.value)}
-                />
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Floor / Unit</label>
+                <input type="text" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" placeholder="Enter floor or unit" value={floorUnit} onChange={(e) => setFloorUnit(e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Feedback date</label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  value={feedbackDate}
-                  onChange={(e) => setFeedbackDate(e.target.value)}
-                />
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Feedback date</label>
+                <input type="date" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" value={feedbackDate} onChange={(e) => setFeedbackDate(e.target.value)} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Feedback given by (name)</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  placeholder="Enter name"
-                  value={feedbackGivenBy}
-                  onChange={(e) => setFeedbackGivenBy(e.target.value)}
-                />
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Feedback given by (name)</label>
+                <input type="text" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" placeholder="Enter name" value={feedbackGivenBy} onChange={(e) => setFeedbackGivenBy(e.target.value)} />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Contact details</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-violet-500"
-                  placeholder="Phone / email"
-                  value={contactDetails}
-                  onChange={(e) => setContactDetails(e.target.value)}
-                />
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Contact details</label>
+                <input type="text" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" placeholder="Phone / email" value={contactDetails} onChange={(e) => setContactDetails(e.target.value)} />
               </div>
             </div>
           </div>
 
-          {/* Question cards */}
+          {/* ── Question Cards ── */}
           {questions.map((q, idx) => {
-            const Icon = getQuestionIcon(q);
+            const { Icon, bg, text } = getIconStyle(idx);
             const category = getQuestionCategory(q);
             return (
-              <div
-                key={q.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col sm:flex-row sm:items-center gap-4"
-              >
-                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-gray-500" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{category}</span>
-                  <h3 className="text-base font-medium text-gray-800 mt-0.5">
-                    {q.q_title}
-                    {q.required && <span className="text-red-500 ml-1">*</span>}
-                  </h3>
-                </div>
-                <div className="w-full sm:min-w-[200px] sm:max-w-sm flex-shrink-0">
-                  {renderQuestionInput(q)}
+              <div key={q.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 transition-shadow hover:shadow-md">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  {/* Icon */}
+                  <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
+                    <Icon className={`w-5 h-5 ${text}`} />
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <span className={`text-xs font-bold uppercase tracking-wider ${text}`}>{category}</span>
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-800 mt-0.5 leading-snug">
+                      {q.q_title}
+                      {q.required && <span className="text-red-500 ml-1">*</span>}
+                    </h3>
+
+                    {/* Attachment */}
+                    {q.attachments && q.attachments.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {q.attachments.map((att) => {
+                          const url = att.document_url ? domainPrefix + att.document_url : "";
+                          const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
+                          return isImage ? (
+                            <img key={att.id} src={url} alt="attachment" className="max-h-32 sm:max-h-40 rounded-lg border object-cover" />
+                          ) : (
+                            <a key={att.id} href={url} target="_blank" rel="noreferrer" className="text-sm text-violet-600 underline hover:text-violet-800">
+                              View attachment
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Input: below title on mobile, inline on large */}
+                    <div className="mt-4">{renderQuestionInput(q)}</div>
+                  </div>
                 </div>
               </div>
             );
           })}
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-600">{error}</div>
+          )}
 
-          <div className="pt-4 flex justify-center">
+          {/* ── Submit Button ── */}
+          <div className="pt-4 pb-2 flex justify-center">
             <button
               type="submit"
               disabled={submitting}
-              className="px-8 py-3 rounded-xl text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-              style={{ backgroundColor: accentColor }}
+              className="inline-flex items-center gap-2.5 px-10 py-3.5 rounded-xl text-white font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
+              style={{ background: `linear-gradient(135deg, ${accentColor}, #a855f7)` }}
             >
-              {submitting ? "Submitting…" : "Submit"}
+              <IoSend className="w-5 h-5" />
+              {submitting ? "Submitting..." : "Submit Feedback"}
             </button>
           </div>
         </form>
+
+        {/* ── Footer ── */}
+        {(survey.footer_text || survey.footer_image) && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 text-center space-y-3">
+            {survey.footer_image && (
+              <img src={domainPrefix + survey.footer_image} alt="Footer" className="max-h-16 mx-auto object-contain" />
+            )}
+            {survey.footer_text && (
+              <p className="text-sm text-gray-500">{survey.footer_text}</p>
+            )}
+          </div>
+        )}
+
+        {/* Copyright */}
+        <p className="text-center text-xs text-gray-400 pt-2 pb-6">
+          Copyright &copy; 2023-{new Date().getFullYear()} Digielves Tech Wizards Private Limited. All rights reserved
+        </p>
       </div>
     </div>
   );
