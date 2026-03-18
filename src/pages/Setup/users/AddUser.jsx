@@ -447,10 +447,7 @@ const AddUser = () => {
               </div>
 
               <div>
-<<<<<<< HEAD
                 <label className="text-sm font-medium block mb-1">Unit No *</label>
-=======
->>>>>>> 180bca0d33ae7e6277fafadc170e267ccb028fdc
                 <label className="text-sm font-medium block mb-1">
                   Unit ID *
                 </label>
