@@ -75,15 +75,15 @@ const CreateEvent = () => {
         console.log("userSites", unitsRes);
         setUnits(unitsRes.data);
         console.log("usersRes", usersRes);
-       const employeesList = usersRes.data
-  .filter((emp) => emp.user_status === true) // ✅ only active users
-  .map((emp) => ({
-    id: emp.id,
-    name: `${emp.firstname} ${emp.lastname}`,
-    building_id: emp.building_id || emp.building?.id || null,
-    userSites: emp.user_sites || [],
-    building: emp.building || {},
-        }));
+        const employeesList = usersRes.data
+          .filter((emp) => emp.user_status === true) // ✅ only active users
+          .map((emp) => ({
+            id: emp.id,
+            name: `${emp.firstname} ${emp.lastname}`,
+            building_id: emp.building_id || emp.building?.id || null,
+            userSites: emp.user_sites || [],
+            building: emp.building || {},
+          }));
 
         setMembers(employeesList);
         // ✅ important: by default show all, so multi-select has options without clicking Filter
@@ -96,26 +96,26 @@ const CreateEvent = () => {
   }, []);
 
   const handleFilter = () => {
-  const filtered = members.filter((member) => {
-  if (!member.user_status) return false; // ❌ skip inactive users
+    const filtered = members.filter((member) => {
+      if (!member.user_status) return false; // ❌ skip inactive users
 
-  const buildingMatch =
-    selectedUnits.length === 0 ||
-    selectedUnits.some(
-      (unit) =>
-        Number(member.building_id ?? member.building?.id) ===
-        Number(unit.value)
-    );
+      const buildingMatch =
+        selectedUnits.length === 0 ||
+        selectedUnits.some(
+          (unit) =>
+            Number(member.building_id ?? member.building?.id) ===
+            Number(unit.value)
+        );
 
-  const ownershipMatch =
-    !selectedOwnership ||
-    member.userSites.some(
-      (site) =>
-        site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-    );
+      const ownershipMatch =
+        !selectedOwnership ||
+        member.userSites.some(
+          (site) =>
+            site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+        );
 
-  return buildingMatch && ownershipMatch;
-});
+      return buildingMatch && ownershipMatch;
+    });
 
     setFilteredMembers(filtered);
 
@@ -240,13 +240,10 @@ const CreateEvent = () => {
 
       if (formData.event_images && formData.event_images.length > 0) {
         formData.event_images.forEach((file) => {
-          formDataSend.append("event[event_images][]", file);
           if (file instanceof File) {
             formDataSend.append("event[event_images][]", file);
-          server
-        }
-      });
-        
+          }
+        });
       }
       console.log("Images before upload:", formData.event_images);
 
@@ -314,18 +311,6 @@ const CreateEvent = () => {
       [fieldName]: Array.isArray(files) ? files : [files],
     });
   };
-
-  // const handleSelectEdit = (selectedOption) => {
-  //   setSelectedMembers(selectedOption); // Update state for selected members
-
-  //   const selectedUserIds = selectedOption.map((option) => option.value); // Extract user IDs
-  //   console.log("akshay", selectedUserIds);
-
-  //   setFormData((prevFormData) => ({
-  //     ...prevFormData,
-  //     user_ids: selectedUserIds.join(","), // Store user IDs as a comma-separated string
-  //   }));
-  // };
 
   return (
     <section className="flex">
@@ -615,7 +600,7 @@ const CreateEvent = () => {
               </h2>
               <FileInputBox
                 fieldName={"event_images"}
-                handleChange={handleFileAttachment} 
+                handleChange={handleFileAttachment}
                 fileType="image/*"
                 onChange={(e) => handleChange(e.target.files)}
               />
