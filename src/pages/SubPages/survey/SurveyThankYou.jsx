@@ -1,5 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
+//import thankYouImg from "../../assets/images/thankyou.png";
+//import logoImg from "../../assets/images/logo.png";
 
 function SurveyThankYou() {
   const { id } = useParams();
@@ -12,11 +14,26 @@ function SurveyThankYou() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">Thank you</h1>
+        {/* 🔷 LOGO */}
+        //<img
+        // src={logoImg}
+        // alt="Logo"
+        // className="w-28 mx-auto mb-6"
+        />
+        {/*thankyou img */}
+        <img
+        //src={thankYouImg}
+        // alt="Thank You"
+        // className="w-40 mx-auto my-4"
+        />
         <p className="mt-3 text-gray-600">
-          Your response has been submitted successfully. We appreciate you taking the time to complete this survey.
-        </p>
-        {id && (
+          Dear Participant,
+          for taking the time to complete our survey. We truly appreciate your valuable feedback.
+          Your response will help us better understand user experiences and improve our services. We are grateful for your participation and support.
+          If you have any additional comments or suggestions, please feel free to share them with us.
+          ds,Survey Team
+                  </p>
+                  {id && (
           <p className="mt-4 text-sm text-gray-500">
             Survey ID: {id}
           </p>

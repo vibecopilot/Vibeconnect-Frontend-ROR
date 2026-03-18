@@ -29,6 +29,33 @@ function AnalyzeResult() {
   const [loading, setLoading] = useState(!!surveyId);
   const [page, setPage] = useState(1);
 
+  const getRatingSummary = (q) => {
+    const counts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    responses.forEach((r) => {
+      const ans = r.survey_answers?.find(
+        (a) => Number(a.survey_question_id) === Number(q.id)
+      );
+      if (ans?.numeric_value) {
+        const val = Number(ans.numeric_value);
+        if (counts[val] !== undefined) counts[val]++;
+      }
+    });
+
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const avg =
+      total > 0
+        ? (
+          Object.entries(counts).reduce(
+            (sum, [star, count]) => sum + star * count,
+            0
+          ) / total
+        ).toFixed(1)
+        : 0;
+
+    return { counts, total, avg };
+  };
+
   useEffect(() => {
     setPage(1);
     if (!surveyId) {
@@ -103,6 +130,23 @@ function AnalyzeResult() {
   };
 
   const questionStats = getQuestionStats();
+  const overallAvgRating = (() => {
+    let totalSum = 0;
+    let totalCount = 0;
+
+    questionStats.forEach((stat) => {
+      if (stat.question.question_type === "rating") {
+        const { counts } = getRatingSummary(stat.question);
+
+        Object.entries(counts).forEach(([star, count]) => {
+          totalSum += Number(star) * count;
+          totalCount += count;
+        });
+      }
+    });
+
+    return totalCount ? (totalSum / totalCount).toFixed(1) : 0;
+  })();
 
   const totalPages = Math.ceil(responses.length / PER_PAGE) || 1;
   const paginatedResponses = useMemo(() => {
@@ -113,7 +157,7 @@ function AnalyzeResult() {
   const handleDownloadCSV = () => {
     if (!survey?.survey_questions?.length || !responses.length) return;
     const questions = survey.survey_questions;
-    const headers = ["#", "Respondent", "Contact Details" ,"Submitted At", ...questions.map((q) => q.q_title || "Q")];
+    const headers = ["#", "Respondent", "Contact Details", "Submitted At", ...questions.map((q) => q.q_title || "Q")];
     const rows = responses.map((r, i) => {
       const respondent = r.response_by || r.feedback_given_by || "Anonymous";
       const contactDetails = r.contact_details || "—";
@@ -203,9 +247,36 @@ function AnalyzeResult() {
         </header>
 
         <div className="flex-1 p-6 space-y-6">
-          <p className="text-gray-600 text-sm font-medium">
-            RESPONDENTS: {responseCount} response{responseCount !== 1 ? "s" : ""}
-          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* Average Rating */}
+            <div className="bg-white border rounded-lg p-5 shadow-sm">
+              <h3 className="text-sm text-gray-500">Average Rating</h3>
+
+              <div className="flex items-center gap-2 mt-2">
+                <p className="text-2xl font-bold text-gray-800">
+                  {overallAvgRating}
+                </p>
+
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <span key={i}>
+                      {i <= Math.round(overallAvgRating) ? "⭐" : "☆"}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Total Responses */}
+            <div className="bg-white border rounded-lg p-5 shadow-sm">
+              <h3 className="text-sm text-gray-500">Total Responses</h3>
+              <p className="text-2xl font-bold text-gray-800 mt-2">
+                {responseCount}
+              </p>
+            </div>
+
+          </div>
 
           {responseCount === 0 ? (
             <div className="border rounded-md p-10 flex flex-col items-center space-y-3 max-w-lg mx-auto">
@@ -221,25 +292,90 @@ function AnalyzeResult() {
           ) : (
             <>
               {/* Per-question charts */}
-              {questionStats.map((stat, idx) => (
-                <div key={stat.question.id || idx} className="border rounded-lg p-5 bg-white shadow-sm">
-                  <h3 className="text-base font-semibold text-gray-800 mb-3">
-                    {idx + 1}. {stat.question.q_title}
-                  </h3>
-                  {stat.question.question_type === "text" ? (
-                    <div className="space-y-2">
-                      {stat.textAnswers.length === 0 ? (
-                        <p className="text-gray-500 text-sm">No text answers.</p>
-                      ) : (
-                        <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                          {stat.textAnswers.map((t, i) => (
-                            <li key={i}>{t}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  ) : stat.labels.length > 0 ? (
-                    <div className="max-w-xl">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {questionStats.map((stat, idx) => (
+                  <div
+                    key={stat.question.id || idx}
+                    className="border rounded-lg p-4 bg-white shadow-sm"
+                  >
+                    <h3 className="text-base font-semibold text-gray-800 mb-3">
+                      {idx + 1}. {stat.question.q_title}
+                    </h3>
+
+                    {stat.question.question_type === "rating" ? (
+                      (() => {
+                        const { counts, total, avg } = getRatingSummary(stat.question);
+
+                        return (
+                          <div className="max-w-2xl mx-auto">
+                            {/* Header */}
+                            <div className="mb-4">
+                              <div className="flex items-center gap-1">
+                                <span className="font-semibold">User Rating</span>
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                  <span key={i}>
+                                    {i <= Math.round(avg) ? "⭐" : "☆"}
+                                  </span>
+                                ))}
+                              </div>
+
+                              <p className="text-gray-600 text-sm">
+                                {avg} average based on {total} reviews
+                              </p>
+                            </div>
+
+                            {/* Bars */}
+                            {[5, 4, 3, 2, 1].map((star) => {
+                              const count = counts[star];
+                              const percent = total ? (count / total) * 100 : 0;
+
+                              return (
+                                <div key={star} className="flex items-center gap-3 mb-2">
+                                  <div className="w-12 text-sm text-gray-700">
+                                    {star} star
+                                  </div>
+
+                                  <div className="flex-1 bg-gray-200 h-4 rounded">
+                                    <div
+                                      className="h-4 rounded"
+                                      style={{
+                                        width: `${percent}%`,
+                                        backgroundColor:
+                                          star === 5
+                                            ? "#22c55e"
+                                            : star === 4
+                                              ? "#3b82f6"
+                                              : star === 3
+                                                ? "#06b6d4"
+                                                : star === 2
+                                                  ? "#f97316"
+                                                  : "#ef4444",
+                                      }}
+                                    />
+                                  </div>
+
+                                  <div className="w-6 text-sm text-gray-700 text-right">
+                                    {count}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()
+                    ) : stat.question.question_type === "text" ? (
+                      <div className="space-y-2">
+                        {stat.textAnswers.length === 0 ? (
+                          <p className="text-gray-500 text-sm">No text answers.</p>
+                        ) : (
+                          <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                            {stat.textAnswers.map((t, i) => (
+                              <li key={i}>{t}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ) : stat.labels.length > 0 ? (
                       <Chart
                         options={{
                           ...defaultChartOptions,
@@ -258,27 +394,33 @@ function AnalyzeResult() {
                         type={stat.labels.length <= 6 ? "donut" : "bar"}
                         height={280}
                       />
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-sm">No answers for this question yet.</p>
-                  )}
-                </div>
-              ))}
+                    ) : (
+                      <p className="text-gray-500 text-sm">
+                        No answers for this question yet.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
 
               {/* Response records - 50 per page */}
-              <div className="border rounded-lg p-5 bg-white shadow-sm">
+              <div className="border rounded-lg p-5 bg-white shadow-sm w-full overflow-x-auto">
                 <h3 className="text-base font-semibold text-gray-800 mb-4">Response records</h3>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-gray-50">
+                  <table className="min-w-[1200px] w-full">
+                    <thead className="bg-gray-100">
+                      <tr>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">#</th>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">Respondent</th>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">Contact Details</th>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">Submitted</th>
-                        {survey.survey_questions.map((q, i) => (
-                          <th key={q.id} className="text-left py-2 px-3 font-semibold text-gray-700 max-w-[200px]">
-                            Q{i + 1}: {q.q_title}
+
+                        {survey.survey_questions.map((q) => (
+                          <th
+                            key={q.id}
+                            className="px-4 py-2 text-left font-semibold text-gray-700 whitespace-nowrap"
+                          >
+                            {q.q_title}
                           </th>
                         ))}
                       </tr>
@@ -339,8 +481,8 @@ function AnalyzeResult() {
             </>
           )}
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 }
 
