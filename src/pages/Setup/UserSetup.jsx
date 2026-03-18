@@ -1,107 +1,103 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
-import { getSetupUsers, getUserCount, getBuildings, updateUserAdminApproval, sendMailToUsers } from "../../api";
+import { getSetupUsers, getUserCount, updateUserAdminApproval } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
+import { FaCheck, FaTimes } from "react-icons/fa";
+// import { useSelector } from "react-redux";
+// import toast from "react-hot-toast";
+// import { getItemInLocalStorage } from "../../utils/localStorage";
 import { BiEdit, BiUser } from "react-icons/bi";
-import { FaCheck, FaDownload, FaUsers } from "react-icons/fa";
-import { IoClose } from "react-icons/io5";
-import { MdApartment, MdDevices } from "react-icons/md";
 import { DNA } from "react-loader-spinner";
-import { useSelector } from "react-redux";
-import toast from "react-hot-toast";
+import { FaDownload, FaUsers } from "react-icons/fa";
+import { MdApartment, MdDevices } from "react-icons/md";
 
 const UserSetup = () => {
   const [users, setUsers] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [showFilter, setShowFilter] = useState(false);
-  const [buildings, setBuildings] = useState([]);
-  const [count, setCount] = useState({});
-  const [activeTab, setActiveTab] = useState("approved");
-  const [filters, setFilters] = useState({
-    tower: "",
-    flat: "",
-    status: "",
-    appDownloaded: "",
-    firstname: "",
-    lastname: "",
-    ownership: "",
-  });
+  const [filteredData, setFilteredData] = useState([]);
+  const [count, setCount] = useState("");
+  const [activeTab, setActiveTab] = useState("approved"); // NEW
+  const [loading, setLoading] = useState(true); // Add loading state
+  // const themeColor = useSelector((state) => state.theme.color);
 
-  const themeColor = useSelector((state) => state.theme.color);
-
+  // console.log("akshay", akshay);
+  // const users = akshay.users || [];
+  // console.log("Users:", users);
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        setLoading(true);
-        const [setupUsers, userCount, buildingRes] = await Promise.all([
-          getSetupUsers(),
-          getUserCount(),
-          getBuildings(),
-        ]);
+        setLoading(true); // Start loading
+        const setupUsers = await getSetupUsers();
+        const userCount = await getUserCount();
+        setCount(userCount.data);
+        const data = setupUsers.data || [];
+        setUsers(data);
 
-        setCount(userCount.data || {});
-        setBuildings(buildingRes.data || []);
-
-        const formattedUsers = (setupUsers.data || []).map((user) => ({
-          ...user,
-          firstname: user.firstname || "",
-          lastname: user.lastname || "",
-          mobile: user.mobile || "",
-          email: user.email || "",
-          Tower: user.user_sites?.[0]?.tower || "",
-          Flat: user.user_sites?.[0]?.flat || "",
-          Ownership_Types: user.user_sites?.[0]?.ownership_type || "N/A",
-          Phase: user.user_phase || "N/A",
-          Occupied: user.user_sites?.[0]?.occupied || "N/A",
-          Status:
-            user.is_admin_approved === true
-              ? "Approved"
-              : user.is_admin_approved === false
-              ? "Rejected"
-              : "Pending",
-          App_Downloaded: user.is_downloaded ? "Yes" : "No",
-          GST_Number: user.gst_number || "N/A",
-          PAN_Number: user.pan_number || "N/A",
-          Created_On: user.created_at ? new Date(user.created_at).toLocaleDateString() : "",
-          Updated_On: user.updated_at ? new Date(user.updated_at).toLocaleDateString() : "",
-          full_unit_name: `${user.user_sites?.[0]?.tower || ""}${user.user_sites?.[0]?.flat ? `-${user.user_sites[0].flat}` : ""}`,
-        }));
-
-        setUsers(formattedUsers);
-        setFilteredData(formattedUsers);
+        setFilteredData(setupUsers.data);
       } catch (error) {
-        console.error(error);
-        toast.error("Failed to load users");
+        console.log(error);
       } finally {
-        setLoading(false);
+        setLoading(false); // Stop loading
       }
     };
-
     fetchUsers();
   }, []);
 
   const tabFilteredUsers = useMemo(() => {
     if (activeTab === "approved") {
-      return users.filter((u) => u.is_admin_approved === true);
+      return users.filter((user) => user.is_admin_approved === true);
     }
+
     if (activeTab === "pending") {
-      return users.filter((u) => u.is_admin_approved === null || u.is_admin_approved === undefined);
+      return users.filter((user) => user.is_admin_approved === null);
     }
+
     if (activeTab === "rejected") {
-      return users.filter((u) => u.is_admin_approved === false);
+      return users.filter((user) => user.is_admin_approved === false);
     }
+
     return users;
   }, [users, activeTab]);
+
+
+  const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+
+    if (searchValue.trim() === "") {
+      setFilteredData(users);
+    } else {
+      const searchWords = searchValue.toLowerCase().split(" ").filter(Boolean);
+      const filteredResults = users.filter((item) => {
+        // Combine searchable fields into one string
+        const searchable = [
+          item.firstname,
+          item.lastname,
+          // item.unit_name,
+          item.email,
+          item.mobile,
+          item.user_type,
+          item.unit?.name || "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        // Check if every search word is present in the combined string
+        return searchWords.every((word) => searchable.includes(word));
+      });
+      setFilteredData(filteredResults);
+    }
+  };
 
   const finalFilteredUsers = useMemo(() => {
     if (!searchText.trim()) return tabFilteredUsers;
 
-    const words = searchText.toLowerCase().split(" ").filter(Boolean);
+    const searchWords = searchText.toLowerCase().split(" ").filter(Boolean);
+
     return tabFilteredUsers.filter((item) => {
       const searchable = [
         item.firstname,
@@ -109,48 +105,15 @@ const UserSetup = () => {
         item.email,
         item.mobile,
         item.user_type,
-        item.full_unit_name,
+        item.unit?.name || "",
       ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
 
-      return words.every((word) => searchable.includes(word));
+      return searchWords.every((word) => searchable.includes(word));
     });
   }, [searchText, tabFilteredUsers]);
-
-  const applyFilters = () => {
-    let filtered = users;
-
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && value.trim() !== "") {
-        filtered = filtered.filter((u) => {
-          if (key === "tower" || key === "flat") {
-            return (u[key] || "").toString().toLowerCase().includes(value.toLowerCase());
-          }
-          return (u[key] || "").toString().toLowerCase() === value.toLowerCase();
-        });
-      }
-    });
-
-    setFilteredData(filtered);
-  };
-
-  const handleSearch = (e) => {
-    setSearchText(e.target.value);
-  };
-
-  const handleSendMail = async (userId, first, last) => {
-    try {
-      toast.loading(`Sending Mail to ${first} ${last}...`);
-      await sendMailToUsers(userId);
-      toast.dismiss();
-      toast.success("Welcome Mail Sent");
-    } catch (error) {
-      toast.dismiss();
-      toast.error("Something went wrong");
-    }
-  };
 
   const handleUserApproval = async (id, isApproved) => {
     try {
@@ -160,24 +123,43 @@ const UserSetup = () => {
       setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, is_admin_approved: isApproved } : u)));
       setFilteredData((prev) => prev.map((u) => (u.id === id ? { ...u, is_admin_approved: isApproved } : u)));
     } catch (err) {
-      console.error(err);
       toast.error("Failed to update approval");
     }
   };
+  const handleStatusToggle = async (row) => {
+    const newStatus = !row.active;
 
-  const totalTotalUsers = users.length;
-  const totalAppDownloads = users.filter((u) => u.is_downloaded).length;
-  const approvedUsers = users.filter((u) => u.is_admin_approved === true).length;
-  const pendingUsers = users.filter((u) => u.is_admin_approved === null || u.is_admin_approved === undefined).length;
-  const rejectedUsers = users.filter((u) => u.is_admin_approved === false).length;
 
-  const dashboardCards = [
-    { title: "Total Users", value: count?.total_user || totalTotalUsers, icon: <FaUsers size={28} />, bg: "bg-blue-400" },
-    { title: "Total App Downloads", value: count?.total_user_downloads || totalAppDownloads, icon: <FaDownload size={28} />, bg: "bg-green-400" },
-    { title: "Approved Users", value: approvedUsers, icon: <FaCheck size={28} />, bg: "bg-indigo-400" },
-    { title: "Pending Users", value: pendingUsers, icon: <IoClose size={28} />, bg: "bg-yellow-400" },
-    { title: "Rejected Users", value: rejectedUsers, icon: <MdDevices size={28} />, bg: "bg-red-400" },
-  ];
+    try {
+      await axiosInstance.patch(`/users/${row.id}/status`, {
+        active: newStatus,
+      });
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === row.id ? { ...user, active: newStatus } : user
+        )
+      );
+    } catch (error) {
+      console.error("Status update failed", error);
+    }
+  };
+  // const totalUsers = users.length;
+  // const appDownloadedCount = users.filter((user) => user.is_downloaded).length;
+  // const appDownloadTenant = users.filter(
+  //   (user) =>
+  //     user.is_downloaded &&
+  //     user.user_sites.some((site) => site.ownership === "tenant")
+  // ).length;
+  // const appDownloadOwner = users.filter(
+  //   (user) =>
+  //     user.is_downloaded &&
+  //     user.user_sites.some((site) => site.ownership === "owner")
+  // ).length;
+  // const approvedUsers = users.filter(
+  //   (user) => user.status === "approved"
+  // ).length;
+  // const pendingUsers = users.filter((user) => user.status === "pending").length;
 
   const userColumn = [
     {
@@ -186,86 +168,253 @@ const UserSetup = () => {
         <div className="flex items-center gap-3">
           <Link to={`/setup/users-details/${row.id}`} title="View"><BsEye size={18} /></Link>
           <Link to={`/setup/edit-user/${row.id}`} state={{ user: row }} title="Edit"><BiEdit size={18} /></Link>
-          <button onClick={() => handleSendMail(row.id, row.firstname, row.lastname)} className="text-white bg-blue-500 px-2 py-1 rounded">Send</button>
         </div>
       ),
       width: "200px",
     },
-    { name: "Name", selector: (row) => `${row.firstname} ${row.lastname}`, sortable: true },
-    { name: "Mobile", selector: (row) => row.mobile || "N/A", sortable: true },
-    { name: "Email", selector: (row) => row.email || "N/A", sortable: true },
-    { name: "Ownership", selector: (row) => row.Ownership_Types || "N/A", sortable: true },
-    { name: "Status", selector: (row) => row.Status || "N/A", sortable: true },
+    { name: "First Name", selector: (row) => row.firstname, sortable: true },
+    { name: "Last Name", selector: (row) => row.lastname, sortable: true },
+    { name: "Email", selector: (row) => row.email, sortable: true },
+    { name: "Mobile", selector: (row) => row.mobile || "NA", sortable: true },
+    {
+      name: "App Downloaded",
+      selector: (row) => (row.is_downloaded ? "Yes" : "No"),
+      sortable: true,
+    },
+    {
+      name: "Building-Floor-Unit",
+      selector: (row) => row.full_unit_name,
+      sortable: true,
+    },
+    {
+      name: "User Type",
+      selector: (row) => {
+        // Determine base user type
+        let userType = "USERTYPE";
+        if (row.user_type === "pms_admin") {
+          userType = "Admin";
+        } else if (row.user_type === "pms_occupant_admin") {
+          userType = "Occupant Admin";
+        } else if (row.user_type === "pms_technician") {
+          userType = "Technician";
+        } else if (row.user_type === "pms_occupant") {
+          userType = "Occupant";
+        } else if (row.user_type === "security_guard") {
+          userType = "Security Guard";
+        } else if (row.user_type === "employee") {
+          userType = "Employee";
+        } else if (
+          row.user_type === "unit_resident" ||
+          row.user_type === "user"
+        ) {
+          userType = "Resident";
+        } else if (row.user_type === "unit_owner") {
+          userType = "Resident";
+        } else {
+          userType = "User";
+        }
+
+        // Get ownership info from user_sites if available
+        const ownership = row.user_sites?.[0]?.ownership;
+        const ownershipType = row.user_sites?.[0]?.ownership_type;
+
+        // Add ownership suffix for residents
+        if (
+          userType === "Resident" ||
+          userType === "Occupant" ||
+          userType === "Occupant Admin"
+        ) {
+          if (ownership === "owner") {
+            userType += ` - Owner${ownershipType === "primary" ? " (Primary)" : ownershipType === "secondary" ? " (Secondary)" : ""}`;
+          } else if (ownership === "tenant") {
+            userType += " - Tenant";
+          }
+        }
+
+        return userType;
+      },
+      sortable: true,
+      wrap: true,
+    },
+
+    {
+      name: "Status",
+      cell: (row) => (
+        <label className="inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={!!row.active}   // ✅ ensure boolean
+            onChange={() => handleStatusToggle(row)}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500 relative transition">
+            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+          </div>
+        </label>
+      ),
+      sortable: true,
+    },
     {
       name: "Approval",
       cell: (row) =>
         activeTab === "pending" ? (
           <div className="flex gap-2">
-            <button className="px-2 py-1 bg-green-600 text-white rounded" onClick={() => handleUserApproval(row.id, true)}>✓</button>
-            <button className="px-2 py-1 bg-red-600 text-white rounded" onClick={() => handleUserApproval(row.id, false)}>✕</button>
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 text-white hover:bg-green-600"
+              onClick={() => handleUserApproval(row.id, true)}
+            >
+              <FaCheck size={14} />
+            </button>
+
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+              onClick={() => handleUserApproval(row.id, false)}
+            >
+              <FaTimes size={14} />
+            </button>
           </div>
         ) : row.is_admin_approved === true ? (
-          <span className="text-green-600">Approved</span>
+          <span className="text-green-600 font-semibold">Approved</span>
         ) : row.is_admin_approved === false ? (
-          <span className="text-red-600">Rejected</span>
+          <span className="text-red-600 font-semibold">Rejected</span>
         ) : (
-          <span className="text-yellow-600">Pending</span>
+          <span className="text-yellow-600 font-semibold">Pending</span>
         ),
       sortable: true,
-    },
+    }
   ];
 
+  const totalDownloads = users?.filter(user => user.is_downloaded).length || 0;
+
+  const dashboardCards = [
+    {
+      title: "Total Users",
+      value: count?.total_user || 0,
+      icon: <FaUsers size={28} />,
+      bg: "from-blue-500 to-blue-700",
+    },
+    {
+      title: "Total App Downloads",
+      value: totalDownloads || 0,
+      icon: <FaDownload size={28} />,
+      bg: "from-green-500 to-green-700",
+    },
+    {
+      title: "Device Registered",
+      value: count?.total_user_downloads || 0,
+      icon: <MdDevices size={28} />,
+      bg: "from-purple-500 to-purple-700",
+    },
+    {
+      title: "Tenant Register",
+      value: count?.total_tenant_downloads || 0,
+      icon: <MdApartment size={28} />,
+      bg: "from-orange-500 to-orange-600",
+    },
+    {
+      title: "Owner Register",
+      value: count?.total_owner_downloads || 0,
+      icon: <BiUser size={28} />,
+      bg: "from-pink-500 to-pink-700",
+    },
+  ];
+  console.log("Filtered Data:", users);
+
   return (
-    <section className="flex bg-gray-50 min-h-screen">
+    <section className="flex">
       <Navbar />
-      <div className="w-full mx-3 flex flex-col gap-4 overflow-hidden mb-5">
-        <div className="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-1 gap-4 mt-4">
-          {dashboardCards.map((card, idx) => (
-            <div key={idx} className={`bg-gradient-to-r ${card.bg} text-white rounded-xl p-5 shadow-lg`}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm opacity-90">{card.title}</p>
-                  <p className="text-3xl font-bold mt-1">{card.value}</p>
-                </div>
-                <div className="opacity-90">{card.icon}</div>
-              </div>
-            </div>
-          ))}
+      <div className="w-full flex mx-3 flex-col gap-4 overflow-hidden mb-5">
+        {/* ---------- TABS ---------- */}
+        <div className="flex bg-gray-100 py-2 rounded-full shadow-inner justify-center mt-4 ">
+
+          <button
+            onClick={() => setActiveTab("approved")}
+            className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "approved"
+                ? "bg-green-300 text-black shadow-md scale-105"
+                : "text-gray-600 hover:text-green-600"
+              }`}
+          >
+            Approved Users
+          </button>
+
+          <button
+            onClick={() => setActiveTab("pending")}
+            className={`px-8 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "pending"
+                ? "bg-yellow-500 text-black shadow-md scale-105"
+                : "text-gray-600 hover:text-yellow-600"
+              }`}
+          >
+            Pending Users
+          </button>
+
+          <button
+            onClick={() => setActiveTab("rejected")}
+            className={`px-8 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "rejected"
+                ? "bg-red-400 text-black shadow-md scale-105"
+                : "text-gray-600 hover:text-red-600"
+              }`}
+          >
+            Rejected Users
+          </button>
+
         </div>
 
-        <div className="flex flex-wrap gap-3 mt-4">
-          <button onClick={() => setActiveTab("approved")} className={`px-4 py-2 rounded-full ${activeTab === "approved" ? "bg-green-500 text-white" : "bg-white"}`}>Approved</button>
-          <button onClick={() => setActiveTab("pending")} className={`px-4 py-2 rounded-full ${activeTab === "pending" ? "bg-yellow-500 text-white" : "bg-white"}`}>Pending</button>
-          <button onClick={() => setActiveTab("rejected")} className={`px-4 py-2 rounded-full ${activeTab === "rejected" ? "bg-red-500 text-white" : "bg-white"}`}>Rejected</button>
+        <div className="mt-5 flex md:flex-row flex-col justify-between md:items-center gap-4">
+          <input
+            type="text"
+            placeholder="Search Anything (Name, Email and Mobile) along with Spaces"
+            className="p-2 w-full border border-gray-300 rounded-md placeholder:text-sm outline-none"
+            value={searchText}
+            onChange={handleSearch}
+          />
+          <Link
+            to="/setup/users-setup/add-new-user"
+            style={{ background: "rgb(19 27 32)" }}
+            className="font-semibold p-2 px-4 rounded-md text-white flex items-center gap-2"
+          >
+            <PiPlusCircle size={20} /> Add
+          </Link>
         </div>
 
-        <div className="mt-3 flex flex-col md:flex-row gap-3 justify-between md:items-center">
-          <input value={searchText} onChange={handleSearch} className="border px-3 py-2 rounded-md w-full md:w-3/5" placeholder="Search by name/email/mobile" />
-          <Link to="/setup/users-setup/add-new-user" className="bg-black text-white px-4 py-2 rounded-md flex items-center gap-2"><PiPlusCircle />Add User</Link>
-        </div>
-
-        <button onClick={() => setShowFilter((prev) => !prev)} className="text-sm text-blue-600 mt-2">{showFilter ? "Hide Filters" : "Show Filters"}</button>
-
-        {showFilter && (
-          <div className="bg-white border rounded-lg p-4 shadow-sm">
-            <div className="grid lg:grid-cols-6 md:grid-cols-3 gap-3">
-              <input value={filters.firstname} onChange={(e) => setFilters((prev) => ({ ...prev, firstname: e.target.value }))} className="border p-2 rounded" placeholder="First Name" />
-              <input value={filters.lastname} onChange={(e) => setFilters((prev) => ({ ...prev, lastname: e.target.value }))} className="border p-2 rounded" placeholder="Last Name" />
-              <input value={filters.tower} onChange={(e) => setFilters((prev) => ({ ...prev, tower: e.target.value }))} className="border p-2 rounded" placeholder="Tower" />
-              <input value={filters.flat} onChange={(e) => setFilters((prev) => ({ ...prev, flat: e.target.value }))} className="border p-2 rounded" placeholder="Flat" />
-              <select value={filters.status} onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value }))} className="border p-2 rounded"><option value="">Status</option><option value="Approved">Approved</option><option value="Pending">Pending</option><option value="Rejected">Rejected</option></select>
-              <select value={filters.appDownloaded} onChange={(e) => setFilters((prev) => ({ ...prev, appDownloaded: e.target.value }))} className="border p-2 rounded"><option value="">App Download</option><option value="Yes">Yes</option><option value="No">No</option></select>
-            </div>
-            <div className="flex gap-2 mt-3">
-              <button onClick={applyFilters} style={{ background: themeColor }} className="text-white px-4 py-2 rounded">Apply</button>
-              <button onClick={() => { setFilters({ tower: "", flat: "", status: "", appDownloaded: "", firstname: "", lastname: "", ownership: ""}); setFilteredData(users); }} className="border px-4 py-2 rounded">Reset</button>
-            </div>
+        {loading ? (
+          <div className="flex justify-center items-center h-80 mt-10">
+            <DNA
+              visible={true}
+              height={110}
+              width={120}
+              ariaLabel="dna-loading"
+              wrapperStyle={{}}
+              wrapperClass="dna-wrapper"
+            />
           </div>
-        )}
+        ) : (
+          <>
+            {/* Attractive Dashboard Cards */}
+            <div className="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-1 gap-8">
+              {dashboardCards.map((card, index) => (
+                <div
+                  key={index}
+                  className={`bg-gradient-to-r ${card.bg} text-white rounded-xl p-6 shadow-lg hover:scale-105 transform transition duration-300`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-sm font-medium opacity-90">
+                        {card.title}
+                      </h3>
+                      <p className="text-3xl font-bold mt-2">{card.value}</p>
+                    </div>
+                    <div className="opacity-90">{card.icon}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-        <div className="bg-white rounded-xl shadow-md p-4">
-          {loading ? <p className="text-center">Loading users...</p> : <Table columns={userColumn} data={finalFilteredUsers} />}
-        </div>
+            {/* Table */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <Table columns={userColumn} data={finalFilteredUsers} />
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
