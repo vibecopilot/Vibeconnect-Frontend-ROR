@@ -1,12 +1,7 @@
-import React, { useState } from "react";
-import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import { getVendors, getSiteAsset, getSoftServices, postAMC } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
