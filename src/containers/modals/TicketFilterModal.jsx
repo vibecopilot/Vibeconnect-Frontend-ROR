@@ -4,11 +4,13 @@ import { getFloors, getUnits, getFilterData, getAssignedTo } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 const TicketFilterModal = ({
   onclose,
-  setFilteredData,
   fetchData,
   currentPage,
   perPage,
   setFilterParams,
+  setSearchText,
+  setSelectedStatus,
+  setCurrentPage,
 }) => {
   const building = getItemInLocalStorage("Building");
   const [floor, setFloor] = useState([]);
@@ -76,32 +78,28 @@ const TicketFilterModal = ({
     
 const handleFilterData = async () => {
   try {
-    const [firstName = "", lastName = ""] =
-      (formData.createBy || "").split(" ");
+    const searchValue = formData.createBy?.trim() || "";
 
-    // Combine all filter fields into one string
-    const searchValue = [
-      formData.category_id,
-      formData.issueStatusId,
-      formData.priorityLevel,
-      formData.assign,
-      firstName,
-      lastName,
-      formData.building_id,
-      formData.floor_id,
-      formData.unit_id,
-      formData.startDate,
-      formData.endDate,
-    ]
-      .filter(Boolean) // remove empty values
-      .join(" ");      // join with space
+    const activeFilters = {
+      category_id: formData.category_id,
+      issueStatusId: formData.issueStatusId,
+      priorityLevel: formData.priorityLevel,
+      assign: formData.assign,
+      building_id: formData.building_id,
+      floor_id: formData.floor_id,
+      unit_id: formData.unit_id,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+    };
 
-    const response = await getFilterData(searchValue);
+    setFilterParams({ ...activeFilters, globalSearch: searchValue });
+    setSearchText(searchValue);
+    setSelectedStatus("all");
+    setCurrentPage(1);
 
-    setFilteredData(response.data.complaints);
-    setFilterParams({ ...formData, globalSearch: searchValue });
+    await fetchData(1, perPage, searchValue, "all", activeFilters);
+
     onclose();
-
   } catch (error) {
     console.error("Error filter Data:", error);
   }
@@ -109,7 +107,26 @@ const handleFilterData = async () => {
 
 
   const handleReset = () => {
-    fetchData(currentPage, perPage);
+    const resetData = {
+      category_id: "",
+      issueStatusId: "",
+      priorityLevel: "",
+      assign: "",
+      createBy: "",
+      building_id: "",
+      floor_id: "",
+      unit_id: "",
+      startDate: "",
+      endDate: "",
+    };
+
+    setFormData(resetData);
+    setFilterParams(resetData);
+    setSearchText("");
+    setSelectedStatus("all");
+    setCurrentPage(1);
+
+    fetchData(1, perPage, "", "all", {});
     onclose();
   };
   console.log(formData);

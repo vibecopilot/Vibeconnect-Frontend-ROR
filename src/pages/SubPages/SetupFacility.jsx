@@ -18,14 +18,14 @@ const SetupFacility = () => {
   const [allowMultipleSlots, setAllowMultipleSlots] = useState("no");
 
   const daysList = [
-  { label: "Sunday", value: 0 },
-  { label: "Monday", value: 1 },
-  { label: "Tuesday", value: 2 },
-  { label: "Wednesday", value: 3 },
-  { label: "Thursday", value: 4 },
-  { label: "Friday", value: 5 },
-  { label: "Saturday", value: 6 },
-];
+    { label: "Sunday", value: 0 },
+    { label: "Monday", value: 1 },
+    { label: "Tuesday", value: 2 },
+    { label: "Wednesday", value: 3 },
+    { label: "Thursday", value: 4 },
+    { label: "Friday", value: 5 },
+    { label: "Saturday", value: 6 },
+  ];
   const handleSelectChange = (e) => {
     setAllowMultipleSlots(e.target.value);
   };
@@ -38,7 +38,7 @@ const SetupFacility = () => {
   const [slotBy, setSlotBy] = useState(""); // Loading state
   const [shareError, setShareError] = useState("");
   const [billingError, setBillingError] = useState("");
-    const [days, setDays] = useState(
+  const [days, setDays] = useState(
     daysList.map((day) => ({
       ...day,
       is_active: false,
@@ -1149,8 +1149,52 @@ const SetupFacility = () => {
           </div>
         </div>
 
+        {/* Payment Options */}
+ <div className="flex gap-4  border-black items-center mt-6">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="postpaid"
+              checked={formData.postpaid}
+              onChange={handlePaymentCheckbox}
+            />
+            Postpaid
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="prepaid"
+              checked={formData.prepaid}
+              onChange={handlePaymentCheckbox}
+            />
+            Prepaid
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="pay_on_facility"
+              checked={formData.pay_on_facility}
+              onChange={handlePaymentCheckbox}
+            />
+            Pay on facility
+          </label>
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="complimentary"
+              checked={formData.complimentary}
+              onChange={handlePaymentCheckbox}
+            />
+            Complimentary
+          </label>
+
+        </div>
+
         <div className="my-4">
-          <h2 className="border-b border-black font-medium text-lg">
+          <h2 className="border-b border-black font-medium text-lg mb-3">
             Fee Setup
           </h2>
           <div className="border rounded-lg bg-blue-50 p-1 my-2">
@@ -1221,7 +1265,21 @@ const SetupFacility = () => {
               </div>
 
               {/* Flat */}
-              <div className="flex flex-col items-center my-2 gap-3">
+              <div className="flex justify-center my-2">
+                {/* Checkbox */}
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_fixed || false}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      is_fixed: e.target.checked,
+                      fixed_amount: e.target.checked ? formData.fixed_amount : ""
+                    })
+                  }
+                />
+
                 {/* Fixed Amount Input */}
                 <input
                   type="text"
@@ -1229,56 +1287,10 @@ const SetupFacility = () => {
                   onChange={(e) =>
                     handlePriceChange("fixed_amount", e.target.value)
                   }
-                  className="border border-gray-400 rounded p-2 outline-none w-48"
+                  className="border border-gray-400 rounded p-2 outline-none w-62"
                   placeholder="₹100"
+                  disabled={!formData.is_fixed}
                 />
-
-                {/* Payment Options */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        name="postpaid"
-                        checked={formData.postpaid}
-                        onChange={handlePaymentCheckbox}
-                      />
-                      Postpaid
-                    </label>
-
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        name="prepaid"
-                        checked={formData.prepaid}
-                        onChange={handlePaymentCheckbox}
-                      />
-                      Prepaid
-                    </label>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        name="pay_on_facility"
-                        checked={formData.pay_on_facility}
-                        onChange={handlePaymentCheckbox}
-                      />
-                      Pay on facility
-                    </label>
-
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        name="complimentary"
-                        checked={formData.complimentary}
-                        onChange={handlePaymentCheckbox}
-                      />
-                      Complimentary
-                    </label>
-                  </div>
-                </div>
               </div>
             </div>
             <div className="grid grid-cols-4 items-center border-b">
@@ -1342,7 +1354,7 @@ const SetupFacility = () => {
                   placeholder="₹100"
                 />
               </div>
-              <div className="flex justify-center my-2">
+              {/* <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
@@ -1389,7 +1401,7 @@ const SetupFacility = () => {
                     </label>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Guest Section */}
@@ -1450,7 +1462,7 @@ const SetupFacility = () => {
                   placeholder="₹100"
                 />
               </div>
-              <div className="flex justify-center my-2">
+              {/* <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
@@ -1497,7 +1509,7 @@ const SetupFacility = () => {
                     </label>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Tenant Section */}
@@ -1558,7 +1570,7 @@ const SetupFacility = () => {
                   placeholder="₹100"
                 />
               </div>
-              <div className="flex justify-center my-2">
+              {/* <div className="flex justify-center my-2">
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex flex-col">
                     <label htmlFor="" className="flex items-center gap-2">
@@ -1605,7 +1617,7 @@ const SetupFacility = () => {
                     </label>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Checkbox */}
@@ -1655,11 +1667,11 @@ const SetupFacility = () => {
                   className="border border-gray-400 rounded p-2 outline-none"
                   placeholder="GST(%)"
                   min={18}
-                  value={formData.gst_no || ""}
+                  value={formData.gst || ""}
                   onChange={(e) =>
                     setFormData((prevState) => ({
                       ...prevState,
-                      gst_no: e.target.value, // ✅ Correctly updates gst in formData
+                      gst: e.target.value, // ✅ Correctly updates gst in formData
                     }))
                   }
                 />
@@ -2030,190 +2042,190 @@ const SetupFacility = () => {
         </div>
         <div className="bg-white rounded-xl shadow-md border p-6 mt-2 mb-3 border-gray-300">
           <h2 className="text-lg font-semibold mb-6">Configure Slot</h2>
-<div className="overflow-x-auto ">
-  {formData.slots.map((slot, slotIndex) => (
-    <div
-      key={slotIndex}
-      className="flex gap-4 items-end mb-4 min-w-[1200px]"
-    >
-      {/* Start Time */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-gray-600">
-          Start time
-        </label>
-        <input
-          type="time"
-          value={formatTime(slot.start_hr, slot.start_min)}
-          onChange={(e) =>
-            handleSlotTimeChange(slotIndex, "start", e.target.value)
-          }
-          className="border rounded-md px-3 py-2"
-        />
-      </div>
+          <div className="overflow-x-auto ">
+            {formData.slots.map((slot, slotIndex) => (
+              <div
+                key={slotIndex}
+                className="flex gap-4 items-end mb-4 min-w-[1200px]"
+              >
+                {/* Start Time */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">
+                    Start time
+                  </label>
+                  <input
+                    type="time"
+                    value={formatTime(slot.start_hr, slot.start_min)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "start", e.target.value)
+                    }
+                    className="border rounded-md px-3 py-2"
+                  />
+                </div>
 
-      {/* Break Start */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-gray-600">
-          Break Start
-        </label>
-        <input
-          type="time"
-          value={formatTime(slot.break_start_hr, slot.break_start_min)}
-          onChange={(e) =>
-            handleSlotTimeChange(slotIndex, "break_start", e.target.value)
-          }
-          className="border rounded-md px-3 py-2"
-        />
-      </div>
+                {/* Break Start */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">
+                    Break Start
+                  </label>
+                  <input
+                    type="time"
+                    value={formatTime(slot.break_start_hr, slot.break_start_min)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "break_start", e.target.value)
+                    }
+                    className="border rounded-md px-3 py-2"
+                  />
+                </div>
 
-      {/* Break End */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-gray-600">
-          Break End
-        </label>
-        <input
-          type="time"
-          value={formatTime(slot.break_end_hr, slot.break_end_min)}
-          onChange={(e) =>
-            handleSlotTimeChange(slotIndex, "break_end", e.target.value)
-          }
-          className="border rounded-md px-3 py-2"
-        />
-      </div>
+                {/* Break End */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">
+                    Break End
+                  </label>
+                  <input
+                    type="time"
+                    value={formatTime(slot.break_end_hr, slot.break_end_min)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "break_end", e.target.value)
+                    }
+                    className="border rounded-md px-3 py-2"
+                  />
+                </div>
 
-      {/* End Time */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-gray-600">
-          End Time
-        </label>
-        <input
-          type="time"
-          value={formatTime(slot.end_hr, slot.end_min)}
-          onChange={(e) =>
-            handleSlotTimeChange(slotIndex, "end", e.target.value)
-          }
-          className="border rounded-md px-3 py-2"
-        />
-      </div>
+                {/* End Time */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={formatTime(slot.end_hr, slot.end_min)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "end", e.target.value)
+                    }
+                    className="border rounded-md px-3 py-2"
+                  />
+                </div>
 
-      {/* Concurrent Slots */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-gray-600">
-          Concurrent
-        </label>
-        <input
-          type="number"
-          min="0"
-          value={slot.concurrent_slots || ""}
-          onChange={(e) =>
-            handleSlotFieldChange(
-              slotIndex,
-              "concurrent_slots",
-              e.target.value
-            )
-          }
-          className="border rounded-md px-3 py-2 w-24"
-        />
-      </div>
+                {/* Concurrent Slots */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">
+                    Concurrent
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={slot.concurrent_slots || ""}
+                    onChange={(e) =>
+                      handleSlotFieldChange(
+                        slotIndex,
+                        "concurrent_slots",
+                        e.target.value
+                      )
+                    }
+                    className="border rounded-md px-3 py-2 w-24"
+                  />
+                </div>
 
-      {/* Slot By */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-gray-600">
-          Slot By
-        </label>
-        <select
-          value={slotBy}
-          onChange={(e) => setSlotBy(e.target.value)}
-          className="border rounded-md px-3 py-2"
-        >
-          <option value="">Select</option> 
-          <option value="15">15 Min</option>
-           <option value="30">30 Min</option>
-            <option value="45">45 Min</option> 
-            <option value="60">1 Hour</option> 
-            <option value="90">1.5 Hour</option> 
-            <option value="120">2 Hour</option> 
-            <option value="180">3 Hour</option>
-             <option value="360">6 Hour</option> 
-             <option value="720">12 Hour</option> 
-             <option value="1440">24 Hour</option>
-        </select>
-      </div>
+                {/* Slot By */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">
+                    Slot By
+                  </label>
+                  <select
+                    value={slotBy}
+                    onChange={(e) => setSlotBy(e.target.value)}
+                    className="border rounded-md px-3 py-2"
+                  >
+                    <option value="">Select</option>
+                    <option value="15">15 Min</option>
+                    <option value="30">30 Min</option>
+                    <option value="45">45 Min</option>
+                    <option value="60">1 Hour</option>
+                    <option value="90">1.5 Hour</option>
+                    <option value="120">2 Hour</option>
+                    <option value="180">3 Hour</option>
+                    <option value="360">6 Hour</option>
+                    <option value="720">12 Hour</option>
+                    <option value="1440">24 Hour</option>
+                  </select>
+                </div>
 
-      {/* Wrap Time */}
-      <div className="flex flex-col">
-        <label className="text-sm font-medium text-gray-600">
-          Wrap Time
-        </label>
-        <input
-          type="number"
-          min="0"
-          value={slot.wrap_up_time || ""}
-          onChange={(e) =>
-            handleSlotFieldChange(
-              slotIndex,
-              "wrap_up_time",
-              e.target.value
-            )
-          }
-          className="border rounded-md px-3 py-2 w-24"
-        />
-      </div>
-    </div>
-  ))}
-</div>
+                {/* Wrap Time */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">
+                    Wrap Time
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={slot.wrap_up_time || ""}
+                    onChange={(e) =>
+                      handleSlotFieldChange(
+                        slotIndex,
+                        "wrap_up_time",
+                        e.target.value
+                      )
+                    }
+                    className="border rounded-md px-3 py-2 w-24"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
 
         </div>
         <div></div>
-         <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
+        <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
         <div className="border rounded mt-3">
-        
-      {/* Header */}
-      <div className="grid grid-cols-4 bg-gradient-to-r from-purple-600 to-orange-400 text-white p-2 font-semibold">
-        <div></div>
-        <div>Day</div>
-        <div>Start</div>
-        <div>End</div>
-      </div>
 
-      {/* Rows */}
-      {days.map((day, index) => (
-        <div
-          key={day.day_of_week}
-          className="grid grid-cols-4 items-center border-b p-2"
-        >
-          {/* Checkbox */}
-          <input
-            type="checkbox"
-            checked={day.is_active}
-            onChange={() => handleCheck(index)}
-          />
+          {/* Header */}
+          <div className="grid grid-cols-4 bg-gradient-to-r from-purple-600 to-orange-400 text-white p-2 font-semibold">
+            <div></div>
+            <div>Day</div>
+            <div>Start</div>
+            <div>End</div>
+          </div>
 
-          {/* Day */}
-          <div>{day.label}</div>
+          {/* Rows */}
+          {days.map((day, index) => (
+            <div
+              key={day.day_of_week}
+              className="grid grid-cols-4 items-center border-b p-2"
+            >
+              {/* Checkbox */}
+              <input
+                type="checkbox"
+                checked={day.is_active}
+                onChange={() => handleCheck(index)}
+              />
 
-          {/* Start Time */}
-          <input
-            type="time"
-            value={day.start_time}
-            disabled={!day.is_active}
-            onChange={(e) =>
-              handleTimeChange1(index, "start_time", e.target.value)
-            }
-          />
+              {/* Day */}
+              <div>{day.label}</div>
 
-          {/* End Time */}
-          <input
-            type="time"
-            value={day.end_time}
-            disabled={!day.is_active}
-            onChange={(e) =>
-              handleTimeChange1(index, "end_time", e.target.value)
-            }
-          />
+              {/* Start Time */}
+              <input
+                type="time"
+                value={day.start_time}
+                disabled={!day.is_active}
+                onChange={(e) =>
+                  handleTimeChange1(index, "start_time", e.target.value)
+                }
+              />
+
+              {/* End Time */}
+              <input
+                type="time"
+                value={day.end_time}
+                disabled={!day.is_active}
+                onChange={(e) =>
+                  handleTimeChange1(index, "end_time", e.target.value)
+                }
+              />
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex flex-col my-4 mt-4">
