@@ -230,14 +230,15 @@ const Ticket = () => {
     },
   };
 
- const fetchData = async (page, perPage, search = "", status = "all") => {
+ const fetchData = async (page, perPage, search = "", status = "all", filters = {}) => {
   setIsLoading(true);
   try {
-    const response = await getAdminComplaints(page, perPage, search, status);
+    const response = await getAdminComplaints(page, perPage, search, status, filters);
 
     const complaints = response?.data?.complaints || [];
     const totalCount = response?.data?.count || 0;
 
+    setCurrentPage(page);
     setFilteredData(complaints);
     setComplaints(complaints);
     setTotalRows(totalCount);
@@ -262,8 +263,8 @@ const Ticket = () => {
 
   useEffect(() => {
     const apiStatus = getApiStatus(selectedStatus);
-    fetchData(currentPage, perPage, searchText, apiStatus);
-  }, [currentPage, perPage, searchText, selectedStatus]);
+    fetchData(currentPage, perPage, searchText, apiStatus, filterParams);
+  }, [currentPage, perPage, searchText, selectedStatus, filterParams]);
 
 
   const [ticketTypes, setTicketsTypes] = useState({});
@@ -663,11 +664,13 @@ const handleSearch = (e) => {
       {filterModal && (
         <TicketFilterModal
           onclose={() => setFilterModal(false)}
-          setFilteredData={setFilteredData}
           fetchData={fetchData}
           currentPage={currentPage}
           perPage={perPage}
           setFilterParams={setFilterParams}
+          setSearchText={setSearchText}
+          setSelectedStatus={setSelectedStatus}
+          setCurrentPage={setCurrentPage}
         />
       )}
     </section>

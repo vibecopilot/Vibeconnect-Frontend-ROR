@@ -796,17 +796,28 @@ export const getAdminComplaints = async (
   page = 1,
   perPage = 10,
   search = "",
-  status = ""
-) =>
-  axiosInstance.get("/pms/admin/complaints.json", {
-    params: {
-      token: token,
-      page: page,
-      per_page: perPage,
-      "q[search_cont]": search,
-      ...(status && status !== "all" ? { "q[issue_status_eq]": status } : {}),
-    },
-  });
+  status = "",
+  filters = {}
+) => {
+  const params = {
+    token: token,
+    page: page,
+    per_page: perPage,
+    ...(search ? { "q[search_cont]": search } : {}),
+    ...(status && status !== "all" ? { "q[search_cont]": status } : {}),
+    ...(filters.category_id ? { "q[search_cont]": filters.category_id } : {}),
+    ...(filters.issueStatusId ? { "q[search_cont]": filters.issueStatusId } : {}),
+    ...(filters.priorityLevel ? { "q[search_cont]": filters.priorityLevel } : {}),
+    ...(filters.assign ? { "q[search_cont]": filters.assign } : {}),
+    ...(filters.building_id ? { "q[search_cont]": filters.building_id } : {}),
+    ...(filters.floor_id ? { "q[search_cont]": filters.floor_id } : {}),
+    ...(filters.unit_id ? { "q[search_cont]": filters.unit_id } : {}),
+    ...(filters.startDate ? { "q[search_cont]": filters.startDate } : {}),
+    ...(filters.endDate ? { "q[search_cont]": filters.endDate } : {}),
+  };
+
+  return axiosInstance.get("/pms/admin/complaints.json", { params });
+};
 
 // export const getAdminExport = async (filters = {}) =>
 // axiosInstance.get(
