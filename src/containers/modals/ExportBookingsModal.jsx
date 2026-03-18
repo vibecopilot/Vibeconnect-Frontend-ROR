@@ -61,27 +61,30 @@ const ExportBookingModal = ({ onclose }) => {
           Export Booking Data
         </h2>
 
-        <div className="flex flex-col gap-3">
-          <div>
+        <div className="flex flex-col gap-4">
+          {/* START DATE */}
+          <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">Start Date</label>
             <input
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)} // ✅ FIXED
+              onChange={(e) => setStartDate(e.target.value)}
               className="border border-gray-200 p-2 rounded-md w-full"
             />
           </div>
 
-          <div>
+          {/* END DATE */}
+          <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">End Date</label>
             <input
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)} // ✅ FIXED
+              onChange={(e) => setEndDate(e.target.value)}
               className="border border-gray-200 p-2 rounded-md w-full"
             />
           </div>
 
+          {/* BUTTONS */}
           <div className="flex justify-end gap-2 mt-4">
             <button
               onClick={onclose}

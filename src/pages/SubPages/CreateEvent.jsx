@@ -246,6 +246,7 @@ const CreateEvent = () => {
           server
         }
       });
+        
       }
       console.log("Images before upload:", formData.event_images);
 

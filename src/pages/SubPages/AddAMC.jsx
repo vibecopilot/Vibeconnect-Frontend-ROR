@@ -3,10 +3,17 @@ import { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { getVendors, getSiteAsset, getSoftServices, postAMC } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const AddAMC = () => {
-  const [amcFor, setAmcFor] = useState("asset");
   const navigate = useNavigate();
+  const [amcFor, setAmcFor] = useState("asset");
+
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -17,12 +24,13 @@ const AddAMC = () => {
   // const month = String(today.getMonth() + 1).padStart(2, "0");
   // const day = String(today.getDate()).padStart(2, "0");
   // const formattedDate = `${year}-${month}-${day}`;
+
   const [vendors, setVendors] = useState([]);
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
-   const [contactFiles, setContactFiles] = useState([]);
+  const [contactFiles, setContactFiles] = useState([]);
   const [invoiceFiles, setInvoiceFiles] = useState([]);
-    const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
 
   
   const [formData, setFormData] = useState({
@@ -44,6 +52,7 @@ const AddAMC = () => {
 };
  
 
+
   const handleFileChange = (event, type) => {
     const files = Array.from(event.target.files);
 
@@ -54,7 +63,7 @@ const AddAMC = () => {
     }
   };
 
-   const fetchVendors = async () => {
+  const fetchVendors = async () => {
     try {
       const siteId = getItemInLocalStorage("SITEID");
       if (!siteId) return;

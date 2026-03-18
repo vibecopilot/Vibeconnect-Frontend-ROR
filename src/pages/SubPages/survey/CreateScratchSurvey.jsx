@@ -100,11 +100,17 @@ const [backgroundImage, setBackgroundImage] = useState(null);
         setDescription(s.description || "");
         setStartDate(s.start_date ? new Date(s.start_date).toISOString().split("T")[0] : "");
         setEndDate(s.end_date ? new Date(s.end_date).toISOString().split("T")[0] : "");
+        // Load branding fields
+        setBackgroundColor(s.background_color || "");
+        setHeaderText(s.header_text || "");
+        setFooterText(s.footer_text || "");
+
         const qs = (s.survey_questions || []).map((q) => {
           const opts = q.options || [];
           const labels = opts.map((o) => o.label || "");
           const frontendType = mapBackendToFrontendType(q.question_type);
           const useChoices = frontendType === "multiple-choice";
+          const att = (q.attachments || [])[0];
           return {
             _qId: q.id,
             question: q.q_title || "",
@@ -114,6 +120,8 @@ const [backgroundImage, setBackgroundImage] = useState(null);
             star: ["", ""],
             _optionIds: opts.map((o) => o.id),
             _deletedOptionIds: [],
+            attachment: null,
+            existingAttachment: att ? att.document_url : null,
           };
         });
         setQuestions(qs);
@@ -129,8 +137,17 @@ const [backgroundImage, setBackgroundImage] = useState(null);
       choices: ["", "", "", ""],
       checkBox: ["", "", "", ""],
       star: ["", ""],
+      attachment: null,
+      existingAttachment: null,
     };
     setQuestions([...questions, newQuestion]);
+  };
+
+  const handleAttachmentChange = (file, index) => {
+    const updated = [...questions];
+    updated[index].attachment = file;
+    if (file) updated[index].existingAttachment = null;
+    setQuestions(updated);
   };
 
   if (loading) {
@@ -316,6 +333,13 @@ const [backgroundImage, setBackgroundImage] = useState(null);
       "survey[survey_questions]",
       JSON.stringify(survey_questions)
     );
+
+    // Question-level attachments
+    questions.forEach((q, i) => {
+      if (q.attachment instanceof File) {
+        formData.append(`survey[question_attachment_${i}]`, q.attachment);
+      }
+    });
 
       if (isEditMode) {
       await updateSurvey(surveyId, formData);
@@ -684,6 +708,28 @@ Add Option
 {question.questionType === "slider" && <AddRangeField />}
 {question.questionType === "multipleTextboxes" && <AddMultipleTextBoxesField />}
 {question.questionType === "dateTime" && <AddDateTimeField />}
+
+{/* Question Attachment */}
+<div className="mt-4 border-t pt-3">
+  <label className="text-sm font-medium text-gray-600 mb-1 block">Attachment</label>
+  {question.existingAttachment && !question.attachment && (
+    <div className="mb-2">
+      <a
+        href={question.existingAttachment}
+        target="_blank"
+        rel="noreferrer"
+        className="text-blue-600 underline text-sm"
+      >
+        View existing attachment
+      </a>
+    </div>
+  )}
+  <input
+    type="file"
+    onChange={(e) => handleAttachmentChange(e.target.files[0], index)}
+    className="border p-2 rounded-md text-sm w-full"
+  />
+</div>
 
                 </div>
 
