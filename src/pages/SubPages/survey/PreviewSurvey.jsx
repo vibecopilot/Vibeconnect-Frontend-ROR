@@ -101,9 +101,8 @@ function PreviewSurvey() {
             {opts.map((opt) => (
               <label
                 key={opt.id || opt.label}
-                className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer ${
-                  value === opt.label ? "bg-gray-100 border-2 border-gray-500" : "border-transparent"
-                }`}
+                className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer ${value === opt.label ? "bg-gray-100 border-2 border-gray-500" : "border-transparent"
+                  }`}
               >
                 <input
                   type="radio"
@@ -114,9 +113,8 @@ function PreviewSurvey() {
                   className="hidden"
                 />
                 <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    value === opt.label ? "border-gray-700" : "border-gray-400"
-                  }`}
+                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${value === opt.label ? "border-gray-700" : "border-gray-400"
+                    }`}
                 >
                   {value === opt.label && <div className="w-2.5 h-2.5 bg-gray-700 rounded-full" />}
                 </div>
@@ -134,9 +132,8 @@ function PreviewSurvey() {
               return (
                 <label
                   key={opt.id || opt.label}
-                  className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer ${
-                    checked ? "bg-gray-100 border-2 border-gray-500" : "border-transparent"
-                  }`}
+                  className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer ${checked ? "bg-gray-100 border-2 border-gray-500" : "border-transparent"
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -145,9 +142,8 @@ function PreviewSurvey() {
                     className="hidden"
                   />
                   <div
-                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${
-                      checked ? "border-gray-700 bg-gray-700" : "border-gray-400"
-                    }`}
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${checked ? "border-gray-700 bg-gray-700" : "border-gray-400"
+                      }`}
                   >
                     {checked && (
                       <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -162,46 +158,46 @@ function PreviewSurvey() {
           </div>
         );
       case "rating":
-case "scale": {
-  const scale = q.scale || 5;
-  const color = q.color || "#FACC15"; // yellow
+      case "scale": {
+        const scale = q.scale || 5;
+        const color = q.color || "#FACC15"; // yellow
 
-  return (
-    <div className="flex flex-col gap-2">
+        return (
+          <div className="flex flex-col gap-2">
 
-      {/* Stars */}
-      <div className="flex gap-2 text-4xl">
-        {Array.from({ length: scale }, (_, i) => {
-          const n = i + 1;
-          const isSelected = value >= n;
+            {/* Stars */}
+            <div className="flex gap-2 text-4xl">
+              {Array.from({ length: scale }, (_, i) => {
+                const n = i + 1;
+                const isSelected = value >= n;
 
-          return (
-            <span
-              key={n}
-              onClick={() => setAnswer(q.id, n)}
-              className="cursor-pointer transition-transform hover:scale-110"
-              style={{
-                color: isSelected ? color : "#D1D5DB" // gray if not selected
-              }}
-            >
-              ★
-            </span>
-          );
-        })}
-      </div>
+                return (
+                  <span
+                    key={n}
+                    onClick={() => setAnswer(q.id, n)}
+                    className="cursor-pointer transition-transform hover:scale-110"
+                    style={{
+                      color: isSelected ? color : "#D1D5DB" // gray if not selected
+                    }}
+                  >
+                    ★
+                  </span>
+                );
+              })}
+            </div>
 
-      {/* Labels */}
-      <div className="flex justify-between text-xs text-gray-500 w-[220px]">
-        <span>Poor</span>
-        <span>Fair</span>
-        <span>Average</span>
-        <span>Good</span>
-        <span>Excellent</span>
-      </div>
+            {/* Labels */}
+            <div className="flex justify-between text-xs text-gray-500 w-[220px]">
+              <span>Poor</span>
+              <span>Fair</span>
+              <span>Average</span>
+              <span>Good</span>
+              <span>Excellent</span>
+            </div>
 
-    </div>
-  );
-}
+          </div>
+        );
+      }
       case "text":
       default: {
         return (
@@ -250,61 +246,31 @@ case "scale": {
     <section className="flex">
       <Navbar />
       <div className="w-full flex mx-3 flex-col overflow-hidden my-5">
-        <div className="grid grid-cols-12 gap-5 mt-5 border overflow-y-auto">
-          <div className="col-span-4 space-y-5 border-r">
-            <div className="max-w-md mx-auto">
-              <div className="flex justify-between items-center mb-4 px-5 py-2">
-                <h2 className="text-lg font-semibold">Survey overview</h2>
-                <button type="button" className="text-gray-600 hover:text-gray-800">
-                  <MdMenuOpen className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="w-full max-w-md mx-auto">
-                <h2 className="text-lg font-semibold border-b pb-5">Page 1</h2>
-                {questions.map((q, idx) => (
-                  <div key={q.id} className="pb-2 p-5">
-                    <button
-                      type="button"
-                      className="w-full text-left font-medium text-gray-700 flex justify-between items-start gap-4"
-                      onClick={() => toggleQuestion(q.id)}
-                    >
-                      <span className="mt-1">
-                        {openQuestion === q.id ? <IoIosArrowDown /> : <IoIosArrowForward />}
-                      </span>
-                      <h2>Q{idx + 1}: {q.q_title}</h2>
-                    </button>
-                    {openQuestion === q.id && (
-                      <p className="text-sm text-gray-500 mt-2 px-8">{q.question_type}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="col-span-8 space-y-8 relative">
+        <div className="flex justify-center mt-5">
+          <div className="w-full max-w-3xl space-y-8 relative">
             {/* Progress Indicator & Analyze Survey */}
-<div className="absolute top-4 right-6 flex items-center gap-3">
-  <div className="bg-white border rounded-lg shadow px-4 py-2 flex items-center gap-3">
-    <span className="text-sm font-semibold text-gray-700">
-      {answeredCount}/{total} Answered
-    </span>
-    <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-      <div
-        className="h-full bg-green-500 transition-all"
-        style={{ width: `${percentage}%` }}
-      />
-    </div>
-  </div>
-  <Link
-    to={`/admin/result-analyze-result?survey_id=${id}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow"
-  >
-    <FaChartBar />
-    Analyze Survey
-  </Link>
-</div>
+            <div className="absolute top-4 right-6 flex items-center gap-3">
+              <div className="bg-white border rounded-lg shadow px-4 py-2 flex items-center gap-3">
+                <span className="text-sm font-semibold text-gray-700">
+                  {answeredCount}/{total} Answered
+                </span>
+                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-green-500 transition-all"
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+              </div>
+              <Link
+                to={`/admin/result-analyze-result?survey_id=${id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow"
+              >
+                <FaChartBar />
+                Analyze Survey
+              </Link>
+            </div>
             <h2 className="text-2xl text-green-600">{survey.survey_title}</h2>
             {survey.description && (
               <p className="text-gray-600">{survey.description}</p>
@@ -368,7 +334,7 @@ case "scale": {
             </div>
           </div>
         </div>
-        </div>
+      </div>
     </section>
   );
 }

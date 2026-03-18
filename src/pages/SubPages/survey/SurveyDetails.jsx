@@ -112,8 +112,8 @@ Survey Team`,
     chart: { type: "donut", toolbar: { show: false } },
     labels: questionStats.length
       ? questionStats.map(
-          (s) => s.question.q_title?.substring(0, 30) || `Q${s.question.id}`,
-        )
+        (s) => s.question.q_title?.substring(0, 30) || `Q${s.question.id}`,
+      )
       : ["No Questions"],
     colors: PALETTE,
     legend: { position: "bottom", fontSize: "12px" },
@@ -124,11 +124,11 @@ Survey Team`,
 
   const overviewChartSeries = questionStats.length
     ? questionStats.map(
-        (s) => Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
-      )
+      (s) => Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
+    )
     : [responseCount || 1];
 
-// The survey will only take a few minutes to complete, and your responses will be kept confidential.
+  // The survey will only take a few minutes to complete, and your responses will be kept confidential.
 
   const fetchSurvey = async () => {
     try {
@@ -354,19 +354,19 @@ Survey Team`,
             <p className="text-2xl mt-2">{estimatedMinutes} min</p>
           </div>
         </div>
-       <div className="w-full bg-gray-100 rounded-md my-5">
-  <div className="max-w-4xl mx-auto px-4 py-8">
-    <div className="relative flex justify-between">
-      <div className="absolute top-5 left-0 right-0 h-0.5">
-        <div className="absolute left-0 right-1/2 h-full bg-green-500"></div>
-        <div className="absolute left-1/2 right-0 h-full bg-gray-200"></div>
-      </div>
-    </div>
-  </div>
-</div>
+        <div className="w-full bg-gray-100 rounded-md my-5">
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <div className="relative flex justify-between">
+              <div className="absolute top-5 left-0 right-0 h-0.5">
+                <div className="absolute left-0 right-1/2 h-full bg-green-500"></div>
+                <div className="absolute left-1/2 right-0 h-full bg-gray-200"></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Response Chart */}
-      {/*  <div className="bg-white rounded-xl border shadow-sm p-8">
+        {/*  <div className="bg-white rounded-xl border shadow-sm p-8">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold">Response Overview 123</h2>
             {responseCount > 0 && (
@@ -376,7 +376,7 @@ Survey Team`,
             )}
           </div>*/}
 
-         {/* {responseCount === 0 ? (
+        {/* {responseCount === 0 ? (
             <div className="flex flex-col items-center py-10 text-gray-400 gap-2">
               <span className="text-4xl">📊</span>
               <p className="text-sm">
@@ -394,7 +394,7 @@ Survey Team`,
                 />
               </div>
 */}
-            {/*  {questionStats.length > 0 && (
+        {/*  {questionStats.length > 0 && (
                 <div className="mt-8 space-y-6">
                   {questionStats.map((stat, idx) => (
                     <div
@@ -548,13 +548,12 @@ Survey Team`,
                     OVERALL SURVEY STATUS
                   </h2>
                   <span
-                    className={`h-2 w-2 rounded-full ${
-                      survey.status === "active"
+                    className={`h-2 w-2 rounded-full ${survey.status === "active"
                         ? "bg-green-600"
                         : survey.status === "closed"
                           ? "bg-gray-500"
                           : "bg-amber-500"
-                    }`}
+                      }`}
                   />
                 </div>
                 <Link
@@ -580,13 +579,12 @@ Survey Team`,
               <h2 className="text-2xl text-gray-800 mb-2">Collectors</h2>
               <div className="border rounded-md">
                 <h2
-                  className={`text-white text-sm px-5 w-fit p-1 rounded-b-md mx-5 capitalize ${
-                    survey.status === "active"
+                  className={`text-white text-sm px-5 w-fit p-1 rounded-b-md mx-5 capitalize ${survey.status === "active"
                       ? "bg-green-700"
                       : survey.status === "closed"
                         ? "bg-gray-600"
                         : "bg-amber-700"
-                  }`}
+                    }`}
                 >
                   {survey.status || "Draft"}
                 </h2>
@@ -675,9 +673,20 @@ Survey Team`,
                 />
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard?.copyText(shareableLink);
-                    toast.success("Link copied to clipboard.");
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(shareableLink);
+                      toast.success("Link copied to clipboard.");
+                    } catch (err) {
+                      const textArea = document.createElement("textarea");
+                      textArea.value = shareableLink;
+                      document.body.appendChild(textArea);
+                      textArea.select();
+                      document.execCommand("copy");
+                      document.body.removeChild(textArea);
+
+                      toast.success("Link copied (fallback).");
+                    }
                   }}
                   className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm"
                 >
@@ -704,11 +713,10 @@ Survey Team`,
                 type="button"
                 onClick={handleSendEmails}
                 disabled={sendingEmails}
-                className={`w-full px-3 py-2 rounded text-white ${
-                  sendingEmails
+                className={`w-full px-3 py-2 rounded text-white ${sendingEmails
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700"
-                } mb-4`}
+                  } mb-4`}
               >
                 {sendingEmails ? "Sending..." : "Send Survey"}
               </button>

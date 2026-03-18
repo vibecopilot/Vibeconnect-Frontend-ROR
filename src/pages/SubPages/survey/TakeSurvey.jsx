@@ -35,20 +35,26 @@ function StarRatingInput({ rating = 0, onRatingChange, scale = 5 }) {
 
 /* ── Icon + colour palette per question index ── */
 const ICON_PALETTE = [
-  { Icon: FiShield, bg: "bg-purple-100", text: "text-purple-600" },
-  { Icon: FiClipboard, bg: "bg-blue-100", text: "text-blue-600" },
-  { Icon: FiHome, bg: "bg-emerald-100", text: "text-emerald-600" },
-  { Icon: FiDroplet, bg: "bg-cyan-100", text: "text-cyan-600" },
-  { Icon: FiTool, bg: "bg-orange-100", text: "text-orange-600" },
-  { Icon: FiStar, bg: "bg-amber-100", text: "text-amber-600" },
-  { Icon: FiSettings, bg: "bg-slate-100", text: "text-slate-600" },
-  { Icon: FiHeart, bg: "bg-rose-100", text: "text-rose-600" },
-  { Icon: FiMessageSquare, bg: "bg-indigo-100", text: "text-indigo-600" },
-  { Icon: FiUsers, bg: "bg-teal-100", text: "text-teal-600" },
-  { Icon: FiCheckCircle, bg: "bg-lime-100", text: "text-lime-600" },
-  { Icon: FiFileText, bg: "bg-pink-100", text: "text-pink-600" },
+  { bg: "bg-purple-100", text: "text-purple-600" },
+  { bg: "bg-blue-100", text: "text-blue-600" },
+  { bg: "bg-emerald-100", text: "text-emerald-600" },
+  { bg: "bg-cyan-100", text: "text-cyan-600" },
+  { bg: "bg-orange-100", text: "text-orange-600" },
+  { bg: "bg-amber-100", text: "text-amber-600" },
+  { bg: "bg-slate-100", text: "text-slate-600" },
+  { bg: "bg-rose-100", text: "text-rose-600" },
+  { bg: "bg-indigo-100", text: "text-indigo-600" },
+  { bg: "bg-teal-100", text: "text-teal-600" },
+  { bg: "bg-lime-100", text: "text-lime-600" },
+  { bg: "bg-pink-100", text: "text-pink-600" },
 ];
-const getIconStyle = (idx) => ICON_PALETTE[idx % ICON_PALETTE.length];
+const getIconStyle = (idx) => {
+  const style = ICON_PALETTE[idx % ICON_PALETTE.length];
+  return {
+    Icon: FiShield, // ALWAYS SAME ICON
+    ...style,
+  };
+};
 
 /* ── Category label from question title keywords ── */
 const CATEGORY_KEYWORDS = [
@@ -180,11 +186,10 @@ function TakeSurvey() {
             {opts.map((opt) => (
               <label
                 key={opt.id || opt.label}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
-                  value === opt.label
-                    ? "bg-violet-50 border-violet-400 shadow-sm"
-                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${value === opt.label
+                  ? "bg-violet-50 border-violet-400 shadow-sm"
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
               >
                 <input type="radio" name={`q-${q.id}`} value={opt.label} checked={value === opt.label} onChange={() => setAnswer(q.id, opt.label)} className="sr-only" />
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${value === opt.label ? "border-violet-600" : "border-gray-400"}`}>
@@ -205,11 +210,10 @@ function TakeSurvey() {
               return (
                 <label
                   key={opt.id || opt.label}
-                  className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
-                    checked
-                      ? "bg-violet-50 border-violet-400 shadow-sm"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                  }`}
+                  className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${checked
+                    ? "bg-violet-50 border-violet-400 shadow-sm"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
                 >
                   <input type="checkbox" checked={checked} onChange={(e) => setMultiAnswer(q.id, opt.label, e.target.checked)} className="sr-only" />
                   <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${checked ? "border-violet-600 bg-violet-600" : "border-gray-400"}`}>
@@ -240,11 +244,10 @@ function TakeSurvey() {
                 key={n}
                 type="button"
                 onClick={() => setAnswer(q.id, n)}
-                className={`min-w-[2.5rem] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  value === n
-                    ? "bg-violet-600 text-white border-violet-600"
-                    : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
-                }`}
+                className={`min-w-[2.5rem] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${value === n
+                  ? "bg-violet-600 text-white border-violet-600"
+                  : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
+                  }`}
               >
                 {n}
               </button>
@@ -292,7 +295,7 @@ function TakeSurvey() {
     );
   }
   if (!survey) return null;
-  const accentColor = "#7C3AED";
+  const accentColor = "#DD3820";
   const defaultFieldsCount = 5;
   const totalWithDefaults = total + defaultFieldsCount;
   const defaultFieldsFilled = [
@@ -315,9 +318,9 @@ function TakeSurvey() {
 
         {/* ── Header Banner ── */}
         <div
-          className="rounded-2xl px-6 sm:px-10 py-10 sm:py-14 text-center text-white shadow-lg overflow-hidden relative"
+          className="rounded-2xl px-6 sm:px-10 pt-24 pb-6 text-white shadow-lg overflow-hidden relative"
           style={{
-            background: `linear-gradient(135deg, ${accentColor}, #a855f7)`,
+            background: "linear-gradient(135deg, #DD3820, #ff6a4d)",
           }}
         >
           {/* Decorative circles */}
@@ -325,23 +328,45 @@ function TakeSurvey() {
           <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
           <div className="absolute top-6 right-12 w-16 h-16 rounded-full bg-white/5 pointer-events-none" />
 
-          <div className="relative z-10">
+          <div className="relative z-10 w-full">
+            {/* 🔷 LOGO (top-left) */}
             {survey.client_logo && (
-              <img src={domainPrefix + survey.client_logo} alt="Logo" className="h-10 sm:h-12 mx-auto mb-4 object-contain drop-shadow" />
+              <img
+                src={domainPrefix + survey.client_logo}
+                alt="Logo"
+                className="h-16 sm:h-20 object-contain absolute top-6 left-6"
+              />
             )}
-            {survey.header_image && (
-              <img src={domainPrefix + survey.header_image} alt="Header" className="max-h-20 sm:max-h-24 mx-auto mb-4 object-contain rounded-lg" />
-            )}
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{survey.survey_title}</h1>
-            {survey.description && (
-              <p className="mt-2 text-sm sm:text-base text-white/80 max-w-lg mx-auto">{survey.description}</p>
-            )}
-            {survey.header_text && (
-              <p className="mt-2 text-xs sm:text-sm text-white/60">{survey.header_text}</p>
-            )}
+
+            {/* 🔷 CENTER CONTENT */}
+            <div className="flex flex-col items-center text-center px-4 sm:px-16">
+
+              {survey.header_image && (
+                <img
+                  src={domainPrefix + survey.header_image}
+                  alt="Header"
+                  className="max-h-20 sm:max-h-24 mb-4 object-contain rounded-lg"
+                />
+              )}
+
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                {survey.survey_title}
+              </h1>
+
+              {survey.description && (
+                <p className="mt-3 text-sm sm:text-base text-white/90 leading-relaxed max-w-2xl">
+                  {survey.description}
+                </p>
+              )}
+
+              {survey.header_text && (
+                <p className="mt-2 text-xs sm:text-sm text-white/60">
+                  {survey.header_text}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-
         {/* ── Progress Bar ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3">
@@ -407,8 +432,7 @@ function TakeSurvey() {
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-xs font-bold uppercase tracking-wider ${text}`}>{category}</span>
+                  <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:justify-between gap-4">
                     <h3 className="text-sm sm:text-base font-semibold text-gray-800 mt-0.5 leading-snug">
                       {q.q_title}
                       {q.required && <span className="text-red-500 ml-1">*</span>}
@@ -432,7 +456,14 @@ function TakeSurvey() {
                     )}
 
                     {/* Input: below title on mobile, inline on large */}
-                    <div className="mt-4">{renderQuestionInput(q)}</div>
+
+                    <div className="mt-3 sm:w-[280px]">
+                      {renderQuestionInput(q)}
+                    </div>
+
+
+
+
                   </div>
                 </div>
               </div>
