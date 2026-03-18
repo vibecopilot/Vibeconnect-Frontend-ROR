@@ -2030,170 +2030,139 @@ const SetupFacility = () => {
         </div>
         <div className="bg-white rounded-xl shadow-md border p-6 mt-2 mb-3 border-gray-300">
           <h2 className="text-lg font-semibold mb-6">Configure Slot</h2>
+<div className="overflow-x-auto ">
+  {formData.slots.map((slot, slotIndex) => (
+    <div
+      key={slotIndex}
+      className="flex gap-4 items-end mb-4 min-w-[1200px]"
+    >
+      {/* Start Time */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600">
+          Start time
+        </label>
+        <input
+          type="time"
+          value={formatTime(slot.start_hr, slot.start_min)}
+          onChange={(e) =>
+            handleSlotTimeChange(slotIndex, "start", e.target.value)
+          }
+          className="border rounded-md px-3 py-2"
+        />
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-6 items-end">
-            {formData.slots.map((slot, slotIndex) => (
-              <React.Fragment key={slotIndex}>
-                {/* Start Time */}
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Start time
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="time"
-                      value={formatTime(slot.start_hr, slot.start_min)}
-                      onChange={(e) =>
-                        handleSlotTimeChange(slotIndex, "start", e.target.value)
-                      }
-                      className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                    />
-                  </div>
-                </div>
+      {/* Break Start */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600">
+          Break Start
+        </label>
+        <input
+          type="time"
+          value={formatTime(slot.break_start_hr, slot.break_start_min)}
+          onChange={(e) =>
+            handleSlotTimeChange(slotIndex, "break_start", e.target.value)
+          }
+          className="border rounded-md px-3 py-2"
+        />
+      </div>
 
-                {/* Break Time Start */}
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Break time ( start)
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="time"
-                      value={formatTime(slot.break_start_hr, slot.break_start_min)}
-                      onChange={(e) =>
-                        handleSlotTimeChange(
-                          slotIndex,
-                          "break_start",
-                          e.target.value,
-                        )
-                      }
-                      className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                    />
-                  </div>
-                </div>
+      {/* Break End */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600">
+          Break End
+        </label>
+        <input
+          type="time"
+          value={formatTime(slot.break_end_hr, slot.break_end_min)}
+          onChange={(e) =>
+            handleSlotTimeChange(slotIndex, "break_end", e.target.value)
+          }
+          className="border rounded-md px-3 py-2"
+        />
+      </div>
 
-                {/* Break Time End */}
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Break time ( end)
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="time"
-                      value={formatTime(slot.break_end_hr, slot.break_end_min)}
-                      onChange={(e) =>
-                        handleSlotTimeChange(
-                          slotIndex,
-                          "break_end",
-                          e.target.value,
-                        )
-                      }
-                      className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                    />
-                  </div>
-                </div>
+      {/* End Time */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600">
+          End Time
+        </label>
+        <input
+          type="time"
+          value={formatTime(slot.end_hr, slot.end_min)}
+          onChange={(e) =>
+            handleSlotTimeChange(slotIndex, "end", e.target.value)
+          }
+          className="border rounded-md px-3 py-2"
+        />
+      </div>
 
-                {/* End Time */}
-                <div>
-                  <label className="text-sm font-medium text-gray-600">
-                    End Time
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      type="time"
-                      value={formatTime(slot.end_hr, slot.end_min)}
-                      onChange={(e) =>
-                        handleSlotTimeChange(slotIndex, "end", e.target.value)
-                      }
-                      className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                    />
-                  </div>
-                </div>
-              </React.Fragment>
-            ))}
-          </div>
-          <div className="flex gap-2 mb-4">
-            <button
-              type="button"
-              onClick={handleAddSlot}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md"
-            >
-              Add Slot
-            </button>
-            {formData.slots.length > 1 && (
-              <button
-                type="button"
-                onClick={() => handleRemoveSlot(formData.slots.length - 1)}
-                className="px-4 py-2 bg-red-600 text-white rounded-md"
-              >
-                Remove Slot
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Concurrent Slots
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={formData.slots[0]?.concurrent_slots || "1"}
-                onChange={(e) =>
-                  handleSlotFieldChange(0, "concurrent_slots", e.target.value)
-                }
-                className="border rounded-md px-3 py-2 w-full"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Slot Duration
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.slots[0]?.slot_duration || ""}
-                onChange={(e) =>
-                  handleSlotFieldChange(0, "slot_duration", e.target.value)
-                }
-                className="border rounded-md px-3 py-2 w-full"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Wrap Time
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={formData.slots[0]?.wrap_up_time || ""}
-                onChange={(e) =>
-                  handleSlotFieldChange(0, "wrap_up_time", e.target.value)
-                }
-                className="border rounded-md px-3 py-2 w-full"
-              />
-            </div>
-          </div>
-          <div className="my-2">
-            <label className="text-sm font-medium text-gray-600">Slot By</label>
-            <select
-              value={slotBy}
-              onChange={(e) => setSlotBy(e.target.value)}
-              className="border rounded-md p-2 w-full"
-            >
-              <option value="">Select</option>
-              <option value="15">15 Min</option>
-              <option value="30">30 Min</option>
-              <option value="45">45 Min</option>
-              <option value="60">1 Hour</option>
-              <option value="90">1.5 Hour</option>
-              <option value="120">2 Hour</option>
-              <option value="180">3 Hour</option>
-              <option value="360">6 Hour</option>
-              <option value="720">12 Hour</option>
-              <option value="1440">24 Hour</option>
-            </select>
-          </div>
+      {/* Concurrent Slots */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600">
+          Concurrent
+        </label>
+        <input
+          type="number"
+          min="0"
+          value={slot.concurrent_slots || ""}
+          onChange={(e) =>
+            handleSlotFieldChange(
+              slotIndex,
+              "concurrent_slots",
+              e.target.value
+            )
+          }
+          className="border rounded-md px-3 py-2 w-24"
+        />
+      </div>
+
+      {/* Slot By */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600">
+          Slot By
+        </label>
+        <select
+          value={slotBy}
+          onChange={(e) => setSlotBy(e.target.value)}
+          className="border rounded-md px-3 py-2"
+        >
+          <option value="">Select</option> 
+          <option value="15">15 Min</option>
+           <option value="30">30 Min</option>
+            <option value="45">45 Min</option> 
+            <option value="60">1 Hour</option> 
+            <option value="90">1.5 Hour</option> 
+            <option value="120">2 Hour</option> 
+            <option value="180">3 Hour</option>
+             <option value="360">6 Hour</option> 
+             <option value="720">12 Hour</option> 
+             <option value="1440">24 Hour</option>
+        </select>
+      </div>
+
+      {/* Wrap Time */}
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600">
+          Wrap Time
+        </label>
+        <input
+          type="number"
+          min="0"
+          value={slot.wrap_up_time || ""}
+          onChange={(e) =>
+            handleSlotFieldChange(
+              slotIndex,
+              "wrap_up_time",
+              e.target.value
+            )
+          }
+          className="border rounded-md px-3 py-2 w-24"
+        />
+      </div>
+    </div>
+  ))}
+</div>
+
         </div>
         <div></div>
          <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>

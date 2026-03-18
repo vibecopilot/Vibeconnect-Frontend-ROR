@@ -1,14 +1,17 @@
 import React, { useState } from "react";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const AddAMC = () => {
   const [amcFor, setAmcFor] = useState("asset");
-<<<<<<< HEAD
+  const navigate = useNavigate();
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   const day = String(today.getDate()).padStart(2, "0");
   const formattedDate = `${year}-${month}-${day}`;
-=======
   // const today = new Date();
   // const year = today.getFullYear();
   // const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -22,7 +25,6 @@ const AddAMC = () => {
     const themeColor = useSelector((state)=> state.theme.color)
 
   
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
   const [formData, setFormData] = useState({
     asset: "",
     service: "",
@@ -33,7 +35,6 @@ const AddAMC = () => {
   });
 
   const handleChange = (e) => {
-<<<<<<< HEAD
   const { name, value } = e.target;
 
   setFormData((prev) => ({
@@ -41,14 +42,7 @@ const AddAMC = () => {
     [name]: value,
   }));
 };
-=======
-    const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+ 
 
   const handleFileChange = (event, type) => {
     const files = Array.from(event.target.files);
@@ -182,7 +176,7 @@ const AddAMC = () => {
       toast.error("Failed to Save AMC");
     }
   };
->>>>>>> 6e2895ca2862289879c854c200b55d4d5d9a92f1
+
   return (
     <section>
       <div className="m-2">

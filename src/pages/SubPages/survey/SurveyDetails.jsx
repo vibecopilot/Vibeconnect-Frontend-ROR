@@ -46,7 +46,7 @@ Survey Team`
   );
 }, [shareableLink]);
 
-  const responseCount = responses.length;
+  // const responseCount = responses.length;
 
   /* Build per-question answer aggregations for the overview chart */
   const questionStats = (() => {
@@ -96,7 +96,7 @@ Survey Team`
     ? questionStats.map((s) => Object.values(s.counts).reduce((a, b) => a + b, 0) || 0)
     : [responseCount || 1];
 
-The survey will only take a few minutes to complete, and your responses will be kept confidential.
+// The survey will only take a few minutes to complete, and your responses will be kept confidential.
 
   const fetchSurvey = async () => {
     try {
@@ -331,15 +331,16 @@ The survey will only take a few minutes to complete, and your responses will be 
             <p className="text-2xl mt-2">2 min</p>
           </div>
         </div>
-        <div className="w-full bg-gray-100 rounded-md my-5">
-          <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="relative flex justify-between">
-              {/* Progress Line */}
-              <div className="absolute top-5 left-0 right-0 h-0.5">
-                <div className="absolute left-0 right-1/2 h-full bg-green-500 transition-all duration-500"></div>
-                <div className="absolute left-1/2 right-0 h-full bg-gray-200 transition-all duration-500"></div>
-              </div>
-
+       <div className="w-full bg-gray-100 rounded-md my-5">
+  <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="relative flex justify-between">
+      <div className="absolute top-5 left-0 right-0 h-0.5">
+        <div className="absolute left-0 right-1/2 h-full bg-green-500"></div>
+        <div className="absolute left-1/2 right-0 h-full bg-gray-200"></div>
+      </div>
+    </div>
+  </div>
+</div>
         {/* Response Chart */}
         <div className="bg-white rounded-xl border shadow-sm p-8">
           <div className="flex items-center justify-between mb-6">
