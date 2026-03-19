@@ -427,24 +427,7 @@ const SetupFacility = () => {
   //   },
   // ]);
 
-  // const handleAddSlot = () => {
-  //   setSlots([
-  //     ...slots,
-  //     {
-  //       id: slots.length + 1,
-  //       startTime: "",
-  //       breakTimeStart: "",
-  //       breakTimeEnd: "",
-  //       endTime: "",
-  //       concurrentSlots: "",
-  //       slotBy: "",
-  //       wrapTime: "",
-  //       day: "",
-  //       isActive: false,
-  //       isBookable: false,
-  //     },
-  //   ]);
-  // };
+
 
   const handleAddSlot = () => {
     setFormData((prevState) => ({
@@ -535,14 +518,77 @@ const SetupFacility = () => {
     {
       id: Date.now(),
       enumerator: "daily_limit",
-      duration: "60",
-      level: "user",
-      times: "1",
-      period_type: "day",
-      enabled: true,
-      primeTime: "18:00-21:00",
+      duration: "",
+      level: "",
+      times: "",
+      period_type: "",
+      enabled: false,
+     primeTime: [{ start_time: "", end_time: "" }],
     },
   ]);
+
+  const normalizeRules = (rulesData) => {
+  return rulesData.map((rule) => ({
+    ...rule,
+    primeTime:
+      Array.isArray(rule.primeTime) && rule.primeTime.length > 0
+        ? rule.primeTime
+        : [{ start_time: "", end_time: "" }], // ✅ fallback
+  }));
+};
+
+const handlePrimeTimeChange = (ruleId, index, field, value) => {
+  setRules((prev) =>
+    prev.map((rule) => {
+      if (rule.id !== ruleId) return rule;
+
+      const updatedPrimeTimes = [...rule.primeTime];
+      // Ensure it's an array of objects
+      if (!Array.isArray(updatedPrimeTimes)) {
+        updatedPrimeTimes = [{ start_time: "", end_time: "" }];
+      }
+
+      // Update the specific prime time
+      updatedPrimeTimes[index] = {
+        ...updatedPrimeTimes[index],
+        [field]: value,
+      };
+
+      return { ...rule, primeTime: updatedPrimeTimes };
+    })
+  );
+};
+
+const handleRemovePrimeTime = (ruleId, index) => {
+  setRules((prev) =>
+    prev.map((rule) => {
+      if (rule.id !== ruleId) return rule;
+
+      const updatedPrimeTimes = [...rule.primeTime];
+      if (Array.isArray(updatedPrimeTimes)) {
+        updatedPrimeTimes.splice(index, 1);
+      }
+
+      return { ...rule, primeTime: updatedPrimeTimes };
+    })
+  );
+};
+
+const handleAddPrimeTime = (ruleId) => {
+  setRules((prev) =>
+    prev.map((rule) =>
+      rule.id === ruleId
+        ? {
+            ...rule,
+            primeTime: [
+              ...(rule.primeTime && Array.isArray(rule.primeTime) ? rule.primeTime : [{ start_time: "", end_time: "" }]),
+              { start_time: "", end_time: "" },
+            ],
+          }
+        : rule
+    )
+  );
+};
   const options = ["Flat", "User", "Tenant", "Owner"];
 
   const handleAddRule = () => {
@@ -554,7 +600,7 @@ const SetupFacility = () => {
       times: "1",
       period_type: "day",
       enabled: true,
-      primeTime: "18:00-21:00",
+      primeTime: [{ start_time: "", end_time: "" }],
     };
     setRules([...rules, newRule]);
   };
@@ -605,248 +651,137 @@ const SetupFacility = () => {
 
     const sendData = new FormData();
 
-    // Basic info
+    // ── Basic info ────────────────────────────────────────────────────────────
     sendData.append("amenity[site_id]", siteId);
-    sendData.append("amenity[name]", formData.name || "");
     sendData.append("amenity[fac_name]", formData.fac_name || "");
     sendData.append("amenity[fac_type]", formData.fac_type || "bookable");
-    sendData.append("amenity[active]", formData.active || "");
+    sendData.append("amenity[type_of_facility]", formData.type_of_facility || "");
+    sendData.append("amenity[description]", formData.description || "");
+    sendData.append("amenity[disclaimer]", formData.disclaimer || "");
+    sendData.append("amenity[cancellation_policy]", formData.cancellation_policy || "");
+    sendData.append("amenity[terms]", formData.terms || "");
+    sendData.append("amenity[deposit]", formData.deposit || "");
+    sendData.append("amenity[gst_no]", formData.gst_no || "");
+    sendData.append("amenity[gst]", formData.gst || "18");
+    sendData.append("amenity[sgst]", formData.sgst || "9");
+
+    // active expects boolean on backend
+    sendData.append("amenity[active]", formData.active === "yes" ? "true" : "false");
+    sendData.append("amenity[status]", formData.status || "active");
     sendData.append("amenity[shareable]", formData.shareable || "");
     sendData.append("amenity[billing]", formData.billing || "");
-    sendData.append("amenity[description]", formData.description || "");
-    sendData.append("amenity[terms]", formData.terms || "");
-    sendData.append(
-      "amenity[cancellation_policy]",
-      formData.cancellation_policy || "",
-    );
+
+    // ── People limits ─────────────────────────────────────────────────────────
     sendData.append("amenity[min_people]", formData.min_people || "");
     sendData.append("amenity[max_people]", formData.max_people || "");
 
-    // Fixed / Flat
-    sendData.append("amenity[is_fixed]", formData.flat ? "true" : "false");
-    sendData.append("amenity[fixed_amount]", formData.fixed_amount || "");
-
-    // GST – decide based on backend (try both if unsure)
-    sendData.append("amenity[gst]", formData.gst_no || "18");
-    // sendData.append("amenity[gst_no]", formData.gst_no || "18");   ← try this if above fails
-
-    // Booking rule + schedule config
+    // ── Booking / schedule config ─────────────────────────────────────────────
     sendData.append("amenity[book_before]", formData.book_before || "");
     sendData.append("amenity[cancel_before]", formData.cancel_before || "");
     sendData.append("amenity[advance_booking]", formData.advance_booking || "");
     sendData.append("amenity[max_slots]", formData.max_slots || "");
-    sendData.append(
-      "amenity[consecutive_slot_allowed]",
-      formData.consecutive_slot_allowed ? "true" : "false",
-    );
-
-    // Member
-    sendData.append("amenity[member]", formData.member ? "true" : "false");
-    sendData.append(
-      "amenity[is_member_adult]",
-      formData.is_member_adult ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[is_member_child]",
-      formData.is_member_child ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[is_guest_adult]",
-      formData.is_guest_adult ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[is_guest_child]",
-      formData.is_guest_child ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[is_tenant_adult]",
-      formData.is_tenant_adult ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[is_tenant_child]",
-      formData.is_tenant_child ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[member_price_adult]",
-      formData.member_price_adult || "",
-    );
-    sendData.append(
-      "amenity[member_price_child]",
-      formData.member_price_child || "",
-    );
-    sendData.append(
-      "amenity[guest_price_child]",
-      formData.guest_price_child || "",
-    );
-    sendData.append(
-      "amenity[tenant_price_adult]",
-      formData.tenant_price_adult || "",
-    );
-    sendData.append(
-      "amenity[tenant_price_child]",
-      formData.tenant_price_child || "",
-    );
-    sendData.append(
-      "amenity[guest_price_adult]",
-      formData.guest_price_adult || "",
-    );
-
-    sendData.append(
-      "amenity[member_postpaid]",
-      formData.member_postpaid ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[member_prepaid]",
-      formData.member_prepaid ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[member_pay_on_facility]",
-      formData.member_pay_on_facility ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[member_complimentary]",
-      formData.member_complimentary ? "true" : "false",
-    );
-
-    // Non-Member
-    sendData.append(
-      "amenity[non_member]",
-      formData.non_member ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[is_non_member_adult]",
-      formData.is_non_member_adult ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[is_non_member_child]",
-      formData.is_non_member_child ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[non_member_price_adult]",
-      formData.non_member_price_adult || "",
-    );
-    sendData.append(
-      "amenity[non_member_price_child]",
-      formData.non_member_price_child || "",
-    );
-    sendData.append(
-      "amenity[non_member_postpaid]",
-      formData.non_member_postpaid ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[non_member_prepaid]",
-      formData.non_member_prepaid ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[non_member_pay_on_facility]",
-      formData.non_member_pay_on_facility ? "true" : "false",
-    );
-    sendData.append(
-      "amenity[non_member_complimentary]",
-      formData.non_member_complimentary ? "true" : "false",
-    );
-
-    // Guest + Tenant → same pattern (copy-paste & change prefix)
-
-    // Book before
-    const bookStr = `${bookBefore.days || 0} days, ${bookBefore.hours || 0} hours, ${bookBefore.minutes || 0} minutes`;
-    sendData.append("book_before[0]", bookStr);
-    sendData.append("book_before[1]", JSON.stringify(bookBefore));
-    sendData.append("book_before[2]", "null");
-
-    // Slot-by / schedule settings
+    sendData.append("amenity[consecutive_slot_allowed]", formData.consecutive_slot_allowed ? "true" : "false");
     sendData.append("amenity[slot_by]", slotBy || "");
 
-    // Slots
+    // ── Global payment methods ────────────────────────────────────────────────
+    sendData.append("amenity[prepaid]", formData.prepaid ? "true" : "false");
+    sendData.append("amenity[postpaid]", formData.postpaid ? "true" : "false");
+    sendData.append("amenity[pay_on_facility]", formData.pay_on_facility ? "true" : "false");
+    sendData.append("amenity[payment_methods]", formData.payment_methods || "");
+
+    // ── Fixed / Flat ──────────────────────────────────────────────────────────
+    sendData.append("amenity[is_fixed]", formData.flat ? "true" : "false");
+    sendData.append("amenity[fixed_amount]", formData.fixed_amount || "");
+
+    // ── Member ────────────────────────────────────────────────────────────────
+    sendData.append("amenity[member]", formData.member ? "true" : "false");
+    sendData.append("amenity[member_price_adult]", formData.member_price_adult || "");
+    sendData.append("amenity[member_price_child]", formData.member_price_child || "");
+    sendData.append("amenity[member_postpaid]", formData.member_postpaid ? "true" : "false");
+    sendData.append("amenity[member_prepaid]", formData.member_prepaid ? "true" : "false");
+    sendData.append("amenity[member_pay_on_facility]", formData.member_pay_on_facility ? "true" : "false");
+    sendData.append("amenity[member_complimentary]", formData.member_complimentary ? "true" : "false");
+
+    // ── Guest ─────────────────────────────────────────────────────────────────
+    sendData.append("amenity[guest]", formData.guest ? "true" : "false");
+    sendData.append("amenity[guest_price_adult]", formData.guest_price_adult || "");
+    sendData.append("amenity[guest_price_child]", formData.guest_price_child || "");
+    sendData.append("amenity[guest_postpaid]", formData.guest_postpaid ? "true" : "false");
+    sendData.append("amenity[guest_prepaid]", formData.guest_prepaid ? "true" : "false");
+    sendData.append("amenity[guest_pay_on_facility]", formData.guest_pay_on_facility ? "true" : "false");
+    sendData.append("amenity[guest_complimentary]", formData.guest_complimentary ? "true" : "false");
+
+    // ── Tenant ────────────────────────────────────────────────────────────────
+    sendData.append("amenity[tenant]", formData.tenant ? "true" : "false");
+    sendData.append("amenity[tenant_price_adult]", formData.tenant_price_adult || "");
+    sendData.append("amenity[tenant_price_child]", formData.tenant_price_child || "");
+    sendData.append("amenity[tenant_postpaid]", formData.tenant_postpaid ? "true" : "false");
+    sendData.append("amenity[tenant_prepaid]", formData.tenant_prepaid ? "true" : "false");
+    sendData.append("amenity[tenant_pay_on_facility]", formData.tenant_pay_on_facility ? "true" : "false");
+    sendData.append("amenity[tenant_complimentary]", formData.tenant_complimentary ? "true" : "false");
+
+    // ── Non-Member ────────────────────────────────────────────────────────────
+    sendData.append("amenity[non_member]", formData.non_member ? "true" : "false");
+    sendData.append("amenity[non_member_price_adult]", formData.non_member_price_adult || "");
+    sendData.append("amenity[non_member_price_child]", formData.non_member_price_child || "");
+    sendData.append("amenity[non_member_postpaid]", formData.non_member_postpaid ? "true" : "false");
+    sendData.append("amenity[non_member_prepaid]", formData.non_member_prepaid ? "true" : "false");
+    sendData.append("amenity[non_member_pay_on_facility]", formData.non_member_pay_on_facility ? "true" : "false");
+    sendData.append("amenity[non_member_complimentary]", formData.non_member_complimentary ? "true" : "false");
+
+    // ── Slots ─────────────────────────────────────────────────────────────────
     formData.slots.forEach((slot, index) => {
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][start_hr]`,
-        slot.start_hr || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][start_min]`,
-        slot.start_min || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][end_hr]`,
-        slot.end_hr || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][end_min]`,
-        slot.end_min || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][break_start_hr]`,
-        slot.break_start_hr || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][break_start_min]`,
-        slot.break_start_min || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][break_end_hr]`,
-        slot.break_end_hr || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][break_end_min]`,
-        slot.break_end_min || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][concurrent_slots]`,
-        slot.concurrent_slots || "1",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][slot_duration]`,
-        slot.slot_duration || "",
-      );
-      sendData.append(
-        `amenity[amenity_slots_attributes][${index}][wrap_up_time]`,
-        slot.wrap_up_time || "0",
-      );
-      // add prime_time if backend supports it
+      const slotBase = `amenity[amenity_slots_attributes][${index}]`;
+      sendData.append(`${slotBase}[start_hr]`, slot.start_hr || "");
+      sendData.append(`${slotBase}[start_min]`, slot.start_min || "");
+      sendData.append(`${slotBase}[end_hr]`, slot.end_hr || "");
+      sendData.append(`${slotBase}[end_min]`, slot.end_min || "");
+      sendData.append(`${slotBase}[break_start_hr]`, slot.break_start_hr || "");
+      sendData.append(`${slotBase}[break_start_min]`, slot.break_start_min || "");
+      sendData.append(`${slotBase}[break_end_hr]`, slot.break_end_hr || "");
+      sendData.append(`${slotBase}[break_end_min]`, slot.break_end_min || "");
+      sendData.append(`${slotBase}[concurrent_slots]`, slot.concurrent_slots || "1");
+      sendData.append(`${slotBase}[slot_duration]`, slot.slot_duration || "");
+      sendData.append(`${slotBase}[wrap_up_time]`, slot.wrap_up_time || "0");
     });
 
-    // Operational days
+    // ── Operational days ──────────────────────────────────────────────────────
     days.forEach((day, idx) => {
       const base = `amenity[amenity_operational_days_attributes][${idx}]`;
       sendData.append(`${base}[day_of_week]`, day.value);
       sendData.append(`${base}[is_active]`, day.is_active ? "true" : "false");
-      sendData.append(`${base}[start_time]`, day.start_time || "");
-      sendData.append(`${base}[end_time]`, day.end_time || "");
+      if (day.is_active) {
+        sendData.append(`${base}[start_time]`, day.start_time || "");
+        sendData.append(`${base}[end_time]`, day.end_time || "");
+      }
     });
 
-    // Booking rules
+    // ── Booking rules ─────────────────────────────────────────────────────────
+    // primeTime is always an array of { start_time, end_time } objects
     rules.forEach((rule, idx) => {
-      const ruleIndex = `amenity[amenity_booking_rules_attributes][${idx}]`;
-      sendData.append(`${ruleIndex}[enumerator]`, rule.enumerator || "daily_limit");
-      sendData.append(`${ruleIndex}[duration]`, rule.duration || "60");
-      sendData.append(`${ruleIndex}[level]`, rule.level || "user");
-      sendData.append(`${ruleIndex}[active]`, rule.enabled ? "true" : "false");
-      sendData.append(`${ruleIndex}[facility_can_be_booked]`, rule.enabled ? "true" : "false");
-      sendData.append(`${ruleIndex}[times_per_day]`, rule.times || "");
-      sendData.append(`${ruleIndex}[period_type]`, rule.period_type || "day");
+      const ruleBase = `amenity[amenity_booking_rules_attributes][${idx}]`;
+      sendData.append(`${ruleBase}[enumerator]`, rule.enumerator || "daily_limit");
+      sendData.append(`${ruleBase}[duration]`, rule.duration || "60");
+      sendData.append(`${ruleBase}[level]`, rule.level || "user");
+      sendData.append(`${ruleBase}[active]`, rule.enabled ? "true" : "false");
+      sendData.append(`${ruleBase}[site_id]`, siteId);
+      sendData.append(`${ruleBase}[facility_can_be_booked]`, rule.enabled ? "true" : "false");
+      sendData.append(`${ruleBase}[times_per_day]`, rule.times || "");
+      sendData.append(`${ruleBase}[period_type]`, rule.period_type || "day");
 
-      const primeTimes = [];
-      if (rule.primeTime) {
-        primeTimes.push(
-          ...rule.primeTime
-            .split("/")
-            .map((entry) => entry.trim())
-            .map((entry) => {
-              const [start, end] = entry.split("-").map((v) => v.trim());
-              return { start_time: start || "", end_time: end || "" };
-            })
-            .filter((pt) => pt.start_time && pt.end_time),
-        );
-      }
+      // primeTime is an array of { start_time, end_time } objects
+      const primeTimes = Array.isArray(rule.primeTime)
+        ? rule.primeTime.filter((pt) => pt.start_time && pt.end_time)
+        : [];
+
       primeTimes.forEach((pt, pIdx) => {
-        const primeBase = `${ruleIndex}[prime_times_attributes][${pIdx}]`;
+        const primeBase = `${ruleBase}[prime_times_attributes][${pIdx}]`;
         sendData.append(`${primeBase}[start_time]`, pt.start_time || "");
         sendData.append(`${primeBase}[end_time]`, pt.end_time || "");
       });
     });
 
-    // Files (include both top-level and nested versions for backend compatibility)
+    // ── Files ─────────────────────────────────────────────────────────────────
     if (formData.attachments?.length) {
       Array.from(formData.attachments).forEach((file) => {
         sendData.append("attachments[]", file);
@@ -1150,7 +1085,7 @@ const SetupFacility = () => {
         </div>
 
         {/* Payment Options */}
- <div className="flex gap-4  border-black items-center mt-6">
+        <div className="flex gap-4  border-black items-center mt-6">
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -1957,15 +1892,47 @@ const SetupFacility = () => {
               </span>
 
               {/* Prime Time Editable Input */}
-              <input
-                type="text"
-                value={rule.primeTime || ""}
-                onChange={(e) =>
-                  handleChange2(rule.id, "primeTime", e.target.value)
-                }
-                placeholder="e.g. 6:00 AM - 10:00AM / 5:00 PM - 8:00PM"
-                className="border border-gray-300 bg-gray-50 rounded px-3 py-1 text-sm w-[300px]"
-              />
+        {(rule.primeTime && rule.primeTime.length > 0 ? rule.primeTime : [{ start_time: "", end_time: "" }]).map((pt, pIdx) => (
+  <div key={pIdx} className="flex items-center gap-2 mb-2">
+    {/* Start Time */}
+    <input
+      type="time"
+      value={pt.start_time}
+      onChange={(e) =>
+        handlePrimeTimeChange(rule.id, pIdx, "start_time", e.target.value)
+      }
+      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
+
+    {/* End Time */}
+    <input
+      type="time"
+      value={pt.end_time}
+      onChange={(e) =>
+        handlePrimeTimeChange(rule.id, pIdx, "end_time", e.target.value)
+      }
+      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
+
+    {/* Delete Button */}
+    {rule.primeTime.length > 1 && (
+      <button
+        type="button"
+        onClick={() => handleRemovePrimeTime(rule.id, pIdx)}
+        className="text-red-500"
+      >
+        <FaTrash />
+      </button>
+    )}
+  </div>
+))}
+              <button
+                type="button"
+                onClick={() => handleAddPrimeTime(rule.id)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm mx-4 mt-3 mb-3"
+              >
+                + Add Prime Time
+              </button>
 
               {/* Sub Facility */}
               <div className="flex items-center gap-2">
@@ -1997,7 +1964,7 @@ const SetupFacility = () => {
             onClick={handleAddRule}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm mx-4 mt-3 mb-3"
           >
-            Add
+            +  Add Rule
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -2174,7 +2141,16 @@ const SetupFacility = () => {
               </div>
             ))}
           </div>
-
+          <div className="mt-4">
+            {/* <button
+              type="button"
+              onClick={handleAddSlot}
+              className=" text-white px-4 py-2 rounded-md"
+              style={{ background: themeColor }}
+            >
+              + Add Slot
+            </button> */}
+          </div>
         </div>
         <div></div>
         <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>

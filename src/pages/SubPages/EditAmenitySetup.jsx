@@ -2,16 +2,15 @@ import React, { useEffect, useState } from "react";
 import {
   domainPrefix,
   getFacitilitySetupId,
-  postFacitilitySetup,
   updateFacitilitySetup,
 } from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { useSelector } from "react-redux";
-import { Navbar } from "@material-tailwind/react";
+import Navbar from "../../components/Navbar";
+import FileInputBox from "../../containers/Inputs/FileInputBox";
+import { Switch } from "../../Buttons";
 import { FaCheck, FaTrash } from "react-icons/fa";
-import { BiPlusCircle } from "react-icons/bi";
-import { id } from "date-fns/locale";
 import toast from "react-hot-toast";
 
 
@@ -29,7 +28,7 @@ const EditAmenitySetup = () => {
     },
   });
 
-    const daysList = [
+  const daysList = [
     { label: "Sunday", value: 0 },
     { label: "Monday", value: 1 },
     { label: "Tuesday", value: 2 },
@@ -39,38 +38,44 @@ const EditAmenitySetup = () => {
     { label: "Saturday", value: 6 },
   ];
 
-   const [days, setDays] = useState(
-      daysList.map((day) => ({
-        ...day,
-        is_active: false,
-        start_time: "",
-        end_time: "",
-      })),
+  const [days, setDays] = useState(
+    daysList.map((day) => ({
+      ...day,
+      is_active: false,
+      start_time: "",
+      end_time: "",
+    })),
+  );
+
+  // ✅ Handle checkbox
+  const handleCheck = (index) => {
+    const updated = [...days];
+    updated[index].is_active = !updated[index].is_active;
+    setDays(updated);
+  };
+
+  // ✅ Handle time change
+  const handleTimeChange1 = (index, field, value) => {
+    const updated = [...days];
+    updated[index][field] = value;
+    setDays(updated);
+  };
+
+
+  const handleChange2 = (id, field, value) => {
+    setRules((prev) =>
+      prev.map((rule) => (rule.id === id ? { ...rule, [field]: value } : rule)),
     );
-  
-    // ✅ Handle checkbox
-    const handleCheck = (index) => {
-      const updated = [...days];
-      updated[index].is_active = !updated[index].is_active;
-      setDays(updated);
-    };
-  
-    // ✅ Handle time change
-    const handleTimeChange1 = (index, field, value) => {
-      const updated = [...days];
-      updated[index][field] = value;
-      setDays(updated);
-    };
-  
-    // ✅ Convert UI → API payload
-    const getPayload = () => {
-      return days.map((d) => ({
-        day_of_week: d.value,
-        start_time: d.start_time || "",
-        end_time: d.end_time || "",
-        is_active: d.is_active,
-      }));
-    };
+  };
+  // ✅ Convert UI → API payload
+  const getPayload = () => {
+    return days.map((d) => ({
+      day_of_week: d.value,
+      start_time: d.start_time || "",
+      end_time: d.end_time || "",
+      is_active: d.is_active,
+    }));
+  };
 
   const handleSelectChange = (e) => {
     setAllowMultipleSlots(e.target.value);
@@ -215,11 +220,14 @@ const EditAmenitySetup = () => {
 
         setDays(
           daysList.map((day) => {
+            // Find the first matching operational_day for this day_of_week
             const op = facility.operational_days?.find(
               (x) => Number(x.day_of_week) === Number(day.value),
             );
             return {
               ...day,
+              // Keep the backend id so PUT sends id and updates, not creates
+              db_id: op?.id ?? null,
               is_active: op?.is_active ?? false,
               start_time: op?.start_time || "",
               end_time: op?.end_time || "",
@@ -230,24 +238,28 @@ const EditAmenitySetup = () => {
         setRules(
           facility.amenity_rules?.length
             ? facility.amenity_rules.map((rule) => ({
-                id: rule.id || Date.now(),
-                enumerator: rule.enumerator ?? "daily_limit",
-                duration: rule.duration?.toString() || "60",
-                level: rule.level || "user",
-                times: rule.times_per_day?.toString() || "",
-                period_type: rule.period_type || "day",
-                enabled:
-                  rule.active ??
-                  rule.facility_can_be_booked ??
-                  rule.enabled ??
-                  true,
-                primeTime:
-                  rule.prime_time && Array.isArray(rule.prime_time)
-                    ? rule.prime_time
-                        .map((p) => `${p.start_time || ""} - ${p.end_time || ""}`)
-                        .join(" / ")
-                    : rule.primeTime || "",
-              }))
+              id: rule.id || Date.now(),
+              enumerator: rule.enumerator ?? "daily_limit",
+              duration: rule.duration?.toString() || "60",
+              level: rule.level || "user",
+              times: rule.times_per_day?.toString() || "",
+              period_type: rule.period_type || "day",
+              enabled:
+                rule.active ??
+                rule.facility_can_be_booked ??
+                rule.enabled ??
+                true,
+              // Always keep primeTime as array of { id, start_time, end_time }
+              primeTime:
+                Array.isArray(rule.prime_time) && rule.prime_time.length > 0
+                  ? rule.prime_time.map((p) => ({
+                    // Keep backend id so PUT updates existing prime_time records
+                    id: p.id ?? null,
+                    start_time: p.start_time || "",
+                    end_time: p.end_time || "",
+                  }))
+                  : [{ id: null, start_time: "", end_time: "" }],
+            }))
             : rules,
         );
 
@@ -314,21 +326,28 @@ const EditAmenitySetup = () => {
           attachments: facility.attachments || [],
           slots: facility.amenity_slots?.length
             ? facility.amenity_slots.map((slot) => ({
-                id: slot.id || null,
-                amenity_id: slot.amenity_id || null,
-                start_hr: String(slot.start_hr).padStart(2, "0"),
-                start_min: String(slot.start_min).padStart(2, "0"),
-                end_hr: String(slot.end_hr).padStart(2, "0"),
-                end_min: String(slot.end_min).padStart(2, "0"),
-              }))
+              id: slot.id || null,
+              amenity_id: slot.amenity_id || null,
+              start_hr: String(slot.start_hr ?? "").padStart(2, "0"),
+              start_min: String(slot.start_min ?? "").padStart(2, "0"),
+              end_hr: String(slot.end_hr ?? "").padStart(2, "0"),
+              end_min: String(slot.end_min ?? "").padStart(2, "0"),
+              break_start_hr: String(slot.break_start_hr ?? "").padStart(2, "0"),
+              break_start_min: String(slot.break_start_min ?? "").padStart(2, "0"),
+              break_end_hr: String(slot.break_end_hr ?? "").padStart(2, "0"),
+              break_end_min: String(slot.break_end_min ?? "").padStart(2, "0"),
+              concurrent_slots: slot.concurrent_slots || "",
+              slot_duration: slot.slot_duration || "",
+              wrap_up_time: slot.wrap_up_time || "",
+            }))
             : [
-                {
-                  start_hr: "",
-                  start_min: "",
-                  end_hr: "",
-                  end_min: "",
-                },
-              ],
+              {
+                start_hr: "", start_min: "", end_hr: "", end_min: "",
+                break_start_hr: "", break_start_min: "",
+                break_end_hr: "", break_end_min: "",
+                concurrent_slots: "", slot_duration: "", wrap_up_time: "",
+              },
+            ],
         });
         setError(null);
       }
@@ -363,19 +382,72 @@ const EditAmenitySetup = () => {
   };
 
   const [rules, setRules] = useState([
-    { id: 1, times: "", type: "", enabled: true, primeTime: "6:00 AM - 10:00AM / 5:00 PM - 8:00PM" },
+    {
+      id: 1,
+      enumerator: "daily_limit",
+      duration: "",
+      level: "",
+      times: "",
+      period_type: "",
+      enabled: false,
+      primeTime: [{ start_time: "", end_time: "" }],
+    },
   ]);
 
   // Add new rule
   const handleAddRule = () => {
     const newRule = {
       id: Date.now(),
-      times: "",
-      type: "",
+      enumerator: "daily_limit",
+      duration: "60",
+      level: "user",
+      times: "1",
+      period_type: "day",
       enabled: true,
-      primeTime: "6:00 AM - 10:00AM / 5:00 PM - 8:00PM",
+      primeTime: [{ start_time: "", end_time: "" }],
     };
     setRules([...rules, newRule]);
+  };
+
+  const handlePrimeTimeChange = (ruleId, index, field, value) => {
+    setRules((prev) =>
+      prev.map((rule) => {
+        if (rule.id !== ruleId) return rule;
+        const updatedPrimeTimes = Array.isArray(rule.primeTime)
+          ? [...rule.primeTime]
+          : [{ start_time: "", end_time: "" }];
+        updatedPrimeTimes[index] = { ...updatedPrimeTimes[index], [field]: value };
+        return { ...rule, primeTime: updatedPrimeTimes };
+      })
+    );
+  };
+
+  const handleAddPrimeTime = (ruleId) => {
+    setRules((prev) =>
+      prev.map((rule) =>
+        rule.id === ruleId
+          ? {
+            ...rule,
+            primeTime: [
+              ...(Array.isArray(rule.primeTime) ? rule.primeTime : []),
+              { start_time: "", end_time: "" },
+            ],
+          }
+          : rule
+      )
+    );
+  };
+
+  const handleRemovePrimeTime = (ruleId, index) => {
+    setRules((prev) =>
+      prev.map((rule) => {
+        if (rule.id !== ruleId) return rule;
+        const updatedPrimeTimes = Array.isArray(rule.primeTime)
+          ? rule.primeTime.filter((_, i) => i !== index)
+          : [];
+        return { ...rule, primeTime: updatedPrimeTimes };
+      })
+    );
   };
 
   // Remove rule
@@ -395,103 +467,154 @@ const EditAmenitySetup = () => {
 
   const updateAmenitiesSetup = async () => {
     const postData = new FormData();
+    const a = formData.amenity;
 
-    // Append amenity fields
-    Object.entries(formData.amenity).forEach(([key, value]) => {
-      postData.append(`amenity[${key}]`, value);
-    });
+    // ── Basic info ────────────────────────────────────────────────────────────
+    postData.append("amenity[site_id]", a.site_id || sitID);
+    postData.append("amenity[fac_name]", a.fac_name || "");
+    postData.append("amenity[fac_type]", a.fac_type || "bookable");
+    postData.append("amenity[type_of_facility]", a.type_of_facility || "");
+    postData.append("amenity[description]", a.description || "");
+    postData.append("amenity[disclaimer]", a.disclaimer || "");
+    postData.append("amenity[cancellation_policy]", a.cancellation_policy || "");
+    postData.append("amenity[terms]", a.terms || "");
+    postData.append("amenity[deposit]", a.deposit || "");
+    postData.append("amenity[gst_no]", a.gst_no || "");
+    postData.append("amenity[gst]", a.gst || "18");
+    postData.append("amenity[sgst]", a.sgst || "9");
+    postData.append("amenity[active]", a.active ? "true" : "false");
+    postData.append("amenity[status]", a.status || "active");
+    postData.append("amenity[shareable]", a.shreable ? "true" : "false");
+    postData.append("amenity[link_to_building]", a.link_to_building ? "true" : "false");
 
-    // Append slots as an array with the correct structure
+    // ── People limits ─────────────────────────────────────────────────────────
+    postData.append("amenity[min_people]", a.min_people || "");
+    postData.append("amenity[max_people]", a.max_people || "");
+
+    // ── Booking / schedule config ─────────────────────────────────────────────
+    postData.append("amenity[book_before]", a.book_before || "");
+    postData.append("amenity[cancel_before]", a.cancel_before || "");
+    postData.append("amenity[advance_booking]", a.advance_booking || "");
+    postData.append("amenity[max_slots]", a.max_slots || "");
+    postData.append("amenity[consecutive_slot_allowed]", a.consecutive_slot_allowed ? "true" : "false");
+    postData.append("amenity[slot_by]", a.slot_by || slotBy || "");
+
+    // ── Global payment methods ────────────────────────────────────────────────
+    postData.append("amenity[prepaid]", a.prepaid ? "true" : "false");
+    postData.append("amenity[postpaid]", a.postpaid ? "true" : "false");
+    postData.append("amenity[pay_on_facility]", a.pay_on_facility ? "true" : "false");
+    postData.append("amenity[complimentary]", a.complimentary ? "true" : "false");
+    postData.append("amenity[payment_methods]", a.payment_methods || "");
+
+    // ── Fixed / Flat ──────────────────────────────────────────────────────────
+    postData.append("amenity[is_fixed]", a.is_fixed ? "true" : "false");
+    postData.append("amenity[fixed_amount]", a.fixed_amount || "");
+
+    // ── Member ────────────────────────────────────────────────────────────────
+    postData.append("amenity[member]", a.member ? "true" : "false");
+    postData.append("amenity[member_price_adult]", a.member_price_adult || "");
+    postData.append("amenity[member_price_child]", a.member_price_child || "");
+    postData.append("amenity[is_member_adult]", a.is_member_adult ? "true" : "false");
+    postData.append("amenity[is_member_child]", a.is_member_child ? "true" : "false");
+
+    // ── Guest ─────────────────────────────────────────────────────────────────
+    postData.append("amenity[guest]", a.guest ? "true" : "false");
+    postData.append("amenity[guest_price_adult]", a.guest_price_adult || "");
+    postData.append("amenity[guest_price_child]", a.guest_price_child || "");
+    postData.append("amenity[is_guest_adult]", a.is_guest_adult ? "true" : "false");
+    postData.append("amenity[is_guest_child]", a.is_guest_child ? "true" : "false");
+
+    // ── Tenant ────────────────────────────────────────────────────────────────
+    postData.append("amenity[tenant]", a.tenant ? "true" : "false");
+    postData.append("amenity[tenant_price_adult]", a.tenant_price_adult || "");
+    postData.append("amenity[tenant_price_child]", a.tenant_price_child || "");
+    postData.append("amenity[is_tenant_adult]", a.is_tenant_adult ? "true" : "false");
+    postData.append("amenity[is_tenant_child]", a.is_tenant_child ? "true" : "false");
+
+    // ── Non-Member ────────────────────────────────────────────────────────────
+    postData.append("amenity[non_member]", a.non_member ? "true" : "false");
+    postData.append("amenity[non_member_price_adult]", a.non_member_price_adult || "");
+    postData.append("amenity[non_member_price_child]", a.non_member_price_child || "");
+    postData.append("amenity[is_non_member_adult]", a.is_non_member_adult ? "true" : "false");
+    postData.append("amenity[is_non_member_child]", a.is_non_member_child ? "true" : "false");
+
+    // ── Slots ─────────────────────────────────────────────────────────────────
     formData.slots.forEach((slot, index) => {
-      Object.entries(slot).forEach(([key, value]) => {
-        postData.append(
-          `amenity[amenity_slots_attributes][${index}][${key}]`,
-          value,
-        );
+      const slotBase = `amenity[amenity_slots_attributes][${index}]`;
+      if (slot.id) postData.append(`${slotBase}[id]`, slot.id);
+      postData.append(`${slotBase}[start_hr]`, slot.start_hr || "");
+      postData.append(`${slotBase}[start_min]`, slot.start_min || "");
+      postData.append(`${slotBase}[end_hr]`, slot.end_hr || "");
+      postData.append(`${slotBase}[end_min]`, slot.end_min || "");
+      postData.append(`${slotBase}[break_start_hr]`, slot.break_start_hr || "");
+      postData.append(`${slotBase}[break_start_min]`, slot.break_start_min || "");
+      postData.append(`${slotBase}[break_end_hr]`, slot.break_end_hr || "");
+      postData.append(`${slotBase}[break_end_min]`, slot.break_end_min || "");
+      postData.append(`${slotBase}[concurrent_slots]`, slot.concurrent_slots || "1");
+      postData.append(`${slotBase}[slot_duration]`, slot.slot_duration || "");
+      postData.append(`${slotBase}[wrap_up_time]`, slot.wrap_up_time || "0");
+    });
+
+    // ── Operational days ──────────────────────────────────────────────────────
+    days.forEach((day, index) => {
+      const base = `amenity[amenity_operational_days_attributes][${index}]`;
+      // Pass id so Rails updates existing record, not creates a new one
+      if (day.db_id) postData.append(`${base}[id]`, day.db_id);
+      postData.append(`${base}[day_of_week]`, day.value);
+      postData.append(`${base}[is_active]`, day.is_active ? "true" : "false");
+      if (day.is_active) {
+        postData.append(`${base}[start_time]`, day.start_time || "");
+        postData.append(`${base}[end_time]`, day.end_time || "");
+      }
+    });
+
+    // ── Booking rules ─────────────────────────────────────────────────────────
+    // primeTime is always an array of { start_time, end_time }
+    rules.forEach((rule, index) => {
+      const ruleAttr = `amenity[amenity_booking_rules_attributes][${index}]`;
+      if (rule.id && typeof rule.id === "number" && rule.id < 1e12) {
+        postData.append(`${ruleAttr}[id]`, rule.id);
+      }
+      postData.append(`${ruleAttr}[enumerator]`, rule.enumerator || "daily_limit");
+      postData.append(`${ruleAttr}[duration]`, rule.duration || "60");
+      postData.append(`${ruleAttr}[level]`, rule.level || "user");
+      postData.append(`${ruleAttr}[active]`, rule.enabled ? "true" : "false");
+      postData.append(`${ruleAttr}[site_id]`, sitID);
+      postData.append(`${ruleAttr}[facility_can_be_booked]`, rule.enabled ? "true" : "false");
+      postData.append(`${ruleAttr}[times_per_day]`, rule.times || "");
+      postData.append(`${ruleAttr}[period_type]`, rule.period_type || "day");
+
+      const primeTimes = Array.isArray(rule.primeTime)
+        ? rule.primeTime.filter((pt) => pt.start_time && pt.end_time)
+        : [];
+      primeTimes.forEach((pt, pIdx) => {
+        const primeBase = `${ruleAttr}[prime_times_attributes][${pIdx}]`;
+        // Pass id so Rails updates existing prime_time, not creates a new one
+        if (pt.id) postData.append(`${primeBase}[id]`, pt.id);
+        postData.append(`${primeBase}[start_time]`, pt.start_time || "");
+        postData.append(`${primeBase}[end_time]`, pt.end_time || "");
       });
     });
 
-    // Append Slot By and detection flags
-    if (formData.amenity.slot_by !== undefined) {
-      postData.append("amenity[slot_by]", formData.amenity.slot_by || slotBy || "");
-    }
+    // ── Cover images ──────────────────────────────────────────────────────────
+    // Only append File objects (newly chosen files); skip objects with image_url (from server)
+    formData.covers.forEach((cover) => {
+      if (cover instanceof File) {
+        postData.append("cover_images[]", cover);
+      }
+    });
 
-    // Append operational days
-    if (days && days.length > 0) {
-      days.forEach((day, index) => {
-        postData.append(
-          `amenity[amenity_operational_days_attributes][${index}][day_of_week]`,
-          day.value,
-        );
-        postData.append(
-          `amenity[amenity_operational_days_attributes][${index}][is_active]`,
-          day.is_active ? "true" : "false",
-        );
-        postData.append(
-          `amenity[amenity_operational_days_attributes][${index}][start_time]`,
-          day.start_time || "",
-        );
-        postData.append(
-          `amenity[amenity_operational_days_attributes][${index}][end_time]`,
-          day.end_time || "",
-        );
-      });
-    }
-
-    // Append rules
-    if (rules && rules.length > 0) {
-      rules.forEach((rule, index) => {
-        const ruleAttr = `amenity[amenity_booking_rules_attributes][${index}]`;
-        postData.append(`${ruleAttr}[enumerator]`, rule.enumerator || "daily_limit");
-        postData.append(`${ruleAttr}[duration]`, rule.duration || "60");
-        postData.append(`${ruleAttr}[level]`, rule.level || "user");
-        postData.append(`${ruleAttr}[times_per_day]`, rule.times || "");
-        postData.append(`${ruleAttr}[period_type]`, rule.period_type || "day");
-        postData.append(
-          `${ruleAttr}[facility_can_be_booked]`,
-          rule.enabled ? "true" : "false",
-        );
-
-        if (rule.primeTime) {
-          const primeParts = rule.primeTime.split("/").map((item) => item.trim());
-          primeParts.forEach((part, pIndex) => {
-            const [start, end] = part.split("-").map((v) => v.trim());
-            postData.append(`${ruleAttr}[prime_times_attributes][${pIndex}][start_time]`, start || "");
-            postData.append(`${ruleAttr}[prime_times_attributes][${pIndex}][end_time]`, end || "");
-          });
-        }
-      });
-    }
-
-    // Append payment methods as an array
-    if (
-      formData.amenity.payment_methods &&
-      formData.amenity.payment_methods.length > 0
-    ) {
+    // ── Attachments ──────────────────────────────────────────────────────────
+    // Only append File objects (newly chosen files); skip objects with image_url (from server)
+    formData.attachments.forEach((attachment) => {
+      if (attachment instanceof File) {
+        postData.append("amenity[attachments][]", attachment);
+      }
+    });
+    // ── Payment methods ────────────────────────────────────────────────────────
+    if (formData.amenity.payment_methods?.length > 0) {
       formData.amenity.payment_methods.forEach((method) => {
         postData.append("amenity[payment_methods][]", method);
-      });
-    }
-
-    // Append cover images
-    if (formData.covers.length > 0) {
-      formData.covers.forEach((file, index) => {
-        if (file instanceof File) {
-          postData.append(`cover_images[]`, file); // Key as "cover_images[index]"
-        } else {
-          console.error("Invalid cover file:", file);
-        }
-      });
-    }
-
-    // Append attachments
-    if (formData.attachments.length > 0) {
-      formData.attachments.forEach((file, index) => {
-        if (file instanceof File) {
-          postData.append(`attachments[]`, file); // Key as "attachments[index]"
-        } else {
-          console.error("Invalid attachment file:", file);
-        }
       });
     }
 
@@ -704,12 +827,9 @@ const EditAmenitySetup = () => {
   };
 
   const handleSlotTimeChange = (index, timeType, timeValue) => {
-    let [hours, minutes] = timeValue.split(":");
-
-    // Ensure hours and minutes are valid strings, defaulting to "00" if empty or undefined
-    hours = (hours || "00").padStart(2, "0");
-    minutes = (minutes || "00").padStart(2, "0");
-
+    const parts = (timeValue || "").split(":");
+    const hours = (parts[0] || "00").padStart(2, "0");
+    const minutes = (parts[1] || "00").padStart(2, "0");
     setFormData((prevState) => {
       const updatedSlots = [...prevState.slots];
       updatedSlots[index] = {
@@ -719,6 +839,21 @@ const EditAmenitySetup = () => {
       };
       return { ...prevState, slots: updatedSlots };
     });
+  };
+
+  const handleSlotFieldChange = (index, field, value) => {
+    setFormData((prevState) => {
+      const updatedSlots = [...prevState.slots];
+      updatedSlots[index] = { ...updatedSlots[index], [field]: value };
+      return { ...prevState, slots: updatedSlots };
+    });
+  };
+
+  const formatTime = (hours, minutes) => {
+    if (!hours && !minutes) return "";
+    const hh = `${hours || ""}`.padStart(2, "0");
+    const mm = `${minutes || ""}`.padStart(2, "0");
+    return `${hh}:${mm}`;
   };
 
   console.log("slots", formData.slots);
@@ -949,48 +1084,48 @@ const EditAmenitySetup = () => {
           </div>
         </div>
         <div className="my-4">
-         <div className="flex gap-4  border-black items-center mt-6">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="postpaid"
-              checked={formData.amenity.postpaid}
-              onChange={handlePaymentCheckbox}
-            />
-            Postpaid
-          </label>
+          <div className="flex gap-4  border-black items-center mt-6">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="postpaid"
+                checked={formData.amenity.postpaid}
+                onChange={handlePaymentCheckbox}
+              />
+              Postpaid
+            </label>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="prepaid"
-              checked={formData.amenity.prepaid}
-              onChange={handlePaymentCheckbox}
-            />
-            Prepaid
-          </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="prepaid"
+                checked={formData.amenity.prepaid}
+                onChange={handlePaymentCheckbox}
+              />
+              Prepaid
+            </label>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="pay_on_facility"
-              checked={formData.amenity.pay_on_facility}
-              onChange={handlePaymentCheckbox}
-            />
-            Pay on facility
-          </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="pay_on_facility"
+                checked={formData.amenity.pay_on_facility}
+                onChange={handlePaymentCheckbox}
+              />
+              Pay on facility
+            </label>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="complimentary"
-              checked={formData.amenity.complimentary}
-              onChange={handlePaymentCheckbox}
-            />
-            Complimentary
-          </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="complimentary"
+                checked={formData.amenity.complimentary}
+                onChange={handlePaymentCheckbox}
+              />
+              Complimentary
+            </label>
 
-        </div>
+          </div>
 
         </div>
         <div className="my-4">
@@ -1071,7 +1206,7 @@ const EditAmenitySetup = () => {
               </div>
 
               {/* Flat */}
-            <div className="flex justify-center my-2">
+              <div className="flex justify-center my-2">
                 {/* Checkbox */}
                 <input
                   type="checkbox"
@@ -1086,7 +1221,7 @@ const EditAmenitySetup = () => {
                   }
                 />
 
-                 <input
+                <input
                   type="text"
                   value={formData.amenity.fixed_amount || ""}
                   onChange={(e) =>
@@ -1095,7 +1230,7 @@ const EditAmenitySetup = () => {
                   className="border border-gray-400 rounded p-2 outline-none"
                   placeholder="₹100"
                 />
-            
+
 
                 {/* <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                   <label className="flex items-center gap-2">
@@ -1142,70 +1277,70 @@ const EditAmenitySetup = () => {
             </div>
 
             {/* Non-Member Section */}
-           <div className="grid grid-cols-4 items-center border-b">
-  
-  {/* Non Member */}
-  <div className="flex justify-center my-2">
-    <label className="flex items-center gap-2">
-      <input
-        type="checkbox"
-        checked={formData.non_member === true}
-        onChange={() => handleCheckboxChange("non_member")}
-      />
-      Non-Member
-    </label>
-  </div>
+            <div className="grid grid-cols-4 items-center border-b">
 
-  {/* Adult */}
-  <div className="flex justify-center my-2">
-    <input
-      type="checkbox"
-      className="mx-2"
-      checked={formData.is_non_member_adult}
-      disabled={!formData.non_member}
-      onChange={() => handleChildToggle("is_non_member_adult")}
-    />
+              {/* Non Member */}
+              <div className="flex justify-center my-2">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.non_member === true}
+                    onChange={() => handleCheckboxChange("non_member")}
+                  />
+                  Non-Member
+                </label>
+              </div>
 
-    <input
-      type="text"
-      disabled={
-        !formData.non_member || !formData.is_non_member_adult
-      }
-      value={formData.non_member_price_adult || ""}
-      onChange={(e) =>
-        handlePriceChange("non_member_price_adult", e.target.value)
-      }
-      className="border border-gray-400 rounded p-2 outline-none"
-      placeholder="₹100"
-    />
-  </div>
+              {/* Adult */}
+              <div className="flex justify-center my-2">
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_non_member_adult}
+                  disabled={!formData.non_member}
+                  onChange={() => handleChildToggle("is_non_member_adult")}
+                />
 
-  {/* Child */}
-  <div className="flex justify-center my-2">
-    <input
-      type="checkbox"
-      className="mx-2"
-      checked={formData.is_non_member_child}
-      disabled={!formData.non_member}
-      onChange={() => handleChildToggle("is_non_member_child")}
-    />
+                <input
+                  type="text"
+                  disabled={
+                    !formData.non_member || !formData.is_non_member_adult
+                  }
+                  value={formData.non_member_price_adult || ""}
+                  onChange={(e) =>
+                    handlePriceChange("non_member_price_adult", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
+              </div>
 
-    <input
-      type="text"
-      disabled={
-        !formData.non_member || !formData.is_non_member_child
-      }
-      value={formData.non_member_price_child || ""}
-      onChange={(e) =>
-        handlePriceChange("non_member_price_child", e.target.value)
-      }
-      className="border border-gray-400 rounded p-2 outline-none"
-      placeholder="₹100"
-    />
-  </div>
+              {/* Child */}
+              <div className="flex justify-center my-2">
+                <input
+                  type="checkbox"
+                  className="mx-2"
+                  checked={formData.is_non_member_child}
+                  disabled={!formData.non_member}
+                  onChange={() => handleChildToggle("is_non_member_child")}
+                />
+
+                <input
+                  type="text"
+                  disabled={
+                    !formData.non_member || !formData.is_non_member_child
+                  }
+                  value={formData.non_member_price_child || ""}
+                  onChange={(e) =>
+                    handlePriceChange("non_member_price_child", e.target.value)
+                  }
+                  className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="₹100"
+                />
+              </div>
 
               {/* <div> */}
-                {/* <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
+              {/* <div className="flex flex-col justify-center items-start gap-2 my-2 pl-4">
                   <div className="grid grid-cols-2 gap-x-4 text-sm">
                     <label className="flex items-center gap-2">
                       <input
@@ -1674,222 +1809,254 @@ const EditAmenitySetup = () => {
         </div>
         {/* Booking Rule */}
         <div className="border rounded-md mt-6">
-                  <div className="bg-gray-100 px-4 py-2 font-semibold text-gray-700 border-b">
-                    Booking Rule
+          <div className="bg-gray-100 px-4 py-2 font-semibold text-gray-700 border-b">
+            Booking Rule
+          </div>
+
+          {rules.map((rule, index) => (
+            <div
+              key={rule.id}
+              className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
+            >
+              {/* Checkbox */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={rule.enabled || false}
+                  onChange={(e) =>
+                    handleChange2(rule.id, "enabled", e.target.checked)
+                  }
+                  className="w-4 h-4"
+                />
+                <span className="text-sm">Facility can be Booked</span>
+              </div>
+
+              {/* Times Input */}
+              <input
+                type="number"
+                placeholder="Enter"
+                value={rule.times || ""}
+                onChange={(e) =>
+                  handleChange2(rule.id, "times", e.target.value)
+                }
+                className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
+              />
+              {/* Select Time per day */}
+              <span className="text-sm">times per day by </span>
+              <select
+                value={rule.level || ""}
+                onChange={(e) => handleChange2(rule.id, "level", e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
+              >
+                <option value="">Select</option>
+                <option value="user">User</option>
+                <option value="flat">Flat</option>
+                <option value="owner">Owner</option>
+                <option value="tenant">Tenant</option>
+              </select>
+
+              {/* Select Period */}
+              <select
+                value={rule.period_type || ""}
+                onChange={(e) => handleChange2(rule.id, "period_type", e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm"
+              >
+                <option value="">Select Slots For</option>
+                <option value="Day">Day</option>
+                <option value="Week">Week</option>
+                <option value="Month">Month</option>
+                <option value="Year">Year</option>
+              </select>
+
+              {/* Prime Time Label */}
+              <span className="text-sm font-medium text-gray-700">
+                Prime Time
+              </span>
+
+              {/* Prime Time – one time-picker row per entry */}
+              <div className="flex flex-col gap-2">
+                {(Array.isArray(rule.primeTime) && rule.primeTime.length > 0
+                  ? rule.primeTime
+                  : [{ start_time: "", end_time: "" }]
+                ).map((pt, pIdx) => (
+                  <div key={pIdx} className="flex items-center gap-2">
+                    <input
+                      type="time"
+                      value={pt.start_time || ""}
+                      onChange={(e) =>
+                        handlePrimeTimeChange(rule.id, pIdx, "start_time", e.target.value)
+                      }
+                      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                    <input
+                      type="time"
+                      value={pt.end_time || ""}
+                      onChange={(e) =>
+                        handlePrimeTimeChange(rule.id, pIdx, "end_time", e.target.value)
+                      }
+                      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                    {Array.isArray(rule.primeTime) && rule.primeTime.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePrimeTime(rule.id, pIdx)}
+                        className="text-red-500"
+                      >
+                        <FaTrash size={12} />
+                      </button>
+                    )}
                   </div>
-        
-                  {rules.map((rule, index) => (
-                    <div
-                      key={rule.id}
-                      className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
-                    >
-                      {/* Checkbox */}
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={rule.enabled || false}
-                          onChange={(e) =>
-                            handleChange2(rule.id, "enabled", e.target.checked)
-                          }
-                          className="w-4 h-4"
-                        />
-                        <span className="text-sm">Facility can be Booked</span>
-                      </div>
-        
-                      {/* Times Input */}
-                      <input
-                        type="number"
-                        placeholder="Enter"
-                        value={rule.times || ""}
-                        onChange={(e) =>
-                          handleChange2(rule.id, "times", e.target.value)
-                        }
-                        className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
-                      />
-                      {/* Select Time per day */}
-                      <span className="text-sm">times per day by </span>
-                      <select
-                        value={rule.level || ""}
-                        onChange={(e) => handleChange2(rule.id, "level", e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
-                      >
-                        <option value="">Select</option>
-                        <option value="user">User</option>
-                        <option value="flat">Flat</option>
-                        <option value="owner">Owner</option>
-                        <option value="tenant">Tenant</option>
-                      </select>
-        
-                      {/* Select Period */}
-                      <select
-                        value={rule.period_type || ""}
-                        onChange={(e) => handleChange2(rule.id, "period_type", e.target.value)}
-                        className="border border-gray-300 rounded px-2 py-1 text-sm"
-                      >
-                        <option value="">Select Slots For</option>
-                        <option value="Day">Day</option>
-                        <option value="Week">Week</option>
-                        <option value="Month">Month</option>
-                        <option value="Year">Year</option>
-                      </select>
-        
-                      {/* Prime Time Label */}
-                      <span className="text-sm font-medium text-gray-700">
-                        Prime Time
-                      </span>
-        
-                      {/* Prime Time Editable Input */}
-                      <input
-                        type="text"
-                        value={rule.primeTime || ""}
-                        onChange={(e) =>
-                          handleChange2(rule.id, "primeTime", e.target.value)
-                        }
-                        placeholder="e.g. 6:00 AM - 10:00AM / 5:00 PM - 8:00PM"
-                        className="border border-gray-300 bg-gray-50 rounded px-3 py-1 text-sm w-[300px]"
-                      />
-        
-                      {/* Sub Facility */}
-                      <div className="flex items-center gap-2">
-                        {/* <input
+                ))}
+                <button
+                  type="button"
+                  onClick={() => handleAddPrimeTime(rule.id)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-xs mt-1 w-fit"
+                >
+                  + Add Prime Time
+                </button>
+              </div>
+
+              {/* Sub Facility */}
+              <div className="flex items-center gap-2">
+                {/* <input
                                   type="checkbox"
                                   checked={subFacilityAvailable}
                                   onChange={(e) => setSubFacilityAvailable(e.target.checked)}
                                 /> */}
-                        <span className="text-sm">Sub Facility</span>
-                      </div>
-        
-                      {/* Delete Button (shown for all rows) */}
-                      {rules.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveRule(rule.id)}
-                          className="text-red-500 hover:text-red-700 ml-auto"
-                          title="Remove rule"
-                        >
-                          <FaTrash size={14} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-        
-                  {/* Add Button */}
-                  <button
-                    type="button"
-                    onClick={handleAddRule}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm mx-4 mt-3 mb-3"
-                  >
-                    Add
-                  </button>
-                </div>
-<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <span className="text-sm">Sub Facility</span>
+              </div>
 
-  {/* ================= COVER IMAGES ================= */}
-  <div className="my-4">
-    <h2 className="border-b border-black text-lg mb-3 font-medium">
-      Cover Images
-    </h2>
+              {/* Delete Button (shown for all rows) */}
+              {rules.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => handleRemoveRule(rule.id)}
+                  className="text-red-500 hover:text-red-700 ml-auto"
+                  title="Remove rule"
+                >
+                  <FaTrash size={14} />
+                </button>
+              )}
+            </div>
+          ))}
 
-    <input
-      type="file"
-      accept="image/*"
-      onChange={(e) => handleFileChange(e, "covers")}
-      multiple
-      className="mb-4"
-    />
-
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {formData.covers && formData.covers.length > 0 ? (
-        formData.covers.map((cover, index) => (
-          <div
-            key={index}
-            className="relative rounded-lg border overflow-hidden"
+          {/* Add Button */}
+          <button
+            type="button"
+            onClick={handleAddRule}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md text-sm mx-4 mt-3 mb-3"
           >
-            <img
-              src={
-                cover.image_url
-                  ? domainPrefix + cover.image_url
-                  : URL.createObjectURL(cover)
-              }
-              alt={`Cover ${index + 1}`}
-              className="object-cover w-full h-40"
+            Add
+          </button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+          {/* ================= COVER IMAGES ================= */}
+          <div className="my-4">
+            <h2 className="border-b border-black text-lg mb-3 font-medium">
+              Cover Images
+            </h2>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleFileChange(e, "covers")}
+              multiple
+              className="mb-4"
             />
 
-            {/* Remove Button */}
-            
-            <button
-              onClick={() => removeImage(index)}
-              className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs"
-            >
-              ✕
-            </button> 
-           
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {formData.covers && formData.covers.length > 0 ? (
+                formData.covers.map((cover, index) => (
+                  <div
+                    key={index}
+                    className="relative rounded-lg border overflow-hidden"
+                  >
+                    <img
+                      src={
+                        cover.image_url
+                          ? domainPrefix + cover.image_url
+                          : URL.createObjectURL(cover)
+                      }
+                      alt={`Cover ${index + 1}`}
+                      className="object-cover w-full h-40"
+                    />
+
+                    {/* Remove Button */}
+
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs"
+                    >
+                      ✕
+                    </button>
+
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">
+                  No cover images available.
+                </p>
+              )}
+            </div>
           </div>
-        ))
-      ) : (
-        <p className="text-gray-500 text-sm">
-          No cover images available.
-        </p>
-      )}
-    </div>
-  </div>
 
-  {/* ================= ATTACHMENTS ================= */}
-  <div className="my-4">
-    <h2 className="border-b border-black text-lg mb-3 font-medium">
-      Attachments
-    </h2>
+          {/* ================= ATTACHMENTS ================= */}
+          <div className="my-4">
+            <h2 className="border-b border-black text-lg mb-3 font-medium">
+              Attachments
+            </h2>
 
-    <input
-      type="file"
-      onChange={(e) => handleFileChange(e, "attachments")}
-      multiple
-      className="mb-4"
-    />
+            <input
+              type="file"
+              onChange={(e) => handleFileChange(e, "attachments")}
+              multiple
+              className="mb-4"
+            />
 
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-      {formData.attachments && formData.attachments.length > 0 ? (
-        formData.attachments.map((doc, index) => (
-          <div
-            key={index}
-            className="relative rounded-lg border overflow-hidden p-3 flex items-center justify-center bg-gray-50"
-          >
-            {doc.image_url || doc.type?.startsWith("image/") ? (
-              <img
-                src={
-                  doc.image_url
-                    ? domainPrefix + doc.image_url
-                    : URL.createObjectURL(doc)
-                }
-                alt={`Attachment ${index + 1}`}
-                className="object-cover w-full h-32"
-              />
-            ) : (
-              <p className="text-sm text-gray-600 text-center">
-                {doc.name || "Document File"}
-              </p>
-            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {formData.attachments && formData.attachments.length > 0 ? (
+                formData.attachments.map((doc, index) => (
+                  <div
+                    key={index}
+                    className="relative rounded-lg border overflow-hidden p-3 flex items-center justify-center bg-gray-50"
+                  >
+                    {doc.image_url || doc.type?.startsWith("image/") ? (
+                      <img
+                        src={
+                          doc.image_url
+                            ? domainPrefix + doc.image_url
+                            : URL.createObjectURL(doc)
+                        }
+                        alt={`Attachment ${index + 1}`}
+                        className="object-cover w-full h-32"
+                      />
+                    ) : (
+                      <p className="text-sm text-gray-600 text-center">
+                        {doc.name || "Document File"}
+                      </p>
+                    )}
 
-            {/* Remove Button */}
-            
-            <button
-              onClick={() => removeAttachment(index)}
-              className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs"
-            >
-              ✕
-            </button> 
-           
+                    {/* Remove Button */}
+
+                    <button
+                      onClick={() => removeAttachment(index)}
+                      className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs"
+                    >
+                      ✕
+                    </button>
+
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">
+                  No attachments available.
+                </p>
+              )}
+            </div>
           </div>
-        ))
-      ) : (
-        <p className="text-gray-500 text-sm">
-          No attachments available.
-        </p>
-      )}
-    </div>
-  </div>
 
-</div>
+        </div>
         <div>
           <div className="flex flex-col">
             <label htmlFor="description" className="font-medium">
@@ -1908,153 +2075,120 @@ const EditAmenitySetup = () => {
         </div>
         <div className="bg-white rounded-xl shadow-md border p-6 mt-2 mb-3 border-gray-300">
           <h2 className="text-lg font-semibold mb-6">Configure Slot</h2>
+          <div className="overflow-x-auto">
+            {formData.slots.map((slot, slotIndex) => (
+              <div key={slotIndex} className="flex gap-4 items-end mb-4 min-w-[1200px]">
 
-          <div className="grid grid-cols-1 md:grid-cols-7 gap-6 items-end">
-            {/* Start Time */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Start time
-              </label>
-              <div className="mt-2">
-                <input
-                  type="time"
-                  value={`${slotData.startHour}:${slotData.startMinute}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(":");
-                    handleChange("startHour", h);
-                    handleChange("startMinute", m);
-                  }}
-                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                />
+                {/* Start Time */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">Start time</label>
+                  <input
+                    type="time"
+                    value={formatTime(slot.start_hr, slot.start_min)}
+                    onChange={(e) => handleSlotTimeChange(slotIndex, "start", e.target.value)}
+                    className="border rounded-md px-3 py-2"
+                  />
+                </div>
+
+                {/* Break Start */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">Break Start</label>
+                  <input
+                    type="time"
+                    value={formatTime(slot.break_start_hr, slot.break_start_min)}
+                    onChange={(e) => handleSlotTimeChange(slotIndex, "break_start", e.target.value)}
+                    className="border rounded-md px-3 py-2"
+                  />
+                </div>
+
+                {/* Break End */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">Break End</label>
+                  <input
+                    type="time"
+                    value={formatTime(slot.break_end_hr, slot.break_end_min)}
+                    onChange={(e) => handleSlotTimeChange(slotIndex, "break_end", e.target.value)}
+                    className="border rounded-md px-3 py-2"
+                  />
+                </div>
+
+                {/* End Time */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">End Time</label>
+                  <input
+                    type="time"
+                    value={formatTime(slot.end_hr, slot.end_min)}
+                    onChange={(e) => handleSlotTimeChange(slotIndex, "end", e.target.value)}
+                    className="border rounded-md px-3 py-2"
+                  />
+                </div>
+
+                {/* Concurrent Slots */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">Concurrent</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={slot.concurrent_slots || ""}
+                    onChange={(e) => handleSlotFieldChange(slotIndex, "concurrent_slots", e.target.value)}
+                    className="border rounded-md px-3 py-2 w-24"
+                  />
+                </div>
+
+                {/* Slot By */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">Slot By</label>
+                  <select
+                    value={slotBy}
+                    onChange={(e) => setSlotBy(e.target.value)}
+                    className="border rounded-md px-3 py-2"
+                  >
+                    <option value="">Select</option>
+                    <option value="15">15 Min</option>
+                    <option value="30">30 Min</option>
+                    <option value="45">45 Min</option>
+                    <option value="60">1 Hour</option>
+                    <option value="90">1.5 Hour</option>
+                    <option value="120">2 Hour</option>
+                    <option value="180">3 Hour</option>
+                    <option value="360">6 Hour</option>
+                    <option value="720">12 Hour</option>
+                    <option value="1440">24 Hour</option>
+                  </select>
+                </div>
+
+                {/* Wrap Time */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600">Wrap Time</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={slot.wrap_up_time || ""}
+                    onChange={(e) => handleSlotFieldChange(slotIndex, "wrap_up_time", e.target.value)}
+                    className="border rounded-md px-3 py-2 w-24"
+                  />
+                </div>
+
+                {/* Remove Slot */}
+                {formData.slots.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveSlot(slotIndex)}
+                    className="text-red-500 hover:text-red-700 mb-2"
+                  >
+                    <FaTrash />
+                  </button>
+                )}
               </div>
-            </div>
-
-            {/* Break Time Start */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Break time ( start)
-              </label>
-              <div className="mt-2">
-                <input
-                  type="time"
-                  value={`${slotData.breakStartHour}:${slotData.breakStartMinute}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(":");
-                    handleChange("breakStartHour", h);
-                    handleChange("breakStartMinute", m);
-                  }}
-                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                />
-              </div>
-            </div>
-
-            {/* Break Time End */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Break time ( end)
-              </label>
-              <div className="mt-2">
-                <input
-                  type="time"
-                  value={`${slotData.breakEndHour}:${slotData.breakEndMinute}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(":");
-                    handleChange("breakEndHour", h);
-                    handleChange("breakEndMinute", m);
-                  }}
-                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                />
-              </div>
-            </div>
-
-            {/* End Time */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                End Time
-              </label>
-              <div className="mt-2">
-                <input
-                  type="time"
-                  value={`${slotData.endHour}:${slotData.endMinute}`}
-                  onChange={(e) => {
-                    const [h, m] = e.target.value.split(":");
-                    handleChange("endHour", h);
-                    handleChange("endMinute", m);
-                  }}
-                  className="border rounded-md px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 text-gray-700"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Concurrent Slot
-              </label>
-              <div className="flex gap-2 mt-2">
-                <input
-                  type="number"
-                  name="concurrent_slot"
-                  value={formData.amenity?.concurrent_slot || ""}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      amenity: {
-                        ...prev.amenity,
-                        wrap_time: e.target.value,
-                      },
-                    }))
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* Slot By */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Slot By
-              </label>
-              <select
-                value={slotBy}
-                onChange={(e) => setSlotBy(e.target.value)}
-                className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Select</option>
-                <option value="15">15 Min</option>
-                <option value="30">30 Min</option>
-                <option value="45">45 Min</option>
-                <option value="60">1 Hour</option>
-                <option value="90">1.5 Hour</option>
-                <option value="120">2 Hour</option>
-                <option value="180">3 Hour</option>
-                <option value="360">6 Hour</option>
-                <option value="720">12 Hour</option>
-                <option value="1440">24 Hour</option>
-              </select>
-            </div>
-
-            {/* Wrap Time */}
-            <div>
-              <label className="text-sm font-medium text-gray-600">
-                Wrap Time
-              </label>
-
-              <input
-                type="number"
-                name="wrap_time"
-                value={formData.amenity?.wrap_time || ""}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    amenity: {
-                      ...prev.amenity,
-                      wrap_time: e.target.value,
-                    },
-                  }))
-                }
-                className="border border-gray-300 rounded-md p-2 w-full mt-2 focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            ))}
           </div>
+          <button
+            type="button"
+            onClick={handleAddSlot}
+            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm"
+          >
+            + Add Slot
+          </button>
         </div>
         {/* <div className="my-4">
           <h2 className="border-b border-black text-lg mb-1 font-medium">
@@ -2126,7 +2260,7 @@ const EditAmenitySetup = () => {
         </div> */}
 
         <div></div>
-         <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
+        <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
         <div className="border rounded mt-3">
 
           {/* Header */}
@@ -2176,39 +2310,39 @@ const EditAmenitySetup = () => {
           ))}
         </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <div className="flex flex-col mt-4">
-            <label htmlFor="terms" className="font-medium">
-              Terms & Conditions
-            </label>
-            <textarea
-              id="terms"
-              rows="3"
-              className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
-              value={formData.amenity.terms} // Bind value to state
-              onChange={handleTermsChange} // Handle change
-              placeholder="Enter terms and conditions..."
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <div className="flex flex-col mt-4">
+              <label htmlFor="terms" className="font-medium">
+                Terms & Conditions
+              </label>
+              <textarea
+                id="terms"
+                rows="3"
+                className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
+                value={formData.amenity.terms} // Bind value to state
+                onChange={handleTermsChange} // Handle change
+                placeholder="Enter terms and conditions..."
+              />
+            </div>
           </div>
-        </div>
 
-        <div>
-          <div className="flex flex-col my-4">
-            <label htmlFor="cancellation_policy" className="font-medium">
-              Cancellation Policy
-            </label>
-            <textarea
-              id="cancellation_policy"
-              rows="3"
-              className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
-              value={formData.amenity.cancellation_policy} // Bind value to state
-              onChange={handleCancellationPolicyChange} // Handle change
-              placeholder="Enter cancellation policy..."
-            />
+          <div>
+            <div className="flex flex-col my-4">
+              <label htmlFor="cancellation_policy" className="font-medium">
+                Cancellation Policy
+              </label>
+              <textarea
+                id="cancellation_policy"
+                rows="3"
+                className="border border-gray-400 p-1 placeholder:text-sm rounded-md"
+                value={formData.amenity.cancellation_policy} // Bind value to state
+                onChange={handleCancellationPolicyChange} // Handle change
+                placeholder="Enter cancellation policy..."
+              />
+            </div>
           </div>
         </div>
-</div>
         <div className="flex justify-center my-2 gap-3 mt-4">
           <button
             style={{ background: themeColor }}
@@ -2225,7 +2359,7 @@ const EditAmenitySetup = () => {
             <FaCheck /> Submit
           </button>
         </div>
-        
+
       </div>
     </section>
   );
