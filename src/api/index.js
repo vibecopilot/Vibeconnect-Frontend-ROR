@@ -792,28 +792,31 @@ export const postHelpDeskStatusSetup = async (data) =>
       token: token,
     },
   });
+  
 export const getAdminComplaints = async (
   page = 1,
   perPage = 10,
   search = "",
   status = "",
   filters = {}
+  
 ) => {
   const params = {
     token: token,
     page: page,
     per_page: perPage,
     ...(search ? { "q[search_cont]": search } : {}),
-    ...(status && status !== "all" ? { "q[search_cont]": status } : {}),
-    ...(filters.category_id ? { "q[search_cont]": filters.category_id } : {}),
-    ...(filters.issueStatusId ? { "q[search_cont]": filters.issueStatusId } : {}),
-    ...(filters.priorityLevel ? { "q[search_cont]": filters.priorityLevel } : {}),
-    ...(filters.assign ? { "q[search_cont]": filters.assign } : {}),
-    ...(filters.building_id ? { "q[search_cont]": filters.building_id } : {}),
-    ...(filters.floor_id ? { "q[search_cont]": filters.floor_id } : {}),
-    ...(filters.unit_id ? { "q[search_cont]": filters.unit_id } : {}),
-    ...(filters.startDate ? { "q[search_cont]": filters.startDate } : {}),
-    ...(filters.endDate ? { "q[search_cont]": filters.endDate } : {}),
+    ...(status && status !== "all" ? { "q[issue_status_eq]": status } : {}),
+    ...(filters.category_id ? { "q[category_type_id_eq]": filters.category_id } : {}),
+    ...(filters.issueStatusId ? { "q[issue_status_eq]": filters.issueStatusId } : {}),
+    ...(filters.priorityLevel ? { "q[priority_cont]": filters.priorityLevel } : {}),
+    ...(filters.assign ? { "q[assigned_to_eq]": filters.assign } : {}),
+    ...(filters.building_id ? { "q[unit_building_id_eq]": filters.building_id } : {}),
+    ...(filters.floor_id ? { "q[unit_floor_id_eq]": filters.floor_id } : {}),
+    ...(filters.unit_id ? { "q[unit_id_eq]": filters.unit_id } : {}),
+    
+    ...(filters.startDate ? { "q[created_at_gteq]": filters.startDate } : {}),
+    ...(filters.endDate ? { "q[created_at_lteq]": filters.endDate } : {}),
   };
 
   return axiosInstance.get("/pms/admin/complaints.json", { params });
@@ -831,14 +834,32 @@ export const getAdminComplaints = async (
 //   }
 // );
 
-export const getAdminExport = async (searchValue) =>
-  axiosInstance.get("/pms/admin/complaints/export_complaints.xlsx", {
-    params: {
-      "q[search_cont]": searchValue,
-      token: token,
-    },
-    responseType: "blob",
-  });
+export const getAdminExport = async (filters = {}, search = "", status = "") => {
+  const params = {
+    token: token,
+
+    ...(search ? { "q[search_cont]": search } : {}),
+    ...(status && status !== "all" ? { "q[issue_status_eq]": status } : {}),
+
+    ...(filters.category_id ? { "q[category_type_id_eq]": filters.category_id } : {}),
+    ...(filters.issueStatusId ? { "q[issue_status_eq]": filters.issueStatusId } : {}),
+    ...(filters.priorityLevel ? { "q[priority_cont]": filters.priorityLevel } : {}),
+    ...(filters.assign ? { "q[assigned_to_eq]": filters.assign } : {}),
+    ...(filters.building_id ? { "q[unit_building_id_eq]": filters.building_id } : {}),
+    ...(filters.floor_id ? { "q[unit_floor_id_eq]": filters.floor_id } : {}),
+    ...(filters.unit_id ? { "q[unit_id_eq]": filters.unit_id } : {}),
+    ...(filters.startDate ? { "q[created_at_gteq]": filters.startDate } : {}),
+    ...(filters.endDate ? { "q[created_at_lteq]": filters.endDate } : {}),
+  };
+
+  return axiosInstance.get(
+    "/pms/admin/complaints/export_complaints.xlsx",
+    {
+      params,
+      responseType: "blob",
+    }
+  );
+};
 
 export const getSetupAmenityExport = async (siteId) =>
   axiosInstance.get("amenities/export.xlsx", {
