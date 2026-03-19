@@ -414,11 +414,15 @@ const handleSearch = (e) => {
   //   }
   // };
 
-  const exportAllToExcel = async () => {
+ const exportAllToExcel = async () => {
   try {
-    const searchValue = filterParams.globalSearch || "";
+    const apiStatus = getApiStatus(selectedStatus);
 
-    const response = await getAdminExport(searchValue);
+    const response = await getAdminExport(
+      filterParams,
+      searchText,
+      apiStatus
+    );
 
     const blob = new Blob([response.data], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -426,11 +430,13 @@ const handleSearch = (e) => {
 
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
+
     link.href = url;
     link.setAttribute(
       "download",
       `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`
     );
+
     document.body.appendChild(link);
     link.click();
     link.remove();
