@@ -163,7 +163,7 @@ function EditSurvey() {
         </h2>
         <div className="flex justify-center">
           <div className="sm:border border-gray-400 p-1 md:px-10 rounded-lg w-4/5 mb-14">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={ }>
               <div className="md:grid grid-cols-3 gap-5 my-3">
                 <div className="flex flex-col">
                   <label className="font-semibold my-2">Survey Title</label>

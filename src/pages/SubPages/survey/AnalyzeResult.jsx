@@ -413,6 +413,7 @@ function AnalyzeResult() {
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">#</th>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">Respondent</th>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">Contact Details</th>
+                        <th className="text-left py-2 px-3 font-semibold text-gray-700">Email</th>
                         <th className="text-left py-2 px-3 font-semibold text-gray-700">Submitted</th>
 
                         {survey.survey_questions.map((q) => (
@@ -435,6 +436,9 @@ function AnalyzeResult() {
                             <td className="py-2 px-3 text-gray-600">{globalIndex + 1}</td>
                             <td className="py-2 px-3 font-medium">{respondent}</td>
                             <td className="py-2 px-3 text-gray-500">{r.contact_details || "—"}</td>
+                            <td className="py-2 px-3 text-gray-500">
+                              {r.email || "—"}   {/* ✅ ADD THIS */}
+                            </td>
                             <td className="py-2 px-3 text-gray-500">{submitted}</td>
                             {survey.survey_questions.map((q) => {
                               const ans = r.survey_answers?.find((a) => Number(a.survey_question_id) === Number(q.id));
