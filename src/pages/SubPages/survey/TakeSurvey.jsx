@@ -96,13 +96,21 @@ function TakeSurvey() {
   );
   const [feedbackGivenBy, setFeedbackGivenBy] = useState("");
   const [contactDetails, setContactDetails] = useState("");
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    if (!id) { setLoading(false); return; }
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
     getPublicSurvey(id)
-      .then((res) => setSurvey(res.data))
+      .then((res) => {
+        console.log("SURVEY RESPONSE:", res.data); // 👈 DEBUG HERE
+        setSurvey(res.data);
+      })
       .catch((err) => {
-        setError(err.response?.data?.error || "Survey not found or not available.");
+        setError(err.response?.data?.error || "Survey not found.");
         setSurvey(null);
       })
       .finally(() => setLoading(false));
@@ -127,6 +135,11 @@ function TakeSurvey() {
   /* ── Submit ── */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!email.trim()) {
+      setError("Email is required.");
+      setSubmitting(false);
+      return;
+    }
     if (!id || !survey) return;
     setError(null);
     setSubmitting(true);
@@ -159,8 +172,9 @@ function TakeSurvey() {
           feedback_date: feedbackDate || null,
           feedback_given_by: feedbackGivenBy.trim(),
           contact_details: contactDetails.trim(),
+          email: email.trim(), // ✅ ADD THIS LINE
           survey_answers_attributes,
-        },
+        }
       });
       navigate(`/survey/${id}/thank-you`, { replace: true });
     } catch (err) {
@@ -296,14 +310,27 @@ function TakeSurvey() {
   }
   if (!survey) return null;
   const accentColor = "#DD3820";
-  const defaultFieldsCount = 5;
+  const defaultFieldsCount = 6;
   const totalWithDefaults = total + defaultFieldsCount;
   const defaultFieldsFilled = [
-    !!companyName.trim(), !!floorUnit.trim(), !!feedbackDate, !!feedbackGivenBy.trim(), !!contactDetails.trim(),
+    !!companyName.trim(),
+    !!floorUnit.trim(),
+    !!feedbackDate,
+    !!feedbackGivenBy.trim(),
+    !!contactDetails.trim(),
+    !!email.trim(), // ✅ ADD THIS LINE
   ].filter(Boolean).length;
   const progressCompleted = defaultFieldsFilled + answeredCount;
   const progressTotal = totalWithDefaults;
   const progressPct = progressTotal ? (progressCompleted / progressTotal) * 100 : 0;
+  const formatDate = (date) => {
+    if (!date) return "—";
+    return new Date(date).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   return (
     <div
@@ -318,52 +345,63 @@ function TakeSurvey() {
 
         {/* ── Header Banner ── */}
         <div
-          className="rounded-2xl px-6 sm:px-10 pt-24 pb-6 text-white shadow-lg overflow-hidden relative"
+          className="rounded-2xl px-6 sm:px-10 pt-4 pb-6 text-white shadow-lg relative"
           style={{
             background: "linear-gradient(135deg, #DD3820, #ff6a4d)",
           }}
         >
           {/* Decorative circles */}
-          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 pointer-events-none" />
-          <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
-          <div className="absolute top-6 right-12 w-16 h-16 rounded-full bg-white/5 pointer-events-none" />
+          <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 z-0 pointer-events-none" />
+          <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/10 z-0 pointer-events-none" />
+          <div className="absolute top-6 right-12 w-16 h-16 rounded-full bg-white/5 z-0 pointer-events-none" />
 
           <div className="relative z-10 w-full">
-            {/* 🔷 LOGO (top-left) */}
-            {survey.client_logo && (
-              <img
-                src={domainPrefix + survey.client_logo}
-                alt="Logo"
-                className="h-16 sm:h-20 object-contain absolute top-6 left-6"
-              />
-            )}
+
 
             {/* 🔷 CENTER CONTENT */}
-            <div className="flex flex-col items-center text-center px-4 sm:px-16">
+            <div className="w-full px-4 sm:px-16">
 
-              {survey.header_image && (
-                <img
-                  src={domainPrefix + survey.header_image}
-                  alt="Header"
-                  className="max-h-20 sm:max-h-24 mb-4 object-contain rounded-lg"
-                />
-              )}
+              <div className="grid grid-cols-3 items-center">
 
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                {survey.survey_title}
-              </h1>
+                {/* LEFT: LOGO */}
+                <div className="flex justify-start">
+                  {survey.client_logo && (
+                    <img
+                      src={
+                        survey.client_logo.startsWith("http")
+                          ? survey.client_logo
+                          : `${domainPrefix}${survey.client_logo}`
+                      }
+                      alt="Logo"
+                      className="h-12 sm:h-14 object-contain"
+                    />
+                  )}
+                </div>
 
+                {/* CENTER: TITLE */}
+                <div className="text-center">
+                  <h1 className="text-3xl sm:text-4xl font-bold">
+                    {survey.survey_title}
+                  </h1>
+                </div>
+
+                {/* RIGHT: DATE */}
+                <div className="flex justify-end text-right text-sm text-white/90">
+                  <div>
+                    <p>Start: {formatDate(survey.start_date)}</p>
+                    <p>End: {formatDate(survey.end_date)}</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* 🔷 DESCRIPTION */}
               {survey.description && (
-                <p className="mt-3 text-sm sm:text-base text-white/90 leading-relaxed max-w-2xl">
+                <p className="mt-6 text-sm sm:text-base text-white/90 leading-relaxed text-left">
                   {survey.description}
                 </p>
               )}
 
-              {survey.header_text && (
-                <p className="mt-2 text-xs sm:text-sm text-white/60">
-                  {survey.header_text}
-                </p>
-              )}
             </div>
           </div>
         </div>
@@ -398,26 +436,73 @@ function TakeSurvey() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Company name</label>
-                <input type="text" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" placeholder="Enter company name" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
+                <input
+                  type="text"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
+                  placeholder="Enter company name"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Floor / Unit</label>
-                <input type="text" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" placeholder="Enter floor or unit" value={floorUnit} onChange={(e) => setFloorUnit(e.target.value)} />
+                <input
+                  type="text"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
+                  placeholder="Enter floor or unit"
+                  value={floorUnit}
+                  onChange={(e) => setFloorUnit(e.target.value)}
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Feedback date</label>
-                <input type="date" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" value={feedbackDate} onChange={(e) => setFeedbackDate(e.target.value)} />
+                <input
+                  type="date"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
+                  value={feedbackDate}
+                  onChange={(e) => setFeedbackDate(e.target.value)}
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Feedback given by (name)</label>
-                <input type="text" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" placeholder="Enter name" value={feedbackGivenBy} onChange={(e) => setFeedbackGivenBy(e.target.value)} />
+                <input
+                  type="text"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
+                  placeholder="Enter name"
+                  value={feedbackGivenBy}
+                  onChange={(e) => setFeedbackGivenBy(e.target.value)}
+                />
               </div>
-              <div className="sm:col-span-2">
+
+              {/* ✅ Email on left */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
+                  placeholder="Enter email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              {/* ✅ Contact details on right */}
+              <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">Contact details</label>
-                <input type="text" className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm" placeholder="Phone / email" value={contactDetails} onChange={(e) => setContactDetails(e.target.value)} />
+                <input
+                  type="text"
+                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
+                  placeholder="Phone / email"
+                  value={contactDetails}
+                  onChange={(e) => setContactDetails(e.target.value)}
+                />
               </div>
             </div>
           </div>
+
 
           {/* ── Question Cards ── */}
           {questions.map((q, idx) => {
@@ -506,6 +591,7 @@ function TakeSurvey() {
         </p>
       </div>
     </div>
+
   );
 }
 
