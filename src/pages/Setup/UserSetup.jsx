@@ -126,24 +126,27 @@ const UserSetup = () => {
       toast.error("Failed to update approval");
     }
   };
-  const handleStatusToggle = async (row) => {
-    const newStatus = !row.active;
+ const handleStatusToggle = async (row) => {
+  const newStatus = !row.user_status; // ✅ use correct field
 
+  try {
+    await axiosInstance.patch(`/users/${row.id}/status`, {
+      user_status: newStatus, // ✅ correct key
+    });
 
-    try {
-      await axiosInstance.patch(`/users/${row.id}/status`, {
-        active: newStatus,
-      });
-
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === row.id ? { ...user, active: newStatus } : user
-        )
-      );
-    } catch (error) {
-      console.error("Status update failed", error);
-    }
-  };
+    // ✅ update UI
+    setUsers((prev) =>
+      prev.map((user) =>
+        user.id === row.id
+          ? { ...user, user_status: newStatus }
+          : user
+      )
+    );
+  } catch (error) {
+    console.error("Status update failed", error);
+    alert("Failed to update status");
+  }
+};
   // const totalUsers = users.length;
   // const appDownloadedCount = users.filter((user) => user.is_downloaded).length;
   // const appDownloadTenant = users.filter(
@@ -238,22 +241,22 @@ const UserSetup = () => {
     },
 
     {
-      name: "Status",
-      cell: (row) => (
-        <label className="inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={!!row.active}   // ✅ ensure boolean
-            onChange={() => handleStatusToggle(row)}
-            className="sr-only peer"
-          />
-          <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500 relative transition">
-            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
-          </div>
-        </label>
-      ),
-      sortable: true,
-    },
+  name: "Status",
+  cell: (row) => (
+    <label className="inline-flex items-center cursor-pointer">
+      <input
+        type="checkbox"
+        checked={row.user_status === true}  
+        onChange={() => handleStatusToggle(row)}
+        className="sr-only peer"
+      />
+      <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500 relative transition">
+        <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+      </div>
+    </label>
+  ),
+  sortable: true,
+},
     {
       name: "Approval",
       cell: (row) =>
@@ -330,8 +333,8 @@ const UserSetup = () => {
           <button
             onClick={() => setActiveTab("approved")}
             className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "approved"
-                ? "bg-green-300 text-black shadow-md scale-105"
-                : "text-gray-600 hover:text-green-600"
+              ? "bg-green-300 text-black shadow-md scale-105"
+              : "text-gray-600 hover:text-green-600"
               }`}
           >
             Approved Users
@@ -340,8 +343,8 @@ const UserSetup = () => {
           <button
             onClick={() => setActiveTab("pending")}
             className={`px-8 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "pending"
-                ? "bg-yellow-500 text-black shadow-md scale-105"
-                : "text-gray-600 hover:text-yellow-600"
+              ? "bg-yellow-500 text-black shadow-md scale-105"
+              : "text-gray-600 hover:text-yellow-600"
               }`}
           >
             Pending Users
@@ -350,8 +353,8 @@ const UserSetup = () => {
           <button
             onClick={() => setActiveTab("rejected")}
             className={`px-8 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "rejected"
-                ? "bg-red-400 text-black shadow-md scale-105"
-                : "text-gray-600 hover:text-red-600"
+              ? "bg-red-400 text-black shadow-md scale-105"
+              : "text-gray-600 hover:text-red-600"
               }`}
           >
             Rejected Users
