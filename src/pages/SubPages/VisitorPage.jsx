@@ -712,28 +712,42 @@ const res = await getVisitorHistory(
       ),
     },
         { name: "ID", selector: (row) => row.id, sortable: true },
-    {
-          name: "Profile",
-          selector: (row) => {
-            const profileUrl = row.profile_picture?.url
-              ? domainPrefix + row.profile_picture.url
-              : row.qr_code_image_url
-              // ? domainPrefix + row.qr_code_image_url
-              // : null;
+  {
+  name: "Profile",
+  cell: (row) => {
+    let profileUrl = "";
 
-            return profileUrl ? (
-              <img
-                src={profileUrl}
-                alt="Profile"
-                className="w-10 h-10 rounded-full cursor-pointer"
-                onClick={() => window.open(profileUrl, "_blank")}
-              />
-            ) : (
-              <img src={image} alt="Default" className="w-10 h-10 rounded-full" />
-            );
-          },
-          sortable: true,
-        },
+    // ✅ Case 1: profile_picture is string (your current API)
+    if (typeof row.profile_picture === "string" && row.profile_picture.trim()) {
+      profileUrl = domainPrefix + row.profile_picture;
+    }
+
+    // ✅ Case 2: profile_picture is object (future-safe)
+    else if (row.profile_picture?.url) {
+      profileUrl = domainPrefix + row.profile_picture.url;
+    }
+
+    // ✅ Case 3: fallback to QR image
+    // else if (row.qr_code_image_url) {
+    //   profileUrl = domainPrefix + row.qr_code_image_url;
+    // }
+
+    return (
+      <img
+        src={profileUrl || image} // 👈 default fallback
+        alt="Profile"
+        className="w-10 h-10 rounded-full object-cover cursor-pointer"
+        onClick={() => {
+          if (profileUrl) window.open(profileUrl, "_blank");
+        }}
+        onError={(e) => {
+          e.target.src = image; // 👈 fallback if broken image
+        }}
+      />
+    );
+  },
+  sortable: true,
+},
     { name: "Visitor Type", selector: (row) => row.visit_type, sortable: true },
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Contact No.", selector: (row) => row.contact_no, sortable: true },
