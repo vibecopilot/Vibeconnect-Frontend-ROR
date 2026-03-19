@@ -2554,14 +2554,19 @@ export const postServiceAssociation = async (data) =>
     },
   });
 
-export const getSoftServices = async () =>
+export const getSoftServices = async (search = "") =>
   axiosInstance.get("/soft_services.json", {
     params: {
       token: token,
+      "q[search_cont]": search ,
     },
   });
+<<<<<<< Updated upstream
 
 // Soft Service Logs API
+=======
+  // Soft Service Logs API
+>>>>>>> Stashed changes
 export const getSoftServiceLogs = async (id) =>
   axiosInstance.get(`/soft_services/${id}/softservices_log_show.json`, {
     params: {
