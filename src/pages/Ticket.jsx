@@ -25,7 +25,7 @@ import { color } from "highcharts";
 import { FaInbox } from "react-icons/fa";
 const Ticket = () => {
 
-  const siteId=getItemInLocalStorage("SITEID");
+  const siteId = getItemInLocalStorage("SITEID");
   const [filteredData, setFilteredData] = useState([]);
   const [filterSearch, setFilterSearch] = useState([]);
 
@@ -63,10 +63,10 @@ const Ticket = () => {
     return date.toLocaleString();
   };
 
-const handlePerRowsChange = async (newPerPage) => {
-  setPerPage(newPerPage);
-  setCurrentPage(1); // reset to first page
-};
+  const handlePerRowsChange = async (newPerPage) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1); // reset to first page
+  };
 
   const columns = [
     {
@@ -229,36 +229,36 @@ const handlePerRowsChange = async (newPerPage) => {
     },
   };
 
- const fetchData = async (page, perPage, search = "", status = "all", filters = {}) => {
-  setIsLoading(true);
-  try {
-    const response = await getAdminComplaints(page, perPage, search, status, filters);
+  const fetchData = async (page, perPage, search = "", status = "all", filters = {}) => {
+    setIsLoading(true);
+    try {
+      const response = await getAdminComplaints(page, perPage, search, status, filters);
 
-    const complaints = response?.data?.complaints || [];
-    const totalCount = response?.data?.count || 0;
+      const complaints = response?.data?.complaints || [];
+      const totalCount = response?.data?.count || 0;
 
-    setCurrentPage(page);
-    setFilteredData(complaints);
-    setComplaints(complaints);
-    setTotalRows(totalCount);
+      setCurrentPage(page);
+      setFilteredData(complaints);
+      setComplaints(complaints);
+      setTotalRows(totalCount);
 
-    const statusCounts = complaints.reduce((acc, curr) => {
-      acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
-      return acc;
-    }, {});
-    setTicketStatusCounts(statusCounts);
+      const statusCounts = complaints.reduce((acc, curr) => {
+        acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
+        return acc;
+      }, {});
+      setTicketStatusCounts(statusCounts);
 
-    const typeCounts = complaints.reduce((acc, curr) => {
-      acc[curr.issue_type] = (acc[curr.issue_type] || 0) + 1;
-      return acc;
-    }, {});
-    setTicketTypeCounts(typeCounts);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      const typeCounts = complaints.reduce((acc, curr) => {
+        acc[curr.issue_type] = (acc[curr.issue_type] || 0) + 1;
+        return acc;
+      }, {});
+      setTicketTypeCounts(typeCounts);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const apiStatus = getApiStatus(selectedStatus);
@@ -269,24 +269,24 @@ const handlePerRowsChange = async (newPerPage) => {
   const [ticketTypes, setTicketsTypes] = useState({});
   const [statusData, setStatusData] = useState({});
 
-const allDashboardCards = [
-  { key: "Total Tickets", value: statusData.total || 0, color: "border border-blue-300 border-4" },
-  { key: "Pending", value: statusData.Pending || 0, color: "border border-4 border-red-300" },
-  { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-4" },
-  { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-4" },
-  { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-4" },
-  { key: "Received", value: statusData.received || 0, color: "border-green-300 border border-4" },
-  { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-4" },
-  { key: "Completed", value:siteId === 74?  statusData.Completed :statusData["Development Done"] || 0, color: "border-pink-300 border border-4" },
-  { key: "Work in Progress",value: statusData["Work In Progress"] || statusData["Work in Progress"] || 0, color: "border-purple-300 border border-4" },
-];
+  const allDashboardCards = [
+    { key: "Total Tickets", value: statusData.total || 0, color: "border border-blue-300 border-4" },
+    { key: "Pending", value: statusData.Pending || 0, color: "border border-4 border-red-300" },
+    { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-4" },
+    { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-4" },
+    { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-4" },
+    { key: "Received", value: statusData.received || 0, color: "border-green-300 border border-4" },
+    { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-4" },
+    { key: "Completed", value: siteId === 74 ? statusData.Completed : statusData["Development Done"] || 0, color: "border-pink-300 border border-4" },
+    { key: "Work in Progress", value: statusData["Work In Progress"] || statusData["Work in Progress"] || 0, color: "border-purple-300 border border-4" },
+  ];
 
-const dashboardCards =
-  siteId === 74
-    ? allDashboardCards.filter(card =>
+  const dashboardCards =
+    siteId === 74
+      ? allDashboardCards.filter(card =>
         ["Total Tickets", "Pending", "Completed", "Work in Progress"].includes(card.key)
       )
-    : allDashboardCards;
+      : allDashboardCards;
 
   const ticketTypeCards = [
     { key: "Complaint", value: ticketTypes.Complaint || 0, color: "border-red-300 border border-4" },
@@ -326,7 +326,7 @@ const dashboardCards =
       try {
         const searchAllTickets = await getAdminComplaints();
         const searchResp = searchAllTickets?.data?.complaints;
-       setFilterSearch(searchResp);
+        setFilterSearch(searchResp);
 
         console.log(searchResp);
       } catch (error) {
@@ -347,11 +347,11 @@ const dashboardCards =
   };
 
 
-const handleSearch = (e) => {
-  const value = e.target.value;
-  setSearchText(value);
-  setCurrentPage(1);
-};
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+    setCurrentPage(1);
+  };
 
   const getApiStatus = (status) => {
     switch (status) {
@@ -367,7 +367,7 @@ const handleSearch = (e) => {
         return "all";
     }
   };
-  
+
 
   const handleStatusChange = (status) => {
     setSelectedStatus(status);
@@ -413,38 +413,38 @@ const handleSearch = (e) => {
   //   }
   // };
 
- const exportAllToExcel = async () => {
-  try {
-    const apiStatus = getApiStatus(selectedStatus);
+  const exportAllToExcel = async () => {
+    try {
+      const apiStatus = getApiStatus(selectedStatus);
 
-    const response = await getAdminExport(
-      filterParams,
-      searchText,
-      apiStatus
-    );
+      const response = await getAdminExport(
+        filterParams,
+        searchText,
+        apiStatus
+      );
 
-    const blob = new Blob([response.data], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
 
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
 
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`
-    );
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
 
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
 
-  } catch (error) {
-    console.error("Error exporting data:", error);
-  }
-};
+    } catch (error) {
+      console.error("Error exporting data:", error);
+    }
+  };
 
   return (
     <section className="flex">
@@ -614,38 +614,38 @@ const handleSearch = (e) => {
             />
           </div>
         ) : filteredData.length === 0 ? (
-       <div className="flex items-center justify-center h-full py-10">
-  <div className="flex flex-col items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-8 py-6 shadow-sm">
-    
-    <FaInbox className="text-4xl text-gray-400" />
+          <div className="flex items-center justify-center h-full py-10">
+            <div className="flex flex-col items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-8 py-6 shadow-sm">
 
-    <p className="text-gray-600 text-sm font-medium">
-      No submissions here
-    </p>
+              <FaInbox className="text-4xl text-gray-400" />
 
-    <p className="text-gray-400 text-xs">
-      Once submissions are available, they will appear here.
-    </p>
+              <p className="text-gray-600 text-sm font-medium">
+                No submissions here
+              </p>
 
-  </div>
-</div>
+              <p className="text-gray-400 text-xs">
+                Once submissions are available, they will appear here.
+              </p>
+
+            </div>
+          </div>
         ) : (
-   <DataTable
-  responsive
-  columns={columns.filter((column) => columnVisibility[column.name])}
-  data={filteredData}
-  customStyles={customStyle}
-  fixedHeader
-  fixedHeaderScrollHeight="500px"
-  pagination
-  paginationServer
-  paginationTotalRows={totalRows}
-  paginationPerPage={perPage}
-  paginationDefaultPage={currentPage}
-  paginationRowsPerPageOptions={[10, 20, 30, 50]}
-  onChangePage={(page) => setCurrentPage(page)}
-  onChangeRowsPerPage={handlePerRowsChange}
-/>
+          <DataTable
+            responsive
+            columns={columns.filter((column) => columnVisibility[column.name])}
+            data={filteredData}
+            customStyles={customStyle}
+            fixedHeader
+            fixedHeaderScrollHeight="500px"
+            pagination
+            paginationServer
+            paginationTotalRows={totalRows}
+            paginationPerPage={perPage}
+            paginationDefaultPage={currentPage}
+            paginationRowsPerPageOptions={[10, 20, 30, 50]}
+            onChangePage={(page) => setCurrentPage(page)}
+            onChangeRowsPerPage={handlePerRowsChange}
+          />
         )}
         {/* </div> */}
 
