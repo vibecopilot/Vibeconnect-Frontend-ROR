@@ -63,11 +63,10 @@ const Ticket = () => {
     return date.toLocaleString();
   };
 
-  const handlePerRowsChange = async (newPerPage, page) => {
-    setPerPage(newPerPage);
-    setCurrentPage(page);
-    fetchData(page, newPerPage);
-  };
+const handlePerRowsChange = async (newPerPage) => {
+  setPerPage(newPerPage);
+  setCurrentPage(1); // reset to first page
+};
 
   const columns = [
     {
@@ -631,21 +630,22 @@ const handleSearch = (e) => {
   </div>
 </div>
         ) : (
-          <DataTable
-            responsive
-            columns={columns.filter((column) => columnVisibility[column.name])}
-            data={filteredData}
-            customStyles={customStyle}
-            fixedHeader
-            fixedHeaderScrollHeight="500px"
-            pagination
-            paginationServer
-            paginationTotalRows={totalRows}
-            paginationPerPage={perPage}
-            paginationRowsPerPageOptions={[10, 20, 30, 50]}
-            onChangePage={(page) => setCurrentPage(page)}
-            onChangeRowsPerPage={handlePerRowsChange}
-          />
+   <DataTable
+  responsive
+  columns={columns.filter((column) => columnVisibility[column.name])}
+  data={filteredData}
+  customStyles={customStyle}
+  fixedHeader
+  fixedHeaderScrollHeight="500px"
+  pagination
+  paginationServer
+  paginationTotalRows={totalRows}
+  paginationPerPage={perPage}
+  paginationDefaultPage={currentPage}
+  paginationRowsPerPageOptions={[10, 20, 30, 50]}
+  onChangePage={(page) => setCurrentPage(page)}
+  onChangeRowsPerPage={handlePerRowsChange}
+/>
         )}
         {/* </div> */}
 
