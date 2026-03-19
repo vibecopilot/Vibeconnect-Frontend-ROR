@@ -19,6 +19,7 @@ import AddMultipleTextBoxesField from "./AddMultipleTextBoxesField"
 // import AddMultipleTextBoxesField from "./AddMultipleTextboxesField";
 import AddDateTimeField from "./AddDateTimeField";
 import { BlockPicker } from "react-color";
+import { domainPrefix } from "../../../api";
 
 // Map frontend question types to backend (rating, multiple_choice, single_choice, true_false, text, scale)
 const mapQuestionTypeToBackend = (frontendType) => {
@@ -64,16 +65,17 @@ function CreateScratchSurvey() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
- const [clientLogo, setClientLogo] = useState(null);
+  const [clientLogo, setClientLogo] = useState(null); // for new upload
+  const [existingClientLogo, setExistingClientLogo] = useState(null); // for preview
 
-const [headerImage, setHeaderImage] = useState(null);
-const [headerText, setHeaderText] = useState("");
+  const [headerImage, setHeaderImage] = useState(null);
+  const [headerText, setHeaderText] = useState("");
 
-const [footerImage, setFooterImage] = useState(null);
-const [footerText, setFooterText] = useState("");
-const [backgroundColor, setBackgroundColor] = useState("");
-const [formThemeColor, setFormThemeColor] = useState(themeColor || "#7C3AED");
- const pastelColors = [
+  const [footerImage, setFooterImage] = useState(null);
+  const [footerText, setFooterText] = useState("");
+  const [backgroundColor, setBackgroundColor] = useState("");
+  const [formThemeColor, setFormThemeColor] = useState(themeColor || "#7C3AED");
+  const pastelColors = [
     "#FFB3BA", // pastel pink
     "#FFDFBA", // pastel orange
     "#FFFFBA", // pastel yellow
@@ -82,7 +84,7 @@ const [formThemeColor, setFormThemeColor] = useState(themeColor || "#7C3AED");
     "#E0BBE4", // pastel purple
     "#FDFD96", // pastel light yellow
   ];
-const [backgroundImage, setBackgroundImage] = useState(null);
+  const [backgroundImage, setBackgroundImage] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(isEditMode);
@@ -104,6 +106,10 @@ const [backgroundImage, setBackgroundImage] = useState(null);
         setBackgroundColor(s.background_color || "");
         setHeaderText(s.header_text || "");
         setFooterText(s.footer_text || "");
+        setExistingClientLogo(s.client_logo || null);
+        setHeaderImage(s.header_image || null);
+        setFooterImage(s.footer_image || null);
+        setBackgroundImage(s.background_image || null);
 
         const qs = (s.survey_questions || []).map((q) => {
           const opts = q.options || [];
@@ -294,59 +300,61 @@ const [backgroundImage, setBackgroundImage] = useState(null);
         })
         .filter(Boolean);
 
-    const destroyedQuestions = (isEditMode ? deletedQuestionIds : []).map(
-      (id) => ({ id, _destroy: true })
-    );
+      const destroyedQuestions = (isEditMode ? deletedQuestionIds : []).map(
+        (id) => ({ id, _destroy: true })
+      );
 
       const survey_questions = [...keptQuestions, ...destroyedQuestions];
 
-    // FORM DATA FOR FILE UPLOAD
-    const formData = new FormData();
+      // FORM DATA FOR FILE UPLOAD
+      const formData = new FormData();
 
-    formData.append("survey[survey_title]", surveyTitle.trim());
-    formData.append("survey[description]", description.trim());
-    formData.append("survey[start_date]", startDate || "");
-    formData.append("survey[end_date]", endDate || "");
-    formData.append("survey[background_color]", backgroundColor);
-    if (backgroundImage) {
-  formData.append("survey[background_image]", backgroundImage);
-}
-
-    // HEADER & FOOTER TEXT
-    formData.append("survey[header_text]", headerText);
-    formData.append("survey[footer_text]", footerText);
-
-    // CLIENT BRANDING FILES
-    if (clientLogo) {
-      formData.append("survey[client_logo]", clientLogo);
-    }
-
-    if (headerImage) {
-      formData.append("survey[header_image]", headerImage);
-    }
-
-    if (footerImage) {
-      formData.append("survey[footer_image]", footerImage);
-    }
-
-    formData.append(
-      "survey[survey_questions]",
-      JSON.stringify(survey_questions)
-    );
-
-    // Question-level attachments
-    questions.forEach((q, i) => {
-      if (q.attachment instanceof File) {
-        formData.append(`survey[question_attachment_${i}]`, q.attachment);
+      formData.append("survey[survey_title]", surveyTitle.trim());
+      formData.append("survey[description]", description.trim());
+      formData.append("survey[start_date]", startDate || "");
+      formData.append("survey[end_date]", endDate || "");
+      formData.append("survey[background_color]", backgroundColor);
+      if (backgroundImage) {
+        formData.append("survey[background_image]", backgroundImage);
       }
-    });
+
+      // HEADER & FOOTER TEXT
+      formData.append("survey[header_text]", headerText);
+      formData.append("survey[footer_text]", footerText);
+
+      // CLIENT BRANDING FILES
+      console.log("Uploading logo:", clientLogo);
+
+      if (clientLogo) {
+        formData.append("survey[client_logo]", clientLogo);
+      }
+
+      if (headerImage) {
+        formData.append("survey[header_image]", headerImage);
+      }
+
+      if (footerImage) {
+        formData.append("survey[footer_image]", footerImage);
+      }
+
+      formData.append(
+        "survey[survey_questions]",
+        JSON.stringify(survey_questions)
+      );
+
+      // Question-level attachments
+      questions.forEach((q, i) => {
+        if (q.attachment instanceof File) {
+          formData.append(`survey[question_attachment_${i}]`, q.attachment);
+        }
+      });
 
       if (isEditMode) {
-      await updateSurvey(surveyId, formData);
+        await updateSurvey(surveyId, formData);
         toast.success("Survey updated.");
         navigate(`/admin/survey-details/${surveyId}`);
       } else {
-      const res = await createSurvey(formData);
+        const res = await createSurvey(formData);
         const id = res.data?.id;
 
         toast.success("Survey created successfully.");
@@ -355,19 +363,19 @@ const [backgroundImage, setBackgroundImage] = useState(null);
         else navigate("/admin/survey");
       }
     } catch (err) {
-    const msg =
-      err.response?.data?.message ||
-      err.response?.data?.errors ||
-      err.message;
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.errors ||
+        err.message;
 
-    toast.error(
-      Array.isArray(msg)
-        ? msg.join(", ")
-        : msg ||
-            (isEditMode
-              ? "Failed to update survey."
-              : "Failed to create survey.")
-    );
+      toast.error(
+        Array.isArray(msg)
+          ? msg.join(", ")
+          : msg ||
+          (isEditMode
+            ? "Failed to update survey."
+            : "Failed to create survey.")
+      );
     } finally {
       setSubmitting(false);
     }
@@ -377,10 +385,10 @@ const [backgroundImage, setBackgroundImage] = useState(null);
   const sectionClass = "w-full bg-gray-50 rounded-xl p-6 shadow-sm border";
 
   return (
-  <div
-    className="flex min-h-screen"
-    style={{ backgroundColor: backgroundColor || "#f3e8ff" }}
-  >
+    <div
+      className="flex min-h-screen"
+      style={{ backgroundColor: backgroundColor || "#f3e8ff" }}
+    >
       <div className="hidden md:block">
         <Navbar />
       </div>
@@ -393,375 +401,389 @@ const [backgroundImage, setBackgroundImage] = useState(null);
 
         {/* Survey Form - centered, equal-width sections */}
         <div className={`${containerClass} flex flex-col gap-6 py-6`}>
-           {/* SECTION 1 : SURVEY INFO */}
-<div className={`${sectionClass}`}>
+          {/* SECTION 1 : SURVEY INFO */}
+          <div className={`${sectionClass}`}>
 
-<h3 className="text-lg font-semibold mb-4">Survey Information</h3>
+            <h3 className="text-lg font-semibold mb-4">Survey Information</h3>
 
-<div className="grid md:grid-cols-3 gap-5">
+            <div className="grid md:grid-cols-3 gap-5">
 
               <div className="flex flex-col">
-<label className="font-semibold mb-1">Survey Title</label>
+                <label className="font-semibold mb-1">Survey Title</label>
                 <input
                   type="text"
                   name="title"
                   id="title"
                   placeholder="Enter Survey Title"
-className="border rounded-lg px-4 py-2"
+                  className="border rounded-lg px-4 py-2"
                   value={surveyTitle}
-onChange={(e)=>setSurveyTitle(e.target.value)}
+                  onChange={(e) => setSurveyTitle(e.target.value)}
                 />
               </div>
 
               <div className="flex flex-col">
-<label className="font-semibold mb-1">Start Date</label>
+                <label className="font-semibold mb-1">Start Date</label>
                 <input
                   type="date"
-className="border rounded-lg px-4 py-2"
+                  className="border rounded-lg px-4 py-2"
                   value={startDate}
-onChange={(e)=>setStartDate(e.target.value)}
+                  onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
 
               <div className="flex flex-col">
-<label className="font-semibold mb-1">End Date</label>
+                <label className="font-semibold mb-1">End Date</label>
                 <input
                   type="date"
-className="border rounded-lg px-4 py-2"
+                  className="border rounded-lg px-4 py-2"
                   value={endDate}
-onChange={(e)=>setEndDate(e.target.value)}
+                  onChange={(e) => setEndDate(e.target.value)}
                 />
-              </div>
-
-</div>
-
-<div className="flex flex-col mt-4">
-<label className="font-semibold mb-1">Description</label>
-                <textarea
-  name="description"
-  id="description"
-  rows="3"
-  className="border rounded-lg px-4 py-2"
-  value={description}
-onChange={(e)=>setDescription(e.target.value)}
-  placeholder="Enter Survey Description"
-/>
-</div>
-
-</div>
-
-{/* SECTION 2 : CUSTOMIZE COLOR */}
-<div className={`${sectionClass}`}>
-
-<h3 className="text-lg font-semibold mb-4">
-Customize Appearance
-</h3>
-
-<label className="text-sm font-medium text-gray-600">
-Background Color
-</label>
-
-<div className="flex flex-wrap gap-3 mt-3 mb-4">
-
-{pastelColors.map((color)=>(
-<button
-key={color}
-type="button"
-onClick={()=>setBackgroundColor(color)}
-className={`w-10 h-10 rounded-lg border-2
-${backgroundColor===color ? "border-black scale-110" : "border-gray-300"}`}
-style={{backgroundColor:color}}
-/>
-))}
-
-</div>
-
-<button
-type="button"
-onClick={()=>{
-setBackgroundColor("")
-setFormThemeColor(themeColor || "#7C3AED")
-}}
-className="px-4 py-2 border rounded-lg hover:bg-gray-100"
->
-Reset Colors
-</button>
-
-</div>
-
-{/* SECTION 3 : BRANDING */}
-<div className={`${sectionClass}`}>
-<h3 className="text-lg font-semibold mb-4">
-Branding
-</h3>
-
-<div className="grid md:grid-cols-2 gap-5">
-
-<div className="flex flex-col">
-<label className="font-semibold mb-1">Background Image</label>
-<input
-type="file"
-accept="image/*"
-onChange={(e)=>setBackgroundImage(e.target.files[0])}
-className="border p-2 rounded-md"
-/>
-</div>
-
-<div className="flex flex-col">
-<label className="font-semibold mb-1">Client Logo</label>
-<input
-type="file"
-accept="image/*"
-onChange={(e)=>setClientLogo(e.target.files[0])}
-className="border p-2 rounded-md"
-/>
-</div>
-
-<div className="flex flex-col">
-<label className="font-semibold mb-1">Header Text</label>
-<input
-type="text"
-className="border rounded-lg px-4 py-2"
-value={headerText}
-onChange={(e)=>setHeaderText(e.target.value)}
-/>
-</div>
-
-<div className="flex flex-col">
-<label className="font-semibold mb-1">Header Image</label>
-<input
-type="file"
-
-accept="image/*"
-onChange={(e)=>setHeaderImage(e.target.files[0])}
-className="border p-2 rounded-md"
-/>
-</div>
-
-<div className="flex flex-col">
-<label className="font-semibold mb-1">Footer Text</label>
-<input
-type="text"
-className="border rounded-lg px-4 py-2"
-value={footerText}
-onChange={(e)=>setFooterText(e.target.value)}
-/>
-</div>
-
-<div className="flex flex-col">
-<label className="font-semibold mb-1">Footer Image</label>
-<input
-type="file"
-accept="image/*"
-onChange={(e)=>setFooterImage(e.target.files[0])}
-className="border p-2 rounded-md"
-/>
-</div>
               </div>
 
             </div>
 
-{/* SECTION 4 : Questions */}
-<div className={`${sectionClass} bg-white`}>
+            <div className="flex flex-col mt-4">
+              <label className="font-semibold mb-1">Description</label>
+              <textarea
+                name="description"
+                id="description"
+                rows="3"
+                className="border rounded-lg px-4 py-2"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter Survey Description"
+              />
+            </div>
 
-<h3 className="text-lg font-semibold mb-4">Add Questions</h3>
+          </div>
 
-              {questions.map((question, index) => (
+          {/* SECTION 2 : CUSTOMIZE COLOR */}
+          <div className={`${sectionClass}`}>
 
-                <div
-                  key={index}
-className="border border-gray-200 rounded-xl p-5 mb-6 bg-white shadow-sm"
-                >
+            <h3 className="text-lg font-semibold mb-4">
+              Customize Appearance
+            </h3>
 
-{/* Top Row */}
-<div className="flex items-center gap-4">
+            <label className="text-sm font-medium text-gray-600">
+              Background Color
+            </label>
 
-                    <input
-                      type="text"
-                      name="question"
-placeholder={`Question ${index + 1}`}
-className="flex-1 border border-gray-300 rounded-lg px-4 py-2"
-                      value={question.question}
-                      onChange={(e) => handleQuestionChange(e, index)}
-                    />
+            <div className="flex flex-wrap gap-3 mt-3 mb-4">
 
-                    <select
-className="border border-gray-300 rounded-lg px-4 py-2"
-                      value={question.questionType}
-                      onChange={(e) => handleQuestionTypeChange(e, index)}
-                    >
-<option value="">Text Answer</option>
-<option value="multiple-choice">Multiple Choice</option>
-<option value="checkBoxes">Checkbox</option>
-                      <option value="star">Star</option>
-                      <option value="bestWorstScale">Best Worst Scale</option>
-                      <option value="fileUpload">File Upload</option>
-                      <option value="singleTextBox">Single TextBox</option>
-                      <option value="commentBox">Comment Box</option>
-<option value="matrixDropdown">Matrix Of Dropdown Menu</option>
-                      <option value="dropdown">Dropdown</option>
-<option value="matrixRatingScale">Matrix Rating Scale</option>
-                      <option value="ranking">Ranking</option>
-                      <option value="slider">Slider</option>
-<option value="multipleTextboxes">Multiple Textboxes</option>
-                      <option value="dateTime">Date/Time</option>
-                    </select>
+              {pastelColors.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setBackgroundColor(color)}
+                  className={`w-10 h-10 rounded-lg border-2
+${backgroundColor === color ? "border-black scale-110" : "border-gray-300"}`}
+                  style={{ backgroundColor: color }}
+                />
+              ))}
 
-<button
-type="button"
-onClick={() => removeQuestion(index)}
-className="text-gray-500 hover:text-red-500"
->
-<FaTrash />
-</button>
+            </div>
 
-                  </div>
+            <button
+              type="button"
+              onClick={() => {
+                setBackgroundColor("")
+                setFormThemeColor(themeColor || "#7C3AED")
+              }}
+              className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+            >
+              Reset Colors
+            </button>
 
-{/* Multiple Choice */}
-                  {question.questionType === "multiple-choice" && (
-<div className="flex flex-col mt-4 space-y-3">
+          </div>
 
-                      {question.choices.map((choice, choiceIndex) => (
-<div className="flex items-center gap-2" key={choiceIndex}>
+          {/* SECTION 3 : BRANDING */}
+          <div className={`${sectionClass}`}>
+            <h3 className="text-lg font-semibold mb-4">
+              Branding
+            </h3>
 
-                          <input
-                            type="text"
-className="border border-gray-300 rounded-md px-3 py-1 w-full"
-                            value={choice}
-onChange={(e)=>handleChoiceChange(e,index,choiceIndex)}
-placeholder={`Option ${choiceIndex+1}`}
-/>
+            <div className="grid md:grid-cols-2 gap-5">
 
-                          <button
-                            type="button"
-onClick={()=>removeChoice(index,choiceIndex)}
-                            className="text-red-500"
-                          >
-<FaTrash size={18}/>
-                          </button>
+              <div className="flex flex-col">
+                <label className="font-semibold mb-1">Background Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setBackgroundImage(e.target.files[0])}
+                  className="border p-2 rounded-md"
+                />
+              </div>
 
-                        </div>
-                      ))}
+              <div className="flex flex-col">
+                <label className="font-semibold mb-1">Client Logo</label>
 
-                        {question.choices.length < 6 && (
-                          <button
-                            type="button"
-onClick={()=>addChoice(index)}
-className="border border-gray-400 px-3 py-1 rounded-md w-fit"
-                          >
-Add Option
-                          </button>
-                        )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setClientLogo(e.target.files[0])}
+                  className="border p-2 rounded-md"
+                />
 
-                    </div>
-                  )}
+                {/* 🔷 Existing Logo Preview */}
+                {existingClientLogo && !clientLogo && (
+                  <img
+                    src={
+                      existingClientLogo.startsWith("http")
+                        ? existingClientLogo
+                        : domainPrefix + existingClientLogo
+                    }
+                    alt="Existing Logo"
+                    className="h-16 mt-2 object-contain border rounded-md p-1"
+                  />
+                )}
+              </div>
 
-{/* Checkboxes */}
-                  {question.questionType === "checkBoxes" && (
-<div className="flex flex-col mt-4 space-y-3">
+              <div className="flex flex-col">
+                <label className="font-semibold mb-1">Header Text</label>
+                <input
+                  type="text"
+                  className="border rounded-lg px-4 py-2"
+                  value={headerText}
+                  onChange={(e) => setHeaderText(e.target.value)}
+                />
+              </div>
 
-                      {question.checkBox.map((box, checkBoxIndex) => (
-<div className="flex items-center gap-2" key={checkBoxIndex}>
+              <div className="flex flex-col">
+                <label className="font-semibold mb-1">Header Image</label>
+                <input
+                  type="file"
 
-<input type="checkbox"/>
+                  accept="image/*"
+                  onChange={(e) => setHeaderImage(e.target.files[0])}
+                  className="border p-2 rounded-md"
+                />
+              </div>
 
-                            <input
-                              type="text"
-className="border border-gray-300 rounded-md px-3 py-1 w-full"
-                              value={box}
-onChange={(e)=>handleChangeCheckBox(e,index,checkBoxIndex)}
-placeholder={`Option ${checkBoxIndex+1}`}
-                            />
+              <div className="flex flex-col">
+                <label className="font-semibold mb-1">Footer Text</label>
+                <input
+                  type="text"
+                  className="border rounded-lg px-4 py-2"
+                  value={footerText}
+                  onChange={(e) => setFooterText(e.target.value)}
+                />
+              </div>
 
-                          <button
-                            type="button"
-onClick={()=>removeCheckBox(index,checkBoxIndex)}
-                            className="text-red-500"
-                          >
-<FaTrash size={18}/>
-                          </button>
+              <div className="flex flex-col">
+                <label className="font-semibold mb-1">Footer Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFooterImage(e.target.files[0])}
+                  className="border p-2 rounded-md"
+                />
+              </div>
+            </div>
 
-                        </div>
-                      ))}
+          </div>
 
-                        {question.checkBox.length < 6 && (
-                          <button
-                            type="button"
-onClick={()=>addCheckBox(index)}
-className="border border-gray-400 px-3 py-1 rounded-md w-fit"
-                          >
-Add Option
-                          </button>
-                        )}
+          {/* SECTION 4 : Questions */}
+          <div className={`${sectionClass} bg-white`}>
 
-                    </div>
-                  )}
+            <h3 className="text-lg font-semibold mb-4">Add Questions</h3>
 
-{/* Other Question Components */}
-{question.questionType === "star" && <AddStarField />}
-{question.questionType === "bestWorstScale" && <BestWorstScale />}
-{question.questionType === "fileUpload" && <FileUploadSurvey />}
-{question.questionType === "matrixDropdown" && <MatrixDropdownMenuSurvey />}
-{question.questionType === "dropdown" && <AddDropdownField />}
-{question.questionType === "matrixRatingScale" && <MatrixRatingScale />}
-{question.questionType === "ranking" && <AddRankingField />}
-{question.questionType === "slider" && <AddRangeField />}
-{question.questionType === "multipleTextboxes" && <AddMultipleTextBoxesField />}
-{question.questionType === "dateTime" && <AddDateTimeField />}
+            {questions.map((question, index) => (
 
-{/* Question Attachment */}
-<div className="mt-4 border-t pt-3">
-  <label className="text-sm font-medium text-gray-600 mb-1 block">Attachment</label>
-  {question.existingAttachment && !question.attachment && (
-    <div className="mb-2">
-      <a
-        href={question.existingAttachment}
-        target="_blank"
-        rel="noreferrer"
-        className="text-blue-600 underline text-sm"
-      >
-        View existing attachment
-      </a>
-    </div>
-  )}
-  <input
-    type="file"
-    onChange={(e) => handleAttachmentChange(e.target.files[0], index)}
-    className="border p-2 rounded-md text-sm w-full"
-  />
-</div>
+              <div
+                key={index}
+                className="border border-gray-200 rounded-xl p-5 mb-6 bg-white shadow-sm"
+              >
+
+                {/* Top Row */}
+                <div className="flex items-center gap-4">
+
+                  <input
+                    type="text"
+                    name="question"
+                    placeholder={`Question ${index + 1}`}
+                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2"
+                    value={question.question}
+                    onChange={(e) => handleQuestionChange(e, index)}
+                  />
+
+                  <select
+                    className="border border-gray-300 rounded-lg px-4 py-2"
+                    value={question.questionType}
+                    onChange={(e) => handleQuestionTypeChange(e, index)}
+                  >
+                    <option value="">Text Answer</option>
+                    <option value="multiple-choice">Multiple Choice</option>
+                    <option value="checkBoxes">Checkbox</option>
+                    <option value="star">Star</option>
+                    <option value="bestWorstScale">Best Worst Scale</option>
+                    <option value="fileUpload">File Upload</option>
+                    <option value="singleTextBox">Single TextBox</option>
+                    <option value="commentBox">Comment Box</option>
+                    <option value="matrixDropdown">Matrix Of Dropdown Menu</option>
+                    <option value="dropdown">Dropdown</option>
+                    <option value="matrixRatingScale">Matrix Rating Scale</option>
+                    <option value="ranking">Ranking</option>
+                    <option value="slider">Slider</option>
+                    <option value="multipleTextboxes">Multiple Textboxes</option>
+                    <option value="dateTime">Date/Time</option>
+                  </select>
+
+                  <button
+                    type="button"
+                    onClick={() => removeQuestion(index)}
+                    className="text-gray-500 hover:text-red-500"
+                  >
+                    <FaTrash />
+                  </button>
 
                 </div>
 
-              ))}
+                {/* Multiple Choice */}
+                {question.questionType === "multiple-choice" && (
+                  <div className="flex flex-col mt-4 space-y-3">
 
-{/* Bottom Buttons */}
-<div className="flex gap-3 mt-4">
+                    {question.choices.map((choice, choiceIndex) => (
+                      <div className="flex items-center gap-2" key={choiceIndex}>
 
-                <button
-                  type="button"
-                  onClick={addQuestion}
-className="bg-violet-600 hover:bg-violet-700 text-white px-5 py-2 rounded-lg"
-                >
-                  Add Question
-                </button>
+                        <input
+                          type="text"
+                          className="border border-gray-300 rounded-md px-3 py-1 w-full"
+                          value={choice}
+                          onChange={(e) => handleChoiceChange(e, index, choiceIndex)}
+                          placeholder={`Option ${choiceIndex + 1}`}
+                        />
 
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting}
-className="px-6 py-2 rounded-lg text-white"
-style={{background:themeColor}}
-                >
-{submitting ? "Saving…" : isEditMode ? "Save Changes" : "Create Survey"}
-                </button>
+                        <button
+                          type="button"
+                          onClick={() => removeChoice(index, choiceIndex)}
+                          className="text-red-500"
+                        >
+                          <FaTrash size={18} />
+                        </button>
 
-</div>
+                      </div>
+                    ))}
+
+                    {question.choices.length < 6 && (
+                      <button
+                        type="button"
+                        onClick={() => addChoice(index)}
+                        className="border border-gray-400 px-3 py-1 rounded-md w-fit"
+                      >
+                        Add Option
+                      </button>
+                    )}
+
+                  </div>
+                )}
+
+                {/* Checkboxes */}
+                {question.questionType === "checkBoxes" && (
+                  <div className="flex flex-col mt-4 space-y-3">
+
+                    {question.checkBox.map((box, checkBoxIndex) => (
+                      <div className="flex items-center gap-2" key={checkBoxIndex}>
+
+                        <input type="checkbox" />
+
+                        <input
+                          type="text"
+                          className="border border-gray-300 rounded-md px-3 py-1 w-full"
+                          value={box}
+                          onChange={(e) => handleChangeCheckBox(e, index, checkBoxIndex)}
+                          placeholder={`Option ${checkBoxIndex + 1}`}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => removeCheckBox(index, checkBoxIndex)}
+                          className="text-red-500"
+                        >
+                          <FaTrash size={18} />
+                        </button>
+
+                      </div>
+                    ))}
+
+                    {question.checkBox.length < 6 && (
+                      <button
+                        type="button"
+                        onClick={() => addCheckBox(index)}
+                        className="border border-gray-400 px-3 py-1 rounded-md w-fit"
+                      >
+                        Add Option
+                      </button>
+                    )}
+
+                  </div>
+                )}
+
+                {/* Other Question Components */}
+                {question.questionType === "star" && <AddStarField />}
+                {question.questionType === "bestWorstScale" && <BestWorstScale />}
+                {question.questionType === "fileUpload" && <FileUploadSurvey />}
+                {question.questionType === "matrixDropdown" && <MatrixDropdownMenuSurvey />}
+                {question.questionType === "dropdown" && <AddDropdownField />}
+                {question.questionType === "matrixRatingScale" && <MatrixRatingScale />}
+                {question.questionType === "ranking" && <AddRankingField />}
+                {question.questionType === "slider" && <AddRangeField />}
+                {question.questionType === "multipleTextboxes" && <AddMultipleTextBoxesField />}
+                {question.questionType === "dateTime" && <AddDateTimeField />}
+
+                {/* Question Attachment */}
+                <div className="mt-4 border-t pt-3">
+                  <label className="text-sm font-medium text-gray-600 mb-1 block">Attachment</label>
+                  {question.existingAttachment && !question.attachment && (
+                    <div className="mb-2">
+                      <a
+                        href={question.existingAttachment}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 underline text-sm"
+                      >
+                        View existing attachment
+                      </a>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    onChange={(e) => handleAttachmentChange(e.target.files[0], index)}
+                    className="border p-2 rounded-md text-sm w-full"
+                  />
+                </div>
 
               </div>
+
+            ))}
+
+            {/* Bottom Buttons */}
+            <div className="flex gap-3 mt-4">
+
+              <button
+                type="button"
+                onClick={addQuestion}
+                className="bg-violet-600 hover:bg-violet-700 text-white px-5 py-2 rounded-lg"
+              >
+                Add Question
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="px-6 py-2 rounded-lg text-white"
+                style={{ background: themeColor }}
+              >
+                {submitting ? "Saving…" : isEditMode ? "Save Changes" : "Create Survey"}
+              </button>
+
             </div>
+
           </div>
+        </div>
       </div>
+    </div>
   );
 }
 
