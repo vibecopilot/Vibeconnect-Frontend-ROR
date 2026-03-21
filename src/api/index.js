@@ -11662,7 +11662,6 @@ export const getVehicleSetups = async (siteId = 47) =>
 //   });
 
 // Amenity Bookings API
-// Amenity Bookings API
 export const getAmenitiesBooking = async (
   page = 1,
   perPage = 10,

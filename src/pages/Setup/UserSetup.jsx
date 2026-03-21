@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
-import { getSetupUsers, getUserCount, updateUserAdminApproval } from "../../api";
+import { getSetupUsers, getUserCount, putSetupUser, updateUserAdminApproval } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { FaCheck, FaTimes } from "react-icons/fa";
@@ -126,15 +126,18 @@ const UserSetup = () => {
       toast.error("Failed to update approval");
     }
   };
- const handleStatusToggle = async (row) => {
-  const newStatus = !row.user_status; // ✅ use correct field
+const handleStatusToggle = async (row) => {
+  const newStatus = !row.user_status;
 
   try {
-    await axiosInstance.patch(`/users/${row.id}/status`, {
-      user_status: newStatus, // ✅ correct key
-    });
+    const token = localStorage.getItem("TOKEN");
 
-    // ✅ update UI
+    await putSetupUser(
+      row.id,
+      { user: { user_status: newStatus } },
+      token
+    );
+
     setUsers((prev) =>
       prev.map((user) =>
         user.id === row.id
@@ -142,9 +145,16 @@ const UserSetup = () => {
           : user
       )
     );
+
+    toast.success(
+      newStatus
+        ? "User Activated Successfully ✅"
+        : "User Deactivated Successfully ❌"
+    );
+
   } catch (error) {
-    console.error("Status update failed", error);
-    alert("Failed to update status");
+    console.error(error);
+    toast.error("Failed to update status ❌");
   }
 };
   // const totalUsers = users.length;
@@ -240,18 +250,29 @@ const UserSetup = () => {
       wrap: true,
     },
 
-    {
+{
   name: "Status",
   cell: (row) => (
     <label className="inline-flex items-center cursor-pointer">
       <input
         type="checkbox"
-        checked={row.user_status === true}  
+        checked={row.user_status === true}
         onChange={() => handleStatusToggle(row)}
         className="sr-only peer"
       />
-      <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-500 relative transition">
-        <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-5"></div>
+
+      {/* Track */}
+      <div
+        className={`w-11 h-6 rounded-full relative transition-all duration-300
+          ${row.user_status ? "bg-green-500" : "bg-red-500"}
+        `}
+      >
+        {/* Thumb */}
+        <div
+          className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300
+            ${row.user_status ? "left-6" : "left-1"}
+          `}
+        ></div>
       </div>
     </label>
   ),
