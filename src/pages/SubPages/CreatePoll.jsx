@@ -213,13 +213,15 @@ function CreatePolls() {
         console.log("userSites", unitsRes);
         setUnits(unitsRes.data);
 
-        const employeesList = usersRes.data.map((emp) => ({
-          id: emp.id,
-          name: `${emp.firstname} ${emp.lastname}`,
-          building_id: emp.building_id || emp.building?.id || null, //for some users id is null
-          userSites: emp.user_sites || [],
-          building: emp.building || {},
-        }));
+         const employeesList = usersRes.data
+          .filter((emp) => emp.user_status === true) // ✅ only active users
+          .map((emp) => ({
+            id: emp.id,
+            name: `${emp.firstname} ${emp.lastname}`,
+            building_id: emp.building_id || emp.building?.id || null,
+            userSites: emp.user_sites || [],
+            building: emp.building || {},
+          }));
 
         setMembers(employeesList);
         setFilteredMembers(employeesList);

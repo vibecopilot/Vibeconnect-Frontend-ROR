@@ -792,14 +792,14 @@ export const postHelpDeskStatusSetup = async (data) =>
       token: token,
     },
   });
-  
+
 export const getAdminComplaints = async (
   page = 1,
   perPage = 10,
   search = "",
   status = "",
   filters = {}
-  
+
 ) => {
   const params = {
     token: token,
@@ -814,7 +814,7 @@ export const getAdminComplaints = async (
     ...(filters.building_id ? { "q[unit_building_id_eq]": filters.building_id } : {}),
     ...(filters.floor_id ? { "q[unit_floor_id_eq]": filters.floor_id } : {}),
     ...(filters.unit_id ? { "q[unit_id_eq]": filters.unit_id } : {}),
-    
+
     ...(filters.startDate ? { "q[created_at_gteq]": filters.startDate } : {}),
     ...(filters.endDate ? { "q[created_at_lteq]": filters.endDate } : {}),
   };
@@ -1958,7 +1958,7 @@ export const getUserCount = async () =>
   });
 
 export const updateUserAdminApproval = async (id, payload, token) =>
-  axiosInstance.patch(`users/${id}/update_status.json`, payload, {
+  axiosInstance.patch(`users/${id}/update_approvals.json`, payload, {
     params: { token },
   });
 
@@ -1985,6 +1985,10 @@ export const postSetupUsers = async (data) =>
     },
   });
 
+export const updateUserStatus = (id, payload, token) =>
+  axiosInstance.patch(`users/${id}/update_status.json`, payload, {
+    params: { token },
+  });
 // export const updateUser = (id, data) => axios.put(`/users/${id}`, data);
 
 export const getVehicleParking = async () =>
@@ -2558,7 +2562,7 @@ export const getSoftServices = async (search = "") =>
   axiosInstance.get("/soft_services.json", {
     params: {
       token: token,
-      "q[search_cont]": search ,
+      "q[search_cont]": search,
     },
   });
 
@@ -11760,7 +11764,25 @@ export const updateAmenity = async (id, formData) =>
     },
   });
 
-//Vehicle Setup
+export const saveAmenitySlotConfig = async (amenityId, data) =>
+  axiosInstance.put(`/api/v1/amenity_slot_configs/${amenityId}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const generateAmenitySlots = async (amenityId) =>
+  axiosInstance.post(
+    `/api/v1/amenity_slot_configs/${amenityId}/generate_slots.json`,
+    {},
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+
+
 export const getVehicleSetup = async () =>
   axiosInstance.get("/vehicle_setups.json", {
     params: {

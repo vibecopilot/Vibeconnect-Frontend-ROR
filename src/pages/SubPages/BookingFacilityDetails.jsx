@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
-import { getFacitilitySetupId } from "../../api";
+import { domainPrefix, getFacitilitySetupId } from "../../api";
 import { useParams } from "react-router-dom";
 import { formatTime } from "../../utils/dateUtils";
+import { useSelector } from "react-redux";
 
 const FacilityDetails = () => {
   const { id } = useParams(); // The ID from URL params
   const [facilityData, setFacilityData] = useState(null); // Set initial state as null, to track loading properly
   const [error, setError] = useState(null); // Error state
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true); 
+    const themeColor = useSelector((state) => state.theme.color);// Loading state
 
   // Fetch the facility details for the specific ID
   const fetchFacilityBooking = async () => {
@@ -32,9 +34,19 @@ const FacilityDetails = () => {
     }
   };
 
+  const days = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
   console.log("AMENITIes", facilityData);
 
-  const domainPrefix = "https://admin.vibecopilot.ai";
+  // const domainPrefix = "https://admin.vibecopilot.ai";
   // const domainPrefix = "http://localhost:3002";
 
   useEffect(() => {
@@ -58,17 +70,20 @@ const FacilityDetails = () => {
       <Navbar />
       <div className="w-full p-4 mb-5">
         <h1
-          style={{ background: "rgb(17, 24, 39)" }}
-          className="bg-black text-white font-semibold rounded-md text-center p-2"
+          style={{ background: themeColor }}
+          className=" text-white font-semibold rounded-md text-center p-2"
         >
           Facility Details
         </h1>
 
         {/* Facility Info */}
         <div className="my-4">
-          <h2 className="border-b border-black text-lg font-medium mb-2">
+         <div>
+           <h2 className="border-b border-black text-lg font-medium mb-2">
             Facility Information
           </h2>
+
+         </div>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
               <p className="font-medium">Facility Name:</p>
@@ -94,28 +109,35 @@ const FacilityDetails = () => {
           <h2 className="border-b border-black text-lg font-medium mb-2">
             Fee Details
           </h2>
-          <div className="border shadow-md rounded-lg bg-blue-50 p-4">
-            {/* {["member", "guest", "tenant"].map((type) => ( */}
-            {["member", "guest"].map((type) => (
-              <div key={type} className="my-2">
-                <p className="font-medium capitalize">{type}:</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p>Adult Fee:</p>
-                    <p>{facilityData[`${type}_price_adult`] || "0"}</p>
-                  </div>
-                  {/* <div>
-                    <p>Child Fee:</p>
-                    <p>{facilityData[`${type}_price_child`] || "0"}</p>
-                  </div> */}
-                </div>
-              </div>
-            ))}
-            <div className="border p-2 rounded-md">
-              <p className="font-medium text-bold capitalize gap-5">
-                Fixed Price: {facilityData?.fixed_amount || "0"}
-              </p>
+           <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 p-4 rounded">
+              <p className="font-medium">Member</p>
+              <p>Adult: ₹{facilityData.member_price_adult || 0}</p>
+              <p>Child: ₹{facilityData.member_price_child || 0}</p>
             </div>
+
+            <div className="bg-green-50 p-4 rounded">
+              <p className="font-medium">Guest</p>
+              <p>Adult: ₹{facilityData.guest_price_adult || 0}</p>
+              <p>Child: ₹{facilityData.guest_price_child || 0}</p>
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded">
+              <p className="font-medium">Tenant</p>
+              <p>Adult: ₹{facilityData.tenant_price_adult || 0}</p>
+              <p>Child: ₹{facilityData.tenant_price_child || 0}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 bg-yellow-50 p-3 rounded">
+            <p>
+              Fixed Price: ₹
+              {facilityData.fixed_amount &&
+              facilityData.fixed_amount !== "null"
+                ? facilityData.fixed_amount
+                : 0}
+            </p>
+            <p>GST: {facilityData.gst || 0}%</p>
           </div>
           <div className="border-b border-black">
             <div className="grid grid-cols-3 p-4 gap-4">
@@ -263,15 +285,15 @@ const FacilityDetails = () => {
                 <div className="grid md:grid-cols-4 gap-4">
                   <div>
                     <p>Day of week:</p>
-                    <p>{day.day_of_week ?? "N/A"}</p>
+                    <p> {days[day.day_of_week] || " "}</p>
                   </div>
                   <div>
                     <p>Start time:</p>
-                    <p>{day.start_time || "N/A"}</p>
+                    <p>{day.start_time || "-"}</p>
                   </div>
                   <div>
                     <p>End time:</p>
-                    <p>{day.end_time || "N/A"}</p>
+                    <p>{day.end_time || "-"}</p>
                   </div>
                   <div>
                     <p>Is active:</p>
