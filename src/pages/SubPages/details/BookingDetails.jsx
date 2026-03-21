@@ -1,28 +1,250 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
-import { domainPrefix, getAmenitiesBookingById } from "../../../api";
+import {
+  domainPrefix,
+  getAmenitiesBookingById,
+  postPaymentBookings,
+  updateAmenityBook
+} from "../../../api";
+import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 const BookingDetails = () => {
-  const { id } = useParams();
+   const { id } = useParams();
+  const navigate = useNavigate();
+  const themeColor = useSelector((state) => state.theme.color);
+  const [userName, setUserName] = useState("");
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false); // state to control the modal
+  const [userOptions, setUserOptions] = useState([]);
+  const [bookingDetails, setBookingDetails] = useState(null);
+  const [error, setError] = useState(null);
+  const [facilityDetails, setFacilityDetails] = useState(null);
+  const [formData, setFormData] = useState({
+    resource_id: id,
+    resource_type: "AmenityBooking",
+    // total_amount: "",
+    paid_amount: "",
+    user_id: "",
+    payment_method: "",
+    transaction_id: "",
+    paymen_date: new Date().toISOString().split("T")[0],
+    notes: "",
+  });
 
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
+   const [showModal, setShowModal] = useState(false);
+   
+
+ const fetchData = async () => {
+  setLoading(true);
+  try {
+    const bookingResponse = await getAmenitiesBookingById(id);
+
+    console.log("FULL RESPONSE:", bookingResponse);
+
+    const bookingD = bookingResponse?.data || bookingResponse;
+
+    if (!bookingD || !bookingD.id) {
+      setError("Booking Data not available for the given ID.");
+      return;
+    }
+
+    setBookingDetails(bookingD);
+    setBooking(bookingD);
+
+    // ✅ Use direct amenity
+    setFacilityDetails(bookingD.amenity);
+
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    setError("Failed to fetch data. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
   useEffect(() => {
-    loadBooking();
+    if (id) {
+      fetchData();
+    }
   }, [id]);
 
-  const loadBooking = async () => {
+
+
+  const postPaymentBooking = async () => {
+    if (
+      !formData.payment_method ||
+      !formData.transaction_id ||
+      !formData.paid_amount
+    ) {
+      toast.error("Payment Type, amount, and Transaction_Id are mandatory!");
+      return;
+    }
+
+    // Validate that the payable amount matches the paid amount
+    if (
+      parseFloat(formData.paid_amount) !== parseFloat(bookingDetails.amount)
+    ) {
+      toast.error("Paid amount must equal the payable amount!");
+      return;
+    }
+
     try {
-      const res = await getAmenitiesBookingById(id);
-      setBooking(res.data);
-    } catch (err) {
-      console.error("Error loading booking:", err);
-    } finally {
-      setLoading(false);
+      const postData = new FormData();
+
+      // Append all form data fields
+      Object.keys(formData).forEach((key) =>
+        postData.append(`payment[${key}]`, formData[key])
+      );
+
+      // Append the total amount (payable amount) to the request
+      postData.append("payment[total_amount]", bookingDetails.amount);
+
+      // Post payment data
+      const response = await postPaymentBookings(postData);
+
+      if (response?.status === 201) {
+        const updatedBookingData = {
+          status: "paid", 
+        };
+
+        console.log("Booking ID to update:", id); // Log the id to check
+        const updateResponse = await updateAmenityBook(id, updatedBookingData); // Pass the id and updated data
+        console.log("update response", updateResponse);
+
+        const updatedPayment = {
+          payment_method: formData.payment_method,
+          total_amount: bookingDetails.amount,
+          paid_amount: formData.paid_amount,
+          paymen_date: new Date().toISOString().split("T")[0], // Use current date or adjust as needed
+          transaction_id: formData.transaction_id,
+          notes: formData.notes || "N/A",
+          resource_id: formData.resource_id,
+          resource_type: formData.resource_type,
+        };
+
+        setBookingDetails((prevDetails) => ({
+          ...prevDetails,
+          payment: updatedPayment,
+        }));
+
+        setShowModal(false);
+        toast.success("Payment Captured successfully!");
+      } else {
+        toast.error("Booking failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error in booking:", error);
+      toast.error("Error in booking. Please try again.");
     }
   };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
+  };
+
+  const handlePaymentChange = (value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      payment_method: value,
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Loading booking details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!bookingDetails || !facilityDetails) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>No booking or facility details available.</p>
+      </div>
+    );
+  }
+
+
+  const handleCancelClick = () => {
+    setShowConfirmPopup(true); // Show confirmation popup when cancel is clicked
+  };
+
+
+  const handleConfirmCancel = async () => {
+    console.log("id", id);
+    try {
+      const updatedBookingData = {
+        status: "cancelled", // Update status to "cancelled"
+      };
+
+      console.log("Booking ID to update:", id); // Log the id to check
+
+      const response = await updateAmenityBook(id, updatedBookingData); // Pass the id and updated data
+      console.log("response", response);
+
+      if (response?.status === 200) {
+
+        toast.success("Status Cancelled!");
+        navigate("/bookings");
+      } else {
+        alert("Failed to cancel the booking. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error updating the booking:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+
+
+
+  const handleClosePopup = () => {
+    setShowConfirmPopup(false); // Close the popup if canceled
+  };
+
+  const created = () => {
+    const date = new Date(facilityDetails.created_at);
+    const yy = date.getFullYear().toString();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+
+    const hh = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+    const ss = String(date.getSeconds()).padStart(2, "0");
+
+    return `${yy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+  };
+
+  // Find the relevant slot time based on the slot ID in the booking
+  const amenitySlotId = bookingDetails.amenity_slot_id;
+  const selectedSlot = facilityDetails.amenity_slots?.find(
+    (slot) => slot.id === amenitySlotId
+  );
+  const slotTime = selectedSlot
+    ? `${String(selectedSlot.start_hr || 0).padStart(2, "0")}:${String(
+        selectedSlot.start_min || 0
+      ).padStart(2, "0")} - ${String(selectedSlot.end_hr || 0).padStart(
+        2,
+        "0"
+      )}:${String(selectedSlot.end_min || 0).padStart(2, "0")}`
+    : "N/A";
+  // console.log("slot time", slotTime);
+
+  // console.log("fac anem", bookingDetails.amount);
+
 
   if (loading) return <p className="p-6 text-center">Loading...</p>;
   if (!booking) return <p className="p-6 text-center">Booking Not Found</p>;
@@ -36,14 +258,220 @@ const BookingDetails = () => {
 
       <div className="w-full p-6 overflow-y-auto">
         {/* HEADER */}
-        <div className="bg-blue-900 text-white p-3 rounded text-center text-lg font-semibold">
+        <div className=" text-white p-2 rounded text-center text-lg font-semibold"
+        style={{background:themeColor}}>
           Amenity Booking Details
         </div>
 
+<div className="flex justify-end p-2 items-center w-full">
+          <div>
+            <div className="flex justify-end gap-2 w-full">
+              {bookingDetails.status !== "cancelled" &&
+                bookingDetails.status !== "paid" && (
+                  <button
+                    className="rounded-md text-white p-2 w-[150px] cursor-pointer"
+                            style={{background:themeColor}}
+
+                    onClick={() => setShowModal(true)}
+                  >
+                    Capture Payment
+                  </button>
+                )}
+              {/* <button
+                className="bg-red-500 rounded-md text-white p-2 w-[100px] cursor-pointer"
+                onClick={() => navigate("/bookings")}
+              >
+                Cancel
+              </button> */}
+              <div>
+                {bookingDetails.status !== "paid" && (
+                  <button
+                    className="bg-red-500 rounded-md text-white p-2 w-[100px] cursor-pointer"
+                    onClick={handleCancelClick}
+                  >
+                    Cancel
+                  </button>
+                )}
+
+                {/* Confirmation Popup */}
+                {showConfirmPopup && (
+                  <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-white p-6 rounded-md shadow-md w-1/3">
+                      <h3 className="text-xl font-semibold mb-4">
+                        Are you sure?
+                      </h3>
+                      <p className="mb-4">
+                        Do you want to cancel and go back to the bookings page?
+                      </p>
+                      <div className="flex justify-end gap-4">
+                        <button
+                          className="bg-green-500 text-white px-4 py-2 rounded-md"
+                          onClick={handleConfirmCancel}
+                        >
+                          Yes, Cancel
+                        </button>
+                        <button
+                          className="bg-gray-500 text-white px-4 py-2 rounded-md"
+                          onClick={handleClosePopup}
+                        >
+                          No, Stay
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {showModal && (
+              <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+                <div className="bg-white p-6 rounded-md w-96">
+                  <h2 className="text-xl font-bold mb-4">Capture Payment</h2>
+                  <div className="flex flex-col gap-4">
+                    {/* <input
+                      type="text"
+                      disabled
+                      name="resource_id"
+                      placeholder="Resource ID"
+                      value={formData.resource_id}
+                      onChange={handleInputChange}
+                      className="border p-2 rounded-md w-full"
+                    /> */}
+                    <label>
+                      Total Amount
+                      <input
+                        type="text"
+                        name="total_amount"
+                        placeholder="Total Amount"
+                        value={formData.total_amount || bookingDetails.amount} // Use formData.total_amount, fallback to bookingDetails.amount
+                        onChange={handleInputChange}
+                        className="border p-2 bg-gray-100 rounded-md w-full"
+                        disabled // This will disable the input field
+                      />
+                    </label>
+
+                    <label>
+                      Paid Amount{" "}
+                      <label className="text-red-500 font-semibold">*</label>
+                      <input
+                        type="text"
+                        name="paid_amount"
+                        placeholder="Paid Amount"
+                        value={formData.paid_amount}
+                        onChange={handleInputChange}
+                        className="border p-2 rounded-md w-full"
+                      />
+                    </label>
+
+                    {/* <input
+                      type="text"
+                      name="user_id"
+                      disabled
+                      placeholder="User ID"
+                      value={user_id}
+                      onChange={handleInputChange}
+                      className="border p-2 rounded-md w-full"
+                    /> */}
+
+                    {/* <input
+                      type="text"
+                      name="payment_method"
+                      placeholder="Payment Method"
+                      value={payment_mode === "pre" ? "Prepaid" : "post" ? "Postpaid" : ""}
+                      onChange={handleInputChange}
+                      className="border p-2 rounded-md w-full"
+                    /> */}
+                    <label>
+                      Payment Method{" "}
+                      <label className="text-red-500 font-semibold">*</label>
+                      <select
+                        className="border p-2 rounded w-full"
+                        value={formData.payment_method}
+                        onChange={(e) => handlePaymentChange(e.target.value)}
+                      >
+                        <option value="">Select Payment Method</option>
+                        <option value="CHEQUE">Cheque</option>
+                        <option value="UPI">UPI</option>
+                        <option value="NEFT">NEFT</option>
+                        <option value="CASH">Cash</option>
+                      </select>
+                    </label>
+                    <label>
+                      {" "}
+                      Transaction ID{" "}
+                      <label className="text-red-500 font-semibold">*</label>
+                      <input
+                        type="text"
+                        name="transaction_id"
+                        placeholder="Transaction ID"
+                        value={formData.transaction_id}
+                        onChange={handleInputChange}
+                        className="border p-2 rounded-md w-full"
+                      />
+                    </label>
+                    <label>
+                      {" "}
+                      Date
+                      <input
+                        type="date"
+                        name="paymen_date"
+                        placeholder="Payment Date"
+                        value={formData.paymen_date}
+                        onChange={handleInputChange}
+                        className="border p-2 rounded-md w-full"
+                      />
+                    </label>
+                    <label>
+                      Remarks
+                      <input
+                        type="textarea"
+                        name="notes"
+                        placeholder="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        className="border p-2 rounded-md w-full"
+                      />
+                    </label>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        className="bg-blue-500 text-white p-2 rounded-md"
+                        onClick={postPaymentBooking}
+                      >
+                        Submit
+                      </button>
+                      <button
+                        className="bg-gray-500 text-white p-2 rounded-md"
+                        onClick={() => setShowModal(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         {/* BOOKING DETAILS */}
         <div className="bg-gray-100 p-5 rounded mt-6 grid grid-cols-4 gap-5">
           <Field label="Booking ID" value={booking.id} />
-          <Field label="Status" value={booking.status} />
+          <Field
+  label="Status"
+  value={
+    <span
+      className={`${
+        booking.status === "booked"
+          ? "bg-yellow-500"
+          : booking.status === "cancelled"
+          ? "bg-red-500"
+          : "bg-green-500"
+      } text-white px-2 py-1 rounded-md text-sm`}
+    >
+      {booking.status.charAt(0).toUpperCase() +
+        booking.status.slice(1)}
+    </span>
+  }
+/>
           <Field label="Booked By" value={booking.book_by_user} />
           <Field label="Booking Date" value={booking.booking_date} />
           <Field label="Booked On" value={booking.created_at?.split("T")[0]} />
