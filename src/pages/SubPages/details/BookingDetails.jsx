@@ -77,10 +77,9 @@ const BookingDetails = () => {
   const postPaymentBooking = async () => {
     if (
       !formData.payment_method ||
-      !formData.transaction_id ||
       !formData.paid_amount
     ) {
-      toast.error("Payment Type, amount, and Transaction_Id are mandatory!");
+      toast.error("Payment Type and amount are mandatory!");
       return;
     }
 
@@ -399,7 +398,7 @@ const BookingDetails = () => {
                     <label>
                       {" "}
                       Transaction ID{" "}
-                      <label className="text-red-500 font-semibold">*</label>
+                      <label className="text-red-500 font-semibold"></label>
                       <input
                         type="text"
                         name="transaction_id"
