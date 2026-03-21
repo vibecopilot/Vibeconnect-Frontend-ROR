@@ -107,6 +107,11 @@ const EditAmenitySetup = () => {
       member: null,
       guest: null,
       tenant: null,
+      non_member: false,
+      non_member_price_adult: "",
+      non_member_price_child: "",
+      is_non_member_adult: false,
+      is_non_member_child: false,
       min_people: "",
       max_people: "",
       cancel_before: "",
@@ -124,17 +129,20 @@ const EditAmenitySetup = () => {
       pay_on_facility: null,
       complimentary: null,
       fixed_amount: null,
+      is_fixed: false,
       terms: "",
       gst_no: "",
+      gst: "",
+      sgst: "",
       advance_booking: false,
       deposit: "",
       description: "",
       max_slots: "",
-      is_member_adult: true, // Added missing state
+      is_member_adult: true,
       is_member_child: false,
-      is_guest_adult: true, // Added missing state
+      is_guest_adult: true,
       is_guest_child: false,
-      is_tenant_adult: true, // Added missing state
+      is_tenant_adult: true,
       is_tenant_child: false,
     },
     covers: [],
@@ -298,7 +306,9 @@ const EditAmenitySetup = () => {
             min_people: facility.min_people || "",
             max_people: facility.max_people || "",
             terms: facility.terms || "",
-            gst_no: facility.gst_no || facility.gst || "",
+            gst_no: facility.gst_no || "",
+            gst: facility.gst || "",
+            sgst: facility.sgst || "",
             deposit: facility.deposit || "",
             description: facility.description || "",
             max_slots: facility.max_slots || "",
@@ -311,7 +321,13 @@ const EditAmenitySetup = () => {
             tenant: facility.tenant ?? null,
             is_tenant_adult: facility.is_tenant_adult ?? true,
             is_tenant_child: facility.is_tenant_child ?? false,
-            fixed_amount: facility.fixed_amount || null,
+            non_member: facility.non_member ?? false,
+            non_member_price_adult: facility.non_member_price_adult || "",
+            non_member_price_child: facility.non_member_price_child || "",
+            is_non_member_adult: facility.is_non_member_adult ?? false,
+            is_non_member_child: facility.is_non_member_child ?? false,
+            fixed_amount: facility.fixed_amount || "",
+            is_fixed: facility.is_fixed ?? false,
             prepaid: facility.prepaid ?? null,
             postpaid: facility.postpaid ?? null,
             status: facility.status || "",
@@ -322,7 +338,6 @@ const EditAmenitySetup = () => {
             link_to_building: facility.link_to_building ?? false,
             slot_by: facility.slot_by || "",
             consecutive_slot_allowed: facility.consecutive_slot_allowed ?? false,
-            is_fixed: facility.is_fixed ?? false,
           },
           covers: facility.covers || [],
           attachments: facility.attachments || [],
@@ -334,10 +349,10 @@ const EditAmenitySetup = () => {
               start_min: String(slot.start_min ?? "").padStart(2, "0"),
               end_hr: String(slot.end_hr ?? "").padStart(2, "0"),
               end_min: String(slot.end_min ?? "").padStart(2, "0"),
-              break_start_hr: String(slot.break_start_hr ?? "").padStart(2, "0"),
-              break_start_min: String(slot.break_start_min ?? "").padStart(2, "0"),
-              break_end_hr: String(slot.break_end_hr ?? "").padStart(2, "0"),
-              break_end_min: String(slot.break_end_min ?? "").padStart(2, "0"),
+              break_start_hr: String(slot.break_start_hr ?? "0").padStart(2, "0"),
+              break_start_min: String(slot.break_start_min ?? "0").padStart(2, "0"),
+              break_end_hr: String(slot.break_end_hr ?? "0").padStart(2, "0"),
+              break_end_min: String(slot.break_end_min ?? "0").padStart(2, "0"),
               concurrent_slots: slot.concurrent_slots || "",
               slot_duration: slot.slot_duration || "",
               wrap_up_time: slot.wrap_up_time || "",
@@ -345,8 +360,8 @@ const EditAmenitySetup = () => {
             : [
               {
                 start_hr: "", start_min: "", end_hr: "", end_min: "",
-                break_start_hr: "", break_start_min: "",
-                break_end_hr: "", break_end_min: "",
+                break_start_hr: "00", break_start_min: "00",
+                break_end_hr: "00", break_end_min: "00",
                 concurrent_slots: "", slot_duration: "", wrap_up_time: "",
               },
             ],
@@ -471,6 +486,14 @@ const EditAmenitySetup = () => {
     const postData = new FormData();
     const a = formData.amenity;
 
+    // helper: convert days/hours/mins fields to total minutes integer
+    const calcTotalMinutes = (prefix) => {
+      const d = parseInt(a[`${prefix}_days`]) || 0;
+      const h = parseInt(a[`${prefix}_hours`]) || 0;
+      const m = parseInt(a[`${prefix}_mins`]) || 0;
+      return d * 24 * 60 + h * 60 + m;
+    };
+
     // ── Basic info ────────────────────────────────────────────────────────────
     postData.append("amenity[site_id]", a.site_id || sitID);
     postData.append("amenity[fac_name]", a.fac_name || "");
@@ -482,8 +505,8 @@ const EditAmenitySetup = () => {
     postData.append("amenity[terms]", a.terms || "");
     postData.append("amenity[deposit]", a.deposit || "");
     postData.append("amenity[gst_no]", a.gst_no || "");
-    postData.append("amenity[gst]", a.gst || "18");
-    postData.append("amenity[sgst]", a.sgst || "9");
+    postData.append("amenity[gst]", a.gst || "");
+    postData.append("amenity[sgst]", a.sgst || "");
     postData.append("amenity[active]", a.active ? "true" : "false");
     postData.append("amenity[status]", a.status || "active");
     postData.append("amenity[shareable]", a.shreable ? "true" : "false");
@@ -494,9 +517,10 @@ const EditAmenitySetup = () => {
     postData.append("amenity[max_people]", a.max_people || "");
 
     // ── Booking / schedule config ─────────────────────────────────────────────
-    postData.append("amenity[book_before]", a.book_before || "");
-    postData.append("amenity[cancel_before]", a.cancel_before || "");
-    postData.append("amenity[advance_booking]", a.advance_booking || "");
+    // Send as total minutes (integer), not the raw array from the API response
+    postData.append("amenity[book_before]", calcTotalMinutes("book_before"));
+    postData.append("amenity[cancel_before]", calcTotalMinutes("cancel_before"));
+    postData.append("amenity[advance_booking]", calcTotalMinutes("advance"));
     postData.append("amenity[max_slots]", a.max_slots || "");
     postData.append("amenity[consecutive_slot_allowed]", a.consecutive_slot_allowed ? "true" : "false");
     postData.append("amenity[slot_by]", a.slot_by || slotBy || "");
@@ -564,10 +588,9 @@ const EditAmenitySetup = () => {
       if (day.db_id) postData.append(`${base}[id]`, day.db_id);
       postData.append(`${base}[day_of_week]`, day.value);
       postData.append(`${base}[is_active]`, day.is_active ? "true" : "false");
-      if (day.is_active) {
-        postData.append(`${base}[start_time]`, day.start_time || "");
-        postData.append(`${base}[end_time]`, day.end_time || "");
-      }
+      // Always send start/end time (empty string when inactive)
+      postData.append(`${base}[start_time]`, day.is_active ? (day.start_time || "") : "");
+      postData.append(`${base}[end_time]`, day.is_active ? (day.end_time || "") : "");
     });
 
     // ── Booking rules ─────────────────────────────────────────────────────────
@@ -1257,13 +1280,16 @@ const EditAmenitySetup = () => {
                 <input
                   type="checkbox"
                   className="mx-2"
-                  checked={formData.is_fixed || false}
+                  checked={formData.amenity.is_fixed || false}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      is_fixed: e.target.checked,
-                      fixed_amount: e.target.checked ? formData.fixed_amount : ""
-                    })
+                    setFormData((prev) => ({
+                      ...prev,
+                      amenity: {
+                        ...prev.amenity,
+                        is_fixed: e.target.checked,
+                        fixed_amount: e.target.checked ? prev.amenity.fixed_amount : "",
+                      },
+                    }))
                   }
                 />
 
@@ -1330,7 +1356,7 @@ const EditAmenitySetup = () => {
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.non_member === true}
+                    checked={formData.amenity.non_member === true}
                     onChange={() => handleCheckboxChange("non_member")}
                   />
                   Non-Member
@@ -1342,17 +1368,17 @@ const EditAmenitySetup = () => {
                 <input
                   type="checkbox"
                   className="mx-2"
-                  checked={formData.is_non_member_adult}
-                  disabled={!formData.non_member}
+                  checked={formData.amenity.is_non_member_adult}
+                  disabled={!formData.amenity.non_member}
                   onChange={() => handleChildToggle("is_non_member_adult")}
                 />
 
                 <input
                   type="text"
                   disabled={
-                    !formData.non_member || !formData.is_non_member_adult
+                    !formData.amenity.non_member || !formData.amenity.is_non_member_adult
                   }
-                  value={formData.non_member_price_adult || ""}
+                  value={formData.amenity.non_member_price_adult || ""}
                   onChange={(e) =>
                     handlePriceChange("non_member_price_adult", e.target.value)
                   }
@@ -1366,17 +1392,17 @@ const EditAmenitySetup = () => {
                 <input
                   type="checkbox"
                   className="mx-2"
-                  checked={formData.is_non_member_child}
-                  disabled={!formData.non_member}
+                  checked={formData.amenity.is_non_member_child}
+                  disabled={!formData.amenity.non_member}
                   onChange={() => handleChildToggle("is_non_member_child")}
                 />
 
                 <input
                   type="text"
                   disabled={
-                    !formData.non_member || !formData.is_non_member_child
+                    !formData.amenity.non_member || !formData.amenity.is_non_member_child
                   }
-                  value={formData.non_member_price_child || ""}
+                  value={formData.amenity.non_member_price_child || ""}
                   onChange={(e) =>
                     handlePriceChange("non_member_price_child", e.target.value)
                   }
@@ -1682,21 +1708,65 @@ const EditAmenitySetup = () => {
               </div>
               <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="gst_no" className="font-medium">
-                  GST
+                  GST No
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="gst_no"
                   id="gst_no"
                   className="border rounded-md p-2"
-                  placeholder="GST(%)"
-                  value={formData.amenity.gst_no || ""} // Add GST to the state if necessary
+                  placeholder="GST Number"
+                  value={formData.amenity.gst_no || ""}
                   onChange={(e) =>
                     setFormData((prevState) => ({
                       ...prevState,
                       amenity: {
                         ...prevState.amenity,
-                        gst_no: e.target.value, // Add GST handler
+                        gst_no: e.target.value,
+                      },
+                    }))
+                  }
+                />
+              </div>
+              <div className="my-2 flex flex-col gap-2">
+                <label htmlFor="gst" className="font-medium">
+                  GST (%)
+                </label>
+                <input
+                  type="number"
+                  name="gst"
+                  id="gst"
+                  className="border rounded-md p-2"
+                  placeholder="GST %"
+                  value={formData.amenity.gst || ""}
+                  onChange={(e) =>
+                    setFormData((prevState) => ({
+                      ...prevState,
+                      amenity: {
+                        ...prevState.amenity,
+                        gst: e.target.value,
+                      },
+                    }))
+                  }
+                />
+              </div>
+              <div className="my-2 flex flex-col gap-2">
+                <label htmlFor="sgst" className="font-medium">
+                  SGST (%)
+                </label>
+                <input
+                  type="number"
+                  name="sgst"
+                  id="sgst"
+                  className="border rounded-md p-2"
+                  placeholder="SGST %"
+                  value={formData.amenity.sgst || ""}
+                  onChange={(e) =>
+                    setFormData((prevState) => ({
+                      ...prevState,
+                      amenity: {
+                        ...prevState.amenity,
+                        sgst: e.target.value,
                       },
                     }))
                   }

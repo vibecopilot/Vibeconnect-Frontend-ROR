@@ -23,6 +23,7 @@ import { FaCheck } from "react-icons/fa";
 import MultiSelect from "../AdminHrms/Components/MultiSelect";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { MdClose } from "react-icons/md";
 
 const CreateEvent = () => {
   const siteId = getItemInLocalStorage("SITEID");
@@ -83,6 +84,7 @@ const CreateEvent = () => {
             building_id: emp.building_id || emp.building?.id || null,
             userSites: emp.user_sites || [],
             building: emp.building || {},
+            user_status: emp.user_status, // ✅ ADD THIS
           }));
 
         setMembers(employeesList);
@@ -97,21 +99,20 @@ const CreateEvent = () => {
 
   const handleFilter = () => {
     const filtered = members.filter((member) => {
-      if (!member.user_status) return false; // ❌ skip inactive users
+      // ✅ only active users
+      if (!member.user_status) return false;
 
       const buildingMatch =
-        selectedUnits.length === 0 ||
-        selectedUnits.some(
-          (unit) =>
-            Number(member.building_id ?? member.building?.id) ===
-            Number(unit.value)
-        );
+        !selectedUnit || // ✅ correct variable
+        Number(member.building_id ?? member.building?.id) ===
+        Number(selectedUnit);
 
       const ownershipMatch =
         !selectedOwnership ||
         member.userSites.some(
           (site) =>
-            site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+            site.ownership?.toLowerCase() ===
+            selectedOwnership.toLowerCase()
         );
 
       return buildingMatch && ownershipMatch;
@@ -143,10 +144,12 @@ const CreateEvent = () => {
     const fetchUsers = async () => {
       try {
         const response = await getSetupUsers();
-        const transformedUsers = (response.data || []).map((user) => ({
-          value: user.id,
-          label: `${user.firstname || ""} ${user.lastname || ""}`.trim(),
-        }));
+        const transformedUsers = (response.data || [])
+          .filter((user) => user.user_status === true) // ✅ ADD THIS
+          .map((user) => ({
+            value: user.id,
+            label: `${user.firstname || ""} ${user.lastname || ""}`.trim(),
+          }));
         setUsers(transformedUsers);
       } catch (error) {
         console.error("Error fetching assigned users:", error);
@@ -606,7 +609,13 @@ const CreateEvent = () => {
               />
             </div>
 
-            <div className="flex justify-center mt-10 my-5">
+            <div className="flex justify-end mt-10 my-5 gap-3">
+              <button
+                              className="bg-black text-white p-2 rounded-md  flex items-center gap-2 px-4"
+onClick={()=>navigate("/communication/events")}
+              >
+                <MdClose/> Cancel
+              </button>
               <button
                 style={{ background: themeColor }}
                 className="bg-black text-white p-2 rounded-md hover:bg-white  flex items-center gap-2 px-4"

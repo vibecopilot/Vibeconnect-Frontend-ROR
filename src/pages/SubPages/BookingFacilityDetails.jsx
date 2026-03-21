@@ -10,7 +10,7 @@ const FacilityDetails = () => {
   const [facilityData, setFacilityData] = useState(null); // Set initial state as null, to track loading properly
   const [error, setError] = useState(null); // Error state
   const [loading, setLoading] = useState(true); 
-    const themeColor = useSelector((state) => state.theme.color);// Loading state
+    const themeColor = useSelector((state) => state.theme.color);
 
   // Fetch the facility details for the specific ID
   const fetchFacilityBooking = async () => {
