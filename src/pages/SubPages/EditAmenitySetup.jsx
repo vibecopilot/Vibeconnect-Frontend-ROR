@@ -3,6 +3,8 @@ import {
   domainPrefix,
   getFacitilitySetupId,
   updateFacitilitySetup,
+  saveAmenitySlotConfig,
+  generateAmenitySlots,
 } from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -608,7 +610,7 @@ const EditAmenitySetup = () => {
     // Only append File objects (newly chosen files); skip objects with image_url (from server)
     formData.attachments.forEach((attachment) => {
       if (attachment instanceof File) {
-        postData.append("amenity[attachments][]", attachment);
+        postData.append("attachments[]", attachment);
       }
     });
     // ── Payment methods ────────────────────────────────────────────────────────
@@ -623,12 +625,56 @@ const EditAmenitySetup = () => {
         throw new Error("Amenity ID is missing.");
       }
 
-      const response = await updateFacitilitySetup(postData, id); // Ensure this API call is correct
+      toast.loading("Saving facility...");
+      const response = await updateFacitilitySetup(postData, id);
+      toast.dismiss();
       console.log(response);
 
-      toast.success("Updated successfully!");
+      // ── Save slot config then generate slots ─────────────────────────────
+      if (formData.slots?.length > 0) {
+        const slot = formData.slots[0];
+        const pad = (v) => String(v || "0").padStart(2, "0");
+        const toTimeStr = (hr, min) => `${pad(hr)}:${pad(min)}:00`;
+
+        const slotByLabels = {
+          "15": "15 min", "30": "30 min", "45": "45 min",
+          "60": "1 hr",  "90": "1.5 hr", "120": "2 hr",
+          "180": "3 hr", "360": "6 hr",   "720": "12 hr", "1440": "24 hr",
+        };
+
+        const slotConfigPayload = {
+          amenity_slot_config: {
+            start_time:       toTimeStr(slot.start_hr,       slot.start_min),
+            end_time:         toTimeStr(slot.end_hr,         slot.end_min),
+            break_time_start: toTimeStr(slot.break_start_hr, slot.break_start_min),
+            break_time_end:   toTimeStr(slot.break_end_hr,   slot.break_end_min),
+            concurrent_slot:  Number(slot.concurrent_slots) || 1,
+            slot_by:          slotByLabels[String(slotBy)] || slotBy || "",
+            wrap_time:        Number(slot.wrap_up_time) || 0,
+          },
+        };
+
+        try {
+          toast.loading("Saving slot configuration...");
+          await saveAmenitySlotConfig(id, slotConfigPayload);
+          toast.dismiss();
+
+          toast.loading("Generating time slots...");
+          await generateAmenitySlots(id);
+          toast.dismiss();
+          toast.success("Updated and slots regenerated successfully!");
+        } catch (slotErr) {
+          toast.dismiss();
+          console.error("Slot config/generate error:", slotErr);
+          toast.error("Amenity saved but slot generation failed.");
+        }
+      } else {
+        toast.success("Updated successfully!");
+      }
+
       navigate("/setup/facility");
     } catch (error) {
+      toast.dismiss();
       console.error(error);
       toast.error("Failed to update amenity setup. Please try again.");
     }

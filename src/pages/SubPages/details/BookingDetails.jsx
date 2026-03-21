@@ -92,7 +92,7 @@ const BookingDetails = () => {
         </div>
 
         {/* BOOKING RULES */}
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <h2 className="text-lg font-semibold mb-3">Booking Rules</h2>
 
           <div className="grid grid-cols-3 gap-5 bg-gray-100 p-5 rounded">
@@ -106,11 +106,11 @@ const BookingDetails = () => {
             />
             <Field label="Cancel Before" value={amenity?.cancel_before?.[0]} />
           </div>
-        </div>
+        </div> */}
 
         {/* SLOT LIST */}
         <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-3">All Slot Timings</h2>
+          <h2 className="text-lg font-semibold mb-3">Amenity Slot Timings</h2>
 
           <div className="grid grid-cols-4 gap-3">
             {amenity?.amenity_slots?.map((s) => (
@@ -126,12 +126,21 @@ const BookingDetails = () => {
           </div>
         </div>
 
-        {/* IMAGES */}
+        {/* DESCRIPTION */}
+        <div className="mt-8 bg-gray-100 p-5 rounded">
+          <p className="font-semibold mb-2">Description</p>
+          <p>{amenity?.description || "No description available"}</p>
+
+          <p className="font-semibold mt-4 mb-2">Terms & Conditions</p>
+          <p className="whitespace-pre-line">{amenity?.terms}</p>
+        </div>
+
+        {/* IMAGES
         <div className="mt-8">
           <h2 className="text-lg font-semibold mb-3">Images</h2>
 
           <div className="grid grid-cols-2 gap-6">
-            {/* COVER IMAGES */}
+            {/* COVER IMAGES 
             <div>
               <p className="font-semibold mb-3">Cover Images</p>
               <hr className="border border-1 border-gray-900" />
@@ -154,7 +163,7 @@ const BookingDetails = () => {
               </div>
             </div>
 
-            {/* ATTACHMENTS */}
+            {/* ATTACHMENTS 
             <div>
               <p className="font-semibold mb-3">Attachments</p>
               <hr className="border border-1 border-gray-900" />
@@ -179,14 +188,7 @@ const BookingDetails = () => {
           </div>
         </div>
 
-        {/* DESCRIPTION */}
-        <div className="mt-8 bg-gray-100 p-5 rounded">
-          <p className="font-semibold mb-2">Description</p>
-          <p>{amenity?.description || "No description available"}</p>
-
-          <p className="font-semibold mt-4 mb-2">Terms & Conditions</p>
-          <p className="whitespace-pre-line">{amenity?.terms}</p>
-        </div>
+        
       </div>
    {previewImage && (
   <div
@@ -211,7 +213,8 @@ const BookingDetails = () => {
       </button>
     </div>
   </div>
-)}
+)} */}
+</div>
     </section>
   );
 };

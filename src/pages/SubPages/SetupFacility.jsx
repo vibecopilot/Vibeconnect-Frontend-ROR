@@ -7,7 +7,7 @@ import { BiPlusCircle } from "react-icons/bi";
 import { Switch } from "../../Buttons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { postFacilitySetup } from "../../api";
+import { postFacilitySetup,  generateAmenitySlots, saveAmenitySlotConfig } from "../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -523,72 +523,72 @@ const SetupFacility = () => {
       times: "",
       period_type: "",
       enabled: false,
-     primeTime: [{ start_time: "", end_time: "" }],
+      primeTime: [{ start_time: "", end_time: "" }],
     },
   ]);
 
   const normalizeRules = (rulesData) => {
-  return rulesData.map((rule) => ({
-    ...rule,
-    primeTime:
-      Array.isArray(rule.primeTime) && rule.primeTime.length > 0
-        ? rule.primeTime
-        : [{ start_time: "", end_time: "" }], // ✅ fallback
-  }));
-};
+    return rulesData.map((rule) => ({
+      ...rule,
+      primeTime:
+        Array.isArray(rule.primeTime) && rule.primeTime.length > 0
+          ? rule.primeTime
+          : [{ start_time: "", end_time: "" }], // ✅ fallback
+    }));
+  };
 
-const handlePrimeTimeChange = (ruleId, index, field, value) => {
-  setRules((prev) =>
-    prev.map((rule) => {
-      if (rule.id !== ruleId) return rule;
+  const handlePrimeTimeChange = (ruleId, index, field, value) => {
+    setRules((prev) =>
+      prev.map((rule) => {
+        if (rule.id !== ruleId) return rule;
 
-      const updatedPrimeTimes = [...rule.primeTime];
-      // Ensure it's an array of objects
-      if (!Array.isArray(updatedPrimeTimes)) {
-        updatedPrimeTimes = [{ start_time: "", end_time: "" }];
-      }
+        const updatedPrimeTimes = [...rule.primeTime];
+        // Ensure it's an array of objects
+        if (!Array.isArray(updatedPrimeTimes)) {
+          updatedPrimeTimes = [{ start_time: "", end_time: "" }];
+        }
 
-      // Update the specific prime time
-      updatedPrimeTimes[index] = {
-        ...updatedPrimeTimes[index],
-        [field]: value,
-      };
+        // Update the specific prime time
+        updatedPrimeTimes[index] = {
+          ...updatedPrimeTimes[index],
+          [field]: value,
+        };
 
-      return { ...rule, primeTime: updatedPrimeTimes };
-    })
-  );
-};
+        return { ...rule, primeTime: updatedPrimeTimes };
+      })
+    );
+  };
 
-const handleRemovePrimeTime = (ruleId, index) => {
-  setRules((prev) =>
-    prev.map((rule) => {
-      if (rule.id !== ruleId) return rule;
+  const handleRemovePrimeTime = (ruleId, index) => {
+    setRules((prev) =>
+      prev.map((rule) => {
+        if (rule.id !== ruleId) return rule;
 
-      const updatedPrimeTimes = [...rule.primeTime];
-      if (Array.isArray(updatedPrimeTimes)) {
-        updatedPrimeTimes.splice(index, 1);
-      }
+        const updatedPrimeTimes = [...rule.primeTime];
+        if (Array.isArray(updatedPrimeTimes)) {
+          updatedPrimeTimes.splice(index, 1);
+        }
 
-      return { ...rule, primeTime: updatedPrimeTimes };
-    })
-  );
-};
+        return { ...rule, primeTime: updatedPrimeTimes };
+      })
+    );
+  };
 
-const handleAddPrimeTime = (ruleId) => {
-  setRules((prev) =>
-    prev.map((rule) =>
-      rule.id === ruleId
-        ? {
+  const handleAddPrimeTime = (ruleId) => {
+    setRules((prev) =>
+      prev.map((rule) =>
+        rule.id === ruleId
+          ? {
             ...rule,
             primeTime: [
               ...(rule.primeTime && Array.isArray(rule.primeTime) ? rule.primeTime : [{ start_time: "", end_time: "" }]),
               { start_time: "", end_time: "" },
             ],
           }
-        : rule
-    )
-  );
-};
+          : rule
+      )
+    );
+  };
   const options = ["Flat", "User", "Tenant", "Owner"];
 
   const handleAddRule = () => {
@@ -798,7 +798,57 @@ const handleAddPrimeTime = (ruleId) => {
       toast.loading("Saving facility...");
       const response = await postFacilitySetup(sendData);
       toast.dismiss();
-      toast.success("Facility created successfully");
+
+      // Extract the new amenity's ID from the response
+      const amenityId =
+        response?.data?.id ||
+        response?.data?.amenity?.id ||
+        response?.data?.data?.id;
+
+      // ── Save slot config then generate slots ─────────────────────────────
+      if (amenityId && formData.slots?.length > 0) {
+        const slot = formData.slots[0];
+        const pad = (v) => String(v || "0").padStart(2, "0");
+        const toTimeStr = (hr, min) => `${pad(hr)}:${pad(min)}:00`;
+
+        // slotBy is stored in minutes; map to the label the API expects
+        const slotByLabels = {
+          "15": "15 min", "30": "30 min", "45": "45 min",
+          "60": "1 hr",  "90": "1.5 hr", "120": "2 hr",
+          "180": "3 hr", "360": "6 hr",   "720": "12 hr", "1440": "24 hr",
+        };
+
+        const slotConfigPayload = {
+          amenity_slot_config: {
+            start_time:       toTimeStr(slot.start_hr,       slot.start_min),
+            end_time:         toTimeStr(slot.end_hr,         slot.end_min),
+            break_time_start: toTimeStr(slot.break_start_hr, slot.break_start_min),
+            break_time_end:   toTimeStr(slot.break_end_hr,   slot.break_end_min),
+            concurrent_slot:  Number(slot.concurrent_slots) || 1,
+            slot_by:          slotByLabels[String(slotBy)] || slotBy || "",
+            wrap_time:        Number(slot.wrap_up_time) || 0,
+          },
+        };
+
+        try {
+          toast.loading("Saving slot configuration...");
+          await saveAmenitySlotConfig(amenityId, slotConfigPayload);
+          toast.dismiss();
+
+          toast.loading("Generating time slots...");
+          await generateAmenitySlots(amenityId);
+          toast.dismiss();
+
+          toast.success("Facility and slots created successfully!");
+        } catch (slotErr) {
+          toast.dismiss();
+          console.error("Slot config/generate error:", slotErr);
+          toast.error("Facility saved but slot generation failed.");
+        }
+      } else {
+        toast.success("Facility created successfully!");
+      }
+
       navigate("/setup/facility");
     } catch (err) {
       toast.dismiss();
@@ -1892,40 +1942,40 @@ const handleAddPrimeTime = (ruleId) => {
               </span>
 
               {/* Prime Time Editable Input */}
-        {(rule.primeTime && rule.primeTime.length > 0 ? rule.primeTime : [{ start_time: "", end_time: "" }]).map((pt, pIdx) => (
-  <div key={pIdx} className="flex items-center gap-2 mb-2">
-    {/* Start Time */}
-    <input
-      type="time"
-      value={pt.start_time}
-      onChange={(e) =>
-        handlePrimeTimeChange(rule.id, pIdx, "start_time", e.target.value)
-      }
-      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-    />
+              {(rule.primeTime && rule.primeTime.length > 0 ? rule.primeTime : [{ start_time: "", end_time: "" }]).map((pt, pIdx) => (
+                <div key={pIdx} className="flex items-center gap-2 mb-2">
+                  {/* Start Time */}
+                  <input
+                    type="time"
+                    value={pt.start_time}
+                    onChange={(e) =>
+                      handlePrimeTimeChange(rule.id, pIdx, "start_time", e.target.value)
+                    }
+                    className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
 
-    {/* End Time */}
-    <input
-      type="time"
-      value={pt.end_time}
-      onChange={(e) =>
-        handlePrimeTimeChange(rule.id, pIdx, "end_time", e.target.value)
-      }
-      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-    />
+                  {/* End Time */}
+                  <input
+                    type="time"
+                    value={pt.end_time}
+                    onChange={(e) =>
+                      handlePrimeTimeChange(rule.id, pIdx, "end_time", e.target.value)
+                    }
+                    className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
 
-    {/* Delete Button */}
-    {rule.primeTime.length > 1 && (
-      <button
-        type="button"
-        onClick={() => handleRemovePrimeTime(rule.id, pIdx)}
-        className="text-red-500"
-      >
-        <FaTrash />
-      </button>
-    )}
-  </div>
-))}
+                  {/* Delete Button */}
+                  {rule.primeTime.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePrimeTime(rule.id, pIdx)}
+                      className="text-red-500"
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
+                </div>
+              ))}
               <button
                 type="button"
                 onClick={() => handleAddPrimeTime(rule.id)}
@@ -1941,7 +1991,7 @@ const handleAddPrimeTime = (ruleId) => {
                           checked={subFacilityAvailable}
                           onChange={(e) => setSubFacilityAvailable(e.target.checked)}
                         /> */}
-                <span className="text-sm">Sub Facility</span>
+                {/* <span className="text-sm">Sub Facility</span> */}
               </div>
 
               {/* Delete Button (shown for all rows) */}
