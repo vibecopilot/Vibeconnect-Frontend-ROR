@@ -104,9 +104,9 @@ const EditAmenitySetup = () => {
       guest_price_child: "",
       tenant_price_child: "",
       tenant_price_adult: "",
-      member: null,
-      guest: null,
-      tenant: null,
+      member: false,
+      guest: false,
+      tenant: false,
       non_member: false,
       non_member_price_adult: "",
       non_member_price_child: "",
@@ -124,10 +124,10 @@ const EditAmenitySetup = () => {
       cancel_before_days: "",
       cancel_before_hours: "",
       cancel_before_mins: "",
-      prepaid: null,
-      postpaid: null,
-      pay_on_facility: null,
-      complimentary: null,
+      prepaid: false,
+      postpaid: false,
+      pay_on_facility: false,
+      complimentary: false,
       fixed_amount: null,
       is_fixed: false,
       terms: "",
@@ -138,11 +138,11 @@ const EditAmenitySetup = () => {
       deposit: "",
       description: "",
       max_slots: "",
-      is_member_adult: true,
+      is_member_adult: false,
       is_member_child: false,
-      is_guest_adult: true,
+      is_guest_adult: false,
       is_guest_child: false,
-      is_tenant_adult: true,
+      is_tenant_adult: false,
       is_tenant_child: false,
     },
     covers: [],
@@ -226,7 +226,25 @@ const EditAmenitySetup = () => {
           concurrentSlots: facility.amenity_slots?.[0]?.concurrent_slots || "",
         });
 
-        setSlotBy(facility.slot_by || "");
+        // Reverse-map the API's slot_by string (e.g. "1 hours", "1 hr", "30 min") → numeric key (e.g. "60", "30")
+        // slot_by lives inside facility.amenity_slot_config (the config object), NOT on the root facility object
+        const slotByReverseMap = {
+          "15 min": "15", "15 mins": "15", "15 minutes": "15",
+          "30 min": "30", "30 mins": "30", "30 minutes": "30",
+          "45 min": "45", "45 mins": "45", "45 minutes": "45",
+          "1 hr": "60", "1 hour": "60", "1 hours": "60", "60 min": "60", "60 mins": "60",
+          "1.5 hr": "90", "1.5 hour": "90", "1.5 hours": "90", "90 min": "90", "90 mins": "90",
+          "2 hr": "120", "2 hour": "120", "2 hours": "120", "120 min": "120", "120 mins": "120",
+          "3 hr": "180", "3 hour": "180", "3 hours": "180", "180 min": "180", "180 mins": "180",
+          "6 hr": "360", "6 hour": "360", "6 hours": "360", "360 min": "360", "360 mins": "360",
+          "12 hr": "720", "12 hour": "720", "12 hours": "720", "720 min": "720", "720 mins": "720",
+          "24 hr": "1440", "24 hour": "1440", "24 hours": "1440",
+        };
+        // Read slot_by from amenity_slot_config first, fall back to root-level slot_by
+        const slotConfig = facility.amenity_slot_config || {};
+        const rawSlotBy = slotConfig.slot_by || facility.slot_by || "";
+        const resolvedSlotBy = slotByReverseMap[rawSlotBy.trim().toLowerCase()] || rawSlotBy;
+        setSlotBy(resolvedSlotBy);
 
         setDays(
           daysList.map((day) => {
@@ -297,12 +315,12 @@ const EditAmenitySetup = () => {
             return_percentage: facility.return_percentage || "",
             create_by: facility.create_by || "",
             active: facility.active ?? true,
-            member_price_adult: facility.member_price_adult || "",
-            member_price_child: facility.member_price_child || "",
-            guest_price_adult: facility.guest_price_adult || "",
-            guest_price_child: facility.guest_price_child || "",
-            tenant_price_child: facility.tenant_price_child || "",
-            tenant_price_adult: facility.tenant_price_adult || "",
+            member_price_adult: facility.member_price_adult ?? "",
+            member_price_child: facility.member_price_child ?? "",
+            guest_price_adult: facility.guest_price_adult ?? "",
+            guest_price_child: facility.guest_price_child ?? "",
+            tenant_price_child: facility.tenant_price_child ?? "",
+            tenant_price_adult: facility.tenant_price_adult ?? "",
             min_people: facility.min_people || "",
             max_people: facility.max_people || "",
             terms: facility.terms || "",
@@ -312,59 +330,84 @@ const EditAmenitySetup = () => {
             deposit: facility.deposit || "",
             description: facility.description || "",
             max_slots: facility.max_slots || "",
-            member: facility.member ?? null,
-            is_member_adult: facility.is_member_adult ?? true,
+            member: facility.member ?? false,
+            is_member_adult: facility.is_member_adult ?? false,
             is_member_child: facility.is_member_child ?? false,
-            guest: facility.guest ?? null,
-            is_guest_adult: facility.is_guest_adult ?? true,
+            guest: facility.guest ?? false,
+            is_guest_adult: facility.is_guest_adult ?? false,
             is_guest_child: facility.is_guest_child ?? false,
-            tenant: facility.tenant ?? null,
-            is_tenant_adult: facility.is_tenant_adult ?? true,
+            tenant: facility.tenant ?? false,
+            is_tenant_adult: facility.is_tenant_adult ?? false,
             is_tenant_child: facility.is_tenant_child ?? false,
             non_member: facility.non_member ?? false,
-            non_member_price_adult: facility.non_member_price_adult || "",
-            non_member_price_child: facility.non_member_price_child || "",
+            non_member_price_adult: facility.non_member_price_adult ?? "",
+            non_member_price_child: facility.non_member_price_child ?? "",
             is_non_member_adult: facility.is_non_member_adult ?? false,
             is_non_member_child: facility.is_non_member_child ?? false,
             fixed_amount: facility.fixed_amount || "",
             is_fixed: facility.is_fixed ?? false,
-            prepaid: facility.prepaid ?? null,
-            postpaid: facility.postpaid ?? null,
+            prepaid: facility.prepaid ?? false,
+            postpaid: facility.postpaid ?? false,
             status: facility.status || "",
             payment_methods: facility.payment_methods || [],
-            complimentary: facility.complimentary ?? null,
-            pay_on_facility: facility.pay_on_facility ?? null,
-            shreable: facility.shareable ?? facility.shreable ?? null,
+            complimentary: facility.complimentary ?? false,
+            pay_on_facility: facility.pay_on_facility ?? false,
+            shreable: facility.shareable ?? facility.shreable ?? false,
             link_to_building: facility.link_to_building ?? false,
             slot_by: facility.slot_by || "",
             consecutive_slot_allowed: facility.consecutive_slot_allowed ?? false,
           },
           covers: facility.covers || [],
           attachments: facility.attachments || [],
-          slots: facility.amenity_slots?.length
-            ? facility.amenity_slots.map((slot) => ({
-              id: slot.id || null,
-              amenity_id: slot.amenity_id || null,
-              start_hr: String(slot.start_hr ?? "").padStart(2, "0"),
-              start_min: String(slot.start_min ?? "").padStart(2, "0"),
-              end_hr: String(slot.end_hr ?? "").padStart(2, "0"),
-              end_min: String(slot.end_min ?? "").padStart(2, "0"),
-              break_start_hr: String(slot.break_start_hr ?? "0").padStart(2, "0"),
-              break_start_min: String(slot.break_start_min ?? "0").padStart(2, "0"),
-              break_end_hr: String(slot.break_end_hr ?? "0").padStart(2, "0"),
-              break_end_min: String(slot.break_end_min ?? "0").padStart(2, "0"),
-              concurrent_slots: slot.concurrent_slots || "",
-              slot_duration: slot.slot_duration || "",
-              wrap_up_time: slot.wrap_up_time || "",
-            }))
-            : [
-              {
-                start_hr: "", start_min: "", end_hr: "", end_min: "",
-                break_start_hr: "00", break_start_min: "00",
-                break_end_hr: "00", break_end_min: "00",
-                concurrent_slots: "", slot_duration: "", wrap_up_time: "",
-              },
-            ],
+          slots: (() => {
+            // Helper to split "HH:MM:SS" or numeric hr into { hr, min }
+            const padHr = (v) => v != null && v !== "" ? String(v).padStart(2, "0") : "00";
+            const parseTimeParts = (timeStr, fallback = "00") => {
+              const parts = (timeStr || "").split(":");
+              return {
+                hr: parts[0] ? String(parts[0]).padStart(2, "0") : fallback,
+                min: parts[1] ? String(parts[1]).padStart(2, "0") : fallback,
+              };
+            };
+            // Break/concurrent/wrap come from amenity_slot_config
+            const brkStart = parseTimeParts(slotConfig.break_time_start);
+            const brkEnd = parseTimeParts(slotConfig.break_time_end);
+
+            // The Configure Slot section always shows ONE editable config row.
+            // Start time = first generated slot's start, End time = last generated slot's end.
+            // (If no generated slots, fall back to amenity_slot_config start/end.)
+            let startHr = "00", startMin = "00", endHr = "00", endMin = "00";
+
+            if (facility.amenity_slots?.length) {
+              const first = facility.amenity_slots[0];
+              const last = facility.amenity_slots[facility.amenity_slots.length - 1];
+              startHr = padHr(first.start_hr);
+              startMin = padHr(first.start_min);
+              endHr = padHr(last.end_hr);
+              endMin = padHr(last.end_min);
+            } else if (slotConfig.start_time) {
+              const s = parseTimeParts(slotConfig.start_time);
+              const e = parseTimeParts(slotConfig.end_time);
+              startHr = s.hr; startMin = s.min;
+              endHr = e.hr; endMin = e.min;
+            }
+
+            return [{
+              id: null, // config row has no amenity_slot id
+              amenity_id: null,
+              start_hr: startHr,
+              start_min: startMin,
+              end_hr: endHr,
+              end_min: endMin,
+              break_start_hr: brkStart.hr,
+              break_start_min: brkStart.min,
+              break_end_hr: brkEnd.hr,
+              break_end_min: brkEnd.min,
+              concurrent_slots: slotConfig.concurrent_slot || "",
+              slot_duration: "",
+              wrap_up_time: slotConfig.wrap_time ?? "",
+            }];
+          })(),
         });
         setError(null);
       }
@@ -622,7 +665,6 @@ const EditAmenitySetup = () => {
     });
 
     // ── Cover images ──────────────────────────────────────────────────────────
-    // Only append File objects (newly chosen files); skip objects with image_url (from server)
     formData.covers.forEach((cover) => {
       if (cover instanceof File) {
         postData.append("cover_images[]", cover);
@@ -630,7 +672,6 @@ const EditAmenitySetup = () => {
     });
 
     // ── Attachments ──────────────────────────────────────────────────────────
-    // Only append File objects (newly chosen files); skip objects with image_url (from server)
     formData.attachments.forEach((attachment) => {
       if (attachment instanceof File) {
         postData.append("attachments[]", attachment);
@@ -661,19 +702,19 @@ const EditAmenitySetup = () => {
 
         const slotByLabels = {
           "15": "15 min", "30": "30 min", "45": "45 min",
-          "60": "1 hr",  "90": "1.5 hr", "120": "2 hr",
-          "180": "3 hr", "360": "6 hr",   "720": "12 hr", "1440": "24 hr",
+          "60": "1 hr", "90": "1.5 hr", "120": "2 hr",
+          "180": "3 hr", "360": "6 hr", "720": "12 hr", "1440": "24 hr",
         };
 
         const slotConfigPayload = {
           amenity_slot_config: {
-            start_time:       toTimeStr(slot.start_hr,       slot.start_min),
-            end_time:         toTimeStr(slot.end_hr,         slot.end_min),
+            start_time: toTimeStr(slot.start_hr, slot.start_min),
+            end_time: toTimeStr(slot.end_hr, slot.end_min),
             break_time_start: toTimeStr(slot.break_start_hr, slot.break_start_min),
-            break_time_end:   toTimeStr(slot.break_end_hr,   slot.break_end_min),
-            concurrent_slot:  Number(slot.concurrent_slots) || 1,
-            slot_by:          slotByLabels[String(slotBy)] || slotBy || "",
-            wrap_time:        Number(slot.wrap_up_time) || 0,
+            break_time_end: toTimeStr(slot.break_end_hr, slot.break_end_min),
+            concurrent_slot: Number(slot.concurrent_slots) || 1,
+            slot_by: slotByLabels[String(slotBy)] || slotBy || "",
+            wrap_time: Number(slot.wrap_up_time) || 0,
           },
         };
 
@@ -757,10 +798,11 @@ const EditAmenitySetup = () => {
       slots: [
         ...prevState.slots,
         {
-          start_hr: "", // Hour for start time
-          start_min: "", // Minute for start time
-          end_hr: "", // Hour for end time
-          end_min: "", // Minute for end time
+          start_hr: "", start_min: "",
+          end_hr: "", end_min: "",
+          break_start_hr: "00", break_start_min: "00",
+          break_end_hr: "00", break_end_min: "00",
+          concurrent_slots: "", slot_duration: "", wrap_up_time: "",
         },
       ],
     }));
@@ -1239,7 +1281,7 @@ const EditAmenitySetup = () => {
                     !formData.amenity.member ||
                     !formData.amenity.is_member_adult
                   }
-                  value={formData.amenity.member_price_adult || ""}
+                  value={formData.amenity.member_price_adult ?? ""}
                   onChange={(e) =>
                     handlePriceChange("member_price_adult", e.target.value)
                   }
@@ -1265,7 +1307,7 @@ const EditAmenitySetup = () => {
                     !formData.amenity.member ||
                     !formData.amenity.is_member_child
                   }
-                  value={formData.amenity.member_price_child || ""}
+                  value={formData.amenity.member_price_child ?? ""}
                   onChange={(e) =>
                     handlePriceChange("member_price_child", e.target.value)
                   }
@@ -1378,7 +1420,7 @@ const EditAmenitySetup = () => {
                   disabled={
                     !formData.amenity.non_member || !formData.amenity.is_non_member_adult
                   }
-                  value={formData.amenity.non_member_price_adult || ""}
+                  value={formData.amenity.non_member_price_adult ?? ""}
                   onChange={(e) =>
                     handlePriceChange("non_member_price_adult", e.target.value)
                   }
@@ -1402,7 +1444,7 @@ const EditAmenitySetup = () => {
                   disabled={
                     !formData.amenity.non_member || !formData.amenity.is_non_member_child
                   }
-                  value={formData.amenity.non_member_price_child || ""}
+                  value={formData.amenity.non_member_price_child ?? ""}
                   onChange={(e) =>
                     handlePriceChange("non_member_price_child", e.target.value)
                   }
@@ -1487,7 +1529,7 @@ const EditAmenitySetup = () => {
                   disabled={
                     !formData.amenity.guest || !formData.amenity.is_guest_adult
                   }
-                  value={formData.amenity.guest_price_adult || ""}
+                  value={formData.amenity.guest_price_adult ?? ""}
                   onChange={(e) =>
                     handlePriceChange("guest_price_adult", e.target.value)
                   }
@@ -1512,7 +1554,7 @@ const EditAmenitySetup = () => {
                   disabled={
                     !formData.amenity.guest || !formData.amenity.is_guest_child
                   }
-                  value={formData.amenity.guest_price_child || ""}
+                  value={formData.amenity.guest_price_child ?? ""}
                   onChange={(e) =>
                     handlePriceChange("guest_price_child", e.target.value)
                   }
@@ -1597,7 +1639,7 @@ const EditAmenitySetup = () => {
                     !formData.amenity.tenant ||
                     !formData.amenity.is_tenant_adult
                   }
-                  value={formData.amenity.tenant_price_adult || ""}
+                  value={formData.amenity.tenant_price_adult ?? ""}
                   onChange={(e) =>
                     handlePriceChange("tenant_price_adult", e.target.value)
                   }
@@ -1623,7 +1665,7 @@ const EditAmenitySetup = () => {
                     !formData.amenity.tenant ||
                     !formData.amenity.is_tenant_child
                   }
-                  value={formData.amenity.tenant_price_child || ""}
+                  value={formData.amenity.tenant_price_child ?? ""}
                   onChange={(e) =>
                     handlePriceChange("tenant_price_child", e.target.value)
                   }
@@ -1728,7 +1770,7 @@ const EditAmenitySetup = () => {
                   }
                 />
               </div>
-              <div className="my-2 flex flex-col gap-2">
+              {/* <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="gst" className="font-medium">
                   GST (%)
                 </label>
@@ -1771,7 +1813,7 @@ const EditAmenitySetup = () => {
                     }))
                   }
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -1840,7 +1882,7 @@ const EditAmenitySetup = () => {
               <input
                 type="text"
                 name="advance_days"
-                value={formData?.amenity?.advance_days || ""}
+                value={formData?.amenity?.advance_days ?? ""}
                 onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
@@ -1852,7 +1894,7 @@ const EditAmenitySetup = () => {
               <input
                 type="text"
                 name="advance_hours"
-                value={formData.amenity.advance_hours || ""}
+                value={formData.amenity.advance_hours ?? ""}
                 onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
@@ -1864,7 +1906,7 @@ const EditAmenitySetup = () => {
               <input
                 type="text"
                 name="advance_mins"
-                value={formData.amenity.advance_mins || ""}
+                value={formData.amenity.advance_mins ?? ""}
                 onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
@@ -1889,7 +1931,7 @@ const EditAmenitySetup = () => {
               <input
                 type="text"
                 name="cancel_before_days"
-                value={formData.amenity.cancel_before_days || ""}
+                value={formData.amenity.cancel_before_days ?? ""}
                 onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
@@ -1901,7 +1943,7 @@ const EditAmenitySetup = () => {
               <input
                 type="text"
                 name="cancel_before_hours"
-                value={formData.amenity.cancel_before_hours || ""}
+                value={formData.amenity.cancel_before_hours ?? ""}
                 onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
@@ -1913,7 +1955,7 @@ const EditAmenitySetup = () => {
               <input
                 type="text"
                 name="cancel_before_mins"
-                value={formData.amenity.cancel_before_mins || ""}
+                value={formData.amenity.cancel_before_mins ?? ""}
                 onBlur={validateInput}
                 onChange={handleInputChange}
                 className="border border-gray-400 rounded-md p-2 outline-none w-full"
@@ -2191,6 +2233,7 @@ const EditAmenitySetup = () => {
         </div>
         <div className="bg-white rounded-xl shadow-md border p-6 mt-2 mb-3 border-gray-300">
           <h2 className="text-lg font-semibold mb-6">Configure Slot</h2>
+
           <div className="overflow-x-auto">
             {formData.slots.map((slot, slotIndex) => (
               <div key={slotIndex} className="flex gap-4 items-end mb-4 min-w-[1200px]">
@@ -2245,7 +2288,7 @@ const EditAmenitySetup = () => {
                   <input
                     type="number"
                     min="0"
-                    value={slot.concurrent_slots || ""}
+                    value={slot.concurrent_slots ?? ""}
                     onChange={(e) => handleSlotFieldChange(slotIndex, "concurrent_slots", e.target.value)}
                     className="border rounded-md px-3 py-2 w-24"
                   />
@@ -2279,7 +2322,7 @@ const EditAmenitySetup = () => {
                   <input
                     type="number"
                     min="0"
-                    value={slot.wrap_up_time || ""}
+                    value={slot.wrap_up_time ?? ""}
                     onChange={(e) => handleSlotFieldChange(slotIndex, "wrap_up_time", e.target.value)}
                     className="border rounded-md px-3 py-2 w-24"
                   />
@@ -2298,13 +2341,6 @@ const EditAmenitySetup = () => {
               </div>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={handleAddSlot}
-            className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm"
-          >
-            + Add Slot
-          </button>
         </div>
         {/* <div className="my-4">
           <h2 className="border-b border-black text-lg mb-1 font-medium">

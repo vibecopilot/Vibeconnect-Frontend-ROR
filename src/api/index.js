@@ -11680,7 +11680,7 @@ export const getAmenitiesBooking = async (
   });
 };
 export const getAmenityExport = (startDate, endDate, siteId) => {
-  return axiosInstance.get("/amenity/export.xlsx", {
+  return axiosInstance.get("/amenity_bookings/export_amenity.xlsx", {
     params: {
       start_date: startDate,
       end_date: endDate,
@@ -11765,6 +11765,9 @@ export const updateAmenity = async (id, formData) =>
 
 export const saveAmenitySlotConfig = async (amenityId, data) =>
   axiosInstance.put(`/api/v1/amenity_slot_configs/${amenityId}.json`, data, {
+    headers: {
+      "Content-Type": "application/json",
+    },
     params: {
       token: token,
     },
