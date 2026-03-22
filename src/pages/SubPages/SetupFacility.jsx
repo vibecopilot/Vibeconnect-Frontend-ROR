@@ -7,7 +7,7 @@ import { BiPlusCircle } from "react-icons/bi";
 import { Switch } from "../../Buttons";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { postFacilitySetup,  generateAmenitySlots, saveAmenitySlotConfig } from "../../api";
+import { postFacilitySetup, generateAmenitySlots, saveAmenitySlotConfig } from "../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -80,7 +80,7 @@ const SetupFacility = () => {
     active: "",
     shareable: "",
     billing: "",
-    flat: false,
+    is_fixed: false,
     fixed_amount: "",
     terms: "",
     min_people: "",
@@ -275,42 +275,42 @@ const SetupFacility = () => {
     const numericFields = [
       { key: "min_people", label: "Minimum people" },
       { key: "max_people", label: "Maximum people" },
-      { key: "fixed_amount", label: "Flat amount" },
-      { key: "member_price_adult", label: "Member adult price" },
-      { key: "guest_price_adult", label: "Guest adult price" },
+      // { key: "fixed_amount", label: "Flat amount" },
+      // { key: "member_price_adult", label: "Member adult price" },
+      // { key: "guest_price_adult", label: "Guest adult price" },
     ];
 
     const isMemberSelected = formData.member;
     const isGuestSelected = formData.guest;
-    const isFlatSelected = formData.flat === true; // assuming flat is a checkbox
+    const isFlatSelected = formData.is_fixed === true; // assuming flat is a checkbox
     const hasFlatAmount = formData.fixed_amount?.toString().trim() !== "";
     const hasMemberAmount =
       formData.member_price_adult?.toString().trim() !== "";
     const hasGuestAmount = formData.guest_price_adult?.toString().trim() !== "";
 
     //Check if at least one pricing category is selected
-    if (!isMemberSelected && !isGuestSelected && !isFlatSelected) {
-      toast.error("Please select at least one category (member/guest/flat).");
-      formIsValid = false;
-    }
+    // if (!isMemberSelected && !isGuestSelected && !isFlatSelected) {
+    //   toast.error("Please select at least one category (member/guest/flat).");
+    //   formIsValid = false;
+    // }
 
-    //If flat is selected, flat amount must be provided
-    if (isFlatSelected && !hasFlatAmount) {
-      toast.error("Please enter flat charges.");
-      formIsValid = false;
-    }
+    // //If flat is selected, flat amount must be provided
+    // if (isFlatSelected && !hasFlatAmount) {
+    //   toast.error("Please enter flat charges.");
+    //   formIsValid = false;
+    // }
 
-    //If member is selected, member amount must be provided
-    if (isMemberSelected && !hasMemberAmount) {
-      toast.error("Please enter member price.");
-      formIsValid = false;
-    }
+    // //If member is selected, member amount must be provided
+    // if (isMemberSelected && !hasMemberAmount) {
+    //   toast.error("Please enter member price.");
+    //   formIsValid = false;
+    // }
 
-    //If guest is selected, guest amount must be provided
-    if (isGuestSelected && !hasGuestAmount) {
-      toast.error("Please enter guest price.");
-      formIsValid = false;
-    }
+    // //If guest is selected, guest amount must be provided
+    // if (isGuestSelected && !hasGuestAmount) {
+    //   toast.error("Please enter guest price.");
+    //   formIsValid = false;
+    // }
 
     //Payment mode check
     const isPaymentValid = validateUserPaymentSelection(formData);
@@ -343,12 +343,12 @@ const SetupFacility = () => {
       }
     });
 
-    if (invalidFields.length > 0) {
-      toast.error(
-        `Form is not valid. Please enter ${invalidFields.join(", ")}`,
-      );
-      formIsValid = false;
-    }
+    // if (invalidFields.length >= 0) {
+    //   toast.error(
+    //     `Form is not valid. Please enter ${invalidFields.join(", ")}`,
+    //   );
+    //   formIsValid = false;
+    // }
 
     //Slot configuration check
     if (!formData.slots || formData.slots.length === 0) {
@@ -690,7 +690,7 @@ const SetupFacility = () => {
     sendData.append("amenity[payment_methods]", formData.payment_methods || "");
 
     // ── Fixed / Flat ──────────────────────────────────────────────────────────
-    sendData.append("amenity[is_fixed]", formData.flat ? "true" : "false");
+    sendData.append("amenity[is_fixed]", formData.is_fixed ? "true" : "false");
     sendData.append("amenity[fixed_amount]", formData.fixed_amount || "");
 
     // ── Member ────────────────────────────────────────────────────────────────
@@ -814,19 +814,19 @@ const SetupFacility = () => {
         // slotBy is stored in minutes; map to the label the API expects
         const slotByLabels = {
           "15": "15 min", "30": "30 min", "45": "45 min",
-          "60": "1 hr",  "90": "1.5 hr", "120": "2 hr",
-          "180": "3 hr", "360": "6 hr",   "720": "12 hr", "1440": "24 hr",
+          "60": "1 hr", "90": "1.5 hr", "120": "2 hr",
+          "180": "3 hr", "360": "6 hr", "720": "12 hr", "1440": "24 hr",
         };
 
         const slotConfigPayload = {
           amenity_slot_config: {
-            start_time:       toTimeStr(slot.start_hr,       slot.start_min),
-            end_time:         toTimeStr(slot.end_hr,         slot.end_min),
+            start_time: toTimeStr(slot.start_hr, slot.start_min),
+            end_time: toTimeStr(slot.end_hr, slot.end_min),
             break_time_start: toTimeStr(slot.break_start_hr, slot.break_start_min),
-            break_time_end:   toTimeStr(slot.break_end_hr,   slot.break_end_min),
-            concurrent_slot:  Number(slot.concurrent_slots) || 1,
-            slot_by:          slotByLabels[String(slotBy)] || slotBy || "",
-            wrap_time:        Number(slot.wrap_up_time) || 0,
+            break_time_end: toTimeStr(slot.break_end_hr, slot.break_end_min),
+            concurrent_slot: Number(slot.concurrent_slots) || 1,
+            slot_by: slotByLabels[String(slotBy)] || slotBy || "",
+            wrap_time: Number(slot.wrap_up_time) || 0,
           },
         };
 

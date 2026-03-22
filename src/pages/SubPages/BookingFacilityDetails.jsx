@@ -9,8 +9,8 @@ const FacilityDetails = () => {
   const { id } = useParams(); // The ID from URL params
   const [facilityData, setFacilityData] = useState(null); // Set initial state as null, to track loading properly
   const [error, setError] = useState(null); // Error state
-  const [loading, setLoading] = useState(true); 
-    const themeColor = useSelector((state) => state.theme.color);
+  const [loading, setLoading] = useState(true);
+  const themeColor = useSelector((state) => state.theme.color);
 
   // Fetch the facility details for the specific ID
   const fetchFacilityBooking = async () => {
@@ -35,14 +35,14 @@ const FacilityDetails = () => {
   };
 
   const days = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
 
   console.log("AMENITIes", facilityData);
 
@@ -78,12 +78,12 @@ const FacilityDetails = () => {
 
         {/* Facility Info */}
         <div className="my-4">
-         <div>
-           <h2 className="border-b border-black text-lg font-medium mb-2">
-            Facility Information
-          </h2>
+          <div>
+            <h2 className="border-b border-black text-lg font-medium mb-2">
+              Facility Information
+            </h2>
 
-         </div>
+          </div>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
               <p className="font-medium">Facility Name:</p>
@@ -109,11 +109,17 @@ const FacilityDetails = () => {
           <h2 className="border-b border-black text-lg font-medium mb-2">
             Fee Details
           </h2>
-           <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-4 gap-4">
             <div className="bg-blue-50 p-4 rounded">
               <p className="font-medium">Member</p>
               <p>Adult: ₹{facilityData.member_price_adult || 0}</p>
               <p>Child: ₹{facilityData.member_price_child || 0}</p>
+            </div>
+
+            <div className="bg-yellow-50 p-4 rounded">
+              <p className="font-medium"> Non Member</p>
+              <p>Adult: ₹{facilityData.non_member_price_adult || 0}</p>
+              <p>Child: ₹{facilityData.non_member_price_child || 0}</p>
             </div>
 
             <div className="bg-green-50 p-4 rounded">
@@ -133,7 +139,7 @@ const FacilityDetails = () => {
             <p>
               Fixed Price: ₹
               {facilityData.fixed_amount &&
-              facilityData.fixed_amount !== "null"
+                facilityData.fixed_amount !== "null"
                 ? facilityData.fixed_amount
                 : 0}
             </p>
@@ -348,7 +354,7 @@ const FacilityDetails = () => {
               <h2 className="font-medium text-lg mb-2">Attachments</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {facilityData.attachments &&
-                facilityData.attachments.length > 0 ? (
+                  facilityData.attachments.length > 0 ? (
                   facilityData.attachments.map((doc, index) => (
                     <div
                       key={index}
@@ -376,9 +382,8 @@ const FacilityDetails = () => {
               Description:
             </h3>
             <p
-              className={`text-gray-600 ${
-                facilityData.description ? "" : "italic text-gray-400"
-              }`}
+              className={`text-gray-600 ${facilityData.description ? "" : "italic text-gray-400"
+                }`}
             >
               {facilityData.description || "NA"}
             </p>
@@ -388,9 +393,8 @@ const FacilityDetails = () => {
               Terms and Conditions:
             </h3>
             <p
-              className={`text-gray-600 ${
-                facilityData.terms ? "" : "italic text-gray-400"
-              }`}
+              className={`text-gray-600 ${facilityData.terms ? "" : "italic text-gray-400"
+                }`}
             >
               {facilityData.terms || "NA"}
             </p>
@@ -400,9 +404,8 @@ const FacilityDetails = () => {
               Terms and Conditions:
             </h3>
             <p
-              className={`text-gray-600 ${
-                facilityData.cancellation_policy ? "" : "italic text-gray-400"
-              }`}
+              className={`text-gray-600 ${facilityData.cancellation_policy ? "" : "italic text-gray-400"
+                }`}
             >
               {facilityData.cancellation_policy || "NA"}
             </p>
