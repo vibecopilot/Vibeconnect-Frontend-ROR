@@ -25,12 +25,9 @@ const EditEvent = () => {
     description: "",
     start_date_time: null,
     end_date_time: null,
-    // react-select selected array
     user_ids: [],
     group_ids: "",
-    // new uploads
-    event_image: [],
-    // existing urls/meta (keep separate)
+   attachfiles:[],
     existing_event_image: [],
     important: false,
     sendMail: false,
@@ -179,7 +176,7 @@ formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "true" : "fal
       // ✅ attachments key same as Create
   if (formData.event_image && formData.event_image.length > 0) {
   formData.event_image.forEach((file) => {
-    formDataSend.append("event[event_images][]", file);
+    formDataSend.append("attachfiles[]", file);
   });
 }
 

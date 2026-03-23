@@ -54,6 +54,7 @@ const CreateEvent = () => {
     user_ids: "",
     group_id: null,
     group_name: "",
+    attachfiles: [],
     event_images: [],
     shared: "all",
     email_enabled: false,
@@ -244,7 +245,7 @@ const CreateEvent = () => {
       if (formData.event_images && formData.event_images.length > 0) {
         formData.event_images.forEach((file) => {
           if (file instanceof File) {
-            formDataSend.append("event[event_images][]", file);
+            formDataSend.append("attachfiles[]", file);
           }
         });
       }
@@ -271,7 +272,6 @@ const CreateEvent = () => {
       user_ids: selectedUserIds.join(","),
     }));
   };
-
   const handleFileAttachment = (files) => {
     let fileArray = [];
 
@@ -285,12 +285,11 @@ const CreateEvent = () => {
 
     setFormData((prev) => ({
       ...prev,
-      event_images: [...prev.event_images, ...fileArray],
+      event_images: [...(prev.event_images || []), ...fileArray], // ✅ SAFE SPREAD
     }));
 
     console.log("Selected Files:", fileArray);
   };
-
   const filterTime = (time) => {
     const selectedDate = new Date(time);
     const currentDate = new Date();
@@ -605,16 +604,16 @@ const CreateEvent = () => {
                 fieldName={"event_images"}
                 handleChange={handleFileAttachment}
                 fileType="image/*"
-                onChange={(e) => handleChange(e.target.files)}
+              // onChange={(e) => handleChange(e.target.files)}
               />
             </div>
 
             <div className="flex justify-end mt-10 my-5 gap-3">
               <button
-                              className="bg-black text-white p-2 rounded-md  flex items-center gap-2 px-4"
-onClick={()=>navigate("/communication/events")}
+                className="bg-black text-white p-2 rounded-md  flex items-center gap-2 px-4"
+                onClick={() => navigate("/communication/events")}
               >
-                <MdClose/> Cancel
+                <MdClose /> Cancel
               </button>
               <button
                 style={{ background: themeColor }}
