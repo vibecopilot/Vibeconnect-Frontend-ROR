@@ -599,9 +599,9 @@ const FacilityBooking = () => {
       <Navbar />
       <div className=" w-full flex mx-3  flex-col overflow-hidden">
         <div className="flex flex-col items-center mb-10">
-          <div className="md:border rounded-md my-2 p-4">
+          <div className="md:border rounded-md w-full my-2">
             <h2
-              style={{ background: "rgb(17, 24, 39)" }}
+              style={{ background: themeColor }}
               className="text-xl p-2 rounded-md font-semibold text-center mb-4 text-white "
             >
               Book Facility

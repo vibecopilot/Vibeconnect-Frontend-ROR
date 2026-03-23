@@ -35,7 +35,7 @@ const SetupFacility = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [facilityError, setFacilityError] = useState("");
   const [activeError, setActiveError] = useState("");
-  const [slotBy, setSlotBy] = useState(""); // Loading state
+  const [slotBy, setSlotBy] = useState("");
   const [shareError, setShareError] = useState("");
   const [billingError, setBillingError] = useState("");
   const [days, setDays] = useState(
@@ -47,21 +47,18 @@ const SetupFacility = () => {
     })),
   );
 
-  // ✅ Handle checkbox
   const handleCheck = (index) => {
     const updated = [...days];
     updated[index].is_active = !updated[index].is_active;
     setDays(updated);
   };
 
-  // ✅ Handle time change
   const handleTimeChange1 = (index, field, value) => {
     const updated = [...days];
     updated[index][field] = value;
     setDays(updated);
   };
 
-  // ✅ Convert UI → API payload
   const getPayload = () => {
     return days.map((d) => ({
       day_of_week: d.value,
@@ -135,8 +132,17 @@ const SetupFacility = () => {
     gst_no: "",
     cancellation_policy: "",
     book_before: "",
+    book_before_days: "",
+    book_before_hours: "",
+    book_before_mins: "",
     cancel_before: "",
+    cancel_before_days: "",
+    cancel_before_hours: "",
+    cancel_before_mins: "",
     advance_booking: "",
+    advance_days: "",
+    advance_hours: "",
+    advance_mins: "",
     max_slots: "",
     consecutive_slot_allowed: false,
     slots: [
@@ -197,6 +203,30 @@ const SetupFacility = () => {
     } else {
       setShareError("");
     }
+  };
+
+  const handleBookingTimeChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: value };
+
+      const calcTotal = (prefix) => {
+        const d = parseInt(updated[`${prefix}_days`]) || 0;
+        const h = parseInt(updated[`${prefix}_hours`]) || 0;
+        const m = parseInt(updated[`${prefix}_mins`]) || 0;
+        return d * 24 * 60 + h * 60 + m;
+      };
+
+      if (name.includes("book_before")) {
+        updated.book_before = calcTotal("book_before");
+      } else if (name.includes("advance")) {
+        updated.advance_booking = calcTotal("advance");
+      } else if (name.includes("cancel_before")) {
+        updated.cancel_before = calcTotal("cancel_before");
+      }
+
+      return updated;
+    });
   };
 
   const handlePriceChange = (field, value) => {
@@ -350,35 +380,39 @@ const SetupFacility = () => {
     //   formIsValid = false;
     // }
 
-    //Slot configuration check
-    if (!formData.slots || formData.slots.length === 0) {
-      toast.error("Please configure at least one slot.");
-      formIsValid = false;
+    //Slot configuration check – only validate if user has started filling slot times
+    if (formData.slots && formData.slots.length > 0) {
+      formData.slots.forEach((slot, idx) => {
+        const hasStart = slot.start_hr && slot.start_min;
+        const hasEnd = slot.end_hr && slot.end_min;
+        const hasAnyTime = hasStart || hasEnd;
+
+        if (hasAnyTime) {
+          // If user started entering slot times, start_time, end_time & slot_by are mandatory
+          if (!hasStart) {
+            toast.error(`Slot ${idx + 1}: Start Time is required.`);
+            formIsValid = false;
+          }
+          if (!hasEnd) {
+            toast.error(`Slot ${idx + 1}: End Time is required.`);
+            formIsValid = false;
+          }
+          if (!slotBy) {
+            toast.error(`Slot ${idx + 1}: Slot By is required.`);
+            formIsValid = false;
+          }
+          // Validate start < end
+          if (hasStart && hasEnd) {
+            const startMins = Number(slot.start_hr) * 60 + Number(slot.start_min);
+            const endMins = Number(slot.end_hr) * 60 + Number(slot.end_min);
+            if (startMins >= endMins) {
+              toast.error(`Slot ${idx + 1}: Start Time must be before End Time.`);
+              formIsValid = false;
+            }
+          }
+        }
+      });
     }
-
-    // const timeToMinutes = (timeStr) => {
-    //   const [hours, minutes] = timeStr.split(":").map(Number);
-    //   return hours * 60 + minutes;
-    // };
-
-    // formData.slots.forEach((slot) => {
-    //   if (
-    //     !slot.startTime ||
-    //     !slot.endTime ||
-    //     slot.startTime.trim() === "" ||
-    //     slot.endTime.trim() === ""
-    //   ) {
-    //     toast.error("All slots must have a valid start and end time.");
-    //     formIsValid = false;
-    //   } else {
-    //     const startMinutes = timeToMinutes(slot.startTime);
-    //     const endMinutes = timeToMinutes(slot.endTime);
-    //     if (startMinutes >= endMinutes) {
-    //       toast.error("Start time must be before end time.");
-    //       formIsValid = false;
-    //     }
-    //   }
-    // });
 
     //Final submission trigger
     if (formIsValid) {
@@ -537,12 +571,69 @@ const SetupFacility = () => {
     }));
   };
 
+  // Helper: convert "HH:MM" string to total minutes for comparison
+  const timeToMinutes = (timeStr) => {
+    if (!timeStr) return null;
+    const [h, m] = timeStr.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  // Validate that a prime-time range falls within the configured slot range
+  const validatePrimeTimeAgainstSlot = (primeStart, primeEnd) => {
+    const slot = formData.slots[0];
+    if (!slot) return true; // no slot configured yet – skip validation
+
+    const slotStartStr = formatTime(slot.start_hr, slot.start_min);
+    const slotEndStr   = formatTime(slot.end_hr, slot.end_min);
+    if (!slotStartStr || !slotEndStr) return true; // slot times not set yet
+
+    const slotStart  = timeToMinutes(slotStartStr);
+    const slotEnd    = timeToMinutes(slotEndStr);
+    const pStart     = timeToMinutes(primeStart);
+    const pEnd       = timeToMinutes(primeEnd);
+
+    if (slotStart === null || slotEnd === null || pStart === null || pEnd === null) return true;
+
+    // Prime-time start must be within slot range
+    if (pStart < slotStart || pStart > slotEnd) return false;
+    // Prime-time end must be within slot range
+    if (pEnd < slotStart || pEnd > slotEnd) return false;
+    // Start must be before end
+    if (pStart >= pEnd) return false;
+
+    return true;
+  };
+
   const handlePrimeTimeChange = (ruleId, index, field, value) => {
+    // Build the would-be prime time entry for validation
+    const currentRule = rules.find((r) => r.id === ruleId);
+    const currentPT = currentRule?.primeTime?.[index] || { start_time: "", end_time: "" };
+    const updatedPT = { ...currentPT, [field]: value };
+
+    // Validate when both start & end are filled in
+    if (updatedPT.start_time && updatedPT.end_time) {
+      const slot = formData.slots[0];
+      const slotStartStr = formatTime(slot?.start_hr, slot?.start_min);
+      const slotEndStr   = formatTime(slot?.end_hr, slot?.end_min);
+
+      if (!slotStartStr || !slotEndStr) {
+        toast.error("Please configure slot start & end time before setting prime time.");
+        return;
+      }
+
+      if (!validatePrimeTimeAgainstSlot(updatedPT.start_time, updatedPT.end_time)) {
+        toast.error(
+          `Prime Time Start & End must be between or equal to the configured slot time (${slotStartStr} – ${slotEndStr}).`
+        );
+        return;
+      }
+    }
+
     setRules((prev) =>
       prev.map((rule) => {
         if (rule.id !== ruleId) return rule;
 
-        const updatedPrimeTimes = [...rule.primeTime];
+        let updatedPrimeTimes = [...rule.primeTime];
         // Ensure it's an array of objects
         if (!Array.isArray(updatedPrimeTimes)) {
           updatedPrimeTimes = [{ start_time: "", end_time: "" }];
@@ -629,6 +720,17 @@ const SetupFacility = () => {
       };
       return { ...prevState, slots: updatedSlots };
     });
+
+    // Auto-populate operational days when slot start or end time is configured
+    if (timeType === "start" || timeType === "end") {
+      setDays((prevDays) =>
+        prevDays.map((day) => ({
+          ...day,
+          ...(timeType === "start" ? { start_time: timeValue } : {}),
+          ...(timeType === "end"   ? { end_time: timeValue }   : {}),
+        }))
+      );
+    }
   };
 
   const handleSlotFieldChange = (index, field, value) => {
@@ -676,9 +778,15 @@ const SetupFacility = () => {
     sendData.append("amenity[max_people]", formData.max_people || "");
 
     // ── Booking / schedule config ─────────────────────────────────────────────
-    sendData.append("amenity[book_before]", formData.book_before || "");
-    sendData.append("amenity[cancel_before]", formData.cancel_before || "");
-    sendData.append("amenity[advance_booking]", formData.advance_booking || "");
+    const calcTotalMinutes = (prefix) => {
+      const d = parseInt(formData[`${prefix}_days`]) || 0;
+      const h = parseInt(formData[`${prefix}_hours`]) || 0;
+      const m = parseInt(formData[`${prefix}_mins`]) || 0;
+      return d * 24 * 60 + h * 60 + m;
+    };
+    sendData.append("amenity[book_before]", calcTotalMinutes("book_before"));
+    sendData.append("amenity[cancel_before]", calcTotalMinutes("cancel_before"));
+    sendData.append("amenity[advance_booking]", calcTotalMinutes("advance"));
     sendData.append("amenity[max_slots]", formData.max_slots || "");
     sendData.append("amenity[consecutive_slot_allowed]", formData.consecutive_slot_allowed ? "true" : "false");
     sendData.append("amenity[slot_by]", slotBy || "");
@@ -697,6 +805,8 @@ const SetupFacility = () => {
     sendData.append("amenity[member]", formData.member ? "true" : "false");
     sendData.append("amenity[member_price_adult]", formData.member_price_adult || "");
     sendData.append("amenity[member_price_child]", formData.member_price_child || "");
+    sendData.append("amenity[is_member_adult]", formData.is_member_adult ? "true" : "false");
+    sendData.append("amenity[is_member_child]", formData.is_member_child ? "true" : "false");
     sendData.append("amenity[member_postpaid]", formData.member_postpaid ? "true" : "false");
     sendData.append("amenity[member_prepaid]", formData.member_prepaid ? "true" : "false");
     sendData.append("amenity[member_pay_on_facility]", formData.member_pay_on_facility ? "true" : "false");
@@ -706,6 +816,8 @@ const SetupFacility = () => {
     sendData.append("amenity[guest]", formData.guest ? "true" : "false");
     sendData.append("amenity[guest_price_adult]", formData.guest_price_adult || "");
     sendData.append("amenity[guest_price_child]", formData.guest_price_child || "");
+    sendData.append("amenity[is_guest_adult]", formData.is_guest_adult ? "true" : "false");
+    sendData.append("amenity[is_guest_child]", formData.is_guest_child ? "true" : "false");
     sendData.append("amenity[guest_postpaid]", formData.guest_postpaid ? "true" : "false");
     sendData.append("amenity[guest_prepaid]", formData.guest_prepaid ? "true" : "false");
     sendData.append("amenity[guest_pay_on_facility]", formData.guest_pay_on_facility ? "true" : "false");
@@ -715,6 +827,8 @@ const SetupFacility = () => {
     sendData.append("amenity[tenant]", formData.tenant ? "true" : "false");
     sendData.append("amenity[tenant_price_adult]", formData.tenant_price_adult || "");
     sendData.append("amenity[tenant_price_child]", formData.tenant_price_child || "");
+    sendData.append("amenity[is_tenant_adult]", formData.is_tenant_adult ? "true" : "false");
+    sendData.append("amenity[is_tenant_child]", formData.is_tenant_child ? "true" : "false");
     sendData.append("amenity[tenant_postpaid]", formData.tenant_postpaid ? "true" : "false");
     sendData.append("amenity[tenant_prepaid]", formData.tenant_prepaid ? "true" : "false");
     sendData.append("amenity[tenant_pay_on_facility]", formData.tenant_pay_on_facility ? "true" : "false");
@@ -724,14 +838,21 @@ const SetupFacility = () => {
     sendData.append("amenity[non_member]", formData.non_member ? "true" : "false");
     sendData.append("amenity[non_member_price_adult]", formData.non_member_price_adult || "");
     sendData.append("amenity[non_member_price_child]", formData.non_member_price_child || "");
+    sendData.append("amenity[is_non_member_adult]", formData.is_non_member_adult ? "true" : "false");
+    sendData.append("amenity[is_non_member_child]", formData.is_non_member_child ? "true" : "false");
     sendData.append("amenity[non_member_postpaid]", formData.non_member_postpaid ? "true" : "false");
     sendData.append("amenity[non_member_prepaid]", formData.non_member_prepaid ? "true" : "false");
     sendData.append("amenity[non_member_pay_on_facility]", formData.non_member_pay_on_facility ? "true" : "false");
     sendData.append("amenity[non_member_complimentary]", formData.non_member_complimentary ? "true" : "false");
 
-    // ── Slots ─────────────────────────────────────────────────────────────────
-    formData.slots.forEach((slot, index) => {
-      const slotBase = `amenity[amenity_slots_attributes][${index}]`;
+    // ── Slots (only send slots that have start & end time filled) ────────────
+    let slotPayloadIndex = 0;
+    formData.slots.forEach((slot) => {
+      const hasStart = slot.start_hr && slot.start_min;
+      const hasEnd = slot.end_hr && slot.end_min;
+      if (!hasStart || !hasEnd) return; // skip empty slots
+
+      const slotBase = `amenity[amenity_slots_attributes][${slotPayloadIndex}]`;
       sendData.append(`${slotBase}[start_hr]`, slot.start_hr || "");
       sendData.append(`${slotBase}[start_min]`, slot.start_min || "");
       sendData.append(`${slotBase}[end_hr]`, slot.end_hr || "");
@@ -743,6 +864,7 @@ const SetupFacility = () => {
       sendData.append(`${slotBase}[concurrent_slots]`, slot.concurrent_slots || "1");
       sendData.append(`${slotBase}[slot_duration]`, slot.slot_duration || "");
       sendData.append(`${slotBase}[wrap_up_time]`, slot.wrap_up_time || "0");
+      slotPayloadIndex++;
     });
 
     // ── Operational days ──────────────────────────────────────────────────────
@@ -805,9 +927,12 @@ const SetupFacility = () => {
         response?.data?.amenity?.id ||
         response?.data?.data?.id;
 
-      // ── Save slot config then generate slots ─────────────────────────────
-      if (amenityId && formData.slots?.length > 0) {
-        const slot = formData.slots[0];
+      // ── Save slot config then generate slots (only if slot has times & slot_by) ───
+      const firstSlotWithTime = formData.slots?.find(
+        (s) => s.start_hr && s.start_min && s.end_hr && s.end_min
+      );
+      if (amenityId && firstSlotWithTime && slotBy) {
+        const slot = firstSlotWithTime;
         const pad = (v) => String(v || "0").padStart(2, "0");
         const toTimeStr = (hr, min) => `${pad(hr)}:${pad(min)}:00`;
 
@@ -990,69 +1115,130 @@ const SetupFacility = () => {
               )}
             </div>
           </div>
-          {/* <div className="grid md:grid-cols-5 gap-2 mt-3">
-            <div className="flex flex-col gap-1">
-              <label className="font-medium">Book Before Days</label>
-              <input
-                type="number"
-                min={0}
-                className="border border-gray-400 rounded-md p-2"
-                value={formData.book_before}
-                onChange={(e) =>
-                  setFormData({ ...formData, book_before: e.target.value })
-                }
-              />
+          <div className="bg-blue-50 border-y mt-3">
+            {/* Booking Allowed Before */}
+            <div className="grid grid-cols-5 items-center border-b px-4 gap-2">
+              <div className="flex justify-center my-2">
+                <label className="flex items-center gap-2">Booking allowed before</label>
+              </div>
+              <div></div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="book_before_days"
+                  value={formData.book_before_days}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Days"
+                  maxLength="2"
+                />
+              </div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="book_before_hours"
+                  value={formData.book_before_hours}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Hours"
+                  maxLength="2"
+                />
+              </div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="book_before_mins"
+                  value={formData.book_before_mins}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Mins"
+                  maxLength="2"
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-medium">Cancel Before (mins)</label>
-              <input
-                type="number"
-                min={0}
-                className="border border-gray-400 rounded-md p-2"
-                value={formData.cancel_before}
-                onChange={(e) =>
-                  setFormData({ ...formData, cancel_before: e.target.value })
-                }
-              />
+
+            {/* Advance Booking */}
+            <div className="grid grid-cols-5 items-center border-b px-4 gap-2">
+              <div className="flex justify-center my-2">
+                <label className="flex items-center gap-2">Advance Booking</label>
+              </div>
+              <div></div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="advance_days"
+                  value={formData.advance_days}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Days"
+                  maxLength="2"
+                />
+              </div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="advance_hours"
+                  value={formData.advance_hours}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Hours"
+                  maxLength="2"
+                />
+              </div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="advance_mins"
+                  value={formData.advance_mins}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Mins"
+                  maxLength="2"
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-medium">Advance Booking (days)</label>
-              <input
-                type="number"
-                min={0}
-                className="border border-gray-400 rounded-md p-2"
-                value={formData.advance_booking}
-                onChange={(e) =>
-                  setFormData({ ...formData, advance_booking: e.target.value })
-                }
-              />
+
+            {/* Can Cancel Before Schedule */}
+            <div className="grid grid-cols-5 items-center px-4 gap-2">
+              <div className="flex justify-center my-2">
+                <label className="flex items-center gap-2">Can Cancel Before Schedule</label>
+              </div>
+              <div></div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="cancel_before_days"
+                  value={formData.cancel_before_days}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Days"
+                  maxLength="2"
+                />
+              </div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="cancel_before_hours"
+                  value={formData.cancel_before_hours}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Hours"
+                  maxLength="2"
+                />
+              </div>
+              <div className="flex justify-center my-2 w-full">
+                <input
+                  type="text"
+                  name="cancel_before_mins"
+                  value={formData.cancel_before_mins}
+                  onChange={handleBookingTimeChange}
+                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                  placeholder="Mins"
+                  maxLength="2"
+                />
+              </div>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="font-medium">Max Slots</label>
-              <input
-                type="number"
-                min={1}
-                className="border border-gray-400 rounded-md p-2"
-                value={formData.max_slots}
-                onChange={(e) =>
-                  setFormData({ ...formData, max_slots: e.target.value })
-                }
-              />
-            </div>
-            <div className="flex items-end gap-2">
-              <label className="font-medium">Consecutive Slot Allowed</label>
-              <input
-                type="checkbox"
-                checked={formData.consecutive_slot_allowed}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    consecutive_slot_allowed: e.target.checked,
-                  })
-                }
-              />
-            </div>
-          </div> */}
+          </div>
           <div>
             <div className="my-2">
               <label htmlFor="subFacility" className="flex items-center gap-2">
