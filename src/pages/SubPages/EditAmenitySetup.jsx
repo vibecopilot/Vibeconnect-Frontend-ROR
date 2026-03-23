@@ -66,7 +66,10 @@ const EditAmenitySetup = () => {
 
   const handleChange2 = (id, field, value) => {
     setRules((prev) =>
-      prev.map((rule) => (rule.id === id ? { ...rule, [field]: value } : rule)),
+      prev.map((rule) => {
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        return ruleKey === id ? { ...rule, [field]: value } : rule;
+      }),
     );
   };
   // ✅ Convert UI → API payload
@@ -266,7 +269,7 @@ const EditAmenitySetup = () => {
         setRules(
           facility.amenity_rules?.length
             ? facility.amenity_rules.map((rule) => ({
-              id: rule.id || Date.now(),
+              id: rule.id, // Keep actual database ID
               enumerator: rule.enumerator ?? "daily_limit",
               duration: rule.duration?.toString() || "60",
               level: rule.level || "user",
@@ -277,16 +280,15 @@ const EditAmenitySetup = () => {
                 rule.facility_can_be_booked ??
                 rule.enabled ??
                 true,
-              // Always keep primeTime as array of { id, start_time, end_time }
               primeTime:
                 Array.isArray(rule.prime_time) && rule.prime_time.length > 0
                   ? rule.prime_time.map((p) => ({
-                    // Keep backend id so PUT updates existing prime_time records
                     id: p.id ?? null,
                     start_time: p.start_time || "",
                     end_time: p.end_time || "",
                   }))
                   : [{ id: null, start_time: "", end_time: "" }],
+              _persisted: true, // Mark as existing in database
             }))
             : rules,
         );
@@ -443,7 +445,8 @@ const EditAmenitySetup = () => {
 
   const [rules, setRules] = useState([
     {
-      id: 1,
+      id: null, // null = new rule, not yet saved
+      _tempId: "_new_0", // Unique identifier for new rules
       enumerator: "daily_limit",
       duration: "",
       level: "",
@@ -451,13 +454,15 @@ const EditAmenitySetup = () => {
       period_type: "",
       enabled: false,
       primeTime: [{ start_time: "", end_time: "" }],
+      _persisted: false, // Track if this rule exists in DB
     },
   ]);
 
   // Add new rule
   const handleAddRule = () => {
     const newRule = {
-      id: Date.now(),
+      id: null, // New rules have no ID yet
+      _tempId: `_new_${Date.now()}`, // Unique identifier for new rules
       enumerator: "daily_limit",
       duration: "60",
       level: "user",
@@ -465,6 +470,7 @@ const EditAmenitySetup = () => {
       period_type: "day",
       enabled: true,
       primeTime: [{ start_time: "", end_time: "" }],
+      _persisted: false, // Mark as not yet saved to DB
     };
     setRules([...rules, newRule]);
   };
@@ -472,7 +478,8 @@ const EditAmenitySetup = () => {
   const handlePrimeTimeChange = (ruleId, index, field, value) => {
     setRules((prev) =>
       prev.map((rule) => {
-        if (rule.id !== ruleId) return rule;
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        if (ruleKey !== ruleId) return rule;
         const updatedPrimeTimes = Array.isArray(rule.primeTime)
           ? [...rule.primeTime]
           : [{ start_time: "", end_time: "" }];
@@ -484,8 +491,9 @@ const EditAmenitySetup = () => {
 
   const handleAddPrimeTime = (ruleId) => {
     setRules((prev) =>
-      prev.map((rule) =>
-        rule.id === ruleId
+      prev.map((rule) => {
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        return ruleKey === ruleId
           ? {
             ...rule,
             primeTime: [
@@ -493,15 +501,16 @@ const EditAmenitySetup = () => {
               { start_time: "", end_time: "" },
             ],
           }
-          : rule
-      )
+          : rule;
+      })
     );
   };
 
   const handleRemovePrimeTime = (ruleId, index) => {
     setRules((prev) =>
       prev.map((rule) => {
-        if (rule.id !== ruleId) return rule;
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        if (ruleKey !== ruleId) return rule;
         const updatedPrimeTimes = Array.isArray(rule.primeTime)
           ? rule.primeTime.filter((_, i) => i !== index)
           : [];
@@ -512,13 +521,19 @@ const EditAmenitySetup = () => {
 
   // Remove rule
   const handleRemoveRule = (id) => {
-    setRules(rules.filter((rule) => rule.id !== id));
+    setRules(rules.filter((rule) => {
+      const ruleKey = rule._persisted ? rule.id : rule._tempId;
+      return ruleKey !== id;
+    }));
   };
 
   // Handle input change
   const handleChange1 = (id, field, value) => {
     setRules((prev) =>
-      prev.map((rule) => (rule.id === id ? { ...rule, [field]: value } : rule)),
+      prev.map((rule) => {
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        return ruleKey === id ? { ...rule, [field]: value } : rule;
+      }),
     );
   };
   useEffect(() => {
@@ -637,12 +652,15 @@ const EditAmenitySetup = () => {
     });
 
     // ── Booking rules ─────────────────────────────────────────────────────────
-    // primeTime is always an array of { start_time, end_time }
+    // Only send rules that are persisted OR have been modified
     rules.forEach((rule, index) => {
       const ruleAttr = `amenity[amenity_booking_rules_attributes][${index}]`;
-      if (rule.id && typeof rule.id === "number" && rule.id < 1e12) {
+      
+      // Only include ID if rule is persisted in database
+      if (rule._persisted && rule.id) {
         postData.append(`${ruleAttr}[id]`, rule.id);
       }
+      
       postData.append(`${ruleAttr}[enumerator]`, rule.enumerator || "daily_limit");
       postData.append(`${ruleAttr}[duration]`, rule.duration || "60");
       postData.append(`${ruleAttr}[level]`, rule.level || "user");
@@ -657,7 +675,7 @@ const EditAmenitySetup = () => {
         : [];
       primeTimes.forEach((pt, pIdx) => {
         const primeBase = `${ruleAttr}[prime_times_attributes][${pIdx}]`;
-        // Pass id so Rails updates existing prime_time, not creates a new one
+        // Only pass ID for existing prime_time records
         if (pt.id) postData.append(`${primeBase}[id]`, pt.id);
         postData.append(`${primeBase}[start_time]`, pt.start_time || "");
         postData.append(`${primeBase}[end_time]`, pt.end_time || "");
@@ -1971,9 +1989,11 @@ const EditAmenitySetup = () => {
             Booking Rule
           </div>
 
-          {rules.map((rule, index) => (
+        {rules.map((rule, index) => {
+          const ruleKey = rule._persisted ? rule.id : rule._tempId;
+          return (
             <div
-              key={rule.id}
+              key={ruleKey}
               className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
             >
               {/* Checkbox */}
@@ -1982,7 +2002,7 @@ const EditAmenitySetup = () => {
                   type="checkbox"
                   checked={rule.enabled || false}
                   onChange={(e) =>
-                    handleChange2(rule.id, "enabled", e.target.checked)
+                    handleChange2(ruleKey, "enabled", e.target.checked)
                   }
                   className="w-4 h-4"
                 />
@@ -1995,7 +2015,7 @@ const EditAmenitySetup = () => {
                 placeholder="Enter"
                 value={rule.times || ""}
                 onChange={(e) =>
-                  handleChange2(rule.id, "times", e.target.value)
+                  handleChange2(ruleKey, "times", e.target.value)
                 }
                 className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
               />
@@ -2003,7 +2023,7 @@ const EditAmenitySetup = () => {
               <span className="text-sm">times per day by </span>
               <select
                 value={rule.level || ""}
-                onChange={(e) => handleChange2(rule.id, "level", e.target.value)}
+                onChange={(e) => handleChange2(ruleKey, "level", e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
               >
                 <option value="">Select</option>
@@ -2016,7 +2036,7 @@ const EditAmenitySetup = () => {
               {/* Select Period */}
               <select
                 value={rule.period_type || ""}
-                onChange={(e) => handleChange2(rule.id, "period_type", e.target.value)}
+                onChange={(e) => handleChange2(ruleKey, "period_type", e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 text-sm"
               >
                 <option value="">Select Slots For</option>
@@ -2042,7 +2062,7 @@ const EditAmenitySetup = () => {
                       type="time"
                       value={pt.start_time || ""}
                       onChange={(e) =>
-                        handlePrimeTimeChange(rule.id, pIdx, "start_time", e.target.value)
+                        handlePrimeTimeChange(ruleKey, pIdx, "start_time", e.target.value)
                       }
                       className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
@@ -2050,14 +2070,14 @@ const EditAmenitySetup = () => {
                       type="time"
                       value={pt.end_time || ""}
                       onChange={(e) =>
-                        handlePrimeTimeChange(rule.id, pIdx, "end_time", e.target.value)
+                        handlePrimeTimeChange(ruleKey, pIdx, "end_time", e.target.value)
                       }
                       className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     {Array.isArray(rule.primeTime) && rule.primeTime.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => handleRemovePrimeTime(rule.id, pIdx)}
+                        onClick={() => handleRemovePrimeTime(ruleKey, pIdx)}
                         className="text-red-500"
                       >
                         <FaTrash size={12} />
@@ -2067,7 +2087,7 @@ const EditAmenitySetup = () => {
                 ))}
                 <button
                   type="button"
-                  onClick={() => handleAddPrimeTime(rule.id)}
+                  onClick={() => handleAddPrimeTime(ruleKey)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-xs mt-1 w-fit"
                 >
                   + Add Prime Time
@@ -2088,7 +2108,7 @@ const EditAmenitySetup = () => {
               {rules.length > 1 && (
                 <button
                   type="button"
-                  onClick={() => handleRemoveRule(rule.id)}
+                  onClick={() => handleRemoveRule(ruleKey)}
                   className="text-red-500 hover:text-red-700 ml-auto"
                   title="Remove rule"
                 >
@@ -2096,7 +2116,8 @@ const EditAmenitySetup = () => {
                 </button>
               )}
             </div>
-          ))}
+          );
+        })}
 
           {/* Add Button */}
           <button
