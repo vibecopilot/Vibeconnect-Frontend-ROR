@@ -616,17 +616,17 @@ const SetupFacility = () => {
       const slotStartStr = formatTime(slot?.start_hr, slot?.start_min);
       const slotEndStr   = formatTime(slot?.end_hr, slot?.end_min);
 
-      if (!slotStartStr || !slotEndStr) {
-        toast.error("Please configure slot start & end time before setting prime time.");
-        return;
-      }
+      // if (!slotStartStr || !slotEndStr) {
+      //   toast.error("Please configure slot start & end time before setting prime time.");
+      //   return;
+      // }
 
-      if (!validatePrimeTimeAgainstSlot(updatedPT.start_time, updatedPT.end_time)) {
-        toast.error(
-          `Prime Time Start & End must be between or equal to the configured slot time (${slotStartStr} – ${slotEndStr}).`
-        );
-        return;
-      }
+      // if (!validatePrimeTimeAgainstSlot(updatedPT.start_time, updatedPT.end_time)) {
+      //   toast.error(
+      //     `Prime Time Start & End must be between or equal to the configured slot time (${slotStartStr} – ${slotEndStr}).`
+      //   );
+      //   return;
+      // }
     }
 
     setRules((prev) =>
