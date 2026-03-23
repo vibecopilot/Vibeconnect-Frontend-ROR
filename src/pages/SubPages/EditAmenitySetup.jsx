@@ -371,9 +371,9 @@ const EditAmenitySetup = () => {
                 min: parts[1] ? String(parts[1]).padStart(2, "0") : fallback,
               };
             };
-            // Break/concurrent/wrap come from amenity_slot_config
-            const brkStart = parseTimeParts(slotConfig.break_time_start);
-            const brkEnd = parseTimeParts(slotConfig.break_time_end);
+            // Break/concurrent/wrap come from amenity_slot_config, fall back to root-level fields
+            const brkStart = parseTimeParts(slotConfig.break_time_start || facility.break_time_start);
+            const brkEnd = parseTimeParts(slotConfig.break_time_end || facility.break_time_end);
 
             // The Configure Slot section always shows ONE editable config row.
             // Start time = first generated slot's start, End time = last generated slot's end.
@@ -541,6 +541,37 @@ const EditAmenitySetup = () => {
   }, [id]); // Trigger when ID changes
 
   const updateAmenitiesSetup = async () => {
+    // ── Validate slot fields before submitting ──────────────────────────────
+    if (formData.slots && formData.slots.length > 0) {
+      for (let idx = 0; idx < formData.slots.length; idx++) {
+        const slot = formData.slots[idx];
+        const hasStart = slot.start_hr && slot.start_min;
+        const hasEnd = slot.end_hr && slot.end_min;
+        const hasAnyTime = hasStart || hasEnd;
+
+        if (hasAnyTime) {
+          if (!hasStart) {
+            toast.error(`Slot ${idx + 1}: Start Time is required.`);
+            return;
+          }
+          if (!hasEnd) {
+            toast.error(`Slot ${idx + 1}: End Time is required.`);
+            return;
+          }
+          if (!slotBy) {
+            toast.error(`Slot By is required when slot times are configured.`);
+            return;
+          }
+          const startMins = Number(slot.start_hr) * 60 + Number(slot.start_min);
+          const endMins = Number(slot.end_hr) * 60 + Number(slot.end_min);
+          if (startMins >= endMins) {
+            toast.error(`Slot ${idx + 1}: Start Time must be before End Time.`);
+            return;
+          }
+        }
+      }
+    }
+
     const postData = new FormData();
     const a = formData.amenity;
 
@@ -712,9 +743,12 @@ const EditAmenitySetup = () => {
       toast.dismiss();
       console.log(response);
 
-      // ── Save slot config then generate slots ─────────────────────────────
-      if (formData.slots?.length > 0) {
-        const slot = formData.slots[0];
+      // ── Save slot config then generate slots (only if slot has times & slot_by) ───
+      const firstSlotWithTime = formData.slots?.find(
+        (s) => s.start_hr && s.start_min && s.end_hr && s.end_min
+      );
+      if (firstSlotWithTime && slotBy) {
+        const slot = firstSlotWithTime;
         const pad = (v) => String(v || "0").padStart(2, "0");
         const toTimeStr = (hr, min) => `${pad(hr)}:${pad(min)}:00`;
 
@@ -767,7 +801,7 @@ const EditAmenitySetup = () => {
       ...prevState,
       amenity: {
         ...prevState.amenity,
-        [type]: prevState.amenity[type] === null ? true : null, // Toggle between true and null
+        [type]: !prevState.amenity[type],
       },
     }));
   };
