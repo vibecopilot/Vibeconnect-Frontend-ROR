@@ -44,6 +44,8 @@ const Ticket = () => {
   const [filterModal, setFilterModal] = useState(false);
   const [hideColumn, setHideColumn] = useState(false);
   const dropdownRef = useRef(null);
+  const [showDashboardFilter, setShowDashboardFilter] = useState(false);
+  const dashboardRef = useRef(null);
 
   const getTimeAgo = (timestamp) => {
     const createdTime = moment(timestamp);
@@ -163,6 +165,21 @@ const Ticket = () => {
     globalSearch: "",
   });
 
+  const [dashboardVisibility, setDashboardVisibility] = useState({
+    "Total Tickets": true,
+    Pending: true,
+    "On Hold": true,
+    Open: true,
+    Closed: true,
+    Received: true,
+    Reopen: true,
+    Completed: true,
+    "Work in Progress": true,
+    Complaint: true,
+    Suggestion: true,
+    Request: true,
+  });
+
   const [columnVisibility, setColumnVisibility] = useState({
     Action: true,
     "Ticket Number": true,
@@ -186,6 +203,7 @@ const Ticket = () => {
     "Total Time": true,
   });
 
+
   const handleCheckboxChange = (column) => {
     setColumnVisibility((prev) => ({
       ...prev,
@@ -193,18 +211,29 @@ const Ticket = () => {
     }));
   };
 
-  const handleClickOutside = (event) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      setHideColumn(false);
-    }
+  const handleDashboardCheckboxChange = (key) => {
+    setDashboardVisibility((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
   };
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dashboardRef.current &&
+        !dashboardRef.current.contains(event.target)
+      ) {
+        setShowDashboardFilter(false);
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
 
   //custom style
   const themeColor = useSelector((state) => state.theme.color);
@@ -270,15 +299,15 @@ const Ticket = () => {
   const [statusData, setStatusData] = useState({});
 
   const allDashboardCards = [
-    { key: "Total Tickets", value: statusData.total || 0, color: "border border-blue-300 border-4" },
-    { key: "Pending", value: statusData.Pending || 0, color: "border border-4 border-red-300" },
-    { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-4" },
-    { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-4" },
-    { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-4" },
-    { key: "Received", value: statusData.received || 0, color: "border-green-300 border border-4" },
-    { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-4" },
-    { key: "Completed", value: siteId === 74 ? statusData.Completed : statusData["Development Done"] || 0, color: "border-pink-300 border border-4" },
-    { key: "Work in Progress", value: statusData["Work In Progress"] || statusData["Work in Progress"] || 0, color: "border-purple-300 border border-4" },
+    { key: "Total Tickets", value: statusData.total || 0, color: "border border-blue-300 border-3 bg-blue-100" },
+    { key: "Pending", value: statusData.Pending || 0, color: "border border-3 border-red-300 bg-red-100" },
+    { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-3 bg-cyan-100" },
+    { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-3 bg-red-100" },
+    { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-3 bg-blue-100" },
+    { key: "Received", value: statusData.received || 0, color: "border-green-300 border border-3 bg-green-100" },
+    { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-3 bg-yellow-100" },
+    { key: "Completed", value: siteId === 74 ? statusData.Completed : statusData["Development Done"] || 0, color: "border-pink-300 border border-3 bg-pink-100" },
+    { key: "Work in Progress", value: statusData["Work In Progress"] || statusData["Work in Progress"] || 0, color: "border-purple-300 border border-3 bg-purple-100" },
   ];
 
   const dashboardCards =
@@ -289,9 +318,9 @@ const Ticket = () => {
       : allDashboardCards;
 
   const ticketTypeCards = [
-    { key: "Complaint", value: ticketTypes.Complaint || 0, color: "border-red-300 border border-4" },
-    { key: "Suggestion", value: ticketTypes.Suggestion || 0, color: "border-green-300 border border-4" },
-    { key: "Request", value: ticketTypes.Request || 0, color: "border-blue-300 border border-4" },
+    { key: "Complaint", value: ticketTypes.Complaint || 0, color: "border-red-300 border border-3 bg-red-100" },
+    { key: "Suggestion", value: ticketTypes.Suggestion || 0, color: "border-green-300 border border-3 bg-green-100" },
+    { key: "Request", value: ticketTypes.Request || 0, color: "border-blue-300 border border-3 bg-blue-100" },
   ];
 
 
@@ -453,25 +482,58 @@ const Ticket = () => {
         {/* DASHBOARD CARDS */}
         <div className="flex flex-col gap-6">
           {/* STATUS CARDS */}
-          <div className="flex flex-wrap gap-4 px-4 py-3">
-            {dashboardCards.map((item) => (
-              <div
-                key={item.key}
-                className={`rounded-full px-6 py-3 shadow-md text-center min-w-[150px] ${item.color}`}
+          <div className="flex flex-wrap gap-3 px-4 py-3">
+            {/* STATUS CARDS */}
+            {dashboardCards
+              .filter((item) => dashboardVisibility[item.key])
+              .map((item) => (
+                <div key={item.key} className={`rounded-xl px-6 py-3 shadow-md text-center min-w-[150px] ${item.color}`}>
+                  <p className="text-sm font-semibold">{item.key}</p>
+                  <p className="text-lg font-bold">{item.value}</p>
+                </div>
+              ))}
+            {ticketTypeCards
+              .filter((item) => dashboardVisibility[item.key])
+              .map((item) => (
+                <div key={item.key} className={`rounded-xl px-6 py-3 shadow-md text-center min-w-[150px] ${item.color}`}>
+                  <p className="text-sm font-semibold">{item.key}</p>
+                  <p className="text-lg font-bold">{item.value}</p>
+                </div>
+              ))}
+          </div>
+          <div className="flex justify-end w-full">
+            <div className="relative" ref={dashboardRef}>
+              <button
+                onClick={() => setShowDashboardFilter(!showDashboardFilter)}
+                style={{ background: themeColor }}
+                className="font-semibold text-white px-4 py-2 flex gap-2 items-center rounded-md whitespace-nowrap"
               >
-                <p className="text-sm font-semibold">{item.key}</p>
-                <p className="text-lg font-bold">{item.value}</p>
-              </div>
-            ))}
-            {ticketTypeCards.map((item) => (
-              <div
-                key={item.key}
-                className={`rounded-full px-6 py-3 shadow-md text-center min-w-[150px] ${item.color}`}
-              >
-                <p className="text-sm font-semibold">{item.key}</p>
-                <p className="text-lg font-bold">{item.value}</p>
-              </div>
-            ))}
+                Dashboard Filter
+                {showDashboardFilter ? <IoIosArrowDown /> : <MdKeyboardArrowRight />}
+              </button>
+
+              {showDashboardFilter && (
+                <div className="absolute right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
+
+                  {/* <p className="px-3 text-xs font-bold text-gray-500">
+                    Dashboard Cards
+                  </p> */}
+
+                  {Object.keys(dashboardVisibility).map((item) => (
+                    <label key={item}>
+                      <div className="flex gap-5 px-3 py-1">
+                        <input
+                          type="checkbox"
+                          checked={dashboardVisibility[item]}
+                          onChange={() => handleDashboardCheckboxChange(item)}
+                        />
+                        <div>{item}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -577,9 +639,12 @@ const Ticket = () => {
               </button>
               {hideColumn && (
                 <div className="absolute py-2 right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
+
+                  {/* Table Columns */}
+                  {/* <p className="px-3 text-xs font-bold text-gray-500">Table Columns</p> */}
                   {Object.keys(columnVisibility).map((column) => (
-                    <label key={column} className="mr-4">
-                      <div className="flex gap-5 px-3">
+                    <label key={column}>
+                      <div className="flex gap-5 px-3 py-1">
                         <input
                           type="checkbox"
                           checked={columnVisibility[column]}
