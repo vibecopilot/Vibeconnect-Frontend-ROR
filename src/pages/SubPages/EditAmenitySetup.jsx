@@ -748,7 +748,7 @@ const EditAmenitySetup = () => {
         } catch (slotErr) {
           toast.dismiss();
           console.error("Slot config/generate error:", slotErr);
-          toast.error("Amenity saved but slot generation failed.");
+          // toast.error("Amenity saved but slot generation failed.");
         }
       } else {
         toast.success("Updated successfully!");
