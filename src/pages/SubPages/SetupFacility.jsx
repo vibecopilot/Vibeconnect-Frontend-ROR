@@ -596,9 +596,9 @@ const SetupFacility = () => {
       id: Date.now(),
       enumerator: "daily_limit",
       duration: "60",
-      level: "user",
-      times: "1",
-      period_type: "day",
+      level: "",
+      times: "",
+      period_type: "",
       enabled: true,
       primeTime: [{ start_time: "", end_time: "" }],
     };
@@ -762,12 +762,12 @@ const SetupFacility = () => {
       const ruleBase = `amenity[amenity_booking_rules_attributes][${idx}]`;
       sendData.append(`${ruleBase}[enumerator]`, rule.enumerator || "daily_limit");
       sendData.append(`${ruleBase}[duration]`, rule.duration || "60");
-      sendData.append(`${ruleBase}[level]`, rule.level || "user");
+      sendData.append(`${ruleBase}[level]`, rule.level || "");
       sendData.append(`${ruleBase}[active]`, rule.enabled ? "true" : "false");
       sendData.append(`${ruleBase}[site_id]`, siteId);
       sendData.append(`${ruleBase}[facility_can_be_booked]`, rule.enabled ? "true" : "false");
       sendData.append(`${ruleBase}[times_per_day]`, rule.times || "");
-      sendData.append(`${ruleBase}[period_type]`, rule.period_type || "day");
+      sendData.append(`${ruleBase}[period_type]`, rule.period_type || "edit");
 
       // primeTime is an array of { start_time, end_time } objects
       const primeTimes = Array.isArray(rule.primeTime)
@@ -2203,7 +2203,7 @@ const SetupFacility = () => {
           </div>
         </div>
         <div></div>
-        <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
+        <h1 className="text-[18px]"><b>Operational Days : </b></h1>
         <div className="border rounded mt-3">
 
           {/* Header */}

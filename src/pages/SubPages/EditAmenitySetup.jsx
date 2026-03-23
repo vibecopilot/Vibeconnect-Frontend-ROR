@@ -464,10 +464,10 @@ const EditAmenitySetup = () => {
       id: null, // New rules have no ID yet
       _tempId: `_new_${Date.now()}`, // Unique identifier for new rules
       enumerator: "daily_limit",
-      duration: "60",
-      level: "user",
-      times: "1",
-      period_type: "day",
+      duration: "",
+      level: "",
+      times: "",
+      period_type: "",
       enabled: true,
       primeTime: [{ start_time: "", end_time: "" }],
       _persisted: false, // Mark as not yet saved to DB
@@ -663,12 +663,12 @@ const EditAmenitySetup = () => {
       
       postData.append(`${ruleAttr}[enumerator]`, rule.enumerator || "daily_limit");
       postData.append(`${ruleAttr}[duration]`, rule.duration || "60");
-      postData.append(`${ruleAttr}[level]`, rule.level || "user");
+      postData.append(`${ruleAttr}[level]`, rule.level || "");
       postData.append(`${ruleAttr}[active]`, rule.enabled ? "true" : "false");
       postData.append(`${ruleAttr}[site_id]`, sitID);
       postData.append(`${ruleAttr}[facility_can_be_booked]`, rule.enabled ? "true" : "false");
       postData.append(`${ruleAttr}[times_per_day]`, rule.times || "");
-      postData.append(`${ruleAttr}[period_type]`, rule.period_type || "day");
+      postData.append(`${ruleAttr}[period_type]`, rule.period_type || "");
 
       const primeTimes = Array.isArray(rule.primeTime)
         ? rule.primeTime.filter((pt) => pt.start_time && pt.end_time)
@@ -2433,7 +2433,7 @@ const EditAmenitySetup = () => {
         </div> */}
 
         <div></div>
-        <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
+        <h1 className="text-[18px]"><b>Operational Days : </b></h1>
         <div className="border rounded mt-3">
 
           {/* Header */}
