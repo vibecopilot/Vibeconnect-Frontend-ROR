@@ -584,13 +584,13 @@ const SetupFacility = () => {
     if (!slot) return true; // no slot configured yet – skip validation
 
     const slotStartStr = formatTime(slot.start_hr, slot.start_min);
-    const slotEndStr   = formatTime(slot.end_hr, slot.end_min);
+    const slotEndStr = formatTime(slot.end_hr, slot.end_min);
     if (!slotStartStr || !slotEndStr) return true; // slot times not set yet
 
-    const slotStart  = timeToMinutes(slotStartStr);
-    const slotEnd    = timeToMinutes(slotEndStr);
-    const pStart     = timeToMinutes(primeStart);
-    const pEnd       = timeToMinutes(primeEnd);
+    const slotStart = timeToMinutes(slotStartStr);
+    const slotEnd = timeToMinutes(slotEndStr);
+    const pStart = timeToMinutes(primeStart);
+    const pEnd = timeToMinutes(primeEnd);
 
     if (slotStart === null || slotEnd === null || pStart === null || pEnd === null) return true;
 
@@ -614,7 +614,7 @@ const SetupFacility = () => {
     if (updatedPT.start_time && updatedPT.end_time) {
       const slot = formData.slots[0];
       const slotStartStr = formatTime(slot?.start_hr, slot?.start_min);
-      const slotEndStr   = formatTime(slot?.end_hr, slot?.end_min);
+      const slotEndStr = formatTime(slot?.end_hr, slot?.end_min);
 
       // if (!slotStartStr || !slotEndStr) {
       //   toast.error("Please configure slot start & end time before setting prime time.");
@@ -727,7 +727,7 @@ const SetupFacility = () => {
         prevDays.map((day) => ({
           ...day,
           ...(timeType === "start" ? { start_time: timeValue } : {}),
-          ...(timeType === "end"   ? { end_time: timeValue }   : {}),
+          ...(timeType === "end" ? { end_time: timeValue } : {}),
         }))
       );
     }
@@ -795,7 +795,7 @@ const SetupFacility = () => {
     sendData.append("amenity[prepaid]", formData.prepaid ? "true" : "false");
     sendData.append("amenity[postpaid]", formData.postpaid ? "true" : "false");
     sendData.append("amenity[pay_on_facility]", formData.pay_on_facility ? "true" : "false");
-     postData.append("amenity[complimentary]", a.complimentary ? "true" : "false");
+    sendData.append("amenity[complimentary]", formData.complimentary ? "true" : "false");
     sendData.append("amenity[payment_methods]", formData.payment_methods || "");
 
     // ── Fixed / Flat ──────────────────────────────────────────────────────────
@@ -1116,7 +1116,7 @@ const SetupFacility = () => {
               )}
             </div>
           </div>
-          
+
           <div>
             <div className="my-2">
               <label htmlFor="subFacility" className="flex items-center gap-2">
@@ -1735,129 +1735,129 @@ const SetupFacility = () => {
           </div>
         </div>
         <div className="bg-blue-50 border-y mt-3">
-            {/* Booking Allowed Before */}
-            <div className="grid grid-cols-5 items-center border-b px-4 gap-2">
-              <div className="flex justify-center my-2">
-                <label className="flex items-center gap-2">Booking allowed before</label>
-              </div>
-              <div></div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="book_before_days"
-                  value={formData.book_before_days}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Days"
-                  maxLength="2"
-                />
-              </div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="book_before_hours"
-                  value={formData.book_before_hours}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Hours"
-                  maxLength="2"
-                />
-              </div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="book_before_mins"
-                  value={formData.book_before_mins}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Mins"
-                  maxLength="2"
-                />
-              </div>
+          {/* Booking Allowed Before */}
+          <div className="grid grid-cols-5 items-center border-b px-4 gap-2">
+            <div className="flex justify-center my-2">
+              <label className="flex items-center gap-2">Booking allowed before</label>
             </div>
-
-            {/* Advance Booking */}
-            <div className="grid grid-cols-5 items-center border-b px-4 gap-2">
-              <div className="flex justify-center my-2">
-                <label className="flex items-center gap-2">Advance Booking</label>
-              </div>
-              <div></div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="advance_days"
-                  value={formData.advance_days}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Days"
-                  maxLength="2"
-                />
-              </div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="advance_hours"
-                  value={formData.advance_hours}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Hours"
-                  maxLength="2"
-                />
-              </div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="advance_mins"
-                  value={formData.advance_mins}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Mins"
-                  maxLength="2"
-                />
-              </div>
+            <div></div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="book_before_days"
+                value={formData.book_before_days}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Days"
+                maxLength="2"
+              />
             </div>
-
-            {/* Can Cancel Before Schedule */}
-            <div className="grid grid-cols-5 items-center px-4 gap-2">
-              <div className="flex justify-center my-2">
-                <label className="flex items-center gap-2">Can Cancel Before Schedule</label>
-              </div>
-              <div></div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="cancel_before_days"
-                  value={formData.cancel_before_days}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Days"
-                  maxLength="2"
-                />
-              </div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="cancel_before_hours"
-                  value={formData.cancel_before_hours}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Hours"
-                  maxLength="2"
-                />
-              </div>
-              <div className="flex justify-center my-2 w-full">
-                <input
-                  type="text"
-                  name="cancel_before_mins"
-                  value={formData.cancel_before_mins}
-                  onChange={handleBookingTimeChange}
-                  className="border border-gray-400 rounded-md p-2 outline-none w-full"
-                  placeholder="Mins"
-                  maxLength="2"
-                />
-              </div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="book_before_hours"
+                value={formData.book_before_hours}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Hours"
+                maxLength="2"
+              />
+            </div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="book_before_mins"
+                value={formData.book_before_mins}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Mins"
+                maxLength="2"
+              />
             </div>
           </div>
+
+          {/* Advance Booking */}
+          <div className="grid grid-cols-5 items-center border-b px-4 gap-2">
+            <div className="flex justify-center my-2">
+              <label className="flex items-center gap-2">Advance Booking</label>
+            </div>
+            <div></div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="advance_days"
+                value={formData.advance_days}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Days"
+                maxLength="2"
+              />
+            </div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="advance_hours"
+                value={formData.advance_hours}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Hours"
+                maxLength="2"
+              />
+            </div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="advance_mins"
+                value={formData.advance_mins}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Mins"
+                maxLength="2"
+              />
+            </div>
+          </div>
+
+          {/* Can Cancel Before Schedule */}
+          <div className="grid grid-cols-5 items-center px-4 gap-2">
+            <div className="flex justify-center my-2">
+              <label className="flex items-center gap-2">Can Cancel Before Schedule</label>
+            </div>
+            <div></div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="cancel_before_days"
+                value={formData.cancel_before_days}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Days"
+                maxLength="2"
+              />
+            </div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="cancel_before_hours"
+                value={formData.cancel_before_hours}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Hours"
+                maxLength="2"
+              />
+            </div>
+            <div className="flex justify-center my-2 w-full">
+              <input
+                type="text"
+                name="cancel_before_mins"
+                value={formData.cancel_before_mins}
+                onChange={handleBookingTimeChange}
+                className="border border-gray-400 rounded-md p-2 outline-none w-full"
+                placeholder="Mins"
+                maxLength="2"
+              />
+            </div>
+          </div>
+        </div>
         {/* <div className="bg-blue-50 border-y">
           <div className="grid grid-cols-4 items-center border-b px-4 gap-2">
             <div className="flex justify-center my-2">
