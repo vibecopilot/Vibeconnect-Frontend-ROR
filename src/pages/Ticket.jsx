@@ -317,6 +317,20 @@ const Ticket = () => {
       )
       : allDashboardCards;
 
+
+const filteredDashboardKeys =
+  siteId === 74
+    ? [
+        "Total Tickets",
+        "Pending",
+        "Completed",
+        "Work in Progress",
+        "Complaint",
+        "Suggestion",
+        "Request",
+      ]
+    : Object.keys(dashboardVisibility);
+
   const ticketTypeCards = [
     { key: "Complaint", value: ticketTypes.Complaint || 0, color: "border-red-300 border border-3 bg-red-100" },
     { key: "Suggestion", value: ticketTypes.Suggestion || 0, color: "border-green-300 border border-3 bg-green-100" },
@@ -341,7 +355,7 @@ const Ticket = () => {
 
         setStatusData({
           ...ticketInfoResp.data.by_status,
-          total: ticketInfoResp.data.total, // ✅ ADD THIS
+          total: ticketInfoResp.data.total, 
         });
 
         setTicketsTypes(ticketInfoResp.data.by_type);
@@ -519,18 +533,18 @@ const Ticket = () => {
                     Dashboard Cards
                   </p> */}
 
-                  {Object.keys(dashboardVisibility).map((item) => (
-                    <label key={item}>
-                      <div className="flex gap-5 px-3 py-1">
-                        <input
-                          type="checkbox"
-                          checked={dashboardVisibility[item]}
-                          onChange={() => handleDashboardCheckboxChange(item)}
-                        />
-                        <div>{item}</div>
-                      </div>
-                    </label>
-                  ))}
+                  {filteredDashboardKeys.map((item) => (
+  <label key={item}>
+    <div className="flex gap-5 px-3 py-1">
+      <input
+        type="checkbox"
+        checked={dashboardVisibility[item]}
+        onChange={() => handleDashboardCheckboxChange(item)}
+      />
+      <div>{item}</div>
+    </div>
+  </label>
+))}
                 </div>
               )}
             </div>
