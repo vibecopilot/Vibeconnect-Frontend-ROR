@@ -79,7 +79,7 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
         await axios.put(`${BASE_URL}/visitor_sub_categories/${catId}.json?token=${token}`, formData);
       } 
       else {
-        formData.append("visitor_staff_category[name]", name.trim());
+        formData.append("name", name.trim());
         await axios.patch(`${BASE_URL}/visitor_staff_categories/${catId}.json?token=${token}`, formData);
       }
 
