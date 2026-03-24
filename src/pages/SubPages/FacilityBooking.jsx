@@ -20,6 +20,7 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 import { error } from "highcharts";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { MdClose } from "react-icons/md";
 const FacilityBooking = () => {
   const navigate = useNavigate();
   const today = new Date();
@@ -81,8 +82,7 @@ const FacilityBooking = () => {
     if (!paymentMethods[key]) {
       if (!silent) {
         alert(
-          `${
-            mode.charAt(0).toUpperCase() + mode.slice(1)
+          `${mode.charAt(0).toUpperCase() + mode.slice(1)
           } is not available for this facility`
         );
       }
@@ -116,9 +116,9 @@ const FacilityBooking = () => {
 
   const fetchUnits = async () => {
     try {
-      const response = await getAllUnits(); 
+      const response = await getAllUnits();
       console.log("Units:", response);
-      setUnits(response.data); 
+      setUnits(response.data);
     } catch (error) {
       console.error("Error fetching units:", error);
     }
@@ -197,7 +197,7 @@ const FacilityBooking = () => {
                 (slot.start_hr === currentHr && slot.start_min > currentMin)
               );
             }
-            return true; 
+            return true;
           })
           .map((slot) => ({
             ...slot,
@@ -207,22 +207,22 @@ const FacilityBooking = () => {
             )} to ${formatTime(slot.end_hr, slot.end_min)}`,
           }));
 
-        setSlots(formattedSlots); 
+        setSlots(formattedSlots);
 
         if (formattedSlots.length === 0) {
           setBlockedDates((prev) =>
             prev.includes(selectedDate) ? prev : [...prev, selectedDate]
           );
         }
-          return formattedSlots;
+        return formattedSlots;
       } else {
         console.log("No Slots Found");
         setSlots([]);
-        return []; 
+        return [];
       }
     } catch (error) {
       console.log("Error Fetching Slots", error);
-      setSlots([]); 
+      setSlots([]);
     }
   };
 
@@ -269,7 +269,7 @@ const FacilityBooking = () => {
           setTerms(selectedFacility.terms || "No terms available.");
           setCancellationPolicy(
             selectedFacility.cancellation_policy ||
-              "No cancellation policy available."
+            "No cancellation policy available."
           );
         } else {
           console.log("Facility not found.");
@@ -352,22 +352,17 @@ const FacilityBooking = () => {
   };
 
   const handleDateChange = async (e) => {
-    const rawDate = e.target.value;
-    const selectedDateObj = new Date(rawDate);
-    const formattedDate = formatDate(selectedDateObj);
+    const rawDate = e.target.value; // already in YYYY-MM-DD format
 
-    setDate(formattedDate);
+    setDate(rawDate); // ✅ directly use this (NO Date conversion)
 
     if (facility) {
-      const response = await fetchSlotsForFacility(facility.id, formattedDate);
-      console.log("Raw API response:", response);
+      const slots = await fetchSlotsForFacility(facility.id, rawDate);
 
-      const slots = Array.isArray(response) ? response : response?.slots || [];
-
-      if (slots.length === 0) {
+      if (!slots || slots.length === 0) {
         toast.error("No slots available for this date.");
         setSlots([]);
-        setDate(""); // optional reset
+        setDate("");
         setFormData((prevData) => ({
           ...prevData,
           booking_date: "",
@@ -378,7 +373,7 @@ const FacilityBooking = () => {
       setSlots(slots);
       setFormData((prevData) => ({
         ...prevData,
-        booking_date: formattedDate,
+        booking_date: rawDate, // ✅ store same string
       }));
     }
   };
@@ -489,9 +484,8 @@ const FacilityBooking = () => {
           console.warn(`No user site found for user ${user.id}`);
           return {
             value: user.id,
-            label: `${user.firstname} ${user.lastname} - Unknown Unit - ${
-              user?.user_sites?.[0]?.ownership || "Unknown Ownership"
-            }`,
+            label: `${user.firstname} ${user.lastname} - Unknown Unit - ${user?.user_sites?.[0]?.ownership || "Unknown Ownership"
+              }`,
           };
         }
 
@@ -500,11 +494,9 @@ const FacilityBooking = () => {
 
         return {
           value: user.id,
-          label: `${user.firstname} ${user.lastname} -${
-            unit ? unit.building_name : "Unknown Unit"
-          } - ${unit ? unit.name : "Unknown Unit"} - ${
-            unit ? unit.floor_name : "Unknown Unit"
-          }`,
+          label: `${user.firstname} ${user.lastname} -${unit ? unit.building_name : "Unknown Unit"
+            } - ${unit ? unit.name : "Unknown Unit"} - ${unit ? unit.floor_name : "Unknown Unit"
+            }`,
         };
       });
 
@@ -514,7 +506,7 @@ const FacilityBooking = () => {
     }
   };
 
-  useEffect(() => {}, []);
+  useEffect(() => { }, []);
 
   useEffect(() => {
     if (units.length > 0) {
@@ -526,11 +518,11 @@ const FacilityBooking = () => {
 
   const handleFacilityChange = (e) => {
     const selectedFacilityId = e.target.value;
-    setSelectedSlot(""); 
+    setSelectedSlot("");
 
     fetchSlotsForFacility(selectedFacilityId, date);
 
-    fetchTermsPolicy(selectedFacilityId); 
+    fetchTermsPolicy(selectedFacilityId);
 
     const selectedFacility = facilities.find(
       (facility) => facility.id === parseInt(selectedFacilityId)
@@ -547,13 +539,13 @@ const FacilityBooking = () => {
     const selectedUserId = e.target.value;
     setFormData((prevData) => ({
       ...prevData,
-      user_id: selectedUserId, 
+      user_id: selectedUserId,
     }));
   };
 
   const [searchText, setSearchText] = useState("");
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null); 
+  const [selectedUser, setSelectedUser] = useState(null);
   const filteredOptions = userOptions.filter((user) =>
     user.label.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -571,18 +563,18 @@ const FacilityBooking = () => {
     setSearchText(user.label);
   };
 
-  const [searchFATerm, setSearchFATerm] = useState(""); 
-  const [showDropdown, setShowDropdown] = useState(false); 
+  const [searchFATerm, setSearchFATerm] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
   const [facilityError, setFacilityError] = useState("");
 
   console.log("Line 536 filters", facilities);
   const filteredFacilities = facilities.filter((facility) =>
     facility.fac_name.toLowerCase().includes(searchFATerm.toLowerCase())
-  ); 
+  );
   const handleFacSelect = (facility) => {
     setSearchFATerm(facility.fac_name);
     setShowDropdown(false);
-    handleFacilityChange({ target: { value: facility.id } }); 
+    handleFacilityChange({ target: { value: facility.id } });
   };
 
   useEffect(() => {
@@ -708,30 +700,30 @@ const FacilityBooking = () => {
                   placeholder="Search User"
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                 />
-                  {isDropdownOpen && (
-                    <ul
-                      role="listbox"
-                      className="absolute left-0 top-full z-50 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full shadow-md"
-                    >
-                      {filteredOptions.length > 0 ? (
-                        filteredOptions.map((option) => (
-                          <li
-                            key={option.value} 
-                            role="option"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleUserSelect(option.value);
-                            }}
-                            className="p-2 hover:bg-gray-200 cursor-pointer"
-                          >
-                            {option.label}
-                          </li>
-                        ))
-                      ) : (
-                        <li className="p-2 text-gray-500">No results found</li>
-                      )}
-                    </ul>
-                  )}
+                {isDropdownOpen && (
+                  <ul
+                    role="listbox"
+                    className="absolute left-0 top-full z-50 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full shadow-md"
+                  >
+                    {filteredOptions.length > 0 ? (
+                      filteredOptions.map((option) => (
+                        <li
+                          key={option.value}
+                          role="option"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleUserSelect(option.value);
+                          }}
+                          className="p-2 hover:bg-gray-200 cursor-pointer"
+                        >
+                          {option.label}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-2 text-gray-500">No results found</li>
+                    )}
+                  </ul>
+                )}
 
               </div>
 
@@ -858,13 +850,11 @@ const FacilityBooking = () => {
                       return (
                         <div key={value} className="relative group">
                           <p
-                            className={`border-2 p-1 px-6 border-black font-medium rounded-full transition-all duration-200 ${
-                              isSelected ? "bg-black text-white" : ""
-                            } ${
-                              !isEnabled
+                            className={`border-2 p-1 px-6 border-black font-medium rounded-full transition-all duration-200 ${isSelected ? "bg-black text-white" : ""
+                              } ${!isEnabled
                                 ? "opacity-50 cursor-not-allowed"
                                 : "cursor-pointer"
-                            }`}
+                              }`}
                             onClick={() => handlePaymentChange(value)}
                           >
                             {label}
@@ -1070,15 +1060,21 @@ const FacilityBooking = () => {
                   type="text"
                   id="amount"
                   name="amount"
-                  value={amountt ? amountt : formData.amount || 0} // Conditional display
+                  value={amountt ? amountt : formData.amount || 0} 
                   disabled
                   className="flex p-2 border border-grey-300 rounded"
                 />
               </div>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3">
               <button
-                onClick={postBookFacility} // Trigger the handleSubmit function on click
+                className="p-2 px-4 flex items-center gap-2 bg-red-400 text-white rounded-md font-medium transition-all duration-300"
+                onClick={() => navigate("/bookings")}
+              >
+                <MdClose/> Cancel
+              </button>
+              <button
+                onClick={postBookFacility} 
                 className="p-2 px-4 flex items-center gap-2 bg-green-400 text-white rounded-md font-medium transition-all duration-300"
               >
                 <FaCheck /> Submit
