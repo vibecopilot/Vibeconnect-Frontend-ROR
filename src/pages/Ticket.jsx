@@ -30,6 +30,7 @@ const Ticket = () => {
   const [filterSearch, setFilterSearch] = useState([]);
 
   const [searchText, setSearchText] = useState("");
+  const [edit, setEdit] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [ticketTypeCounts, setTicketTypeCounts] = useState({});
   const [ticketStatusCounts, setTicketStatusCounts] = useState({});
@@ -304,7 +305,7 @@ const Ticket = () => {
     { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-3 bg-cyan-100" },
     { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-3 bg-red-100" },
     { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-3 bg-blue-100" },
-    { key: "Received", value: statusData.received || 0, color: "border-green-300 border border-3 bg-green-100" },
+    { key: "Received", value: siteId === 74 ? statusData.Received :statusData.received || 0, color: "border-green-300 border border-3 bg-green-100" },
     { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-3 bg-yellow-100" },
     { key: "Completed", value: siteId === 74 ? statusData.Completed : statusData["Development Done"] || 0, color: "border-pink-300 border border-3 bg-pink-100" },
     { key: "Work in Progress", value: statusData["Work In Progress"] || statusData["Work in Progress"] || 0, color: "border-purple-300 border border-3 bg-purple-100" },
@@ -313,23 +314,24 @@ const Ticket = () => {
   const dashboardCards =
     siteId === 74
       ? allDashboardCards.filter(card =>
-        ["Total Tickets", "Pending", "Completed", "Work in Progress"].includes(card.key)
+        ["Total Tickets", "Pending", "Completed", "Work in Progress","Received"].includes(card.key)
       )
       : allDashboardCards;
 
 
-const filteredDashboardKeys =
-  siteId === 74
-    ? [
+  const filteredDashboardKeys =
+    siteId === 74
+      ? [
         "Total Tickets",
         "Pending",
         "Completed",
         "Work in Progress",
+        "Received",
         "Complaint",
         "Suggestion",
         "Request",
       ]
-    : Object.keys(dashboardVisibility);
+      : Object.keys(dashboardVisibility);
 
   const ticketTypeCards = [
     { key: "Complaint", value: ticketTypes.Complaint || 0, color: "border-red-300 border border-3 bg-red-100" },
@@ -355,7 +357,7 @@ const filteredDashboardKeys =
 
         setStatusData({
           ...ticketInfoResp.data.by_status,
-          total: ticketInfoResp.data.total, 
+          total: ticketInfoResp.data.total,
         });
 
         setTicketsTypes(ticketInfoResp.data.by_type);
@@ -406,10 +408,33 @@ const filteredDashboardKeys =
         return "Pending";
       case "Development Done":
         return "Development Done";
+      case "Completed":
+        return "Completed"; 
+           case "Received":
+        return "Received"; 
+      case "Work in Progress":
+        return "Work in Progress";
       default:
         return "all";
     }
   };
+
+  const statusOptions =
+    siteId === 74
+      ? [
+        { label: "All", value: "all" },
+        { label: "Pending", value: "pending" },
+        { label: "Received", value: "Received" },
+        { label: "Completed", value: "Completed" }, // API value
+        { label: "Work in Progress", value: "Work in Progress" },
+      ]
+      : [
+        { label: "All", value: "all" },
+        { label: "Open", value: "open" },
+        { label: "Closed", value: "closed" },
+        { label: "Pending", value: "pending" },
+        { label: "Completed", value: "Development Done" }, // API value
+      ];
 
 
   const handleStatusChange = (status) => {
@@ -534,17 +559,17 @@ const filteredDashboardKeys =
                   </p> */}
 
                   {filteredDashboardKeys.map((item) => (
-  <label key={item}>
-    <div className="flex gap-5 px-3 py-1">
-      <input
-        type="checkbox"
-        checked={dashboardVisibility[item]}
-        onChange={() => handleDashboardCheckboxChange(item)}
-      />
-      <div>{item}</div>
-    </div>
-  </label>
-))}
+                    <label key={item}>
+                      <div className="flex gap-5 px-3 py-1">
+                        <input
+                          type="checkbox"
+                          checked={dashboardVisibility[item]}
+                          onChange={() => handleDashboardCheckboxChange(item)}
+                        />
+                        <div>{item}</div>
+                      </div>
+                    </label>
+                  ))}
                 </div>
               )}
             </div>
@@ -552,72 +577,25 @@ const filteredDashboardKeys =
         </div>
 
         <div className="flex sm:flex-row flex-col w-full  gap-2 my-5">
-          <div className="md:flex justify-between grid grid-cols-2 items-center  gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="all"
-                name="status"
-                checked={selectedStatus === "all"}
-                onChange={() => handleStatusChange("all")}
-              />
-              <label htmlFor="all" className="text-sm">
-                All
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="open"
-                name="status"
-                checked={selectedStatus === "open"}
-                onChange={() => handleStatusChange("open")}
-              />
-              <label htmlFor="open" className="text-sm">
-                Open
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="closed"
-                name="status"
-                checked={selectedStatus === "closed"}
-                onChange={() => handleStatusChange("closed")}
-              />
-              <label htmlFor="closed" className="text-sm">
-                Closed
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="pending"
-                name="status"
-                checked={selectedStatus === "pending"}
-                onChange={() => handleStatusChange("pending")}
-              />
-              <label htmlFor="pending" className="text-sm">
-                Pending
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="completed"
-                name="status"
-                checked={selectedStatus === "Development Done"}
-                onChange={() => handleStatusChange("Development Done")}
-              />
-
-              <label htmlFor="completed" className="text-sm">
-                Completed
-              </label>
-            </div>
+          <div className="md:flex justify-between grid grid-cols-2 items-center gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
+            {statusOptions.map((item) => (
+              <div key={item.value} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="status"
+                  checked={selectedStatus === item.value}
+                  onChange={() => handleStatusChange(item.value)}
+                />
+                <label className="text-sm">{item.label}</label>
+              </div>
+            ))}
           </div>
 
-          <div className="flex lg:flex-row flex-col w-full gap-2">
-            <input
+<div
+  className={`flex lg:flex-row flex-col gap-2 ${
+    siteId === 74 ? "w-[1030px]" : "w-full"
+  }`}
+>            <input
               type="text"
               placeholder="Search by Title, Ticket number, Category, Ticket type, Priority or Unit "
               className="border border-gray-400 md:w-full placeholder:text-xs rounded-lg p-2"
