@@ -806,7 +806,7 @@ export const getAdminComplaints = async (
     page: page,
     per_page: perPage,
     ...(search ? { "q[search_cont]": search } : {}),
-    ...(status && status !== "all" ? { "q[issue_status_eq]": status } : {}),
+    ...(status && status !== "all" ? { "q[complaint_status_name_eq]": status } : {}),
     ...(filters.category_id ? { "q[category_type_id_eq]": filters.category_id } : {}),
     ...(filters.issueStatusId ? { "q[issue_status_eq]": filters.issueStatusId } : {}),
     ...(filters.priorityLevel ? { "q[priority_cont]": filters.priorityLevel } : {}),
@@ -10787,6 +10787,14 @@ export const getDeviceConfiguration = async (siteId) =>
       token: token,
     },
   });
+
+  export const deleteDeviceConfiguration = async (id) => {
+   axiosInstance.delete(`/hik_devices/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+};
 export const postComplianceTags = async (data) =>
   axiosInstance.post(`/compliance_tags.json`, data, {
     params: {
