@@ -50,14 +50,15 @@ const EditAmenitySetup = () => {
   );
 
   // ✅ Handle checkbox
-  const handleCheck = (index) => {
+   const handleCheck = (index) => {
     const updated = [...days];
     updated[index].is_active = !updated[index].is_active;
     setDays(updated);
   };
 
+
   // ✅ Handle time change
-  const handleTimeChange1 = (index, field, value) => {
+ const handleTimeChange1 = (index, field, value) => {
     const updated = [...days];
     updated[index][field] = value;
     setDays(updated);
@@ -990,18 +991,27 @@ const EditAmenitySetup = () => {
   };
 
   const handleSlotTimeChange = (index, timeType, timeValue) => {
-    const parts = (timeValue || "").split(":");
-    const hours = (parts[0] || "00").padStart(2, "0");
-    const minutes = (parts[1] || "00").padStart(2, "0");
+    const [hours, minutes] = timeValue.split(":");
     setFormData((prevState) => {
       const updatedSlots = [...prevState.slots];
       updatedSlots[index] = {
         ...updatedSlots[index],
-        [`${timeType}_hr`]: hours,
-        [`${timeType}_min`]: minutes,
+        [`${timeType}_hr`]: hours ?? "",
+        [`${timeType}_min`]: minutes ?? "",
       };
       return { ...prevState, slots: updatedSlots };
     });
+
+    // Auto-populate operational days when slot start or end time is configured
+    if (timeType === "start" || timeType === "end") {
+      setDays((prevDays) =>
+        prevDays.map((day) => ({
+          ...day,
+          ...(timeType === "start" ? { start_time: timeValue } : {}),
+          ...(timeType === "end"   ? { end_time: timeValue }   : {}),
+        }))
+      );
+    }
   };
 
   const handleSlotFieldChange = (index, field, value) => {
@@ -2288,70 +2298,97 @@ const EditAmenitySetup = () => {
         </div>
         <div className="bg-white rounded-xl shadow-md border p-6 mt-2 mb-3 border-gray-300">
           <h2 className="text-lg font-semibold mb-6">Configure Slot</h2>
-
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto ">
             {formData.slots.map((slot, slotIndex) => (
-              <div key={slotIndex} className="flex gap-4 items-end mb-4 min-w-[1200px]">
-
+              <div
+                key={slotIndex}
+                className="flex gap-4 items-end mb-4 min-w-[1200px]"
+              >
                 {/* Start Time */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Start time</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Start time
+                  </label>
                   <input
                     type="time"
                     value={formatTime(slot.start_hr, slot.start_min)}
-                    onChange={(e) => handleSlotTimeChange(slotIndex, "start", e.target.value)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "start", e.target.value)
+                    }
                     className="border rounded-md px-3 py-2"
                   />
                 </div>
 
                 {/* Break Start */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Break Start</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Break Start
+                  </label>
                   <input
                     type="time"
                     value={formatTime(slot.break_start_hr, slot.break_start_min)}
-                    onChange={(e) => handleSlotTimeChange(slotIndex, "break_start", e.target.value)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "break_start", e.target.value)
+                    }
                     className="border rounded-md px-3 py-2"
                   />
                 </div>
 
                 {/* Break End */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Break End</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Break End
+                  </label>
                   <input
                     type="time"
                     value={formatTime(slot.break_end_hr, slot.break_end_min)}
-                    onChange={(e) => handleSlotTimeChange(slotIndex, "break_end", e.target.value)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "break_end", e.target.value)
+                    }
                     className="border rounded-md px-3 py-2"
                   />
                 </div>
 
                 {/* End Time */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">End Time</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    End Time
+                  </label>
                   <input
                     type="time"
                     value={formatTime(slot.end_hr, slot.end_min)}
-                    onChange={(e) => handleSlotTimeChange(slotIndex, "end", e.target.value)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "end", e.target.value)
+                    }
                     className="border rounded-md px-3 py-2"
                   />
                 </div>
 
                 {/* Concurrent Slots */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Concurrent</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Concurrent
+                  </label>
                   <input
                     type="number"
                     min="0"
-                    value={slot.concurrent_slots ?? ""}
-                    onChange={(e) => handleSlotFieldChange(slotIndex, "concurrent_slots", e.target.value)}
+                    value={slot.concurrent_slots || ""}
+                    onChange={(e) =>
+                      handleSlotFieldChange(
+                        slotIndex,
+                        "concurrent_slots",
+                        e.target.value
+                      )
+                    }
                     className="border rounded-md px-3 py-2 w-24"
                   />
                 </div>
 
                 {/* Slot By */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Slot By</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Slot By
+                  </label>
                   <select
                     value={slotBy}
                     onChange={(e) => setSlotBy(e.target.value)}
@@ -2373,99 +2410,37 @@ const EditAmenitySetup = () => {
 
                 {/* Wrap Time */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Wrap Time</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Wrap Time
+                  </label>
                   <input
                     type="number"
                     min="0"
-                    value={slot.wrap_up_time ?? ""}
-                    onChange={(e) => handleSlotFieldChange(slotIndex, "wrap_up_time", e.target.value)}
+                    value={slot.wrap_up_time || ""}
+                    onChange={(e) =>
+                      handleSlotFieldChange(
+                        slotIndex,
+                        "wrap_up_time",
+                        e.target.value
+                      )
+                    }
                     className="border rounded-md px-3 py-2 w-24"
                   />
                 </div>
-
-                {/* Remove Slot */}
-                {formData.slots.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSlot(slotIndex)}
-                    className="text-red-500 hover:text-red-700 mb-2"
-                  >
-                    <FaTrash />
-                  </button>
-                )}
               </div>
             ))}
           </div>
-        </div>
-        {/* <div className="my-4">
-          <h2 className="border-b border-black text-lg mb-1 font-medium">
-            Configure Slot
-          </h2>
-
-          {formData.slots.map((slot, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-3 gap-2 bg-white my-2 rounded-lg"
-            >
-              <div className="flex flex-col">
-                <label htmlFor={`start-time-${index}`} className="font-medium">
-                  Start Time
-                </label>
-                <input
-                  id={`start-time-${index}`}
-                  type="time"
-                  placeholder="Start Time"
-                  value={`${String(slot.start_hr || 0).padStart(
-                    2,
-                    "0",
-                  )}:${String(slot.start_min || 0).padStart(2, "0")}`}
-                  onChange={(e) =>
-                    handleSlotTimeChange(index, "start", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex flex-col mx-3">
-                <label htmlFor={`end-time-${index}`} className="font-medium">
-                  End Time
-                </label>
-                <input
-                  id={`end-time-${index}`}
-                  type="time"
-                  placeholder="End Time"
-                  value={`${String(slot.end_hr || 0).padStart(2, "0")}:${String(
-                    slot.end_min || 0,
-                  ).padStart(2, "0")}`}
-                  onChange={(e) =>
-                    handleSlotTimeChange(index, "end", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex items-end justify-end">
-                <button
-                  type="button"
-                  onClick={() => handleRemoveSlot(index)}
-                  className="text-red-600 hover:text-red-800 p-2"
-                >
-                  <FaTrash size={20} />
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <div className="flex">
-            <button
+          <div className="mt-4">
+            {/* <button
               type="button"
               onClick={handleAddSlot}
-              className="flex items-center px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className=" text-white px-4 py-2 rounded-md"
+              style={{ background: themeColor }}
             >
-              <BiPlusCircle className="h-5 w-5 mr-2" />
-              Add Slot
-            </button>
+              + Add Slot
+            </button> */}
           </div>
-        </div> */}
-
+        </div>
         <div></div>
         <h1 className="text-[18px]"><b>Operational Days : </b></h1>
         <div className="border rounded mt-3">
