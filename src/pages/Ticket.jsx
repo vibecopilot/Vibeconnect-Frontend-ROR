@@ -157,6 +157,32 @@ const Ticket = () => {
     },
   ];
 
+//   useEffect(() => {
+//   // Calculate status counts from currently filtered data
+//   const statusCounts = filteredData.reduce((acc, curr) => {
+//     let status = curr.issue_status || curr.status;
+
+//     if (status === "Oh Hold") status = "On Hold";
+//     if (status === "Development Done") status = "Completed";
+
+//     acc[status] = (acc[status] || 0) + 1;
+//     return acc;
+//   }, {});
+
+//   // Calculate type counts from currently filtered data
+//   const typeCounts = filteredData.reduce((acc, curr) => {
+//     const type = curr.issue_type || curr.complaint_type;
+//     acc[type] = (acc[type] || 0) + 1;
+//     return acc;
+//   }, {});
+
+//   setStatusData({
+//     ...statusCounts,
+//     total: filteredData.length,
+//   });
+
+//   setTicketsTypes(typeCounts);
+// }, [filteredData]);
   const [filterParams, setFilterParams] = useState({
     category_id: "",
     issueStatusId: "",
@@ -441,6 +467,8 @@ const Ticket = () => {
     filterSearchStatus();
     fetchTicketInfo();
   }, []);
+
+
 
   const handleNext = () => {
     setCurrentPage((prevPage) => prevPage + 1);
