@@ -328,10 +328,9 @@ const handleDownload = (type = "pdf") => {
                 >
               Download PDF
             </button>
-
             <button onClick={() => handleDownload("csv")}>
              Download CSV
-             
+
             </button>
             <Link
               to={`/services/edit-service/${id}`}
