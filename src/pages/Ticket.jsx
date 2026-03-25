@@ -8,6 +8,7 @@ import {
   getAdminExport,
   getAdminPerPageComplaints,
   getComplaints,
+  getComplaintsDrill,
   getTicketDashboard,
 } from "../api";
 import { BsEye } from "react-icons/bs";
@@ -30,14 +31,17 @@ const Ticket = () => {
   const [filterSearch, setFilterSearch] = useState([]);
 
   const [searchText, setSearchText] = useState("");
+  const isTypeFilterActive = useRef(false);
   const [edit, setEdit] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedType, setSelectedType] = useState("all");
   const [ticketTypeCounts, setTicketTypeCounts] = useState({});
   const [ticketStatusCounts, setTicketStatusCounts] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [exportAllTickets, setExportAllTickets] = useState([]);
   const allTicketTypes = ["Complaint", "Request", "Suggestion"];
   // const [filterSearch, setFilter] = useState([]);
+
   const [complaints, setComplaints] = useState([]);
   const [perPage, setPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
@@ -96,13 +100,13 @@ const Ticket = () => {
       sortable: true,
     },
     { name: "Floor Name", selector: (row) => row.floor_name, sortable: true },
-    { name: "Unit Name", selector: (row) => row.unit, sortable: true },
+    { name: "Unit Name", selector: (row) => row.unit || row.unit_name, sortable: true },
     {
       name: "Customer Name",
       selector: (row) => row.created_by,
       sortable: true,
     },
-    { name: "Category", selector: (row) => row.category_type, sortable: true },
+    { name: "Category", selector: (row) => row.category_type || row.category, sortable: true },
     {
       name: "Sub Category",
       selector: (row) => row.sub_category,
@@ -115,16 +119,27 @@ const Ticket = () => {
     //   sortable: true,
     //   // maxWidth: "500px",
     // },
-    { name: "Status", selector: (row) => row.issue_status, sortable: true },
-    { name: "Created By", selector: (row) => row.created_by, sortable: true },
+    {
+      name: "Status",
+      selector: (row) => {
+        const status = row.issue_status || row.status;
+
+        // ✅ Fix mapping for UI
+        if (status === "Oh Hold") return "On Hold";
+        if (status === "Development Done") return "Completed";
+
+        return status;
+      },
+      sortable: true,
+    }, { name: "Created By", selector: (row) => row.created_by, sortable: true },
     {
       name: "Created On",
       selector: (row) => dateFormat(row.created_at),
       sortable: true,
     },
     { name: "Priority", selector: (row) => row.priority, sortable: true },
-    { name: "Assigned To", selector: (row) => row.assigned_to, sortable: true },
-    { name: "Ticket Type", selector: (row) => row.issue_type, sortable: true },
+    { name: "Assigned To", selector: (row) => row.assigned_to || row.assigned_to, sortable: true },
+    { name: "Ticket Type", selector: (row) => row.issue_type || row.complaint_type, sortable: true },
     // {
     //   name: "Response TAT",
     //   selector: (row) => row.response_TAT,
@@ -135,16 +150,7 @@ const Ticket = () => {
     //   selector: (row) => row.response_time,
     //   sortable: true,
     // },
-    // {
-    //   name: "Resolution TAT",
-    //   selector: (row) => row.resolution_TAT,
-    //   sortable: true,
-    // },
-    // {
-    //   name: "Resolution Time",
-    //   selector: (row) => row.resolution_time,
-    //   sortable: true,
-    // },
+
     {
       name: "Total Time",
       selector: (row) => getTimeAgo(row.created_at),
@@ -152,6 +158,32 @@ const Ticket = () => {
     },
   ];
 
+  //   useEffect(() => {
+  //   // Calculate status counts from currently filtered data
+  //   const statusCounts = filteredData.reduce((acc, curr) => {
+  //     let status = curr.issue_status || curr.status;
+
+  //     if (status === "Oh Hold") status = "On Hold";
+  //     if (status === "Development Done") status = "Completed";
+
+  //     acc[status] = (acc[status] || 0) + 1;
+  //     return acc;
+  //   }, {});
+
+  //   // Calculate type counts from currently filtered data
+  //   const typeCounts = filteredData.reduce((acc, curr) => {
+  //     const type = curr.issue_type || curr.complaint_type;
+  //     acc[type] = (acc[type] || 0) + 1;
+  //     return acc;
+  //   }, {});
+
+  //   setStatusData({
+  //     ...statusCounts,
+  //     total: filteredData.length,
+  //   });
+
+  //   setTicketsTypes(typeCounts);
+  // }, [filteredData]);
   const [filterParams, setFilterParams] = useState({
     category_id: "",
     issueStatusId: "",
@@ -165,6 +197,8 @@ const Ticket = () => {
     endDate: "",
     globalSearch: "",
   });
+
+
 
   const [dashboardVisibility, setDashboardVisibility] = useState({
     "Total Tickets": true,
@@ -272,14 +306,15 @@ const Ticket = () => {
       setComplaints(complaints);
       setTotalRows(totalCount);
 
-      const statusCounts = complaints.reduce((acc, curr) => {
-        acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
-        return acc;
-      }, {});
-      setTicketStatusCounts(statusCounts);
+      // const statusCounts = complaints.reduce((acc, curr) => {
+      //   acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
+      //   return acc;
+      // }, {});
+      // setTicketStatusCounts(statusCounts);
 
       const typeCounts = complaints.reduce((acc, curr) => {
-        acc[curr.issue_type] = (acc[curr.issue_type] || 0) + 1;
+        const type = curr.issue_type || curr.complaint_type;
+        acc[type] = (acc[type] || 0) + 1;
         return acc;
       }, {});
       setTicketTypeCounts(typeCounts);
@@ -290,22 +325,76 @@ const Ticket = () => {
     }
   };
 
+
   useEffect(() => {
+    // ❌ Skip normal API if type filter is active
+    if (isTypeFilterActive.current) return;
+    if (selectedType !== "all") return;
+
     const apiStatus = getApiStatus(selectedStatus);
-    fetchData(currentPage, perPage, searchText, apiStatus, filterParams);
-  }, [currentPage, perPage, searchText, selectedStatus, filterParams]);
 
+    fetchData(currentPage, perPage, searchText, apiStatus, {
+      ...filterParams,
+    });
+  }, [currentPage, perPage, searchText, selectedStatus, filterParams, selectedType]);
 
+  const handleStatusCardClick = (statusKey) => {
+    isTypeFilterActive.current = false;   // ✅ allow normal API again
+
+    if (statusKey === "Total Tickets") {
+      setSelectedStatus("all");
+    } else {
+      setSelectedStatus(statusKey);
+    }
+
+    setSelectedType("all"); // reset type filter
+    setCurrentPage(1);
+  };
+
+  const handleTypeCardClick = async (typeKey) => {
+    isTypeFilterActive.current = true;
+
+    setSelectedType(typeKey);
+    setSelectedStatus("all");
+    setCurrentPage(1);
+    setIsLoading(true);
+
+    try {
+      const response = await getComplaintsDrill(
+        "type",
+        typeKey,
+        siteId,
+        1
+      );
+
+      const data = response?.data;
+
+      // ✅ FIX HERE
+      const complaints =
+        data?.by_type?.[typeKey]?.records || [];
+
+      const totalCount =
+        data?.by_type?.[typeKey]?.count || 0;
+
+      setFilteredData(complaints);
+      setComplaints(complaints);
+      setTotalRows(totalCount);
+    } catch (error) {
+      console.error("Error fetching type-wise data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const [ticketTypes, setTicketsTypes] = useState({});
   const [statusData, setStatusData] = useState({});
 
   const allDashboardCards = [
     { key: "Total Tickets", value: statusData.total || 0, color: "border border-blue-300 border-3 bg-blue-100" },
     { key: "Pending", value: statusData.Pending || 0, color: "border border-3 border-red-300 bg-red-100" },
-    { key: "On Hold", value: statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-3 bg-cyan-100" },
+    { key: "On Hold", value: statusData["On Hold"] || statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-3 bg-cyan-100" },
     { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-3 bg-red-100" },
     { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-3 bg-blue-100" },
-    { key: "Received", value: siteId === 74 ? statusData.Received :statusData.received || 0, color: "border-green-300 border border-3 bg-green-100" },
+    { key: "Received", value: siteId === 74 ? statusData.Received : statusData.received || 0, color: "border-green-300 border border-3 bg-green-100" },
     { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-3 bg-yellow-100" },
     { key: "Completed", value: siteId === 74 ? statusData.Completed : statusData["Development Done"] || 0, color: "border-pink-300 border border-3 bg-pink-100" },
     { key: "Work in Progress", value: statusData["Work In Progress"] || statusData["Work in Progress"] || 0, color: "border-purple-300 border border-3 bg-purple-100" },
@@ -314,7 +403,7 @@ const Ticket = () => {
   const dashboardCards =
     siteId === 74
       ? allDashboardCards.filter(card =>
-        ["Total Tickets", "Pending", "Completed", "Work in Progress","Received"].includes(card.key)
+        ["Total Tickets", "Pending", "Completed", "Work in Progress", "Received"].includes(card.key)
       )
       : allDashboardCards;
 
@@ -350,37 +439,42 @@ const Ticket = () => {
 
 
 
+  // Re-fetches dashboard counts (status cards + ticket-type cards) with the given filters.
+  // Called on mount with empty filters (= initial totals) and on every filter apply/reset.
+  const fetchDashboardCounts = async (filters = {}) => {
+    try {
+      const ticketInfoResp = await getTicketDashboard({ filters });
+      setStatusData({
+        ...ticketInfoResp.data.by_status,
+        total: ticketInfoResp.data.total,
+      });
+      setTicketsTypes(ticketInfoResp.data.by_type);
+    } catch (error) {
+      console.log("Dashboard count error:", error);
+    }
+  };
+
+  // Initial load — fetch search data once
   useEffect(() => {
-    const fetchTicketInfo = async () => {
-      try {
-        const ticketInfoResp = await getTicketDashboard();
-
-        setStatusData({
-          ...ticketInfoResp.data.by_status,
-          total: ticketInfoResp.data.total,
-        });
-
-        setTicketsTypes(ticketInfoResp.data.by_type);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
     const filterSearchStatus = async () => {
       try {
         const searchAllTickets = await getAdminComplaints();
         const searchResp = searchAllTickets?.data?.complaints;
         setFilterSearch(searchResp);
-
-        console.log(searchResp);
       } catch (error) {
         console.log(error);
       }
     };
     filterSearchStatus();
-    fetchTicketInfo();
   }, []);
+
+  // Re-fetch dashboard counts whenever filterParams changes (filter applied OR reset)
+  // On mount filterParams is the initial empty object → shows unfiltered totals
+  useEffect(() => {
+    fetchDashboardCounts(filterParams);
+  }, [filterParams]);
+
+
 
   const handleNext = () => {
     setCurrentPage((prevPage) => prevPage + 1);
@@ -399,23 +493,63 @@ const Ticket = () => {
   };
 
   const getApiStatus = (status) => {
-    switch (status) {
-      case "open":
-        return "Open";
-      case "closed":
-        return "Closed";
-      case "pending":
-        return "Pending";
-      case "Development Done":
-        return "Development Done";
-      case "Completed":
-        return "Completed"; 
-           case "Received":
-        return "Received"; 
-      case "Work in Progress":
-        return "Work in Progress";
-      default:
-        return "all";
+    if (status === "all") return "all";
+
+    // 🔥 Handle Completed mapping
+    if (status === "Completed") {
+      return siteId === 74 ? "Completed" : "Development Done";
+    }
+
+    if (status === "On Hold") {
+      return "Oh Hold";
+    }
+
+    return status;
+  };
+
+  const handlePageChange = async (page) => {
+    setCurrentPage(page);
+
+    if (selectedType !== "all") {
+      setIsLoading(true);
+      try {
+        const response = await getComplaintsDrill(
+          "type",
+          selectedType,
+          siteId,
+          page
+        );
+
+        const data = response?.data;
+
+        const complaints =
+          data?.by_type?.[selectedType]?.records || [];
+
+        const totalCount =
+          data?.by_type?.[selectedType]?.count || 0;
+
+        // ✅ map data (VERY IMPORTANT)
+        const formattedData = complaints.map((item) => ({
+          ...item,
+          issue_type: item.complaint_type,
+          issue_status: item.status,
+          category_type: item.category,
+          unit: item.unit_name,
+        }));
+
+        setFilteredData(formattedData);
+        setTotalRows(totalCount);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      const apiStatus = getApiStatus(selectedStatus);
+
+      fetchData(page, perPage, searchText, apiStatus, {
+        ...filterParams,
+      });
     }
   };
 
@@ -526,7 +660,11 @@ const Ticket = () => {
             {dashboardCards
               .filter((item) => dashboardVisibility[item.key])
               .map((item) => (
-                <div key={item.key} className={`rounded-xl px-6 py-3 shadow-md text-center min-w-[150px] ${item.color}`}>
+                <div
+                  key={item.key}
+                  onClick={() => handleStatusCardClick(item.key)}
+                  className={`rounded-xl px-6 py-3 shadow-md text-center min-w-[150px] cursor-pointer hover:scale-105 transition ${item.color}`}
+                >
                   <p className="text-sm font-semibold">{item.key}</p>
                   <p className="text-lg font-bold">{item.value}</p>
                 </div>
@@ -534,106 +672,66 @@ const Ticket = () => {
             {ticketTypeCards
               .filter((item) => dashboardVisibility[item.key])
               .map((item) => (
-                <div key={item.key} className={`rounded-xl px-6 py-3 shadow-md text-center min-w-[150px] ${item.color}`}>
+                <div
+                  key={item.key}
+                  onClick={() => handleTypeCardClick(item.key)}
+                  className={`rounded-xl px-6 py-3 shadow-md text-center min-w-[150px] cursor-pointer hover:scale-105 transition ${item.color}`}
+                >
                   <p className="text-sm font-semibold">{item.key}</p>
                   <p className="text-lg font-bold">{item.value}</p>
                 </div>
               ))}
           </div>
-          <div className="flex justify-end w-full">
-            <div className="relative" ref={dashboardRef}>
-              <button
-                onClick={() => setShowDashboardFilter(!showDashboardFilter)}
-                style={{ background: themeColor }}
-                className="font-semibold text-white px-4 py-2 flex gap-2 items-center rounded-md whitespace-nowrap"
-              >
-                Dashboard Filter
-                {showDashboardFilter ? <IoIosArrowDown /> : <MdKeyboardArrowRight />}
-              </button>
 
-              {showDashboardFilter && (
-                <div className="absolute right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
-
-                  {/* <p className="px-3 text-xs font-bold text-gray-500">
-                    Dashboard Cards
-                  </p> */}
-
-                  {filteredDashboardKeys.map((item) => (
-                    <label key={item}>
-                      <div className="flex gap-5 px-3 py-1">
-                        <input
-                          type="checkbox"
-                          checked={dashboardVisibility[item]}
-                          onChange={() => handleDashboardCheckboxChange(item)}
-                        />
-                        <div>{item}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
-        <div className="flex sm:flex-row flex-col w-full  gap-2 my-5">
-          <div className="md:flex justify-between grid grid-cols-2 items-center gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
-            {statusOptions.map((item) => (
-              <div key={item.value} className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="status"
-                  checked={selectedStatus === item.value}
-                  onChange={() => handleStatusChange(item.value)}
-                />
-                <label className="text-sm">{item.label}</label>
-              </div>
-            ))}
-          </div>
+        <div className="flex justify-between items-center w-full gap-4 flex-wrap mt-6">
 
-<div
-  className={`flex lg:flex-row flex-col gap-2 ${
-    siteId === 74 ? "w-[1030px]" : "w-full"
-  }`}
->            <input
+          {/* 🔹 LEFT SIDE (Search) */}
+          <div className="flex w-full md:w-[40%]">
+            <input
               type="text"
-              placeholder="Search by Title, Ticket number, Category, Ticket type, Priority or Unit "
-              className="border border-gray-400 md:w-full placeholder:text-xs rounded-lg p-2"
+              placeholder="Search by Title, Ticket number, Category, Ticket type, Priority or Unit"
+              className="border border-gray-400 w-full placeholder:text-xs rounded-lg p-2"
               value={searchText}
               onChange={handleSearch}
             />
+          </div>
+
+          {/* 🔹 RIGHT SIDE (Buttons) */}
+          <div className="flex gap-2 flex-wrap justify-end w-full md:w-auto">
 
             <Link
               to={"/tickets/create-ticket"}
               style={{ background: themeColor }}
-              className=" font-semibold  text-white duration-300 transition-all  p-2 rounded-md  cursor-pointer text-center flex items-center gap-2 justify-center"
-            // onClick={() => setShowCountry(!showCountry)}
+              className="text-white p-2 rounded-md flex items-center gap-2"
             >
               <PiPlusCircle size={20} />
               Add
             </Link>
+
             <button
-              className=" font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
+              className="text-white px-4 p-2 flex gap-2 items-center rounded-md"
               style={{ background: themeColor }}
               onClick={() => setFilterModal(!filterModal)}
             >
               <BiFilterAlt />
               Filter
             </button>
+
+            {/* Hide Columns */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setHideColumn(!hideColumn)}
                 style={{ background: themeColor }}
-                className="font-semibold text-white px-4 p-2 flex gap-2 items-center justify-center rounded-md whitespace-nowrap w-full"
+                className="text-white px-4 p-2 flex gap-2 items-center rounded-md"
               >
                 Hide Columns
                 {hideColumn ? <IoIosArrowDown /> : <MdKeyboardArrowRight />}
               </button>
-              {hideColumn && (
-                <div className="absolute py-2 right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
 
-                  {/* Table Columns */}
-                  {/* <p className="px-3 text-xs font-bold text-gray-500">Table Columns</p> */}
+              {hideColumn && (
+                <div className="absolute right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
                   {Object.keys(columnVisibility).map((column) => (
                     <label key={column}>
                       <div className="flex gap-5 px-3 py-1">
@@ -649,64 +747,96 @@ const Ticket = () => {
                 </div>
               )}
             </div>
+
+            {/* Export */}
             <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              className="text-white px-4 py-2 rounded"
               onClick={exportAllToExcel}
               style={{ background: themeColor }}
             >
               Export
             </button>
+
+            {/* Dashboard Filter */}
+            <div className="relative" ref={dashboardRef}>
+              <button
+                onClick={() => setShowDashboardFilter(!showDashboardFilter)}
+                style={{ background: themeColor }}
+                className="text-white px-4 py-2 flex gap-2 items-center rounded-md"
+              >
+                Dashboard Filter
+                {showDashboardFilter ? <IoIosArrowDown /> : <MdKeyboardArrowRight />}
+              </button>
+
+              {showDashboardFilter && (
+                <div className="absolute right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
+                  {filteredDashboardKeys.map((item) => (
+                    <label key={item}>
+                      <div className="flex gap-5 px-3 py-1">
+                        <input
+                          type="checkbox"
+                          checked={dashboardVisibility[item]}
+                          onChange={() => handleDashboardCheckboxChange(item)}
+                        />
+                        <div>{item}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
-
-        {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
-            />
-          </div>
-        ) : filteredData.length === 0 ? (
-          <div className="flex items-center justify-center h-full py-10">
-            <div className="flex flex-col items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-8 py-6 shadow-sm">
-
-              <FaInbox className="text-4xl text-gray-400" />
-
-              <p className="text-gray-600 text-sm font-medium">
-                No submissions here
-              </p>
-
-              <p className="text-gray-400 text-xs">
-                Once submissions are available, they will appear here.
-              </p>
-
+        <div className="mt-3">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-full">
+              <DNA
+                visible={true}
+                height="120"
+                width="120"
+                ariaLabel="dna-loading"
+                wrapperStyle={{}}
+                wrapperClass="dna-wrapper"
+              />
             </div>
-          </div>
-        ) : (
-          <DataTable
-            responsive
-            columns={columns.filter((column) => columnVisibility[column.name])}
-            data={filteredData}
-            customStyles={customStyle}
-            fixedHeader
-            fixedHeaderScrollHeight="500px"
-            pagination
-            paginationServer
-            paginationTotalRows={totalRows}
-            paginationPerPage={perPage}
-            paginationDefaultPage={currentPage}
-            paginationRowsPerPageOptions={[10, 20, 30, 50]}
-            onChangePage={(page) => setCurrentPage(page)}
-            onChangeRowsPerPage={handlePerRowsChange}
-          />
-        )}
-        {/* </div> */}
+          ) : filteredData.length === 0 ? (
+            <div className="flex items-center justify-center h-full py-10">
+              <div className="flex flex-col items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-8 py-6 shadow-sm">
 
-        {/* <div className="flex justify-end m-2 gap-2 items-center">
+                <FaInbox className="text-4xl text-gray-400" />
+
+                <p className="text-gray-600 text-sm font-medium">
+                  No submissions here
+                </p>
+
+                <p className="text-gray-400 text-xs">
+                  Once submissions are available, they will appear here.
+                </p>
+
+              </div>
+            </div>
+          ) : (
+            <DataTable
+              responsive
+              columns={columns.filter((column) => columnVisibility[column.name])}
+              data={filteredData}
+              customStyles={customStyle}
+              fixedHeader
+              fixedHeaderScrollHeight="500px"
+              pagination
+              paginationServer
+              paginationTotalRows={totalRows}
+              paginationPerPage={perPage}
+              paginationDefaultPage={currentPage}
+              paginationRowsPerPageOptions={[10, 20, 30, 50]}
+              onChangePage={handlePageChange}
+              onChangeRowsPerPage={handlePerRowsChange}
+            />
+          )}
+          {/* </div> */}
+
+          {/* <div className="flex justify-end m-2 gap-2 items-center">
           <button
             onClick={handlePrevious}
             className=" px-2   disabled:opacity-50 disabled:shadow-none shadow-custom-all-sides rounded-full"
@@ -723,19 +853,21 @@ const Ticket = () => {
             <MdKeyboardArrowRight size={30} />
           </button>
         </div> */}
+        </div>
+        {filterModal && (
+          <TicketFilterModal
+            onclose={() => setFilterModal(false)}
+            fetchData={fetchData}
+            currentPage={currentPage}
+            perPage={perPage}
+            setFilterParams={setFilterParams}
+            setSearchText={setSearchText}
+            setSelectedStatus={setSelectedStatus}
+            setCurrentPage={setCurrentPage}
+            filterParams={filterParams}
+          />
+        )}
       </div>
-      {filterModal && (
-        <TicketFilterModal
-          onclose={() => setFilterModal(false)}
-          fetchData={fetchData}
-          currentPage={currentPage}
-          perPage={perPage}
-          setFilterParams={setFilterParams}
-          setSearchText={setSearchText}
-          setSelectedStatus={setSelectedStatus}
-          setCurrentPage={setCurrentPage}
-        />
-      )}
     </section>
   );
 };

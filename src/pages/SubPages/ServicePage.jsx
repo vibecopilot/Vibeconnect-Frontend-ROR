@@ -19,6 +19,10 @@ const ServicePage = () => {
   const [servicess, setServices] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
 
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
   /* ===== BULK UPLOAD STATES ===== */
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState(null);
@@ -28,6 +32,29 @@ const ServicePage = () => {
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString();
+  };
+
+  const filterByDate = () => {
+    if (!startDate || !endDate) {
+      toast.error("Select both dates");
+      return;
+    }
+
+    const start = new Date(startDate).setHours(0, 0, 0, 0);
+    const end = new Date(endDate).setHours(23, 59, 59, 999);
+
+    const filtered = servicess.filter((item) => {
+      const time = new Date(item.created_at).getTime();
+      return time >= start && time <= end;
+    });
+
+    if (!filtered.length) {
+      toast.error("No data found for selected range");
+      return;
+    }
+
+    exportToExcel(filtered);
+    setShowExportModal(false);
   };
 
   const column = [
@@ -92,50 +119,60 @@ const ServicePage = () => {
     }
   };
 
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(filteredData);
+  const exportToExcel = (data) => {
+    const formatted = data.map((item) => ({
+      Name: item.name,
+      Building: item.building_name,
+      Floor: item.floor_name,
+      User: item.user_name,
+      Created_On: dateFormat(item.created_at),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(formatted);
     const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer]);
+    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+    const blob = new Blob([buffer]);
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "service_data.xlsx";
     link.click();
   };
 
+
   const handleSelectedRows = (rows) => {
     setSelectedRows(rows.map((row) => row.id));
   };
 
- const handleQrDownload = async () => {
-  if (!selectedRows.length) {
-    return toast.error("Please select at least one service");
-  }
+  const handleQrDownload = async () => {
+    if (!selectedRows.length) {
+      return toast.error("Please select at least one service");
+    }
 
-  const toastId = toast.loading("Downloading QR...");
+    const toastId = toast.loading("Downloading QR...");
 
-  try {
-    // Call the new API
-    const response = await softServiceDownloadQrCode(selectedRows);
+    try {
+      // Call the new API
+      const response = await softServiceDownloadQrCode(selectedRows);
 
-    // Convert blob to URL and trigger download
-    const blob = new Blob([response.data], { type: "application/pdf" });
-    const url = window.URL.createObjectURL(blob);
+      // Convert blob to URL and trigger download
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "qr_codes.pdf";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "qr_codes.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
-    toast.success("Downloaded successfully", { id: toastId });
-  } catch (error) {
-    console.error("Download failed:", error);
-    toast.error("Failed to download QR codes", { id: toastId });
-  }
-};
+      toast.success("Downloaded successfully", { id: toastId });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download QR codes", { id: toastId });
+    }
+  };
 
 
   /* ===== IMPORT EXCEL ===== */
@@ -190,18 +227,18 @@ const ServicePage = () => {
             </button>
 
             <button
-  onClick={handleQrDownload}
-  className="flex items-center gap-2 text-white px-4 py-2 rounded"
-  style={{ background: themeColor }}
->
-  <FaDownload /> QR Code
-</button>
+              onClick={handleQrDownload}
+              className="flex items-center gap-2 text-white px-4 py-2 rounded"
+              style={{ background: themeColor }}
+            >
+              <FaDownload /> QR Code
+            </button>
 
 
             <button
-              onClick={exportToExcel}
-              className="text-white px-4 py-2 rounded"
+              onClick={() => setShowExportModal(true)}
               style={{ background: themeColor }}
+              className="text-white px-4 py-2"
             >
               Export
             </button>
@@ -266,24 +303,78 @@ const ServicePage = () => {
                 Import
               </button>
 
-             <button
-  onClick={() => {
-    const link = document.createElement("a");
-    link.href = "/sample.pdf";   // jo bhi file ka naam hai
-    link.download = "sample.pdf";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }}
-  className="bg-black text-white px-4 py-2 rounded"
->
-  Download Sample Format
-</button>
+              <button
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = "/sample.pdf";   // jo bhi file ka naam hai
+                  link.download = "sample.pdf";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="bg-black text-white px-4 py-2 rounded"
+              >
+                Download Sample Format
+              </button>
 
             </div>
           </div>
         </div>
       )}
+
+      {showExportModal && (
+  <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+    <div className="bg-white p-6 rounded w-[350px] relative">
+
+      {/* ✅ CLOSE ICON */}
+      <button
+        className="absolute top-3 right-3 text-gray-500 hover:text-black"
+        onClick={() => setShowExportModal(false)}
+      >
+        <FaTimes />
+      </button>
+
+      <h2 className="font-bold mb-4">Export By Date Range</h2>
+
+      <label className="text-[14px]">
+        <b>Start Date :</b>
+      </label>
+      <input
+        type="date"
+        value={startDate}
+        onChange={(e) => setStartDate(e.target.value)}
+        className="border p-2 w-full mb-2 rounded-md"
+      />
+
+      <label className="text-[14px]">
+        <b>End Date :</b>
+      </label>
+      <input
+        type="date"
+        value={endDate}
+        onChange={(e) => setEndDate(e.target.value)}
+        className="border p-2 w-full mb-4 rounded-md"
+      />
+
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setShowExportModal(false)}
+          className="bg-gray-400 text-white px-4 py-2 rounded-lg"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={filterByDate}
+          className="text-white px-4 py-2 rounded-lg"
+          style={{ background: themeColor }}
+        >
+          Export
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </section>
   );
 };
