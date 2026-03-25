@@ -10788,8 +10788,8 @@ export const getDeviceConfiguration = async (siteId) =>
     },
   });
 
-  export const deleteDeviceConfiguration = async (id) => {
-   axiosInstance.delete(`/hik_devices/${id}.json`, {
+export const deleteDeviceConfiguration = async (id) => {
+  axiosInstance.delete(`/hik_devices/${id}.json`, {
     params: {
       token: token,
     },
