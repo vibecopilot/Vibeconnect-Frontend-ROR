@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { FaCheck, FaTimes } from "react-icons/fa";
 // import { useSelector } from "react-redux";
-// import toast from "react-hot-toast";
+import toast from "react-hot-toast";
 // import { getItemInLocalStorage } from "../../utils/localStorage";
 import { BiEdit, BiUser } from "react-icons/bi";
 import { DNA } from "react-loader-spinner";
@@ -26,8 +26,7 @@ const UserSetup = () => {
   // console.log("akshay", akshay);
   // const users = akshay.users || [];
   // console.log("Users:", users);
-  useEffect(() => {
-    const fetchUsers = async () => {
+  const fetchUsers = async () => {
       try {
         setLoading(true); // Start loading
         const setupUsers = await getSetupUsers();
@@ -43,7 +42,9 @@ const UserSetup = () => {
         setLoading(false); // Stop loading
       }
     };
-    fetchUsers();
+
+  useEffect(() => {
+        fetchUsers();
   }, []);
 
  const tabFilteredUsers = useMemo(() => {
@@ -127,17 +128,48 @@ const UserSetup = () => {
     });
   }, [searchText, tabFilteredUsers]);
 
-  const handleUserApproval = async (id, isApproved) => {
-    try {
-      const token = localStorage.getItem("TOKEN");
-      await updateUserAdminApproval(id, { is_admin_approved: isApproved }, token);
-      toast.success(isApproved ? "User approved successfully" : "User rejected successfully");
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, is_admin_approved: isApproved } : u)));
-      setFilteredData((prev) => prev.map((u) => (u.id === id ? { ...u, is_admin_approved: isApproved } : u)));
-    } catch (err) {
-      toast.error("Failed to update approval");
+const handleUserApproval = async (id, isApproved) => {
+  const token = localStorage.getItem("TOKEN");
+
+  setUsers((prev) =>
+    prev.map((u) =>
+      u.id === id
+        ? {
+            ...u,
+            is_admin_approved: isApproved,
+            user_status: true,
+          }
+        : u
+    )
+  );
+
+  try {
+    await updateUserAdminApproval(
+      id,
+      {
+        user_status: true,
+        is_admin_approved: isApproved,
+      },
+      token
+    );
+
+    // ✅ FIXED TOAST
+    if (isApproved === true) {
+      toast.success("User approved successfully ✅");
+    } else {
+      toast.error("User rejected successfully ❌");
     }
-  };
+
+  } catch (err) {
+    console.error(err);
+
+    toast.error("Failed to update approval ❌");
+
+    // rollback if failed
+    fetchUsers();
+  }
+};
+
 const handleStatusToggle = async (row) => {
   const newStatus = !row.user_status;
 

@@ -1958,7 +1958,7 @@ export const getUserCount = async () =>
   });
 
 export const updateUserAdminApproval = async (id, payload, token) =>
-  axiosInstance.patch(`users/${id}/update_approvals.json`, payload, {
+  axiosInstance.patch(`users/${id}/update_status.json`, payload, {
     params: { token },
   });
 
