@@ -11,6 +11,7 @@ const TicketFilterModal = ({
   setSearchText,
   setSelectedStatus,
   setCurrentPage,
+  filterParams,
 }) => {
   const building = getItemInLocalStorage("Building");
   const [floor, setFloor] = useState([]);
@@ -18,18 +19,13 @@ const TicketFilterModal = ({
   const categories = getItemInLocalStorage("categories");
   const statuses = getItemInLocalStorage("STATUS");
   const [assignedUser, setAssignedUser] = useState([]);
-  const [formData, setFormData] = useState({
-    category_id: "",
-    issueStatusId: "",
-    priorityLevel: "",
-    assign: "",
-    createBy: "",
-    building_id: "",
-    floor_id: "",
-    unit_id: "",
-    startDate: "",
-    endDate: "",
-  });
+  const [formData, setFormData] = useState(filterParams || {});
+
+
+  useEffect(() => {
+    setFormData(filterParams || {});
+  }, [filterParams]);
+
   const buildingChange = async (e) => {
     async function fetchFloor(floorID) {
       try {
@@ -52,20 +48,28 @@ const TicketFilterModal = ({
       }
     }
 
-    if (e.target.type === "select-one" && e.target.name === "building_id") {
+    if (e.target.name === "building_id") {
       const BuildID = Number(e.target.value);
+
       await fetchFloor(BuildID);
 
       setFormData({
         ...formData,
         building_id: BuildID,
+        floor_id: "",   // ✅ reset floor
+        unit_id: "",    // ✅ reset unit
       });
-    } else if (e.target.type === "select-one" && e.target.name === "floor_id") {
+
+      setUnitName([]); // ✅ clear units
+    } else if (e.target.name === "floor_id") {
       const UnitID = Number(e.target.value);
+
       await getUnit(UnitID);
+
       setFormData({
         ...formData,
         floor_id: UnitID,
+        unit_id: "", // ✅ reset unit
       });
     } else {
       setFormData({
@@ -75,36 +79,65 @@ const TicketFilterModal = ({
     }
   };
 
-    
-const handleFilterData = async () => {
-  try {
-    const searchValue = formData.createBy?.trim() || "";
 
-    const activeFilters = {
-      category_id: formData.category_id,
-      issueStatusId: formData.issueStatusId,
-      priorityLevel: formData.priorityLevel,
-      assign: formData.assign,
-      building_id: formData.building_id,
-      floor_id: formData.floor_id,
-      unit_id: formData.unit_id,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
+  const handleFilterData = async () => {
+    try {
+      const searchValue = formData.createBy?.trim() || "";
+
+      const activeFilters = {
+        category_id: formData.category_id,
+        issueStatusId: formData.issueStatusId,
+        priorityLevel: formData.priorityLevel,
+        assign: formData.assign,
+        building_id: formData.building_id,
+        floor_id: formData.floor_id,
+        unit_id: formData.unit_id,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+      };
+
+      setFilterParams({ ...activeFilters, globalSearch: searchValue });
+      setSearchText(searchValue);
+      setSelectedStatus("all");
+      setCurrentPage(1);
+
+      await fetchData(1, perPage, searchValue, "all", activeFilters);
+
+      onclose();
+    } catch (error) {
+      console.error("Error filter Data:", error);
+    }
+  };
+
+  useEffect(() => {
+    const loadDependentData = async () => {
+      try {
+        // 👉 Load floors if building exists
+        if (filterParams?.building_id) {
+          const floorsRes = await getFloors(filterParams.building_id);
+          const floorsData = floorsRes.data.map((item) => ({
+            name: item.name,
+            id: item.id,
+          }));
+          setFloor(floorsData);
+
+          // 👉 Load units if floor exists
+          if (filterParams?.floor_id) {
+            const unitsRes = await getUnits(filterParams.floor_id);
+            const unitsData = unitsRes.data.map((item) => ({
+              name: item.name,
+              id: item.id,
+            }));
+            setUnitName(unitsData);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading dependent data:", error);
+      }
     };
 
-    setFilterParams({ ...activeFilters, globalSearch: searchValue });
-    setSearchText(searchValue);
-    setSelectedStatus("all");
-    setCurrentPage(1);
-
-    await fetchData(1, perPage, searchValue, "all", activeFilters);
-
-    onclose();
-  } catch (error) {
-    console.error("Error filter Data:", error);
-  }
-};
-
+    loadDependentData();
+  }, [filterParams]);
 
   const handleReset = () => {
     const resetData = {

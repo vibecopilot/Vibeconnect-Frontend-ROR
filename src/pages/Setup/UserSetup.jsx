@@ -46,21 +46,33 @@ const UserSetup = () => {
     fetchUsers();
   }, []);
 
-  const tabFilteredUsers = useMemo(() => {
-    if (activeTab === "approved") {
-      return users.filter((user) => user.is_admin_approved === true);
-    }
+ const tabFilteredUsers = useMemo(() => {
+  if (activeTab === "approved") {
+    return users.filter(
+      (user) =>
+        user.is_admin_approved === true ||
+        user.user_type === "pms_admin" // always approved
+    );
+  }
 
-    if (activeTab === "pending") {
-      return users.filter((user) => user.is_admin_approved === null);
-    }
+  if (activeTab === "pending") {
+    return users.filter(
+      (user) =>
+        user.is_admin_approved === null &&
+        user.user_type !== "pms_admin" // exclude admin
+    );
+  }
 
-    if (activeTab === "rejected") {
-      return users.filter((user) => user.is_admin_approved === false);
-    }
+  if (activeTab === "rejected") {
+    return users.filter(
+      (user) =>
+        user.is_admin_approved === false &&
+        user.user_type !== "pms_admin"
+    );
+  }
 
-    return users;
-  }, [users, activeTab]);
+  return users;
+}, [users, activeTab]);
 
 
   const handleSearch = (e) => {
