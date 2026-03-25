@@ -41,6 +41,7 @@ const Ticket = () => {
   const [exportAllTickets, setExportAllTickets] = useState([]);
   const allTicketTypes = ["Complaint", "Request", "Suggestion"];
   // const [filterSearch, setFilter] = useState([]);
+
   const [complaints, setComplaints] = useState([]);
   const [perPage, setPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
@@ -149,7 +150,7 @@ const Ticket = () => {
     //   selector: (row) => row.response_time,
     //   sortable: true,
     // },
- 
+
     {
       name: "Total Time",
       selector: (row) => getTimeAgo(row.created_at),
@@ -157,32 +158,32 @@ const Ticket = () => {
     },
   ];
 
-//   useEffect(() => {
-//   // Calculate status counts from currently filtered data
-//   const statusCounts = filteredData.reduce((acc, curr) => {
-//     let status = curr.issue_status || curr.status;
+  //   useEffect(() => {
+  //   // Calculate status counts from currently filtered data
+  //   const statusCounts = filteredData.reduce((acc, curr) => {
+  //     let status = curr.issue_status || curr.status;
 
-//     if (status === "Oh Hold") status = "On Hold";
-//     if (status === "Development Done") status = "Completed";
+  //     if (status === "Oh Hold") status = "On Hold";
+  //     if (status === "Development Done") status = "Completed";
 
-//     acc[status] = (acc[status] || 0) + 1;
-//     return acc;
-//   }, {});
+  //     acc[status] = (acc[status] || 0) + 1;
+  //     return acc;
+  //   }, {});
 
-//   // Calculate type counts from currently filtered data
-//   const typeCounts = filteredData.reduce((acc, curr) => {
-//     const type = curr.issue_type || curr.complaint_type;
-//     acc[type] = (acc[type] || 0) + 1;
-//     return acc;
-//   }, {});
+  //   // Calculate type counts from currently filtered data
+  //   const typeCounts = filteredData.reduce((acc, curr) => {
+  //     const type = curr.issue_type || curr.complaint_type;
+  //     acc[type] = (acc[type] || 0) + 1;
+  //     return acc;
+  //   }, {});
 
-//   setStatusData({
-//     ...statusCounts,
-//     total: filteredData.length,
-//   });
+  //   setStatusData({
+  //     ...statusCounts,
+  //     total: filteredData.length,
+  //   });
 
-//   setTicketsTypes(typeCounts);
-// }, [filteredData]);
+  //   setTicketsTypes(typeCounts);
+  // }, [filteredData]);
   const [filterParams, setFilterParams] = useState({
     category_id: "",
     issueStatusId: "",
@@ -197,7 +198,7 @@ const Ticket = () => {
     globalSearch: "",
   });
 
-  
+
 
   const [dashboardVisibility, setDashboardVisibility] = useState({
     "Total Tickets": true,
@@ -311,10 +312,11 @@ const Ticket = () => {
       // }, {});
       // setTicketStatusCounts(statusCounts);
 
-      // const typeCounts = complaints.reduce((acc, curr) => {
-      //   acc[curr.issue_type] = (acc[curr.issue_type] || 0) + 1;
-      //   return acc;
-      // }, {});
+      const typeCounts = complaints.reduce((acc, curr) => {
+        const type = curr.issue_type || curr.complaint_type;
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {});
       setTicketTypeCounts(typeCounts);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -322,6 +324,7 @@ const Ticket = () => {
       setIsLoading(false);
     }
   };
+
 
   useEffect(() => {
     // ❌ Skip normal API if type filter is active
@@ -436,37 +439,40 @@ const Ticket = () => {
 
 
 
+  // Re-fetches dashboard counts (status cards + ticket-type cards) with the given filters.
+  // Called on mount with empty filters (= initial totals) and on every filter apply/reset.
+  const fetchDashboardCounts = async (filters = {}) => {
+    try {
+      const ticketInfoResp = await getTicketDashboard({ filters });
+      setStatusData({
+        ...ticketInfoResp.data.by_status,
+        total: ticketInfoResp.data.total,
+      });
+      setTicketsTypes(ticketInfoResp.data.by_type);
+    } catch (error) {
+      console.log("Dashboard count error:", error);
+    }
+  };
+
+  // Initial load — fetch search data once
   useEffect(() => {
-    const fetchTicketInfo = async () => {
-      try {
-        const ticketInfoResp = await getTicketDashboard();
-
-        setStatusData({
-          ...ticketInfoResp.data.by_status,
-          total: ticketInfoResp.data.total,
-        });
-
-        setTicketsTypes(ticketInfoResp.data.by_type);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-
     const filterSearchStatus = async () => {
       try {
         const searchAllTickets = await getAdminComplaints();
         const searchResp = searchAllTickets?.data?.complaints;
         setFilterSearch(searchResp);
-
-        console.log(searchResp);
       } catch (error) {
         console.log(error);
       }
     };
     filterSearchStatus();
-    fetchTicketInfo();
   }, []);
+
+  // Re-fetch dashboard counts whenever filterParams changes (filter applied OR reset)
+  // On mount filterParams is the initial empty object → shows unfiltered totals
+  useEffect(() => {
+    fetchDashboardCounts(filterParams);
+  }, [filterParams]);
 
 
 
@@ -858,6 +864,7 @@ const Ticket = () => {
             setSearchText={setSearchText}
             setSelectedStatus={setSelectedStatus}
             setCurrentPage={setCurrentPage}
+            filterParams={filterParams}
           />
         )}
       </div>
