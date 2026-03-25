@@ -4,6 +4,7 @@ import Navbar from "../../../components/Navbar";
 import { domainPrefix, getStaffDetails } from "../../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import image from "/profile.png";
+import * as XLSX from "xlsx";
 import {
   dateFormat,
   FormattedDateToShowProperly,
@@ -32,6 +33,35 @@ const StaffDetails = () => {
     };
     fetchDetails();
   }, [id]);
+
+  const exportStaffLogs = () => {
+  if (!staffLogs || staffLogs.length === 0) {
+    alert("No data to export");
+    return;
+  }
+
+  const formattedData = staffLogs.map((item, index) => ({
+    "Sr No": index + 1,
+    "Staff Name": item.staff_name || "--",
+    "Mobile": item.staff_number || "--",
+    "Check In": item.punched_in_at
+      ? FormattedDateToShowProperly(item.punched_in_at)
+      : "--",
+    "Check Out": item.punched_out_at
+      ? FormattedDateToShowProperly(item.punched_out_at)
+      : "Still Working",
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Staff Logs");
+
+  XLSX.writeFile(
+    workbook,
+    `staff_logs_${new Date().toISOString().split("T")[0]}.xlsx`
+  );
+};
 
   /* ================= WORKING SCHEDULE ================= */
   const scheduleArray = details.working_schedule
@@ -179,10 +209,22 @@ const StaffDetails = () => {
           </div>
 
           {/* STAFF LOGS */}
-          <div>
-            <h2 className="font-medium border-b mb-2">Staff Logs</h2>
-            <Table columns={staffLogColumns} data={staffLogs} />
-          </div>
+        {/* STAFF LOGS */}
+<div>
+  <div className="flex justify-between items-center mb-2">
+    <h2 className="font-medium border-b">Staff Logs</h2>
+
+    <button
+      onClick={exportStaffLogs}
+      style={{ background: themeColor }}
+      className="text-white px-3 py-1 rounded-md text-sm"
+    >
+      Export
+    </button>
+  </div>
+
+  <Table columns={staffLogColumns} data={staffLogs} />
+</div>
 
           {/* ATTACHMENTS */}
           <div>
