@@ -11,7 +11,7 @@ import {
 import { FaQrcode, FaRegFileAlt } from "react-icons/fa";
 import Table from "../../../components/table/Table";
 import { dateTimeFormat } from "../../../utils/dateUtils";
-import DatePicker from "react-datepicker";
+import DatePicker from "react-datepicker";``
 import "react-datepicker/dist/react-datepicker.css";
 import { BsEye } from "react-icons/bs";
 import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
@@ -157,18 +157,24 @@ useEffect(() => {
   };
 
   const [searchText, setSearchText] = useState("");
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-   if (searchValue.trim() === "") {
-      setFilteredScheduleData(ScheduleData);
-    } else {
-      const filteredResult = ScheduleData.filter((item) =>
-        item.assigned_name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredScheduleData(filteredResult);
-    }
-  };
+ const handleSearch = (e) => {
+  const value = e.target.value.toLowerCase();
+  setSearchText(value);
+
+  let filtered = [...ScheduleData];
+
+  // Apply search
+  if (value) {
+    filtered = filtered.filter((item) =>
+      item.assigned_name?.toLowerCase().includes(value)
+    );
+  }
+
+  // Apply date filter ALSO
+  filtered = filterByDateRange(filtered, startDate, endDate);
+
+  setFilteredScheduleData(filtered);
+};
 
   const FormatedDate = (dateString) => {
     const date = new Date(dateString);
@@ -192,20 +198,18 @@ useEffect(() => {
       year: "numeric",
     });
   };
-  const filterByDateRange = (data) => {
-    if (startDate && endDate) {
-      console.log(data);
-      return data.filter((item) => {
-        console.log(item.start_time);
-        const itemDate = new Date(item.start_time).setHours(0, 0, 0, 0);
-        const start = startDate.setHours(0, 0, 0, 0);
-        const end = endDate.setHours(23, 59, 59, 999);
-        // Check if the itemDate falls within the start and end date range
-        return itemDate >= start && itemDate <= end;
-      });
-    }
-    return data;
-  };
+const filterByDateRange = (data, start, end) => {
+  if (start && end) {
+    const startTime = new Date(start).setHours(0, 0, 0, 0);
+    const endTime = new Date(end).setHours(23, 59, 59, 999);
+
+    return data.filter((item) => {
+      const itemTime = new Date(item.start_time).getTime();
+      return itemTime >= startTime && itemTime <= endTime;
+    });
+  }
+  return data;
+};
  const ScheduleColumn = [
   {
     name: "View",
@@ -235,7 +239,7 @@ useEffect(() => {
   },
   {
     name: "Assigned To",
-    selector: (row) => row.assigned_name,
+    selector: (row) => row.assigned_name || "-",
     sortable: true,
   },
 ];
@@ -453,19 +457,23 @@ const handleDownload = (type = "pdf") => {
                   placeholder="Search by assigned to"
                   className="p-2 border-gray-300 rounded-md w-full  my-2 outline-none border"
                 />
-                <DatePicker
-                  selectsRange={true}
-                  startDate={startDate}
-                  endDate={endDate}
-                  onChange={(update) => {
-                    setStartDate(update[0]);
-                    setEndDate(update[1]);
-                    setFilteredScheduleData(filterByDateRange(ScheduleData));
-                  }}
-                  isClearable={true}
-                  placeholderText="Search by Date range"
-                  className="p-2 border-gray-300 rounded-md w-64  my-2 outline-none border"
-                />
+               <DatePicker
+  selectsRange={true}
+  startDate={startDate}
+  endDate={endDate}
+  onChange={(update) => {
+    const [start, end] = update;
+
+    setStartDate(start);
+    setEndDate(end);
+
+    const filtered = filterByDateRange(ScheduleData, start, end);
+    setFilteredScheduleData(filtered);
+  }}
+  isClearable={true}
+  placeholderText="Search by Date range"
+  className="p-2 border-gray-300 rounded-md w-64 my-2 outline-none border"
+/>
               </div>
              <Table columns={ScheduleColumn} data={filteredScheduleData || []} />
             </div>
