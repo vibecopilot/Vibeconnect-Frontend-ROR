@@ -609,9 +609,10 @@ export const getSnagChecklistID = async (data) =>
     },
   });
 // ticket download section
-export const getTicketStatusDownload = async () =>
+export const getTicketStatusDownload = async (params = {}) =>
   axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx?`, {
     params: {
+      ...params,
       token: token,
     },
     responseType: "blob",
@@ -1958,7 +1959,7 @@ export const getUserCount = async () =>
   });
 
 export const updateUserAdminApproval = async (id, payload, token) =>
-  axiosInstance.patch(`users/${id}/update_status.json`, payload, {
+  axiosInstance.patch(`users/${id}/update_approvals.json`, payload, {
     params: { token },
   });
 

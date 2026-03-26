@@ -11,6 +11,7 @@ import {
   getStaffDrill,
   getStaffPunchedInToday,
   getStaffPunchedOutToday,
+  getRegisteredVehicle,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import DetailPopup from "../../components/DetailPopup";
@@ -255,12 +256,12 @@ const buildXYOptions = ({
   const areaFill =
     type === "area"
       ? {
-          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-          stops: [
-            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
-            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
-          ],
-        }
+        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+        stops: [
+          [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+          [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+        ],
+      }
       : undefined;
 
   const dataPoints = (values || []).map((v, i) => {
@@ -309,12 +310,12 @@ const buildXYOptions = ({
         marker:
           type === "line" || type === "area"
             ? {
-                enabled: true,
-                radius: 4,
-                lineWidth: 2,
-                lineColor: seriesColor,
-                fillColor: "#FFFFFF",
-              }
+              enabled: true,
+              radius: 4,
+              lineWidth: 2,
+              lineColor: seriesColor,
+              fillColor: "#FFFFFF",
+            }
             : { enabled: false },
       },
       column: { borderRadius: 10, pointPadding: 0.12, groupPadding: 0.22 },
@@ -538,19 +539,19 @@ const VisitorsAnalyticsDashboard = () => {
     const countType = byKeyToCountType(byKey);
     const title = `${formatByLabel(byKey)}: ${countValue}`;
     const rangeFrom = formatDateForApi(fromDate);
-    const rangeTo   = formatDateForApi(toDate);
+    const rangeTo = formatDateForApi(toDate);
 
     setDetailFilter({ byKey, countValue });
     setDetailPage(page);
     setDetailPopup({ open: true, title, records: [], loading: true, columns: visitorColumns });
 
     try {
-      const res     = await getVisitorsDashboardDrill(countType, countValue, siteId, page, rangeFrom, rangeTo);
-      const bucket  = res?.data?.[byKey]?.[countValue];
+      const res = await getVisitorsDashboardDrill(countType, countValue, siteId, page, rangeFrom, rangeTo);
+      const bucket = res?.data?.[byKey]?.[countValue];
       const records = Array.isArray(bucket?.records) ? bucket.records : [];
-      const total   = bucket?.count ?? bucket?.total ?? records.length;
+      const total = bucket?.count ?? bucket?.total ?? records.length;
       const perPage = bucket?.per_page ?? 10;
-      const pages   = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      const pages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
 
       setDetailTotalPages(pages);
       setDetailPopup({ open: true, title, records, loading: false, columns: visitorColumns });
@@ -574,7 +575,7 @@ const VisitorsAnalyticsDashboard = () => {
       key: "company_name",
       label: "Company",
       accessor: (r) =>
-         r.company_name,
+        r.company_name,
     },
     { key: "contact_no", label: "Contact", accessor: (r) => r.contact_no },
     { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
@@ -637,22 +638,98 @@ const VisitorsAnalyticsDashboard = () => {
       accessor: (r) => r.staff_work_type ?? r.work_type ?? "—",
     },
     {
-      key: "punched_in_at",
-      label: "Punched In",
-      accessor: (r) =>
-        r.punched_in_at
-          ? new Date(r.punched_in_at).toLocaleString()
-          : "—",
+    key: "punched_in_at",
+    label: "Punched In",
+    accessor: (r) => {
+      const time =
+        r.today_attendance?.punched_in_at ??
+        r.attendances?.[0]?.punched_in_at;
+
+      return time ? new Date(time).toLocaleString() : "—";
     },
-    {
-      key: "punched_out_at",
-      label: "Punched Out",
-      accessor: (r) =>
-        r.punched_out_at
-          ? new Date(r.punched_out_at).toLocaleString()
-          : "—",
+  },
+  {
+    key: "punched_out_at",
+    label: "Punched Out",
+    accessor: (r) => {
+      const time =
+        r.today_attendance?.punched_out_at ??
+        r.attendances?.[0]?.punched_out_at;
+
+      return time ? new Date(time).toLocaleString() : "—";
     },
+  },
   ];
+
+ const vehicleColumns = [
+  {
+    key: "vehicle_number",
+    label: "Vehicle No",
+    accessor: (r) => r.vehicle_number ?? "—",
+  },
+  {
+    key: "owner_name",
+    label: "Owner",
+    accessor: (r) => {
+      const user = r.user_name || r.created_by_name;
+      return user
+        ? `${user.firstname ?? ""} ${user.lastname ?? ""}`.trim()
+        : "—";
+    },
+  },
+  {
+    key: "slot_name",
+    label: "Slot",
+    accessor: (r) => r.slot_name ?? "—",
+  },
+  {
+    key: "vehicle_type",
+    label: "Type",
+    accessor: (r) =>
+      `${r.vehicle_category ?? ""} ${r.vehicle_type ?? ""}`.trim() || "—",
+  },
+  {
+    key: "status",
+    label: "Status",
+    accessor: (r) => r.approved ?? (r.status ? "Active" : "Inactive") ?? "—",
+  },
+  {
+    key: "created_at",
+    label: "Created",
+    accessor: (r) =>
+      r.created_at
+        ? new Date(r.created_at).toLocaleString()
+        : "—",
+  },
+];
+
+  const handleVehicleClick = async (title) => {
+    setDetailPopup({
+      open: true,
+      title,
+      records: [],
+      loading: true,
+      columns: vehicleColumns,
+    });
+
+    try {
+      const res = await getRegisteredVehicle({ site_id: siteId });
+
+      const list = res?.data?.registered_vehicles ?? res?.data ?? [];
+
+      setDetailPopup({
+        open: true,
+        title,
+        records: Array.isArray(list) ? list : [],
+        loading: false,
+        columns: vehicleColumns,
+      });
+    } catch (err) {
+      console.error("Vehicle drill error:", err);
+      toast.error("Failed to load vehicle details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
 
   // ─── Click handlers ───────────────────────────────────────────────────────
 
@@ -729,14 +806,14 @@ const VisitorsAnalyticsDashboard = () => {
   /** Icon for each chart tab */
   const getTabIcon = (key) => {
     const map = {
-      by_in_out:      "🔄",
-      by_entry_type:  "🚪",
-      by_visit_type:  "👤",
-      by_purpose:     "📝",
-      by_frequency:   "📊",
-      by_created_by:  "👥",
-      hourly:         "📈",
-      monthly:        "📅",
+      by_in_out: "🔄",
+      by_entry_type: "🚪",
+      by_visit_type: "👤",
+      by_purpose: "📝",
+      by_frequency: "📊",
+      by_created_by: "👥",
+      hourly: "📈",
+      monthly: "📅",
     };
     return map[key] ?? "📋";
   };
@@ -765,7 +842,7 @@ const VisitorsAnalyticsDashboard = () => {
         plotOptions: {
           ...options.plotOptions,
           series: { ...(options.plotOptions.series || {}), point: { ...(options.plotOptions.series?.point || {}), ...evt } },
-          pie:    { ...(options.plotOptions.pie    || {}), point: { ...(options.plotOptions.pie?.point    || {}), ...evt } },
+          pie: { ...(options.plotOptions.pie || {}), point: { ...(options.plotOptions.pie?.point || {}), ...evt } },
         },
       };
     };
@@ -798,8 +875,8 @@ const VisitorsAnalyticsDashboard = () => {
         label: formatByLabel(key),
         icon: getTabIcon(key),
       })),
-      { id: "hourly",  label: "Hourly Trend",  icon: "📈" },
-      { id: "monthly", label: "Monthly Trend",  icon: "📅" },
+      { id: "hourly", label: "Hourly Trend", icon: "📈" },
+      { id: "monthly", label: "Monthly Trend", icon: "📅" },
     ],
     [byData],
   );
@@ -899,14 +976,14 @@ const VisitorsAnalyticsDashboard = () => {
       {/* ── Visitor stat cards (dynamic – all API fields) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {[
-          { key: "total",    title: "Total Visitors",  note: "All time visitors",   accent: CHART_PALETTE[0],  icon: <FaUsers />     },
-          { key: "in",       title: "Total In",         note: "Currently inside",    accent: CHART_PALETTE[1],  icon: <FaUserCheck /> },
-          { key: "out",      title: "Total Out",        note: "Currently out",       accent: CHART_PALETTE[2],  icon: <FaUserClock /> },
-          { key: "today",    title: "Today's Visitors", note: "Today",               accent: CHART_PALETTE[5],  icon: <FaUsers />     },
-          { key: "today_in", title: "Today's In",       note: "Today check-in",      accent: CHART_PALETTE[6],  icon: <FaUserCheck /> },
-          { key: "today_out",title: "Today's Out",      note: "Today check-out",     accent: CHART_PALETTE[3],  icon: <FaUserClock /> },
-          { key: "expected", title: expectedLabel,      note: "Pre-registered",      accent: CHART_PALETTE[9],  icon: <FaUserClock /> },
-          { key: "unexpected",title: unexpectedLabel,   note: "Walk-in visitors",    accent: CHART_PALETTE[4],  icon: <FaUsers />     },
+          { key: "total", title: "Total Visitors", note: "All time visitors", accent: CHART_PALETTE[0], icon: <FaUsers /> },
+          { key: "in", title: "Total In", note: "Currently inside", accent: CHART_PALETTE[1], icon: <FaUserCheck /> },
+          { key: "out", title: "Total Out", note: "Currently out", accent: CHART_PALETTE[2], icon: <FaUserClock /> },
+          { key: "today", title: "Today's Visitors", note: "Today", accent: CHART_PALETTE[5], icon: <FaUsers /> },
+          { key: "today_in", title: "Today's In", note: "Today check-in", accent: CHART_PALETTE[6], icon: <FaUserCheck /> },
+          { key: "today_out", title: "Today's Out", note: "Today check-out", accent: CHART_PALETTE[3], icon: <FaUserClock /> },
+          { key: "expected", title: expectedLabel, note: "Pre-registered", accent: CHART_PALETTE[9], icon: <FaUserClock /> },
+          { key: "unexpected", title: unexpectedLabel, note: "Walk-in visitors", accent: CHART_PALETTE[4], icon: <FaUsers /> },
         ]
           .filter(({ key }) => dashboardData[key] !== undefined)
           .map(({ key, title, note, accent, icon }) => (
@@ -991,6 +1068,7 @@ const VisitorsAnalyticsDashboard = () => {
           value={vehicleData.total}
           icon={<FaCar />}
           accent={CHART_PALETTE[8]}
+          onClick={() => handleVehicleClick("Total Vehicles")}
         />
       </div>
 
