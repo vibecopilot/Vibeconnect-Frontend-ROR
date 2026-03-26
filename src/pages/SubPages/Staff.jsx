@@ -368,10 +368,10 @@ const [originalHistoryStaff, setOriginalHistoryStaff] = useState([]);
     }
   };
 
-  const paginatedData = filteredStaff.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
+  // const paginatedData = filteredStaff.slice(
+  //   (currentPage - 1) * rowsPerPage,
+  //   currentPage * rowsPerPage
+  // );
 
 
 const fetchHistory = async () => {
@@ -487,10 +487,10 @@ const fetchHistory = async () => {
     }
   };
 
-  useEffect(() => {
-    fetchStaff(currentPage);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, rowsPerPage]);
+  // useEffect(() => {
+  //   fetchStaff(currentPage);
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [currentPage, rowsPerPage]);
 
 const handleSearch = (e) => {
   const searchValue = e.target.value.toLowerCase();
@@ -556,7 +556,7 @@ const handleSearch = (e) => {
     } else if (page === "staffout") {
       fetchStaffOut(currentPage, rowsPerPage);
     }
-  }, [page, currentPage, rowsPerPage, searchText]);
+  }, [page, currentPage, rowsPerPage]);
 
   // Reset pagination when switching tabs
   useEffect(() => {
@@ -564,11 +564,11 @@ const handleSearch = (e) => {
     setApprovalCurrentPage(1);
   }, [page]);
 
-  useEffect(() => {
-    if (currentPage > Math.ceil(totalCount / rowsPerPage)) {
-      setCurrentPage(1); // reset to valid page
-    }
-  }, [totalCount, currentPage, rowsPerPage]);
+  // useEffect(() => {
+  //   if (currentPage > Math.ceil(totalCount / rowsPerPage)) {
+  //     setCurrentPage(1); // reset to valid page
+  //   }
+  // }, [totalCount, currentPage, rowsPerPage]);
 
   const handleApproval = async (staffId, decision) => {
     try {
@@ -999,7 +999,7 @@ const handleSearch = (e) => {
           {(page === "all" || page === "staffin" || page === "staffout") && (
             <Table
               columns={columns}
-              data={paginatedData}
+               data={filteredStaff}
               paginationServer
               paginationTotalRows={totalRecords}
               onChangePage={(page) => setCurrentPage(page)}

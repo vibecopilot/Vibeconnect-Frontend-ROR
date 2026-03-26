@@ -27,6 +27,11 @@ import { FaInbox } from "react-icons/fa";
 const Ticket = () => {
 
   const siteId = getItemInLocalStorage("SITEID");
+//   const [siteId, setSiteId] = useState(getItemInLocalStorage("SITEID"));
+// const [siteName, setSiteName] = useState(getItemInLocalStorage("SITENAME") || "");
+// const [siteData, setSiteData] = useState([]);
+// const [siteOpen, setSiteOpen] = useState(false);
+// // const dropdownRef = useRef(null);
   const [filteredData, setFilteredData] = useState([]);
   const [filterSearch, setFilterSearch] = useState([]);
 

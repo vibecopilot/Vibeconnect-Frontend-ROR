@@ -356,36 +356,36 @@ const RVehicles = () => {
   };
 
 
-const handleBulkUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const handleBulkUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const token =
-      normalizeToken(tokens?.queryToken) ||
-      normalizeToken(tokens?.bearerToken);
+      const token =
+        normalizeToken(tokens?.queryToken) ||
+        normalizeToken(tokens?.bearerToken);
 
-    const res = await axiosInstance.post(
-      `/registered_vehicles/bulk_upload.json?token=${token}`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+      const res = await axiosInstance.post(
+        `/registered_vehicles/bulk_upload.json?token=${token}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-    alert("Bulk upload successful");
+      alert("Bulk upload successful");
 
-    setRefreshTick((prev) => prev + 1); // refresh table
-  } catch (err) {
-    console.error(err);
-    alert("Upload failed");
-  }
-};
+      setRefreshTick((prev) => prev + 1); // refresh table
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed");
+    }
+  };
 
   /** ---------------- Main fetch ---------------- */
   useEffect(() => {
@@ -398,9 +398,9 @@ const handleBulkUpload = async (e) => {
       try {
         let params = { page: currentPageNum, per_page: PER_PAGE };
 
-      if (searchTerm.trim()) {
-        params["q[vehicle_number_or_registered_user_cont]"] = searchTerm.trim();
-      }
+        if (searchTerm.trim()) {
+          params["q[vehicle_number_or_registered_user_cont]"] = searchTerm.trim();
+        }
 
         let response;
         let data = {};
@@ -421,26 +421,26 @@ const handleBulkUpload = async (e) => {
           data = response?.data || {};
           list = data.vehicle_logs || [];
         } else if (page === "History") {
-  response = await getVehicleHistory(params);
-  data = response?.data || {};
-  list = data.vehicle_logs || [];
+          response = await getVehicleHistory(params);
+          data = response?.data || {};
+          list = data.vehicle_logs || [];
 
-  const merged = [...(recentHistory || []), ...(list || [])];
+          const merged = [...(recentHistory || []), ...(list || [])];
 
-  const seen = new Set();
-  const unique = merged.filter((x) => {
-    const key =
-      x?.id ||
-      `${x?.registered_vehicle_id}-${x?.check_in}-${x?.check_out}-${x?.created_at}`;
+          const seen = new Set();
+          const unique = merged.filter((x) => {
+            const key =
+              x?.id ||
+              `${x?.registered_vehicle_id}-${x?.check_in}-${x?.check_out}-${x?.created_at}`;
 
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
 
-  list = unique; // ✅ important so search + sort runs later
-}
- else if (page === "Approvals") {
+          list = unique; // ✅ important so search + sort runs later
+        }
+        else if (page === "Approvals") {
           const t = requireApprovalsTokenOrSetError();
           if (!t) {
             setVehicles([]);
@@ -497,31 +497,31 @@ const handleBulkUpload = async (e) => {
           return;
         }
 
-      let filteredList = list;
+        let filteredList = list;
 
-if (searchTerm.trim()) {
-  const term = searchTerm.toLowerCase();
+        if (searchTerm.trim()) {
+          const term = searchTerm.toLowerCase();
 
-  filteredList = list.filter((item) => {
-    const name =
-      item?.registered_user ||
-      item?.created_by ||
-      item?.name ||
-      "";
+          filteredList = list.filter((item) => {
+            const name =
+              item?.registered_user ||
+              item?.created_by ||
+              item?.name ||
+              "";
 
-    const vehicle =
-      item?.vehicle_number ||
-      item?.registered_vehicle?.vehicle_number ||
-      "";
+            const vehicle =
+              item?.vehicle_number ||
+              item?.registered_vehicle?.vehicle_number ||
+              "";
 
-    return (
-      name.toLowerCase().includes(term) ||
-      vehicle.toLowerCase().includes(term)
-    );
-    });
-   }
+            return (
+              name.toLowerCase().includes(term) ||
+              vehicle.toLowerCase().includes(term)
+            );
+          });
+        }
 
-          const sorted = [...filteredList].sort((a, b) => {
+        const sorted = [...filteredList].sort((a, b) => {
           const da = a?.created_at ? new Date(a.created_at).getTime() : 0;
           const db = b?.created_at ? new Date(b.created_at).getTime() : 0;
           return db - da;
@@ -542,14 +542,14 @@ if (searchTerm.trim()) {
     fetchData();
     return () => controller.abort();
   }, [
-        page,
-        currentPageNum,
-        searchTerm,
-        BASE_URL,
-        requireApprovalsTokenOrSetError,
-        refreshTick,
-        recentHistory,
-      ]);
+    page,
+    currentPageNum,
+    searchTerm,
+    BASE_URL,
+    requireApprovalsTokenOrSetError,
+    refreshTick,
+    recentHistory,
+  ]);
 
   return (
     <div className="visitors-page">
@@ -559,40 +559,15 @@ if (searchTerm.trim()) {
         <div className="w-full flex mx-3 flex-col overflow-hidden">
           <Passes />
 
-          <div className="flex gap-3">
-
-  {/* Bulk Upload */}
-  <label className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition">
-    <IoCloudUploadOutline size={20} />
-    Bulk Upload
-    <input
-      type="file"
-      accept=".csv,.xlsx"
-      onChange={handleBulkUpload}
-      hidden
-    />
-  </label>
-
-  {/* Add Vehicle */}
-  <button
-    onClick={() => navigate("/admin/add-rvehicles")}
-    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-  >
-    <IoAddCircleOutline size={20} />
-    Add Vehicle
-  </button>
-
-</div>
           <div className="flex justify-between items-end border-b border-gray-300 m-2">
             <div className="flex -mb-px">
               {["All", "Vehicle In", "Vehicle Out", "Approvals", "History"].map((tab) => (
                 <h2
                   key={tab}
-                  className={`p-2 px-4 text-sm cursor-pointer border-r border-l border-t ${
-                    page === tab
-                      ? "text-blue-600 bg-white border-gray-300 rounded-t-lg font-semibold"
-                      : "text-gray-600 border-transparent"
-                  }`}
+                  className={`p-2 px-4 text-sm cursor-pointer border-r border-l border-t ${page === tab
+                    ? "text-blue-600 bg-white border-gray-300 rounded-t-lg font-semibold"
+                    : "text-gray-600 border-transparent"
+                    }`}
                   onClick={() => {
                     if (page !== tab) {
                       setPage(tab);
@@ -607,22 +582,46 @@ if (searchTerm.trim()) {
                 </h2>
               ))}
             </div>
+          </div>
 
-            <div className="relative mb-1 mr-2 flex items-center">
+          <div className="flex justify-between items-center gap-3">
+            <div className="relative mb-1 flex items-center">
               <input
                 type="text"
-                placeholder="Search name or vehicle..."
+                placeholder="Search By vehicle Number..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm w-64"
+                className="pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm w-[500px]"
               />
               <FaSearch className="absolute left-3 text-gray-400 h-4 w-4" />
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+              {/* Bulk Upload */}
+              <label className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition">
+                <IoCloudUploadOutline size={20} />
+                Bulk Upload
+                <input
+                  type="file"
+                  accept=".csv,.xlsx"
+                  onChange={handleBulkUpload}
+                  hidden
+                />
+              </label>
+
+              {/* Add Vehicle */}
+              <button
+                onClick={() => navigate("/admin/add-rvehicles")}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+              >
+                <IoAddCircleOutline size={20} />
+                Add Vehicle
+              </button>
             </div>
           </div>
 
           <RVehiclesTable
             data={vehicles}
-            loading={loading} 
+            loading={loading}
             error={error}
             currentPageNum={currentPageNum}
             pageType={page}
