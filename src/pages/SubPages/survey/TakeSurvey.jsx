@@ -386,12 +386,12 @@ function TakeSurvey() {
                 </div>
 
                 {/* RIGHT: DATE */}
-                <div className="flex justify-end text-right text-sm text-white/90">
+                {/* <div className="flex justify-end text-right text-sm text-white/90">
                   <div>
                     <p>Start: {formatDate(survey.start_date)}</p>
                     <p>End: {formatDate(survey.end_date)}</p>
                   </div>
-                </div>
+                </div> */}
 
               </div>
 
@@ -491,11 +491,11 @@ function TakeSurvey() {
 
               {/* ✅ Contact details on right */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">Contact details</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Mobile Number</label>
                 <input
                   type="text"
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
-                  placeholder="Phone / email"
+                  placeholder="Enter mobile number"
                   value={contactDetails}
                   onChange={(e) => setContactDetails(e.target.value)}
                 />
