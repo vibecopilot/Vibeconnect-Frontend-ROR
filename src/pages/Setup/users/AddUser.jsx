@@ -158,8 +158,9 @@ const AddUser = () => {
       return toast.error("Please select Tower, Floor & Unit");
     }
 
-      const isAdmin = formData.userType?.toLowerCase() === "admin";
-
+const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
+  formData.userType?.toLowerCase()
+);
 
     const payload = {
       user: {
@@ -170,8 +171,8 @@ const AddUser = () => {
         mobile: formData.mobile,
         user_type: formData.userType || "user",
         active: true,
-       user_status: isAdmin ? true : false, 
-      is_admin_approved: isAdmin ? true : false,
+        user_status: isAdmin ? true : false,
+        is_admin_approved: isAdmin ? true : null,
         birth_date: formData.birth_date,
         anniversary: formData.anniversary,
 
@@ -539,12 +540,12 @@ const AddUser = () => {
                   </div>
 
                 </div>
-
+`
               )} */}
 
               <div>
                 <label className="text-sm font-medium block mb-1">
-                  Status 
+                  Status
                 </label>
                 <select
                   name="status"
