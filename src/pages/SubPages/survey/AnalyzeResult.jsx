@@ -178,6 +178,7 @@ function AnalyzeResult() {
     URL.revokeObjectURL(link.href);
   };
 
+
   if (loading) {
     return (
       <div className="flex">
@@ -432,12 +433,12 @@ function AnalyzeResult() {
                         const respondent = r.response_by || r.feedback_given_by || "Anonymous";
                         const submitted = r.created_at ? new Date(r.created_at).toLocaleString() : "—";
                         return (
-                          <tr key={r.id || globalIndex} className="border-b hover:bg-gray-50">
+                          <tr key={r.id  || globalIndex} className="border-b hover:bg-gray-50">
                             <td className="py-2 px-3 text-gray-600">{globalIndex + 1}</td>
                             <td className="py-2 px-3 font-medium">{respondent}</td>
                             <td className="py-2 px-3 text-gray-500">{r.contact_details || "—"}</td>
                             <td className="py-2 px-3 text-gray-500">
-                              {r.email || "—"}   {/* ✅ ADD THIS */}
+                              {r.respond_mail || r.email || "—"}
                             </td>
                             <td className="py-2 px-3 text-gray-500">{submitted}</td>
                             {survey.survey_questions.map((q) => {
