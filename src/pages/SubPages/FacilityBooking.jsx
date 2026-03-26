@@ -469,7 +469,8 @@ const FacilityBooking = () => {
       navigate("/bookings");
     } catch (error) {
       console.error("Error in booking:", error);
-      alert("Error in booking. Please try again.", error);
+      // alert("Error in booking. Please try again.", error);
+      toast.error("Booking Limit Reached");
     }
   };
   console.log("uuu", units);
