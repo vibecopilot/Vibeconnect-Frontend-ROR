@@ -187,7 +187,10 @@ function PPMCalendarDashboard() {
 
       const parseDate = (val) => {
         if (!val) return null;
+
+        // ✅ Force local time parsing (prevents shifting)
         const d = new Date(val);
+
         return isNaN(d.getTime()) ? null : d;
       };
 
@@ -196,8 +199,11 @@ function PPMCalendarDashboard() {
         const startTime = ev.start_time || "00:00:00";
 
         const start =
-          parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) ||
-          new Date();
+          parseDate(
+            startDate.includes("T")
+              ? startDate
+              : `${startDate}T${startTime || "00:00:00"}`
+          );
 
         let end = parseDate(ev.end);
 
@@ -241,6 +247,23 @@ function PPMCalendarDashboard() {
     },
     [fetchCalendarEvents]
   );
+
+  const handleDateClick = (arg) => {
+    const clickedDate = arg.dateStr; // YYYY-MM-DD
+
+    const dayEvents = events.filter((e) => {
+      const eventDate = new Date(e.start)
+        .toISOString()
+        .slice(0, 10);
+
+      return eventDate === clickedDate;
+    });
+
+    console.log("Clicked Date:", clickedDate);
+    console.log("Events:", dayEvents);
+
+    // show in modal or state
+  };
 
   // ✅ Fix: When 'view' state changes, tell FullCalendar to switch view
   useEffect(() => {
@@ -323,10 +346,10 @@ function PPMCalendarDashboard() {
             {assignTo}
           </span>
 
-          <Badge tone={tone}>
+          {/* <Badge tone={tone}>
             {statusIcon(status)}
             <span className="capitalize">{status}</span>
-          </Badge>
+          </Badge> */}
         </div>
       </div>
     );
@@ -465,6 +488,8 @@ function PPMCalendarDashboard() {
       {/* ✅ NEW UI: calendar inside clean card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-3">
         <FullCalendar
+          timeZone="local"
+          dateClick={handleDateClick}
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={view}
