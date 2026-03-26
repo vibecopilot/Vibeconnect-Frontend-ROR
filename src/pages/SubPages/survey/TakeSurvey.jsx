@@ -464,43 +464,32 @@ function TakeSurvey() {
           <div className="absolute top-6 right-12 w-16 h-16 rounded-full bg-white/5 z-0 pointer-events-none" />
 
           <div className="relative z-10 w-full">
-            {/* 🔷 CENTER CONTENT */}
             <div className="w-full px-4 sm:px-16">
-              <div className="grid grid-cols-3 items-center">
-                {/* LEFT: LOGO */}
-                <div className="flex justify-start">
-                  {survey.client_logo && (
-                    <img
-                      src={
-                        survey.client_logo.startsWith("http")
-                          ? survey.client_logo
-                          : `${domainPrefix}${survey.client_logo}`
-                      }
-                      alt="Logo"
-                      className="h-16 sm:h-16 object-contain"
-                    />
-                  )}
+              {/* Logo pinned top-left */}
+              {survey.client_logo && (
+                <div className="flex justify-start mb-3">
+                  <img
+                    src={
+                      survey.client_logo.startsWith("http")
+                        ? survey.client_logo
+                        : `${domainPrefix}${survey.client_logo}`
+                    }
+                    alt="Logo"
+                    className="h-10 sm:h-14 max-w-[120px] sm:max-w-[160px] object-contain"
+                  />
                 </div>
+              )}
 
-                {/* CENTER: TITLE */}
-                <div className="text-center">
-                  <h1 className="text-3xl sm:text-4xl font-bold">
-                    {survey.survey_title}
-                  </h1>
-                </div>
-
-                {/* RIGHT: DATE */}
-                {/* <div className="flex justify-end text-right text-sm text-white/90">
-                  <div>
-                    <p>Start: {formatDate(survey.start_date)}</p>
-                    <p>End: {formatDate(survey.end_date)}</p>
-                  </div>
-                </div> */}
+              {/* Title – always centred */}
+              <div className="text-center">
+                <h1 className="text-2xl sm:text-4xl font-bold leading-tight break-words">
+                  {survey.survey_title}
+                </h1>
               </div>
 
-              {/* 🔷 DESCRIPTION */}
+              {/* Description */}
               {survey.description && (
-                <p className="mt-6 text-xl sm:text-xl text-white/90 leading-relaxed text-left font-semibold">
+                <p className="mt-4 sm:mt-6 text-base sm:text-xl text-white/90 leading-relaxed text-left">
                   {survey.description}
                 </p>
               )}
