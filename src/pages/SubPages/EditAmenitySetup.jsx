@@ -50,7 +50,7 @@ const EditAmenitySetup = () => {
   );
 
   // ✅ Handle checkbox
-   const handleCheck = (index) => {
+  const handleCheck = (index) => {
     const updated = [...days];
     updated[index].is_active = !updated[index].is_active;
     setDays(updated);
@@ -58,7 +58,7 @@ const EditAmenitySetup = () => {
 
 
   // ✅ Handle time change
- const handleTimeChange1 = (index, field, value) => {
+  const handleTimeChange1 = (index, field, value) => {
     const updated = [...days];
     updated[index][field] = value;
     setDays(updated);
@@ -409,6 +409,8 @@ const EditAmenitySetup = () => {
               concurrent_slots: slotConfig.concurrent_slot || "",
               slot_duration: "",
               wrap_up_time: slotConfig.wrap_time ?? "",
+              concurrent_slots: slotConfig.concurrent_slot ?? facility.concurrent_slot ?? "1",
+              wrap_up_time: slotConfig.wrap_time ?? facility.wrap_time ?? "0",
             }];
           })(),
         });
@@ -666,9 +668,9 @@ const EditAmenitySetup = () => {
       postData.append(`${slotBase}[break_start_min]`, slot.break_start_min || "");
       postData.append(`${slotBase}[break_end_hr]`, slot.break_end_hr || "");
       postData.append(`${slotBase}[break_end_min]`, slot.break_end_min || "");
-      postData.append(`${slotBase}[concurrent_slots]`, slot.concurrent_slots || "1");
+      postData.append(`${slotBase}[concurrent_slots]`, slot.concurrent_slots || "");
       postData.append(`${slotBase}[slot_duration]`, slot.slot_duration || "");
-      postData.append(`${slotBase}[wrap_up_time]`, slot.wrap_up_time || "0");
+      postData.append(`${slotBase}[wrap_up_time]`, slot.wrap_up_time || "");
     });
 
     // ── Operational days ──────────────────────────────────────────────────────
@@ -687,12 +689,12 @@ const EditAmenitySetup = () => {
     // Only send rules that are persisted OR have been modified
     rules.forEach((rule, index) => {
       const ruleAttr = `amenity[amenity_booking_rules_attributes][${index}]`;
-      
+
       // Only include ID if rule is persisted in database
       if (rule._persisted && rule.id) {
         postData.append(`${ruleAttr}[id]`, rule.id);
       }
-      
+
       postData.append(`${ruleAttr}[enumerator]`, rule.enumerator || "daily_limit");
       postData.append(`${ruleAttr}[duration]`, rule.duration || "60");
       postData.append(`${ruleAttr}[level]`, rule.level || "");
@@ -1008,7 +1010,7 @@ const EditAmenitySetup = () => {
         prevDays.map((day) => ({
           ...day,
           ...(timeType === "start" ? { start_time: timeValue } : {}),
-          ...(timeType === "end"   ? { end_time: timeValue }   : {}),
+          ...(timeType === "end" ? { end_time: timeValue } : {}),
         }))
       );
     }
@@ -2033,135 +2035,135 @@ const EditAmenitySetup = () => {
             Booking Rule
           </div>
 
-        {rules.map((rule, index) => {
-          const ruleKey = rule._persisted ? rule.id : rule._tempId;
-          return (
-            <div
-              key={ruleKey}
-              className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
-            >
-              {/* Checkbox */}
-              <div className="flex items-center gap-2">
+          {rules.map((rule, index) => {
+            const ruleKey = rule._persisted ? rule.id : rule._tempId;
+            return (
+              <div
+                key={ruleKey}
+                className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
+              >
+                {/* Checkbox */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={rule.enabled || false}
+                    onChange={(e) =>
+                      handleChange2(ruleKey, "enabled", e.target.checked)
+                    }
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Facility can be Booked</span>
+                </div>
+
+                {/* Times Input */}
                 <input
-                  type="checkbox"
-                  checked={rule.enabled || false}
+                  type="number"
+                  placeholder="Enter"
+                  value={rule.times || ""}
                   onChange={(e) =>
-                    handleChange2(ruleKey, "enabled", e.target.checked)
+                    handleChange2(ruleKey, "times", e.target.value)
                   }
-                  className="w-4 h-4"
+                  className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
                 />
-                <span className="text-sm">Facility can be Booked</span>
-              </div>
-
-              {/* Times Input */}
-              <input
-                type="number"
-                placeholder="Enter"
-                value={rule.times || ""}
-                onChange={(e) =>
-                  handleChange2(ruleKey, "times", e.target.value)
-                }
-                className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
-              />
-              {/* Select Time per day */}
-              <span className="text-sm">times per day by </span>
-              <select
-                value={rule.level || ""}
-                onChange={(e) => handleChange2(ruleKey, "level", e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
-              >
-                <option value="">Select</option>
-                <option value="user">User</option>
-                <option value="flat">Flat</option>
-                <option value="owner">Owner</option>
-                <option value="tenant">Tenant</option>
-              </select>
-
-              {/* Select Period */}
-              <select
-                value={rule.period_type || ""}
-                onChange={(e) => handleChange2(ruleKey, "period_type", e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="">Select Slots For</option>
-                <option value="Day">Day</option>
-                <option value="Week">Week</option>
-                <option value="Month">Month</option>
-                <option value="Year">Year</option>
-              </select>
-
-              {/* Prime Time Label */}
-              <span className="text-sm font-medium text-gray-700">
-                Prime Time
-              </span>
-
-              {/* Prime Time – one time-picker row per entry */}
-              <div className="flex flex-col gap-2">
-                {(Array.isArray(rule.primeTime) && rule.primeTime.length > 0
-                  ? rule.primeTime
-                  : [{ start_time: "", end_time: "" }]
-                ).map((pt, pIdx) => (
-                  <div key={pIdx} className="flex items-center gap-2">
-                    <input
-                      type="time"
-                      value={pt.start_time || ""}
-                      onChange={(e) =>
-                        handlePrimeTimeChange(ruleKey, pIdx, "start_time", e.target.value)
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    <input
-                      type="time"
-                      value={pt.end_time || ""}
-                      onChange={(e) =>
-                        handlePrimeTimeChange(ruleKey, pIdx, "end_time", e.target.value)
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    {Array.isArray(rule.primeTime) && rule.primeTime.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePrimeTime(ruleKey, pIdx)}
-                        className="text-red-500"
-                      >
-                        <FaTrash size={12} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => handleAddPrimeTime(ruleKey)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-xs mt-1 w-fit"
+                {/* Select Time per day */}
+                <span className="text-sm">times per day by </span>
+                <select
+                  value={rule.level || ""}
+                  onChange={(e) => handleChange2(ruleKey, "level", e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
                 >
-                  + Add Prime Time
-                </button>
-              </div>
+                  <option value="">Select</option>
+                  <option value="user">User</option>
+                  <option value="flat">Flat</option>
+                  <option value="owner">Owner</option>
+                  <option value="tenant">Tenant</option>
+                </select>
 
-              {/* Sub Facility */}
-              <div className="flex items-center gap-2">
-                {/* <input
+                {/* Select Period */}
+                <select
+                  value={rule.period_type || ""}
+                  onChange={(e) => handleChange2(ruleKey, "period_type", e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Select Slots For</option>
+                  <option value="Day">Day</option>
+                  <option value="Week">Week</option>
+                  <option value="Month">Month</option>
+                  <option value="Year">Year</option>
+                </select>
+
+                {/* Prime Time Label */}
+                <span className="text-sm font-medium text-gray-700">
+                  Prime Time
+                </span>
+
+                {/* Prime Time – one time-picker row per entry */}
+                <div className="flex flex-col gap-2">
+                  {(Array.isArray(rule.primeTime) && rule.primeTime.length > 0
+                    ? rule.primeTime
+                    : [{ start_time: "", end_time: "" }]
+                  ).map((pt, pIdx) => (
+                    <div key={pIdx} className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={pt.start_time || ""}
+                        onChange={(e) =>
+                          handlePrimeTimeChange(ruleKey, pIdx, "start_time", e.target.value)
+                        }
+                        className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                      <input
+                        type="time"
+                        value={pt.end_time || ""}
+                        onChange={(e) =>
+                          handlePrimeTimeChange(ruleKey, pIdx, "end_time", e.target.value)
+                        }
+                        className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                      {Array.isArray(rule.primeTime) && rule.primeTime.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePrimeTime(ruleKey, pIdx)}
+                          className="text-red-500"
+                        >
+                          <FaTrash size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleAddPrimeTime(ruleKey)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-xs mt-1 w-fit"
+                  >
+                    + Add Prime Time
+                  </button>
+                </div>
+
+                {/* Sub Facility */}
+                <div className="flex items-center gap-2">
+                  {/* <input
                                   type="checkbox"
                                   checked={subFacilityAvailable}
                                   onChange={(e) => setSubFacilityAvailable(e.target.checked)}
                                 /> */}
-                <span className="text-sm">Sub Facility</span>
-              </div>
+                  <span className="text-sm">Sub Facility</span>
+                </div>
 
-              {/* Delete Button (shown for all rows) */}
-              {rules.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveRule(ruleKey)}
-                  className="text-red-500 hover:text-red-700 ml-auto"
-                  title="Remove rule"
-                >
-                  <FaTrash size={14} />
-                </button>
-              )}
-            </div>
-          );
-        })}
+                {/* Delete Button (shown for all rows) */}
+                {rules.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveRule(ruleKey)}
+                    className="text-red-500 hover:text-red-700 ml-auto"
+                    title="Remove rule"
+                  >
+                    <FaTrash size={14} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
 
           {/* Add Button */}
           <button
