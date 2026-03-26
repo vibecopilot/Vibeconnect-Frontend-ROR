@@ -1076,7 +1076,7 @@ const handleSearch = (e) => {
                   className="w-full border px-3 py-2 rounded-md"
                 />
 
-                <input
+                {/* <input
                   type="text"
                   placeholder="Building Name"
                   value={filters.building_name}
@@ -1084,7 +1084,7 @@ const handleSearch = (e) => {
                     setFilters({ ...filters, building_name: e.target.value })
                   }
                   className="w-full border px-3 py-2 rounded-md"
-                />
+                /> */}
               </div>
 
               <div className="flex gap-3 mt-5">

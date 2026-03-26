@@ -144,7 +144,6 @@ const AddUser = () => {
       "mobile",
       "password",
       "occupancy_type",
-      "status",
     ];
 
     for (let key of required) {
@@ -545,14 +544,13 @@ const AddUser = () => {
 
               <div>
                 <label className="text-sm font-medium block mb-1">
-                  Status *
+                  Status 
                 </label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  required
                 >
                   <option value="" disabled>
                     Select Status

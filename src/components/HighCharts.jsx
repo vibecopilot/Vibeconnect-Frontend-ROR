@@ -257,30 +257,30 @@ const buildOptions = ({
   const areaFill =
     type === "area"
       ? {
-          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-          stops: [
-            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
-            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
-          ],
-        }
+        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+        stops: [
+          [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+          [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+        ],
+      }
       : undefined;
 
   const seriesData = isPie
     ? categories.map((name, i) => ({
-        name,
-        y: values[i],
-        color: pointColorFn
-          ? pointColorFn(name, i, values[i])
-          : palette[i % palette.length],
-      }))
+      name,
+      y: values[i],
+      color: pointColorFn
+        ? pointColorFn(name, i, values[i])
+        : palette[i % palette.length],
+    }))
     : isBarOrColumn
-    ? categories.map((name, i) => ({
+      ? categories.map((name, i) => ({
         y: values[i],
         color: pointColorFn
           ? pointColorFn(name, i, values[i])
           : palette[i % palette.length],
       }))
-    : values;
+      : values;
 
   return {
     chart: {
@@ -298,37 +298,37 @@ const buildOptions = ({
     xAxis: isPie
       ? undefined
       : {
-          categories,
-          lineColor: "#E5E7EB",
-          tickColor: "#E5E7EB",
-          labels: { style: { color: "#6B7280", fontSize: "12px" } },
-          title: { text: null },
-        },
+        categories,
+        lineColor: "#E5E7EB",
+        tickColor: "#E5E7EB",
+        labels: { style: { color: "#6B7280", fontSize: "12px" } },
+        title: { text: null },
+      },
     yAxis: isPie
       ? undefined
       : {
-          min: 0,
-          title: { text: yTitle },
-          gridLineColor: "#E5E7EB",
-          gridLineDashStyle: "Dash",
-          labels: { style: { color: "#6B7280", fontSize: "12px" } },
-        },
+        min: 0,
+        title: { text: yTitle },
+        gridLineColor: "#E5E7EB",
+        gridLineDashStyle: "Dash",
+        labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      },
 
     tooltip: isPie
       ? {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E5E7EB",
-          borderRadius: 10,
-          shadow: false,
-          pointFormat: "<b>{point.y}</b> ({point.percentage:.1f}%)",
-        }
+        backgroundColor: "#FFFFFF",
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        shadow: false,
+        pointFormat: "<b>{point.y}</b> ({point.percentage:.1f}%)",
+      }
       : {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E5E7EB",
-          borderRadius: 10,
-          shadow: false,
-          pointFormat: "<b>{point.y}</b>",
-        },
+        backgroundColor: "#FFFFFF",
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        shadow: false,
+        pointFormat: "<b>{point.y}</b>",
+      },
 
     plotOptions: {
       pie: {
@@ -366,12 +366,12 @@ const buildOptions = ({
         marker:
           type === "line" || type === "area"
             ? {
-                enabled: true,
-                radius: 4,
-                lineWidth: 2,
-                lineColor: seriesColor,
-                fillColor: "#FFFFFF",
-              }
+              enabled: true,
+              radius: 4,
+              lineWidth: 2,
+              lineColor: seriesColor,
+              fillColor: "#FFFFFF",
+            }
             : { enabled: false },
       },
     },
@@ -380,11 +380,11 @@ const buildOptions = ({
       isPie
         ? { name: title, colorByPoint: true, data: seriesData }
         : {
-            name: title,
-            color: seriesColor, // for line/area (and fallback)
-            data: seriesData,
-            fillColor: areaFill,
-          },
+          name: title,
+          color: seriesColor, // for line/area (and fallback)
+          data: seriesData,
+          fillColor: areaFill,
+        },
     ],
   };
 };
@@ -551,7 +551,7 @@ const TicketHighCharts = () => {
     await fetchDetailRecords(detailFilter.countType, detailFilter.countValue, nextPage);
   };
 
-useEffect(() => {
+  useEffect(() => {
     const fetchTicketInfo = async () => {
       try {
         const resp = await getTicketDashboard(dashboardParams);
@@ -575,26 +575,42 @@ useEffect(() => {
 
     fetchTicketInfo();
   }, [dashboardParams]);
-  const handleTicketStatusDownload = async () => {
+  const handleTicketStatusDownload = async (countType, countValue) => {
     const toastId = toast.loading("Downloading Please Wait...");
     setDownloading(true);
+
     try {
-      const response = await getTicketStatusDownload();
+      const params = {
+        siteId: Number(siteId) || undefined,
+        start_date_eq: dashboardParams.start_date_eq,
+        end_date_eq: dashboardParams.end_date_eq,
+
+        // ✅ IMPORTANT (this is missing in your code)
+        ...(countType && { count_type: countType }),
+        ...(countValue && { count_value: countValue }),
+      };
+
+      const response = await getTicketStatusDownload(params);
+
       const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: response.headers["content-type"] })
+        new Blob([response.data], {
+          type: response.headers["content-type"],
+        })
       );
+
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", "ticket_file.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
+
       toast.dismiss(toastId);
-      toast.success("Ticket downloaded successfully");
+      toast.success("Filtered ticket downloaded");
     } catch (error) {
       toast.dismiss(toastId);
       console.error("Error downloading Ticket:", error);
-      toast.error("Something went wrong, please try again");
+      toast.error("Something went wrong");
     } finally {
       setDownloading(false);
     }
@@ -948,7 +964,7 @@ useEffect(() => {
           trendPercent={null}
           trendDirection="down"
           // legendItems={legendTopTwo(statusData, statusPointColor)}
-          onDownload={handleTicketStatusDownload}
+          onDownload={() => handleTicketStatusDownload("status")}
           chartType={statusChartType}
           setChartType={setStatusChartType}
           allowBar={true}
@@ -965,7 +981,7 @@ useEffect(() => {
           title="Tickets by Category"
           // subtitle="Where tickets are coming from"
           // legendItems={legendTopTwo(categoryData, categoryPointColor)}
-          onDownload={handleTicketStatusDownload}
+          onDownload={() => handleTicketStatusDownload("category")}
           chartType={categoryChartType}
           setChartType={setCategoryChartType}
           allowBar={true}
@@ -982,7 +998,7 @@ useEffect(() => {
           title="Tickets by Type"
           // subtitle="Distribution by ticket type"
           // legendItems={legendTopTwo(ticketTypes, typePointColor)}
-          onDownload={handleTicketStatusDownload}
+          onDownload={() => handleTicketStatusDownload("type")}
           chartType={ticketTypeChartType}
           setChartType={setTicketTypeChartType}
           allowBar={true}
@@ -998,8 +1014,11 @@ useEffect(() => {
         <ChartCard
           title={Number(siteId) === 74 ? "Tickets by Block" : "Tickets by Floor"}          // subtitle="Floor-wise ticket count"
           // legendItems={legendTopTwo(floorTickets, floorPointColor)}
-          onDownload={handleTicketStatusDownload}
-          chartType={floorChartType}
+          onDownload={() =>
+            handleTicketStatusDownload(
+              Number(siteId) === 74 ? "block" : "unit"
+            )
+          } chartType={floorChartType}
           setChartType={setFloorChartType}
           allowBar={true}
           downloading={downloading}
@@ -1016,8 +1035,11 @@ useEffect(() => {
             title={Number(siteId) === 74 ? "Tickets by Tenant" : "Tickets by Unit"}
             // subtitle="Unit-wise ticket count"
             // legendItems={legendTopTwo(unitTickets, unitPointColor)}
-            onDownload={handleTicketStatusDownload}
-            chartType={unitChartType}
+            onDownload={() =>
+              handleTicketStatusDownload(
+                Number(siteId) === 74 ? "tenant" : "unit"
+              )
+            } chartType={unitChartType}
             setChartType={setUnitChartType}
             allowBar={true}
             downloading={downloading}
@@ -1044,14 +1066,14 @@ useEffect(() => {
         columns={[
           { key: "id", label: "ID" },
           { key: "title", label: "Title", accessor: (r) => r.heading || r.subject || "—" },
-{
-    key: "building",
-    label: siteId === 74 ? "Block Name" : "Building Name",
-    accessor: (r) => r.building_name || "—",
-  },           { key: "priority", label: "Priority", accessor:(r)=>r.priority },
-                     { key: "status", label: "Status", accessor: (r) => r.status || "—" },
+          {
+            key: "building",
+            label: siteId === 74 ? "Block Name" : "Building Name",
+            accessor: (r) => r.building_name || "—",
+          }, { key: "priority", label: "Priority", accessor: (r) => r.priority },
+          { key: "status", label: "Status", accessor: (r) => r.status || "—" },
           { key: "createdBy", label: "Created By", accessor: (r) => r.created_by || "—" },
-                    { key: "assigned_to", label: "Assigned To", accessor: (r) => r.assigned_to_name || r.assigned_to || "—" },
+          { key: "assigned_to", label: "Assigned To", accessor: (r) => r.assigned_to_name || r.assigned_to || "—" },
           { key: "created_at", label: "Created At", accessor: (r) => r.created_at || r.created_date || "—" },
         ]}
       />
