@@ -364,6 +364,8 @@ const FacilityBooking = () => {
   };
 
   const postBookFacility = async () => {
+      const toastId = toast.loading("Facility Booking, please wait...");
+
     const postData = new FormData();
     const today = new Date();
     const selectedDate = new Date(formData.booking_date);
@@ -450,7 +452,7 @@ const FacilityBooking = () => {
       const response = await postAmenitiesBooking(postData);
 
       // console.log("Booking response:", response);
-      toast.success("Booking successful!");
+      toast.success("Booking successful!",{ id: toastId });
       navigate("/bookings");
     } catch (error) {
       // console.error("Error in booking:", error);
