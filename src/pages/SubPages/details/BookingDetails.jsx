@@ -504,8 +504,8 @@ const BookingDetails = () => {
             }
           />
           <Field label="Booked By" value={booking.book_by_user} />
-          <Field label="Booking Date" value={booking.booking_date} />
-          <Field label="Booked On" value={booking.created_at?.split("T")[0]} />
+          <Field label="Scheduled Date" value={booking.booking_date} />
+          <Field label="Booked Date" value={booking.created_at?.split("T")[0]} />
           <Field
             label="Slot"
             value={

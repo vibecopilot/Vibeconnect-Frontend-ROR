@@ -172,50 +172,90 @@ const FacilityBooking = () => {
   };
 
   const fetchSlotsForFacility = async (facilityId, selectedDate) => {
-    try {
-      const response = await getFacilitySlots(facilityId, selectedDate); // API Call
+  try {
+    const response = await getFacilitySlots(facilityId, selectedDate);
 
-      if (response?.data?.slots) {
-        const now = new Date();
-        const currentHr = now.getHours();
-        const currentMin = now.getMinutes();
-        const selectedDt = new Date(selectedDate);
-        const isToday = selectedDt.toDateString() === now.toDateString();
+    if (response?.data?.slots) {
+      const now = new Date();
+      const selectedDt = new Date(selectedDate);
 
-        const formattedSlots = response.data.slots
-          .filter((slot) => {
-            if (isToday) {
-              return (
-                slot.start_hr > currentHr ||
-                (slot.start_hr === currentHr && slot.start_min > currentMin)
-              );
-            }
-            return true;
-          })
-          .map((slot) => ({
-            ...slot,
-            slot_str: `${formatTime(
-              slot.start_hr,
-              slot.start_min
-            )} to ${formatTime(slot.end_hr, slot.end_min)}`,
-          }));
+      const isToday =
+        selectedDt.toDateString() === now.toDateString();
 
-        setSlots(formattedSlots);
+      const currentHr = now.getHours();
+      const currentMin = now.getMinutes();
 
-        if (formattedSlots.length === 0) {
-          setBlockedDates((prev) =>
-            prev.includes(selectedDate) ? prev : [...prev, selectedDate]
-          );
-        }
-        return formattedSlots;
-      } else {
+      // 👉 Get selected facility
+      const selectedFacility = facilities.find(
+        (f) => f.id === parseInt(facilityId)
+      );
+
+      // 👉 Get day of week (0 = Sunday)
+      const dayOfWeek = selectedDt.getDay();
+
+      // 👉 Find operational day config
+      const operationalDay = selectedFacility?.operational_days?.find(
+        (d) => d.day_of_week === dayOfWeek
+      );
+
+      // ❌ If facility closed that day
+      if (!operationalDay || !operationalDay.is_active) {
         setSlots([]);
         return [];
       }
-    } catch (error) {
+
+      // 👉 Convert operational times
+      const [opStartHr, opStartMin] = operationalDay.start_time
+        .split(":")
+        .map(Number);
+
+      const [opEndHr, opEndMin] = operationalDay.end_time
+        .split(":")
+        .map(Number);
+
+      const formattedSlots = response.data.slots
+        .filter((slot) => {
+          // ✅ Filter by operational time
+          const slotStart = slot.start_hr * 60 + (slot.start_min || 0);
+          const opStart = opStartHr * 60 + opStartMin;
+          const opEnd = opEndHr * 60 + opEndMin;
+
+          if (slotStart < opStart || slotStart >= opEnd) {
+            return false;
+          }
+
+          // ✅ Filter past slots (today only)
+          if (isToday) {
+            return (
+              slot.start_hr > currentHr ||
+              (slot.start_hr === currentHr &&
+                slot.start_min > currentMin)
+            );
+          }
+
+          return true;
+        })
+        .map((slot) => ({
+          ...slot,
+          slot_str: `${formatTime(
+            slot.start_hr,
+            slot.start_min
+          )} to ${formatTime(slot.end_hr, slot.end_min)}`,
+        }));
+
+      setSlots(formattedSlots);
+
+      return formattedSlots;
+    } else {
       setSlots([]);
+      return [];
     }
-  };
+  } catch (error) {
+    console.error(error);
+    setSlots([]);
+    return [];
+  }
+};
 
   const [testFacility, setTestFacility] = useState([]);
   const fetchTermsPolicy = async (facilityId) => {
@@ -364,7 +404,7 @@ const FacilityBooking = () => {
   };
 
   const postBookFacility = async () => {
-      const toastId = toast.loading("Facility Booking, please wait...");
+      // const toastId = toast.loading("Facility Booking, please wait...");
 
     const postData = new FormData();
     const today = new Date();
@@ -449,15 +489,19 @@ const FacilityBooking = () => {
         console.log(`${key}: ${value}`);
       }
 
-      const response = await postAmenitiesBooking(postData);
-
-      // console.log("Booking response:", response);
-      toast.success("Booking successful!",{ id: toastId });
+      const response = await toast.promise(
+      postAmenitiesBooking(postData),
+      {
+        loading: "Facility Booking, please wait...",
+        success: "Booking successful!",
+        error: "Booking limit exhausted",
+      }
+    );
       navigate("/bookings");
     } catch (error) {
-      // console.error("Error in booking:", error);
+      console.error("Error in booking:", error);
       // alert("Error in booking. Please try again.", error);
-      toast.error("Booking limit exhausted! for this week");
+      // toast.error("Booking limit exhausted! for this week");
     }
   };
   // console.log("uuu", units);
