@@ -164,7 +164,7 @@ function PPMCalendarDashboard() {
   const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
     if (!startStr || !endStr) return;
 
-    const toastId = toast.loading("Loading calendar...");
+    // const toastId = toast.loading("Loading calendar...");
 
     try {
       const data = await getCalendarActivities(startStr, endStr);

@@ -11643,8 +11643,8 @@ export const getCalendarBookings = async (
       token: token,
       booking_type,
       site_id,
-      ...(start_date ? { start_date } : {}),
-      ...(end_date ? { end_date } : {}),
+      ...(start_date && { start_date }),
+      ...(end_date && { end_date }),
     },
   });
 
@@ -11683,7 +11683,7 @@ export const getAmenitiesBooking = async (
       page,
       per_page: perPage,
       site_id: siteId,
-      search, // add this
+      "q[search_cont]":search, // add this
       _t: new Date().getTime(),
     },
   });
