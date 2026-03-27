@@ -112,12 +112,10 @@ const FacilityBooking = () => {
     guest_price_adult: 0,
   });
 
-  console.log("formData", formData);
 
   const fetchUnits = async () => {
     try {
       const response = await getAllUnits();
-      console.log("Units:", response);
       setUnits(response.data);
     } catch (error) {
       console.error("Error fetching units:", error);
@@ -126,13 +124,10 @@ const FacilityBooking = () => {
 
   const calculateBookingAmount = (facility, formData) => {
     if (facility?.fixed_amount) {
-      console.log("Fixed amount of facility", facility.fixed_amount)
       const fixedAmount = Number(facility?.fixed_amount) || 0;
       const taxPercentage = Number(facility?.gst_no) || 0;
-      console.log("taxPercentage Amount:", taxPercentage);
       const taxAmount = (fixedAmount * taxPercentage) / 100;
       const totalAmount = fixedAmount + taxAmount;
-      console.log("Fixed Amount:", totalAmount);
       return totalAmount;
     } else {
       return formData?.amount ?? "";
@@ -153,7 +148,6 @@ const FacilityBooking = () => {
 
   useEffect(() => {
     const bookingAmount = calculateBookingAmount(facility, formData);
-    console.log("Booking Amount:", bookingAmount);
     setAmountt(bookingAmount);
   }, [facility, formData]);
 
@@ -171,7 +165,6 @@ const FacilityBooking = () => {
     }
   };
 
-  console.log("Slots", slots);
 
   const formatTime = (hr, min) => {
     const safeMin = min ?? 0;
@@ -216,12 +209,10 @@ const FacilityBooking = () => {
         }
         return formattedSlots;
       } else {
-        console.log("No Slots Found");
         setSlots([]);
         return [];
       }
     } catch (error) {
-      console.log("Error Fetching Slots", error);
       setSlots([]);
     }
   };
@@ -272,24 +263,19 @@ const FacilityBooking = () => {
             "No cancellation policy available."
           );
         } else {
-          console.log("Facility not found.");
           setTerms("No terms available.");
           setCancellationPolicy("No cancellation policy available.");
         }
       } else {
-        console.log("Error in fetching data.");
         setTerms("No terms available.");
         setCancellationPolicy("No cancellation policy available.");
       }
     } catch (error) {
-      console.log("Error fetching facility data:", error);
       setTerms("Error loading terms.");
       setCancellationPolicy("Error loading cancellation policy.");
     }
   };
 
-  console.log("Data coming from API", testFacility);
-  console.log("Payment methods", paymentMethods);
 
   const handleInputChange = (field, value) => {
     const updatedFormData = { ...formData, [field]: parseInt(value) || 0 };
@@ -325,7 +311,6 @@ const FacilityBooking = () => {
     const totalBeforeTax = memberTotal + guestTotal; //+ tenantTotal;
     // Assuming `tax_no` comes from the fetched data (e.g., tax rate is 12%)
     const taxAmount = calculateGST(totalBeforeTax, formData.gst_no || 0); // If no tax, use 0
-    console.log("tax amm", taxAmount);
     const finalAmount = totalBeforeTax + taxAmount;
     // Update formData and the total amount
     setFormData({
@@ -464,16 +449,16 @@ const FacilityBooking = () => {
 
       const response = await postAmenitiesBooking(postData);
 
-      console.log("Booking response:", response);
+      // console.log("Booking response:", response);
       toast.success("Booking successful!");
       navigate("/bookings");
     } catch (error) {
-      console.error("Error in booking:", error);
+      // console.error("Error in booking:", error);
       // alert("Error in booking. Please try again.", error);
-      toast.error("Booking Limit Reached");
+      toast.error("Booking limit exhausted! for this week");
     }
   };
-  console.log("uuu", units);
+  // console.log("uuu", units);
   const fetchUsers = async () => {
     try {
       const response = await getSetupUsers();
@@ -482,7 +467,6 @@ const FacilityBooking = () => {
         const userSite = user?.user_sites?.[0];
 
         if (!userSite) {
-          console.warn(`No user site found for user ${user.id}`);
           return {
             value: user.id,
             label: `${user.firstname} ${user.lastname} - Unknown Unit - ${user?.user_sites?.[0]?.ownership || "Unknown Ownership"
@@ -491,7 +475,6 @@ const FacilityBooking = () => {
         }
 
         const unit = units.find((unit) => unit?.id === userSite?.unit_id);
-        console.log("Found unit:", unit);
 
         return {
           value: user.id,
@@ -515,7 +498,7 @@ const FacilityBooking = () => {
     }
   }, [units]);
 
-  console.log("facility", facility);
+  // console.log("facility", facility);
 
   const handleFacilityChange = (e) => {
     const selectedFacilityId = e.target.value;
@@ -568,7 +551,7 @@ const FacilityBooking = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [facilityError, setFacilityError] = useState("");
 
-  console.log("Line 536 filters", facilities);
+  // console.log("Line 536 filters", facilities);
   const filteredFacilities = facilities.filter((facility) =>
     facility.fac_name.toLowerCase().includes(searchFATerm.toLowerCase())
   );
