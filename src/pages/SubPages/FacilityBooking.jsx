@@ -172,90 +172,90 @@ const FacilityBooking = () => {
   };
 
   const fetchSlotsForFacility = async (facilityId, selectedDate) => {
-  try {
-    const response = await getFacilitySlots(facilityId, selectedDate);
+    try {
+      const response = await getFacilitySlots(facilityId, selectedDate);
 
-    if (response?.data?.slots) {
-      const now = new Date();
-      const selectedDt = new Date(selectedDate);
+      if (response?.data?.slots) {
+        const now = new Date();
+        const selectedDt = new Date(selectedDate);
 
-      const isToday =
-        selectedDt.toDateString() === now.toDateString();
+        const isToday =
+          selectedDt.toDateString() === now.toDateString();
 
-      const currentHr = now.getHours();
-      const currentMin = now.getMinutes();
+        const currentHr = now.getHours();
+        const currentMin = now.getMinutes();
 
-      // 👉 Get selected facility
-      const selectedFacility = facilities.find(
-        (f) => f.id === parseInt(facilityId)
-      );
+        // 👉 Get selected facility
+        const selectedFacility = facilities.find(
+          (f) => f.id === parseInt(facilityId)
+        );
 
-      // 👉 Get day of week (0 = Sunday)
-      const dayOfWeek = selectedDt.getDay();
+        // 👉 Get day of week (0 = Sunday)
+        const dayOfWeek = selectedDt.getDay();
 
-      // 👉 Find operational day config
-      const operationalDay = selectedFacility?.operational_days?.find(
-        (d) => d.day_of_week === dayOfWeek
-      );
+        // 👉 Find operational day config
+        const operationalDay = selectedFacility?.operational_days?.find(
+          (d) => d.day_of_week === dayOfWeek
+        );
 
-      // ❌ If facility closed that day
-      if (!operationalDay || !operationalDay.is_active) {
+        // ❌ If facility closed that day
+        if (!operationalDay || !operationalDay.is_active) {
+          setSlots([]);
+          return [];
+        }
+
+        // 👉 Convert operational times
+        const [opStartHr, opStartMin] = operationalDay.start_time
+          .split(":")
+          .map(Number);
+
+        const [opEndHr, opEndMin] = operationalDay.end_time
+          .split(":")
+          .map(Number);
+
+        const formattedSlots = response.data.slots
+          .filter((slot) => {
+            // ✅ Filter by operational time
+            const slotStart = slot.start_hr * 60 + (slot.start_min || 0);
+            const opStart = opStartHr * 60 + opStartMin;
+            const opEnd = opEndHr * 60 + opEndMin;
+
+            if (slotStart < opStart || slotStart >= opEnd) {
+              return false;
+            }
+
+            // ✅ Filter past slots (today only)
+            if (isToday) {
+              return (
+                slot.start_hr > currentHr ||
+                (slot.start_hr === currentHr &&
+                  slot.start_min > currentMin)
+              );
+            }
+
+            return true;
+          })
+          .map((slot) => ({
+            ...slot,
+            slot_str: `${formatTime(
+              slot.start_hr,
+              slot.start_min
+            )} to ${formatTime(slot.end_hr, slot.end_min)}`,
+          }));
+
+        setSlots(formattedSlots);
+
+        return formattedSlots;
+      } else {
         setSlots([]);
         return [];
       }
-
-      // 👉 Convert operational times
-      const [opStartHr, opStartMin] = operationalDay.start_time
-        .split(":")
-        .map(Number);
-
-      const [opEndHr, opEndMin] = operationalDay.end_time
-        .split(":")
-        .map(Number);
-
-      const formattedSlots = response.data.slots
-        .filter((slot) => {
-          // ✅ Filter by operational time
-          const slotStart = slot.start_hr * 60 + (slot.start_min || 0);
-          const opStart = opStartHr * 60 + opStartMin;
-          const opEnd = opEndHr * 60 + opEndMin;
-
-          if (slotStart < opStart || slotStart >= opEnd) {
-            return false;
-          }
-
-          // ✅ Filter past slots (today only)
-          if (isToday) {
-            return (
-              slot.start_hr > currentHr ||
-              (slot.start_hr === currentHr &&
-                slot.start_min > currentMin)
-            );
-          }
-
-          return true;
-        })
-        .map((slot) => ({
-          ...slot,
-          slot_str: `${formatTime(
-            slot.start_hr,
-            slot.start_min
-          )} to ${formatTime(slot.end_hr, slot.end_min)}`,
-        }));
-
-      setSlots(formattedSlots);
-
-      return formattedSlots;
-    } else {
+    } catch (error) {
+      console.error(error);
       setSlots([]);
       return [];
     }
-  } catch (error) {
-    console.error(error);
-    setSlots([]);
-    return [];
-  }
-};
+  };
 
   const [testFacility, setTestFacility] = useState([]);
   const fetchTermsPolicy = async (facilityId) => {
@@ -385,7 +385,7 @@ const FacilityBooking = () => {
       const slots = await fetchSlotsForFacility(facility.id, rawDate);
 
       if (!slots || slots.length === 0) {
-        toast.error("No slots available for this date.");
+        toast.error("This amenity cannot be booked today as it is a non-operational day. Kindly choose a working day.");
         setSlots([]);
         setDate("");
         setFormData((prevData) => ({
@@ -404,7 +404,7 @@ const FacilityBooking = () => {
   };
 
   const postBookFacility = async () => {
-      // const toastId = toast.loading("Facility Booking, please wait...");
+    // const toastId = toast.loading("Facility Booking, please wait...");
 
     const postData = new FormData();
     const today = new Date();
@@ -490,13 +490,13 @@ const FacilityBooking = () => {
       }
 
       const response = await toast.promise(
-      postAmenitiesBooking(postData),
-      {
-        loading: "Facility Booking, please wait...",
-        success: "Booking successful!",
-        error: "Booking limit exhausted",
-      }
-    );
+        postAmenitiesBooking(postData),
+        {
+          loading: "Facility Booking, please wait...",
+          success: "Booking successful!",
+          error: "Booking Limit Exhausted - Do you want to request a waitlist spot?",
+        }
+      );
       navigate("/bookings");
     } catch (error) {
       console.error("Error in booking:", error);
@@ -1090,7 +1090,7 @@ const FacilityBooking = () => {
                   type="text"
                   id="amount"
                   name="amount"
-                  value={amountt ? amountt : formData.amount || 0} 
+                  value={amountt ? amountt : formData.amount || 0}
                   disabled
                   className="flex p-2 border border-grey-300 rounded"
                 />
@@ -1101,10 +1101,10 @@ const FacilityBooking = () => {
                 className="p-2 px-4 flex items-center gap-2 bg-red-400 text-white rounded-md font-medium transition-all duration-300"
                 onClick={() => navigate("/bookings")}
               >
-                <MdClose/> Cancel
+                <MdClose /> Cancel
               </button>
               <button
-                onClick={postBookFacility} 
+                onClick={postBookFacility}
                 className="p-2 px-4 flex items-center gap-2 bg-green-400 text-white rounded-md font-medium transition-all duration-300"
               >
                 <FaCheck /> Submit

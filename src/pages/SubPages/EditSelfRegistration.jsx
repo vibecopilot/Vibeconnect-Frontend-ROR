@@ -6,6 +6,7 @@ import Webcam from "react-webcam";
 import axios from "axios";
 import { FaTrash } from "react-icons/fa";
 import { getVisitorById, updateVisitor } from "../../api";
+import toast from "react-hot-toast";
 
 const EditSelfRegistration = () => {
 
@@ -158,7 +159,7 @@ useEffect(() => {
 
     await updateVisitor(id, form, token);
 
-    alert("Visitor updated successfully");
+    toast.success("Visitor updated successfully");
 
     // redirect to main page
     
@@ -302,6 +303,8 @@ useEffect(() => {
       value={formData.contact_no}
       onChange={handleChange}
       className="border p-2 rounded w-full"
+      maxLength={10}
+      minLength={10}
     />
   </div>
 

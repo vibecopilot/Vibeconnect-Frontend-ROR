@@ -1097,7 +1097,7 @@ const SetupFacility = () => {
             </div>
             <div className="flex flex-col gap-1">
               <label htmlFor="" className="font-medium">
-                Link to building
+                Link to Billing
               </label>
               <select
                 name="billing"
