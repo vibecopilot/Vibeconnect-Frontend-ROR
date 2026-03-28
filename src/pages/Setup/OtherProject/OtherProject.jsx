@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import Navbar from "../../../components/Navbar";
 import {
   deleteOtherProject,
+  domainPrefix,
   getOtherProject,
   postOtherProject,
   postProjectLike,
@@ -12,11 +13,7 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { PiPlusCircle } from "react-icons/pi";
 import { FiEdit, FiTrash2, FiHeart } from "react-icons/fi";
 import toast from "react-hot-toast";
-import { Slider } from "antd";
-// import Slider from "react-slick";
-
-// import "slick-carousel/slick/slick.css";
-// import "slick-carousel/slick/slick-theme.css";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 const API_BASE = "https://admin.vibecopilot.ai";
 const PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
@@ -36,6 +33,7 @@ const OtherProject = () => {
   });
 
   const [likedProjects, setLikedProjects] = useState([]);
+  const [imageIndexes, setImageIndexes] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,12 +62,13 @@ const OtherProject = () => {
     if (filePdfRef.current) filePdfRef.current.value = "";
   }, []);
 
-  const buildImageUrl = (docPath) => {
-    if (!docPath || typeof docPath !== "string") return null;
-    if (docPath.startsWith("http://") || docPath.startsWith("https://")) return docPath;
+  const buildFileUrl = (docPath) => {
+    if (!docPath) return null;
+
+    if (docPath.startsWith("http")) return docPath;
+
     return `${API_BASE}${docPath}`;
   };
-
   const extractLikeUserName = (like) => {
     const u = like?.user || like?.liked_by || like?.created_by || null;
     return (
@@ -84,26 +83,26 @@ const OtherProject = () => {
     );
   };
 
-      const normalizeLikeUser = (like) => {
-        // If API returns just number IDs
-        if (typeof like === "number") {
-          return { id: like, name: `User #${like}`, email: "", mobile: "", avatar: "" };
-        }
+  const normalizeLikeUser = (like) => {
+    // If API returns just number IDs
+    if (typeof like === "number") {
+      return { id: like, name: `User #${like}`, email: "", mobile: "", avatar: "" };
+    }
 
-        // Your backend format: { user_id, full_name, mobile, email }
-        const id = Number(like?.user_id ?? like?.userId ?? like?.id) || null;
+    // Your backend format: { user_id, full_name, mobile, email }
+    const id = Number(like?.user_id ?? like?.userId ?? like?.id) || null;
 
-        const name =
-          like?.full_name ||
-          like?.name ||
-          like?.username ||
-          (id ? `User #${id}` : "Unknown User");
+    const name =
+      like?.full_name ||
+      like?.name ||
+      like?.username ||
+      (id ? `User #${id}` : "Unknown User");
 
-        const email = like?.email || "";
-        const mobile = like?.mobile || "";
+    const email = like?.email || "";
+    const mobile = like?.mobile || "";
 
-        return { id, name, email, mobile, avatar: "" };
-      };
+    return { id, name, email, mobile, avatar: "" };
+  };
 
 
   const didILikeProject = (project) => {
@@ -233,11 +232,12 @@ const OtherProject = () => {
 
       const response = await getOtherProject();
       const list = Array.isArray(response?.data) ? response.data : [];
-
       const transformed = list.map((project) => {
-        const attachments = Array.isArray(project?.attachments) ? project.attachments : [];
+        const attachments = Array.isArray(project?.attachments)
+          ? project.attachments
+          : [];
         const images = attachments
-          .map((a) => buildImageUrl(a?.document))
+          .map((a) => buildFileUrl(a?.document))
           .filter(Boolean);
 
         const likesArr = Array.isArray(project?.likes) ? project.likes : [];
@@ -368,11 +368,15 @@ const OtherProject = () => {
     e.preventDefault();
     const toastId = toast.loading("Processing...");
 
+    const companyId = Number(getItemInLocalStorage("COMPANYID")) || null;
+
     const fd = new FormData();
     fd.append("other_project[title]", formData.title?.trim() || "");
     fd.append("other_project[description]", formData.description?.trim() || "");
     fd.append("other_project[address]", formData.address?.trim() || "");
-
+    if (companyId) {
+      fd.append("other_project[company_id]", companyId);
+    }
     if (formData.attachments && formData.attachments.length) {
       Array.from(formData.attachments).forEach((f) => fd.append("attachments[]", f));
     }
@@ -400,18 +404,19 @@ const OtherProject = () => {
     }
   };
 
-  const baseSliderSettings = useMemo(
-    () => ({
-      dots: true,
-      infinite: false,
-      speed: 500,
-      slidesToShow: 1,
-      slidesToScroll: 1,
-      arrows: true,
-      adaptiveHeight: false,
-    }),
-    []
-  );
+  const goToPrevImage = (projectId, total) => {
+    setImageIndexes((prev) => ({
+      ...prev,
+      [projectId]: ((prev[projectId] ?? 0) - 1 + total) % total,
+    }));
+  };
+
+  const goToNextImage = (projectId, total) => {
+    setImageIndexes((prev) => ({
+      ...prev,
+      [projectId]: ((prev[projectId] ?? 0) + 1) % total,
+    }));
+  };
 
   return (
     <section className="flex">
@@ -448,36 +453,70 @@ const OtherProject = () => {
                   [574, 570].includes(Number(userID)));
 
               const hasMultipleImages = (project.images?.length || 0) > 1;
-              const sliderSettings = {
-                ...baseSliderSettings,
-                dots: hasMultipleImages,
-                arrows: hasMultipleImages,
-                infinite: hasMultipleImages,
-              };
+              const currentImgIndex = imageIndexes[project.id] ?? 0;
+              const totalImages = project.images?.length || 1;
 
               const isLiked = likedProjects.includes(project.id);
               const likeBusy = likeLoadingIds.includes(project.id);
 
               return (
+
                 <div
                   key={project.id}
-                  className="bg-white rounded-xl shadow-lg border overflow-hidden"
+                  className="bg-white rounded-xl shadow-lg border overflow-hidden "
                 >
-                  {/* IMAGE */}
-                  <div className="relative h-56 bg-gray-200">
-                    <Slider {...sliderSettings}>
-                      {(project.images || [PLACEHOLDER]).map((img, i) => (
-                        <img
-                          key={`${project.id}-${i}`}
-                          src={img}
-                          className="h-56 w-full object-cover"
-                          alt={project?.title ? `Project: ${project.title}` : "project"}
-                          onError={(e) => {
-                            e.currentTarget.src = PLACEHOLDER;
-                          }}
-                        />
-                      ))}
-                    </Slider>
+                  {/* IMAGE CAROUSEL */}
+                  <div className="relative h-56 bg-gray-200 overflow-hidden">
+                    <a
+                      href={(project.images || [PLACEHOLDER])[currentImgIndex] ?? PLACEHOLDER}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <img
+                        src={(project.images || [PLACEHOLDER])[currentImgIndex] ?? PLACEHOLDER}
+                        className="h-56 w-full object-cover cursor-pointer"
+                        alt={project?.title ? `Project: ${project.title}` : "project"}
+                        onError={(e) => {
+                          e.currentTarget.src = PLACEHOLDER;
+                        }}
+                      />
+                    </a>
+
+                    {hasMultipleImages && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => goToPrevImage(project.id, totalImages)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1 z-10"
+                          title="Previous"
+                        >
+                          <FiChevronLeft size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => goToNextImage(project.id, totalImages)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1 z-10"
+                          title="Next"
+                        >
+                          <FiChevronRight size={18} />
+                        </button>
+                        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                          {project.images.map((_, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() =>
+                                setImageIndexes((prev) => ({ ...prev, [project.id]: idx }))
+                              }
+                              className={`h-1.5 rounded-full transition-all ${idx === currentImgIndex
+                                ? "w-4 bg-white"
+                                : "w-1.5 bg-white/50"
+                                }`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="p-5">
@@ -523,11 +562,9 @@ const OtherProject = () => {
                       <button
                         onClick={() => handleLikeSubmit(project.id)}
                         disabled={isLiked || likeBusy}
-                        className={`flex items-center gap-1 ${
-                          isLiked ? "text-red-500" : "text-gray-400"
-                        } ${
-                          likeBusy ? "opacity-60 cursor-not-allowed" : "hover:opacity-90"
-                        }`}
+                        className={`flex items-center gap-1 ${isLiked ? "text-red-500" : "text-gray-400"
+                          } ${likeBusy ? "opacity-60 cursor-not-allowed" : "hover:opacity-90"
+                          }`}
                         type="button"
                         title={isLiked ? "Liked" : "Like"}
                       >
@@ -678,11 +715,11 @@ const OtherProject = () => {
 
                       <div className="min-w-0">
                         <p className="font-semibold truncate">{u?.name || "Unknown User"}</p>
-                     <p className="text-xs text-gray-600 truncate">
-                        {u?.email ? u.email : "—"}
-                        {u?.mobile ? ` • ${u.mobile}` : ""}
-                        {(!u?.email && !u?.mobile && u?.id) ? `User ID: ${u.id}` : ""}
-                      </p>
+                        <p className="text-xs text-gray-600 truncate">
+                          {u?.email ? u.email : "—"}
+                          {u?.mobile ? ` • ${u.mobile}` : ""}
+                          {(!u?.email && !u?.mobile && u?.id) ? `User ID: ${u.id}` : ""}
+                        </p>
 
                       </div>
                     </div>
