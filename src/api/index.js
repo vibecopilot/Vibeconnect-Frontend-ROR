@@ -3143,6 +3143,16 @@ export const getExpectedVisitor = async (
     params["q[host_user_firstname_or_host_user_lastname_cont]"] = filters.host;
   }
 
+  // Add skip_host_approval filter (boolean must be sent as string for query params)
+  if (filters.skip_host_approval !== undefined && filters.skip_host_approval !== null && filters.skip_host_approval !== "") {
+    params["q[skip_host_approval_eq]"] = filters.skip_host_approval;
+  }
+
+  // Add building filter
+  if (filters.building_id) {
+    params["q[building_id_eq]"] = filters.building_id;
+  }
+
   // Support direct q[...] object keys from VisitorFilters
   Object.keys(filters).forEach((key) => {
     if (key.startsWith("q[")) {
@@ -3263,14 +3273,21 @@ export const visitorApproval = async (id, data) =>
       token: token,
     },
   });
-export const getVisitorHistory = async (page = 1, perPage = 10) =>
-  axiosInstance.get(`/visitors/approval_history.json`, {
-    params: {
-      token: token,
-      page: page,
-      per_page: perPage,
-    },
-  });
+export const getVisitorHistory = async (page = 1, perPage = 10, filters = {}) => {
+  const params = {
+    token: token,
+    page: page,
+    per_page: perPage,
+  };
+
+  if (filters.dateFrom) params["q[approval_date_gteq]"] = filters.dateFrom;
+  if (filters.dateTo) params["q[approval_date_lteq]"] = filters.dateTo;
+  if (filters.mobile) params["q[contact_no_cont]"] = filters.mobile;
+  if (filters.approved !== undefined && filters.approved !== null && filters.approved !== "")
+    params["q[approved_eq]"] = filters.approved;
+
+  return axiosInstance.get(`/visitors/approval_history.json`, { params });
+};
 export const getVisitorDetails = async (id) =>
   axiosInstance.get(`/visitors/${id}.json`, {
     params: {

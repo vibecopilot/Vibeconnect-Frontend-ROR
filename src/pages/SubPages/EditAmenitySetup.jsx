@@ -1231,7 +1231,7 @@ const EditAmenitySetup = () => {
 
             {/* Link To Building */}
             <div className="flex flex-col gap-1">
-              <label className="font-medium">Link To Building</label>
+              <label className="font-medium">Link To Billing</label>
               <select
                 className="border rounded-md border-gray-400 p-2 py-3"
                 value={
