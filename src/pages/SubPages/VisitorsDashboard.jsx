@@ -1,20 +1,21 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FaDownload, FaCalendarAlt } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { getVisitorAnalytics, getExportVisitors } from "../../api";
+import { getVisitorAnalytics, getExportVisitors, getVisitorsDashboardDrill } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import DetailPopup from "../../components/DetailPopup";
 
-/* ── ordered list of stat cards we want to display ─────────────────────────
-   Only cards whose key exists in the API response will be rendered.        */
+
+
 const STAT_CONFIG = [
-  { key: "total",        title: "Total Visitors",   subtitle: "All time visitors",   accent: "#1D4ED8", drillFilter: "total"       },
-  { key: "in",           title: "Total In",          subtitle: "Currently inside",    accent: "#10B981", drillFilter: "in"          },
-  { key: "out",          title: "Total Out",         subtitle: "Currently out",       accent: "#F59E0B", drillFilter: "out"         },
-  { key: "today",        title: "Today's Visitors",  subtitle: "Today",               accent: "#06B6D4", drillFilter: "today"       },
-  { key: "today_in",     title: "Today's In",        subtitle: "Today check-in",      accent: "#8B5CF6", drillFilter: "today_in"    },
-  { key: "today_out",    title: "Today's Out",       subtitle: "Today check-out",     accent: "#EC4899", drillFilter: "today_out"   },
-  { key: "expected_v",   title: "Expected",          subtitle: "Pre-registered",      accent: "#14B8A6", drillFilter: "expected"    },
-  { key: "unexpected_v", title: "Unexpected",        subtitle: "Walk-in visitors",    accent: "#EF4444", drillFilter: "unexpected"  },
+  { key: "total", title: "Total Visitors", subtitle: "All time visitors", accent: "#1D4ED8", drillFilter: "total" },
+  { key: "in", title: "Total In", subtitle: "Currently inside", accent: "#10B981", drillFilter: "in" },
+  { key: "out", title: "Total Out", subtitle: "Currently out", accent: "#F59E0B", drillFilter: "out" },
+  { key: "today", title: "Today's Visitors", subtitle: "Today", accent: "#06B6D4", drillFilter: "today" },
+  { key: "today_in", title: "Today's In", subtitle: "Today check-in", accent: "#8B5CF6", drillFilter: "today_in" },
+  { key: "today_out", title: "Today's Out", subtitle: "Today check-out", accent: "#EC4899", drillFilter: "today_out" },
+  { key: "expected_v", title: "Expected", subtitle: "Pre-registered", accent: "#14B8A6", drillFilter: "expected" },
+  { key: "unexpected_v", title: "Unexpected", subtitle: "Walk-in visitors", accent: "#EF4444", drillFilter: "unexpected" },
 ];
 
 const formatDateForApi = (isoDate) => {
@@ -67,20 +68,71 @@ const SkeletonCard = () => (
 );
 
 const VisitorsDashboard = () => {
-  const siteId    = getItemInLocalStorage("SITEID");
+  const siteId = getItemInLocalStorage("SITEID");
   const companyId = getItemInLocalStorage("COMPANYID");
   const isCompany55 = String(companyId) === "55";
 
-  const [rawStats,     setRawStats]     = useState({});
-  const [loading,      setLoading]      = useState(true);
-  const [filterOpen,   setFilterOpen]   = useState(false);
-  const [fromDate,     setFromDate]     = useState("");
-  const [toDate,       setToDate]       = useState("");
+  const [rawStats, setRawStats] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [tempFromDate, setTempFromDate] = useState("");
-  const [tempToDate,   setTempToDate]   = useState("");
-  const [showDlModal,  setShowDlModal]  = useState(false);
-  const [dlStart,      setDlStart]      = useState("");
-  const [dlEnd,        setDlEnd]        = useState("");
+  const [tempToDate, setTempToDate] = useState("");
+  const [showDlModal, setShowDlModal] = useState(false);
+  const [dlStart, setDlStart] = useState("");
+  const [dlEnd, setDlEnd] = useState("");
+
+  const [detailPopup, setDetailPopup] = useState({
+    open: false,
+    title: "",
+    records: [],
+    loading: false,
+  });
+  const [detailPage, setDetailPage] = useState(1);
+  const [detailTotalPages, setDetailTotalPages] = useState(1);
+  const [detailFilter, setDetailFilter] = useState({ filterKey: "", title: "" });
+
+  const fetchDrillRecords = async (filterKey, title, page = 1) => {
+    setDetailPopup((p) => ({ ...p, open: true, title, loading: true, records: [] }));
+    setDetailFilter({ filterKey, title });
+    setDetailPage(page);
+
+    try {
+      const rangeFrom = formatDateForApi(fromDate);
+      const rangeTo = formatDateForApi(toDate);
+
+      const res = await getVisitorsDashboardDrill(
+        filterKey,              // count_type  e.g. "total"
+        filterKey,              // count_value e.g. "total"
+        siteId,
+        page,                   // record_page
+        rangeFrom || undefined,
+        rangeTo || undefined
+      );
+
+      const bucket = res?.data?.[filterKey] ?? res?.data ?? {};
+      const records = Array.isArray(bucket?.records) ? bucket.records : [];
+      const total = bucket?.count ?? bucket?.total ?? records.length;
+      const perPage = bucket?.per_page ?? 10;
+      const totalPages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+
+      setDetailTotalPages(totalPages);
+      setDetailPopup({ open: true, title, records, loading: false });
+
+    } catch (err) {
+      console.error("Visitor drill error:", err);
+      toast.error("Failed to load visitor details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  const handleCardClick = (filterKey, title) => fetchDrillRecords(filterKey, title, 1);
+
+  const onDetailPageChange = (nextPage) => {
+    if (nextPage < 1 || nextPage > detailTotalPages) return;
+    fetchDrillRecords(detailFilter.filterKey, detailFilter.title, nextPage);
+  };
 
   useEffect(() => {
     fetchStats();
@@ -91,8 +143,8 @@ const VisitorsDashboard = () => {
     setLoading(true);
     try {
       const rangeFrom = formatDateForApi(fromDate);
-      const rangeTo   = formatDateForApi(toDate);
-      const resp      = await getVisitorAnalytics(rangeFrom, rangeTo, siteId);
+      const rangeTo = formatDateForApi(toDate);
+      const resp = await getVisitorAnalytics(rangeFrom, rangeTo, siteId);
       setRawStats(resp?.data || {});
     } catch (err) {
       console.error("Error fetching visitors dashboard:", err);
@@ -108,7 +160,7 @@ const VisitorsDashboard = () => {
       .filter((cfg) => rawStats[cfg.key] !== undefined)
       .map((cfg) => {
         let title = cfg.title;
-        if (cfg.key === "expected_v")   title = isCompany55 ? "Planned"   : "Expected";
+        if (cfg.key === "expected_v") title = isCompany55 ? "Planned" : "Expected";
         if (cfg.key === "unexpected_v") title = isCompany55 ? "Unplanned" : "Unexpected";
         return { ...cfg, title, value: rawStats[cfg.key] };
       });
@@ -119,10 +171,10 @@ const VisitorsDashboard = () => {
     const contentType =
       response?.headers?.["content-type"] ||
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    const url  = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
+    const url = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
     const link = document.createElement("a");
     link.style.display = "none";
-    link.href     = url;
+    link.href = url;
     link.download = filename;
     document.body.appendChild(link);
     link.click();
@@ -139,8 +191,8 @@ const VisitorsDashboard = () => {
         downloadBlob(response, `visitors_${range.start}_to_${range.end}.xlsx`);
       } else {
         response = await getExportVisitors();
-        const s   = new Date();
-        const ym  = `${s.getFullYear()}${String(s.getMonth() + 1).padStart(2, "0")}${String(s.getDate()).padStart(2, "0")}`;
+        const s = new Date();
+        const ym = `${s.getFullYear()}${String(s.getMonth() + 1).padStart(2, "0")}${String(s.getDate()).padStart(2, "0")}`;
         downloadBlob(response, `visitors_export_${ym}.xlsx`);
       }
       toast.success("Downloaded successfully");
@@ -252,16 +304,42 @@ const VisitorsDashboard = () => {
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
           : visibleCards.map((cfg) => (
+            <div
+              key={cfg.key}
+              onClick={() => handleCardClick(cfg.drillFilter, cfg.title)}
+              className="cursor-pointer"
+            >
               <StatCard
-                key={cfg.key}
                 title={cfg.title}
                 subtitle={cfg.subtitle}
                 value={cfg.value}
                 accent={cfg.accent}
               />
-            ))
+            </div>
+          ))
         }
       </div>
+
+      <DetailPopup
+        isOpen={detailPopup.open}
+        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        title={detailPopup.title}
+        subtitle={`Page ${detailPage} of ${detailTotalPages}`}
+        records={detailPopup.records}
+        loading={detailPopup.loading}
+        page={detailPage}
+        totalPages={detailTotalPages}
+        onPageChange={onDetailPageChange}
+        columns={[
+          { key: "name", label: "Name", accessor: (r) => r.name },
+          { key: "contact_no", label: "Mobile", accessor: (r) => r.contact_no },
+          { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
+          { key: "coming_from", label: "Coming From", accessor: (r) => r.coming_from },
+          { key: "expected_date", label: "Date", accessor: (r) => r.expected_date },
+          { key: "visit_type", label: "Type", accessor: (r) => r.visit_type },
+          { key: "company_name", label: "Company", accessor: (r) => r.company_name },
+        ]}
+      />
 
       {/* ── Download modal ───────────────────────────────────────────────────── */}
       {showDlModal && (
