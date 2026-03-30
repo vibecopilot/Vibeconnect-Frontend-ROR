@@ -441,16 +441,19 @@ const OtherProject = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => {
-              const createdById =
-                project?.created_by_id ??
-                project?.created_by?.id ??
-                project?.created_by ??
-                null;
+              const createdById = Number(
+                project?.created_by_id ||
+                project?.created_by?.id ||
+                project?.created_by ||
+                0
+              );
 
               const isOwnerOrAdmin =
-                userID &&
-                (Number(createdById) === Number(userID) ||
-                  [574, 570].includes(Number(userID)));
+                Number(userID) > 0 &&
+                (
+                  createdById === Number(userID) ||
+                  [574, 570].includes(Number(userID))
+                );
 
               const hasMultipleImages = (project.images?.length || 0) > 1;
               const currentImgIndex = imageIndexes[project.id] ?? 0;
