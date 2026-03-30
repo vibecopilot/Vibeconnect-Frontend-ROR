@@ -109,123 +109,134 @@ function PPMCalendarDashboard() {
 
   const initialDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-//   const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
-//     if (!startStr || !endStr) return;
-//     const toastId = toast.loading("Loading calendar...");
-//     try {
-//       const data = await getCalendarActivities(startStr, endStr);
-//       const rawList = Array.isArray(data?.data)
-//   ? data.data
-//   : (data?.data?.events ?? []);
+  //   const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
+  //     if (!startStr || !endStr) return;
+  //     const toastId = toast.loading("Loading calendar...");
+  //     try {
+  //       const data = await getCalendarActivities(startStr, endStr);
+  //       const rawList = Array.isArray(data?.data)
+  //   ? data.data
+  //   : (data?.data?.events ?? []);
 
-// // ✅ Only allow PPM and AMC
-//        const list = rawList.filter((item) => {
-//        const type = (item?.activity_type || item?.checklist_type || "")
-//        .toString()
-//        .toLowerCase();
+  // // ✅ Only allow PPM and AMC
+  //        const list = rawList.filter((item) => {
+  //        const type = (item?.activity_type || item?.checklist_type || "")
+  //        .toString()
+  //        .toLowerCase();
 
-//       return type === "ppm" || type === "amc";
-//      });
-//       const parseDate = (val) => {
-//         if (!val) return null;
-//         const d = new Date(val);
-//         return isNaN(d.getTime()) ? null : d;
-//       };
-//       const formattedEvents = list.map((ev, idx) => {
-//         const startDate = ev.start || "";
-//         const startTime = ev.start_time || "00:00:00";
-//         const start = parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) || new Date();
-//         let end = parseDate(ev.end);
-//         if (!end && ev.end_time) end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
-//         const formatForCSV = (d) => (d ? d.toISOString() : "");
-//         return {
-//           id: String(ev?.id ?? idx),
-//           title: ev?.title || ev?.checklist_name || "Activity",
-//           start,
-//           end,
-//           extendedProps: {
-//             assignTo: ev?.assigned_to_name ?? ev?.assign_to ?? "—",
-//             status: normalizeStatus(ev?.status ?? ""),
-//             raw: ev,
-//             startStr: formatForCSV(start),
-//             endStr: formatForCSV(end),
-//           },
-//         };
-//       });
-//       setEvents(formattedEvents);
-//       toast.dismiss(toastId);
-//     } catch (error) {
-//       toast.dismiss(toastId);
-//       console.error(error);
-//       toast.error("Failed to load calendar");
-//     }
-//   }, []);
+  //       return type === "ppm" || type === "amc";
+  //      });
+  //       const parseDate = (val) => {
+  //         if (!val) return null;
+  //         const d = new Date(val);
+  //         return isNaN(d.getTime()) ? null : d;
+  //       };
+  //       const formattedEvents = list.map((ev, idx) => {
+  //         const startDate = ev.start || "";
+  //         const startTime = ev.start_time || "00:00:00";
+  //         const start = parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) || new Date();
+  //         let end = parseDate(ev.end);
+  //         if (!end && ev.end_time) end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
+  //         const formatForCSV = (d) => (d ? d.toISOString() : "");
+  //         return {
+  //           id: String(ev?.id ?? idx),
+  //           title: ev?.title || ev?.checklist_name || "Activity",
+  //           start,
+  //           end,
+  //           extendedProps: {
+  //             assignTo: ev?.assigned_to_name ?? ev?.assign_to ?? "—",
+  //             status: normalizeStatus(ev?.status ?? ""),
+  //             raw: ev,
+  //             startStr: formatForCSV(start),
+  //             endStr: formatForCSV(end),
+  //           },
+  //         };
+  //       });
+  //       setEvents(formattedEvents);
+  //       toast.dismiss(toastId);
+  //     } catch (error) {
+  //       toast.dismiss(toastId);
+  //       console.error(error);
+  //       toast.error("Failed to load calendar");
+  //     }
+  //   }, []);
 
-const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
-  if (!startStr || !endStr) return;
+  const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
+    if (!startStr || !endStr) return;
 
-  const toastId = toast.loading("Loading calendar...");
+    // const toastId = toast.loading("Loading calendar...");
 
-  try {
-    const data = await getCalendarActivities(startStr, endStr);
+    try {
+      const data = await getCalendarActivities(startStr, endStr);
 
-    const rawList = Array.isArray(data?.data)
-      ? data.data
-      : (data?.data?.events ?? []);
+      const rawList = Array.isArray(data?.data)
+        ? data.data
+        : (data?.data?.events ?? []);
 
-    // ✅ filter only ppm & amc
-    const list = rawList.filter((item) => {
-      const name = (
-        item?.title ||
-        item?.checklist_name ||
-        item?.name ||
-        ""
-      ).toLowerCase();
+      // ✅ filter only ppm & amc
+      const list = rawList.filter((item) => {
+        const name = (
+          item?.title ||
+          item?.checklist_name ||
+          item?.name ||
+          ""
+        ).toLowerCase();
 
-      return name.includes("ppm") || name.includes("amc");
-    });
+        return name.includes("ppm") || name.includes("amc");
+      });
 
-    const parseDate = (val) => {
-      if (!val) return null;
-      const d = new Date(val);
-      return isNaN(d.getTime()) ? null : d;
-    };
+      const parseDate = (val) => {
+        if (!val) return null;
 
-    const formattedEvents = list.map((ev, idx) => {
-      const startDate = ev.start || "";
-      const startTime = ev.start_time || "00:00:00";
+        // ✅ Force local time parsing (prevents shifting)
+        const d = new Date(val);
 
-      const start =
-        parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) ||
-        new Date();
-
-      let end = parseDate(ev.end);
-
-      if (!end && ev.end_time) {
-        end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
-      }
-
-      return {
-        id: String(ev?.id ?? idx),
-        title: ev?.title || ev?.checklist_name || "Activity",
-        start,
-        end,
-        extendedProps: {
-          assignTo: ev?.assigned_to_name ?? ev?.assign_to ?? "—",
-          status: normalizeStatus(ev?.status ?? ""),
-          raw: ev,
-        },
+        return isNaN(d.getTime()) ? null : d;
       };
-    });
 
-    setEvents(formattedEvents);
-    toast.dismiss(toastId);
-  } catch (error) {
-    toast.dismiss(toastId);
-    console.error(error);
-    toast.error("Failed to load calendar");
-  }
-}, []);
+      const formattedEvents = list.map((ev, idx) => {
+        const startDate = ev.start || "";
+        const startTime = ev.start_time || "00:00:00";
+
+        const start =
+          parseDate(
+            startDate.includes("T")
+              ? startDate
+              : `${startDate}T${startTime || "00:00:00"}`
+          );
+
+        let end = parseDate(ev.end);
+
+        if (!end && ev.end_time) {
+          end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
+        }
+
+        return {
+          id: String(ev?.id ?? idx),
+          title: ev?.title || ev?.checklist_name || "Activity",
+          start,
+          end,
+          extendedProps: {
+            assignTo:
+              ev?.assigned_to_name ||
+              ev?.assign_to ||
+              (Array.isArray(ev?.assigned_users)
+                ? ev.assigned_users.join(", ")
+                : "—"),
+            status: normalizeStatus(ev?.status ?? ""),
+            raw: ev,
+          },
+        };
+      });
+
+      setEvents(formattedEvents);
+      toast.dismiss(toastId);
+    } catch (error) {
+      toast.dismiss(toastId);
+      console.error(error);
+      toast.error("Failed to load calendar");
+    }
+  }, []);
   const handleDatesSet = React.useCallback(
     (arg) => {
       if (arg?.view?.currentStart && arg?.view?.currentEnd) {
@@ -236,6 +247,23 @@ const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
     },
     [fetchCalendarEvents]
   );
+
+  const handleDateClick = (arg) => {
+    const clickedDate = arg.dateStr; // YYYY-MM-DD
+
+    const dayEvents = events.filter((e) => {
+      const eventDate = new Date(e.start)
+        .toISOString()
+        .slice(0, 10);
+
+      return eventDate === clickedDate;
+    });
+
+    console.log("Clicked Date:", clickedDate);
+    console.log("Events:", dayEvents);
+
+    // show in modal or state
+  };
 
   // ✅ Fix: When 'view' state changes, tell FullCalendar to switch view
   useEffect(() => {
@@ -318,10 +346,10 @@ const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
             {assignTo}
           </span>
 
-          <Badge tone={tone}>
+          {/* <Badge tone={tone}>
             {statusIcon(status)}
             <span className="capitalize">{status}</span>
-          </Badge>
+          </Badge> */}
         </div>
       </div>
     );
@@ -460,6 +488,8 @@ const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
       {/* ✅ NEW UI: calendar inside clean card */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-3">
         <FullCalendar
+          timeZone="local"
+          dateClick={handleDateClick}
           ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={view}
@@ -479,7 +509,7 @@ const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
           allDayText="All Day"
           nowIndicator
           selectable
-          dayMaxEvents={3}
+          dayMaxEvents={1}
           eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: true }}
           slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: true }}
         />
@@ -488,7 +518,7 @@ const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
       {/* ✅ Modern modal */}
       {modal && selectedEvent && (
         <ModalWrapper onclose={oncloseModal}>
-          <div className="flex flex-col gap-y-4">
+          <div className="flex flex-col gap-y-4 w-[500px] h-[300px]">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="text-base font-bold text-gray-900 truncate">
@@ -510,7 +540,7 @@ const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                 <p className="text-xs text-gray-500">Assigned To</p>
-                <p className="text-sm font-semibold text-gray-900 mt-1 truncate">
+                <p className="text-sm font-semibold text-gray-900 mt-1 break-words whitespace-normal">
                   {selectedEvent.extendedProps?.assignTo}
                 </p>
               </div>

@@ -88,20 +88,33 @@ useEffect(() => {
 
 
 const fetchStaffCategories = async () => {
-      try {
-        const res = await axios.get(`${BASE_URL}/visitor_staff_categories.json?token=${token}`);
-        console.log("Staff Categories Response:", res.data);
-        const staffData = res.data?.staff_categories || 
-                         res.data?.data?.staff_categories || 
-                         (Array.isArray(res.data) ? res.data : []) ||
-                         [];
-        setStaffCategories(Array.isArray(staffData) ? staffData : []);
-      } catch (err) {
-        console.error("Error fetching staff categories:", err);
-        setStaffCategories([]);
-        toast.error("Failed to load staff categories");
-      }
-    };
+  try {
+    const res = await axios.get(
+      `${BASE_URL}/visitor_staff_categories.json?token=${token}`
+    );
+
+    let staffData =
+      res.data?.staff_categories ||
+      res.data?.data?.staff_categories ||
+      (Array.isArray(res.data) ? res.data : []) ||
+      [];
+
+    // ✅ remove null-name records OR keep with fallback
+    staffData = staffData.map((item) => ({
+      ...item,
+      name: item.name || "",
+    }));
+
+    // ✅ sort latest first
+    staffData = staffData.sort((a, b) => b.id - a.id);
+
+    setStaffCategories(staffData);
+  } catch (err) {
+    console.error("Error fetching staff categories:", err);
+    setStaffCategories([]);
+    toast.error("Failed to load staff categories");
+  }
+};
 
   const fetchVisitorCategories = async () => {
     try {
@@ -190,11 +203,11 @@ useEffect(() => {
 
   const handleSearch = (e) => setSearchText(e.target.value.toLowerCase());
 
-  const filteredStaffCategories = Array.isArray(staffCategories)
-    ? staffCategories.filter((i) =>
-        i?.name?.toLowerCase().includes(searchText)
-      )
-    : [];
+const filteredStaffCategories = Array.isArray(staffCategories)
+  ? staffCategories.filter((i) =>
+      (i?.name || "").toLowerCase().includes(searchText)
+    )
+  : [];
 
   const filteredVisitorCategories = Array.isArray(visitorCategories)
     ? visitorCategories.filter((i) =>
@@ -229,7 +242,10 @@ useEffect(() => {
   const staffCategoryColumns = useMemo(
     () => [
       { name: "Sr No", selector: (_, i) => i + 1, width: "70px" },
-      { name: "Category Name", selector: (row) => row?.name },
+     { 
+  name: "Category Name", 
+  selector: (row) => row?.name || "—" 
+},
       { name: "Staff Count", selector: (row) => row?.staffs_count || 0 },
       {
         name: "Action",
@@ -254,7 +270,7 @@ useEffect(() => {
                     `${BASE_URL}/visitor_staff_categories/${row.id}.json?token=${token}`
                   );
                   toast.success("Deleted");
-                  setReload((p) => !p);
+                 setReload((prev) => !prev);
                 } catch (error) {
                   console.error("Delete error:", error);
                   toast.error("Failed to delete");
@@ -265,7 +281,7 @@ useEffect(() => {
         ),
       },
     ],
-    []
+    [reload]
   );
 
   const visitorCategoryColumns = useMemo(
@@ -311,7 +327,7 @@ useEffect(() => {
         ),
       },
     ],
-    []
+    [reload]
   );
 
   const subCategoryColumns = useMemo(
@@ -361,7 +377,7 @@ useEffect(() => {
         ),
       },
     ],
-    [visitorCategoryMap]
+    [visitorCategoryMap,reload]
   );
 
   const parkingConfigColumns = useMemo(
@@ -373,7 +389,7 @@ useEffect(() => {
       { name: "Vehicle Type", selector: (row) => row?.vehicle_type || "-" },
       { name: "Site Name", selector: (row) => row?.site_name || "-" },
     ],
-    []
+    [reload]
   );
 
   return (

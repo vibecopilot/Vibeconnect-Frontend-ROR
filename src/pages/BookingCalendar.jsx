@@ -49,7 +49,7 @@ const siteId=getItemInLocalStorage("SITEID")
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
     const yyyy = d.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
+  return `${yyyy}/${mm}/${dd}`; 
   };
 
   // Fetch Bookings
@@ -66,19 +66,19 @@ const siteId=getItemInLocalStorage("SITEID")
       const bookings = response?.data?.bookings || [];
 
       const formattedEvents = bookings.map((b) => {
-        const startDate = new Date(b.start);
-        startDate.setHours(10, 0, 0);
+  const startDate = new Date(b.start);
 
-        const endDate = new Date(b.end);
-        endDate.setHours(12, 0, 0);
-        return {
-          id: b.id,
-          title: `${b.title} - ${b.booked_by}`,
-          start: startDate,
-          end: endDate,
-          allDay: false,
-        };
-      });
+  const endDate = new Date(b.end);
+  endDate.setDate(endDate.getDate() + 1); // 🔥 fix last day issue
+
+  return {
+    id: b.id,
+    title: `${b.title} - ${b.booked_by}`,
+    start: startDate,
+    end: endDate,
+    allDay: true,
+  };
+});
 
       setEvents(formattedEvents);
       

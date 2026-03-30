@@ -56,6 +56,7 @@ const EditAmenitySetup = () => {
     setDays(updated);
   };
 
+
   // ✅ Handle time change
   const handleTimeChange1 = (index, field, value) => {
     const updated = [...days];
@@ -66,7 +67,10 @@ const EditAmenitySetup = () => {
 
   const handleChange2 = (id, field, value) => {
     setRules((prev) =>
-      prev.map((rule) => (rule.id === id ? { ...rule, [field]: value } : rule)),
+      prev.map((rule) => {
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        return ruleKey === id ? { ...rule, [field]: value } : rule;
+      }),
     );
   };
   // ✅ Convert UI → API payload
@@ -266,7 +270,7 @@ const EditAmenitySetup = () => {
         setRules(
           facility.amenity_rules?.length
             ? facility.amenity_rules.map((rule) => ({
-              id: rule.id || Date.now(),
+              id: rule.id, // Keep actual database ID
               enumerator: rule.enumerator ?? "daily_limit",
               duration: rule.duration?.toString() || "60",
               level: rule.level || "user",
@@ -277,16 +281,15 @@ const EditAmenitySetup = () => {
                 rule.facility_can_be_booked ??
                 rule.enabled ??
                 true,
-              // Always keep primeTime as array of { id, start_time, end_time }
               primeTime:
                 Array.isArray(rule.prime_time) && rule.prime_time.length > 0
                   ? rule.prime_time.map((p) => ({
-                    // Keep backend id so PUT updates existing prime_time records
                     id: p.id ?? null,
                     start_time: p.start_time || "",
                     end_time: p.end_time || "",
                   }))
                   : [{ id: null, start_time: "", end_time: "" }],
+              _persisted: true, // Mark as existing in database
             }))
             : rules,
         );
@@ -369,9 +372,9 @@ const EditAmenitySetup = () => {
                 min: parts[1] ? String(parts[1]).padStart(2, "0") : fallback,
               };
             };
-            // Break/concurrent/wrap come from amenity_slot_config
-            const brkStart = parseTimeParts(slotConfig.break_time_start);
-            const brkEnd = parseTimeParts(slotConfig.break_time_end);
+            // Break/concurrent/wrap come from amenity_slot_config, fall back to root-level fields
+            const brkStart = parseTimeParts(slotConfig.break_time_start || facility.break_time_start);
+            const brkEnd = parseTimeParts(slotConfig.break_time_end || facility.break_time_end);
 
             // The Configure Slot section always shows ONE editable config row.
             // Start time = first generated slot's start, End time = last generated slot's end.
@@ -406,6 +409,8 @@ const EditAmenitySetup = () => {
               concurrent_slots: slotConfig.concurrent_slot || "",
               slot_duration: "",
               wrap_up_time: slotConfig.wrap_time ?? "",
+              concurrent_slots: slotConfig.concurrent_slot ?? facility.concurrent_slot ?? "1",
+              wrap_up_time: slotConfig.wrap_time ?? facility.wrap_time ?? "0",
             }];
           })(),
         });
@@ -443,7 +448,8 @@ const EditAmenitySetup = () => {
 
   const [rules, setRules] = useState([
     {
-      id: 1,
+      id: null, // null = new rule, not yet saved
+      _tempId: "_new_0", // Unique identifier for new rules
       enumerator: "daily_limit",
       duration: "",
       level: "",
@@ -451,20 +457,23 @@ const EditAmenitySetup = () => {
       period_type: "",
       enabled: false,
       primeTime: [{ start_time: "", end_time: "" }],
+      _persisted: false, // Track if this rule exists in DB
     },
   ]);
 
   // Add new rule
   const handleAddRule = () => {
     const newRule = {
-      id: Date.now(),
+      id: null, // New rules have no ID yet
+      _tempId: `_new_${Date.now()}`, // Unique identifier for new rules
       enumerator: "daily_limit",
-      duration: "60",
-      level: "user",
-      times: "1",
-      period_type: "day",
+      duration: "",
+      level: "",
+      times: "",
+      period_type: "",
       enabled: true,
       primeTime: [{ start_time: "", end_time: "" }],
+      _persisted: false, // Mark as not yet saved to DB
     };
     setRules([...rules, newRule]);
   };
@@ -472,7 +481,8 @@ const EditAmenitySetup = () => {
   const handlePrimeTimeChange = (ruleId, index, field, value) => {
     setRules((prev) =>
       prev.map((rule) => {
-        if (rule.id !== ruleId) return rule;
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        if (ruleKey !== ruleId) return rule;
         const updatedPrimeTimes = Array.isArray(rule.primeTime)
           ? [...rule.primeTime]
           : [{ start_time: "", end_time: "" }];
@@ -484,8 +494,9 @@ const EditAmenitySetup = () => {
 
   const handleAddPrimeTime = (ruleId) => {
     setRules((prev) =>
-      prev.map((rule) =>
-        rule.id === ruleId
+      prev.map((rule) => {
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        return ruleKey === ruleId
           ? {
             ...rule,
             primeTime: [
@@ -493,15 +504,16 @@ const EditAmenitySetup = () => {
               { start_time: "", end_time: "" },
             ],
           }
-          : rule
-      )
+          : rule;
+      })
     );
   };
 
   const handleRemovePrimeTime = (ruleId, index) => {
     setRules((prev) =>
       prev.map((rule) => {
-        if (rule.id !== ruleId) return rule;
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        if (ruleKey !== ruleId) return rule;
         const updatedPrimeTimes = Array.isArray(rule.primeTime)
           ? rule.primeTime.filter((_, i) => i !== index)
           : [];
@@ -512,13 +524,19 @@ const EditAmenitySetup = () => {
 
   // Remove rule
   const handleRemoveRule = (id) => {
-    setRules(rules.filter((rule) => rule.id !== id));
+    setRules(rules.filter((rule) => {
+      const ruleKey = rule._persisted ? rule.id : rule._tempId;
+      return ruleKey !== id;
+    }));
   };
 
   // Handle input change
   const handleChange1 = (id, field, value) => {
     setRules((prev) =>
-      prev.map((rule) => (rule.id === id ? { ...rule, [field]: value } : rule)),
+      prev.map((rule) => {
+        const ruleKey = rule._persisted ? rule.id : rule._tempId;
+        return ruleKey === id ? { ...rule, [field]: value } : rule;
+      }),
     );
   };
   useEffect(() => {
@@ -526,6 +544,37 @@ const EditAmenitySetup = () => {
   }, [id]); // Trigger when ID changes
 
   const updateAmenitiesSetup = async () => {
+    // ── Validate slot fields before submitting ──────────────────────────────
+    if (formData.slots && formData.slots.length > 0) {
+      for (let idx = 0; idx < formData.slots.length; idx++) {
+        const slot = formData.slots[idx];
+        const hasStart = slot.start_hr && slot.start_min;
+        const hasEnd = slot.end_hr && slot.end_min;
+        const hasAnyTime = hasStart || hasEnd;
+
+        if (hasAnyTime) {
+          if (!hasStart) {
+            toast.error(`Slot ${idx + 1}: Start Time is required.`);
+            return;
+          }
+          if (!hasEnd) {
+            toast.error(`Slot ${idx + 1}: End Time is required.`);
+            return;
+          }
+          if (!slotBy) {
+            toast.error(`Slot By is required when slot times are configured.`);
+            return;
+          }
+          const startMins = Number(slot.start_hr) * 60 + Number(slot.start_min);
+          const endMins = Number(slot.end_hr) * 60 + Number(slot.end_min);
+          if (startMins >= endMins) {
+            toast.error(`Slot ${idx + 1}: Start Time must be before End Time.`);
+            return;
+          }
+        }
+      }
+    }
+
     const postData = new FormData();
     const a = formData.amenity;
 
@@ -619,9 +668,9 @@ const EditAmenitySetup = () => {
       postData.append(`${slotBase}[break_start_min]`, slot.break_start_min || "");
       postData.append(`${slotBase}[break_end_hr]`, slot.break_end_hr || "");
       postData.append(`${slotBase}[break_end_min]`, slot.break_end_min || "");
-      postData.append(`${slotBase}[concurrent_slots]`, slot.concurrent_slots || "1");
+      postData.append(`${slotBase}[concurrent_slots]`, slot.concurrent_slots || "");
       postData.append(`${slotBase}[slot_duration]`, slot.slot_duration || "");
-      postData.append(`${slotBase}[wrap_up_time]`, slot.wrap_up_time || "0");
+      postData.append(`${slotBase}[wrap_up_time]`, slot.wrap_up_time || "");
     });
 
     // ── Operational days ──────────────────────────────────────────────────────
@@ -637,27 +686,30 @@ const EditAmenitySetup = () => {
     });
 
     // ── Booking rules ─────────────────────────────────────────────────────────
-    // primeTime is always an array of { start_time, end_time }
+    // Only send rules that are persisted OR have been modified
     rules.forEach((rule, index) => {
       const ruleAttr = `amenity[amenity_booking_rules_attributes][${index}]`;
-      if (rule.id && typeof rule.id === "number" && rule.id < 1e12) {
+
+      // Only include ID if rule is persisted in database
+      if (rule._persisted && rule.id) {
         postData.append(`${ruleAttr}[id]`, rule.id);
       }
+
       postData.append(`${ruleAttr}[enumerator]`, rule.enumerator || "daily_limit");
       postData.append(`${ruleAttr}[duration]`, rule.duration || "60");
-      postData.append(`${ruleAttr}[level]`, rule.level || "user");
+      postData.append(`${ruleAttr}[level]`, rule.level || "");
       postData.append(`${ruleAttr}[active]`, rule.enabled ? "true" : "false");
       postData.append(`${ruleAttr}[site_id]`, sitID);
       postData.append(`${ruleAttr}[facility_can_be_booked]`, rule.enabled ? "true" : "false");
       postData.append(`${ruleAttr}[times_per_day]`, rule.times || "");
-      postData.append(`${ruleAttr}[period_type]`, rule.period_type || "day");
+      postData.append(`${ruleAttr}[period_type]`, rule.period_type || "");
 
       const primeTimes = Array.isArray(rule.primeTime)
         ? rule.primeTime.filter((pt) => pt.start_time && pt.end_time)
         : [];
       primeTimes.forEach((pt, pIdx) => {
         const primeBase = `${ruleAttr}[prime_times_attributes][${pIdx}]`;
-        // Pass id so Rails updates existing prime_time, not creates a new one
+        // Only pass ID for existing prime_time records
         if (pt.id) postData.append(`${primeBase}[id]`, pt.id);
         postData.append(`${primeBase}[start_time]`, pt.start_time || "");
         postData.append(`${primeBase}[end_time]`, pt.end_time || "");
@@ -694,9 +746,12 @@ const EditAmenitySetup = () => {
       toast.dismiss();
       console.log(response);
 
-      // ── Save slot config then generate slots ─────────────────────────────
-      if (formData.slots?.length > 0) {
-        const slot = formData.slots[0];
+      // ── Save slot config then generate slots (only if slot has times & slot_by) ───
+      const firstSlotWithTime = formData.slots?.find(
+        (s) => s.start_hr && s.start_min && s.end_hr && s.end_min
+      );
+      if (firstSlotWithTime && slotBy) {
+        const slot = firstSlotWithTime;
         const pad = (v) => String(v || "0").padStart(2, "0");
         const toTimeStr = (hr, min) => `${pad(hr)}:${pad(min)}:00`;
 
@@ -730,7 +785,7 @@ const EditAmenitySetup = () => {
         } catch (slotErr) {
           toast.dismiss();
           console.error("Slot config/generate error:", slotErr);
-          toast.error("Amenity saved but slot generation failed.");
+          // toast.error("Amenity saved but slot generation failed.");
         }
       } else {
         toast.success("Updated successfully!");
@@ -749,7 +804,7 @@ const EditAmenitySetup = () => {
       ...prevState,
       amenity: {
         ...prevState.amenity,
-        [type]: prevState.amenity[type] === null ? true : null, // Toggle between true and null
+        [type]: !prevState.amenity[type],
       },
     }));
   };
@@ -938,18 +993,27 @@ const EditAmenitySetup = () => {
   };
 
   const handleSlotTimeChange = (index, timeType, timeValue) => {
-    const parts = (timeValue || "").split(":");
-    const hours = (parts[0] || "00").padStart(2, "0");
-    const minutes = (parts[1] || "00").padStart(2, "0");
+    const [hours, minutes] = timeValue.split(":");
     setFormData((prevState) => {
       const updatedSlots = [...prevState.slots];
       updatedSlots[index] = {
         ...updatedSlots[index],
-        [`${timeType}_hr`]: hours,
-        [`${timeType}_min`]: minutes,
+        [`${timeType}_hr`]: hours ?? "",
+        [`${timeType}_min`]: minutes ?? "",
       };
       return { ...prevState, slots: updatedSlots };
     });
+
+    // Auto-populate operational days when slot start or end time is configured
+    if (timeType === "start" || timeType === "end") {
+      setDays((prevDays) =>
+        prevDays.map((day) => ({
+          ...day,
+          ...(timeType === "start" ? { start_time: timeValue } : {}),
+          ...(timeType === "end" ? { end_time: timeValue } : {}),
+        }))
+      );
+    }
   };
 
   const handleSlotFieldChange = (index, field, value) => {
@@ -1167,7 +1231,7 @@ const EditAmenitySetup = () => {
 
             {/* Link To Building */}
             <div className="flex flex-col gap-1">
-              <label className="font-medium">Link To Building</label>
+              <label className="font-medium">Link To Billing</label>
               <select
                 className="border rounded-md border-gray-400 p-2 py-3"
                 value={
@@ -1971,132 +2035,135 @@ const EditAmenitySetup = () => {
             Booking Rule
           </div>
 
-          {rules.map((rule, index) => (
-            <div
-              key={rule.id}
-              className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
-            >
-              {/* Checkbox */}
-              <div className="flex items-center gap-2">
+          {rules.map((rule, index) => {
+            const ruleKey = rule._persisted ? rule.id : rule._tempId;
+            return (
+              <div
+                key={ruleKey}
+                className="flex flex-wrap items-center gap-4 px-4 py-3 border-b last:border-b-0"
+              >
+                {/* Checkbox */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={rule.enabled || false}
+                    onChange={(e) =>
+                      handleChange2(ruleKey, "enabled", e.target.checked)
+                    }
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm">Facility can be Booked</span>
+                </div>
+
+                {/* Times Input */}
                 <input
-                  type="checkbox"
-                  checked={rule.enabled || false}
+                  type="number"
+                  placeholder="Enter"
+                  value={rule.times || ""}
                   onChange={(e) =>
-                    handleChange2(rule.id, "enabled", e.target.checked)
+                    handleChange2(ruleKey, "times", e.target.value)
                   }
-                  className="w-4 h-4"
+                  className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
                 />
-                <span className="text-sm">Facility can be Booked</span>
-              </div>
-
-              {/* Times Input */}
-              <input
-                type="number"
-                placeholder="Enter"
-                value={rule.times || ""}
-                onChange={(e) =>
-                  handleChange2(rule.id, "times", e.target.value)
-                }
-                className="border border-gray-300 rounded px-2 py-1 w-24 text-sm"
-              />
-              {/* Select Time per day */}
-              <span className="text-sm">times per day by </span>
-              <select
-                value={rule.level || ""}
-                onChange={(e) => handleChange2(rule.id, "level", e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
-              >
-                <option value="">Select</option>
-                <option value="user">User</option>
-                <option value="flat">Flat</option>
-                <option value="owner">Owner</option>
-                <option value="tenant">Tenant</option>
-              </select>
-
-              {/* Select Period */}
-              <select
-                value={rule.period_type || ""}
-                onChange={(e) => handleChange2(rule.id, "period_type", e.target.value)}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="">Select Slots For</option>
-                <option value="Day">Day</option>
-                <option value="Week">Week</option>
-                <option value="Month">Month</option>
-                <option value="Year">Year</option>
-              </select>
-
-              {/* Prime Time Label */}
-              <span className="text-sm font-medium text-gray-700">
-                Prime Time
-              </span>
-
-              {/* Prime Time – one time-picker row per entry */}
-              <div className="flex flex-col gap-2">
-                {(Array.isArray(rule.primeTime) && rule.primeTime.length > 0
-                  ? rule.primeTime
-                  : [{ start_time: "", end_time: "" }]
-                ).map((pt, pIdx) => (
-                  <div key={pIdx} className="flex items-center gap-2">
-                    <input
-                      type="time"
-                      value={pt.start_time || ""}
-                      onChange={(e) =>
-                        handlePrimeTimeChange(rule.id, pIdx, "start_time", e.target.value)
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    <input
-                      type="time"
-                      value={pt.end_time || ""}
-                      onChange={(e) =>
-                        handlePrimeTimeChange(rule.id, pIdx, "end_time", e.target.value)
-                      }
-                      className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    />
-                    {Array.isArray(rule.primeTime) && rule.primeTime.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePrimeTime(rule.id, pIdx)}
-                        className="text-red-500"
-                      >
-                        <FaTrash size={12} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => handleAddPrimeTime(rule.id)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-xs mt-1 w-fit"
+                {/* Select Time per day */}
+                <span className="text-sm">times per day by </span>
+                <select
+                  value={rule.level || ""}
+                  onChange={(e) => handleChange2(ruleKey, "level", e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm w-[150px]"
                 >
-                  + Add Prime Time
-                </button>
-              </div>
+                  <option value="">Select</option>
+                  <option value="user">User</option>
+                  <option value="flat">Flat</option>
+                  <option value="owner">Owner</option>
+                  <option value="tenant">Tenant</option>
+                </select>
 
-              {/* Sub Facility */}
-              <div className="flex items-center gap-2">
-                {/* <input
+                {/* Select Period */}
+                <select
+                  value={rule.period_type || ""}
+                  onChange={(e) => handleChange2(ruleKey, "period_type", e.target.value)}
+                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                >
+                  <option value="">Select Slots For</option>
+                  <option value="Day">Day</option>
+                  <option value="Week">Week</option>
+                  <option value="Month">Month</option>
+                  <option value="Year">Year</option>
+                </select>
+
+                {/* Prime Time Label */}
+                <span className="text-sm font-medium text-gray-700">
+                  Prime Time
+                </span>
+
+                {/* Prime Time – one time-picker row per entry */}
+                <div className="flex flex-col gap-2">
+                  {(Array.isArray(rule.primeTime) && rule.primeTime.length > 0
+                    ? rule.primeTime
+                    : [{ start_time: "", end_time: "" }]
+                  ).map((pt, pIdx) => (
+                    <div key={pIdx} className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        value={pt.start_time || ""}
+                        onChange={(e) =>
+                          handlePrimeTimeChange(ruleKey, pIdx, "start_time", e.target.value)
+                        }
+                        className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                      <input
+                        type="time"
+                        value={pt.end_time || ""}
+                        onChange={(e) =>
+                          handlePrimeTimeChange(ruleKey, pIdx, "end_time", e.target.value)
+                        }
+                        className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                      {Array.isArray(rule.primeTime) && rule.primeTime.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePrimeTime(ruleKey, pIdx)}
+                          className="text-red-500"
+                        >
+                          <FaTrash size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => handleAddPrimeTime(ruleKey)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1 rounded-md text-xs mt-1 w-fit"
+                  >
+                    + Add Prime Time
+                  </button>
+                </div>
+
+                {/* Sub Facility */}
+                <div className="flex items-center gap-2">
+                  {/* <input
                                   type="checkbox"
                                   checked={subFacilityAvailable}
                                   onChange={(e) => setSubFacilityAvailable(e.target.checked)}
                                 /> */}
-                <span className="text-sm">Sub Facility</span>
-              </div>
+                  <span className="text-sm">Sub Facility</span>
+                </div>
 
-              {/* Delete Button (shown for all rows) */}
-              {rules.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveRule(rule.id)}
-                  className="text-red-500 hover:text-red-700 ml-auto"
-                  title="Remove rule"
-                >
-                  <FaTrash size={14} />
-                </button>
-              )}
-            </div>
-          ))}
+                {/* Delete Button (shown for all rows) */}
+                {rules.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveRule(ruleKey)}
+                    className="text-red-500 hover:text-red-700 ml-auto"
+                    title="Remove rule"
+                  >
+                    <FaTrash size={14} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
 
           {/* Add Button */}
           <button
@@ -2233,70 +2300,97 @@ const EditAmenitySetup = () => {
         </div>
         <div className="bg-white rounded-xl shadow-md border p-6 mt-2 mb-3 border-gray-300">
           <h2 className="text-lg font-semibold mb-6">Configure Slot</h2>
-
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto ">
             {formData.slots.map((slot, slotIndex) => (
-              <div key={slotIndex} className="flex gap-4 items-end mb-4 min-w-[1200px]">
-
+              <div
+                key={slotIndex}
+                className="flex gap-4 items-end mb-4 min-w-[1200px]"
+              >
                 {/* Start Time */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Start time</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Start time
+                  </label>
                   <input
                     type="time"
                     value={formatTime(slot.start_hr, slot.start_min)}
-                    onChange={(e) => handleSlotTimeChange(slotIndex, "start", e.target.value)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "start", e.target.value)
+                    }
                     className="border rounded-md px-3 py-2"
                   />
                 </div>
 
                 {/* Break Start */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Break Start</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Break Start
+                  </label>
                   <input
                     type="time"
                     value={formatTime(slot.break_start_hr, slot.break_start_min)}
-                    onChange={(e) => handleSlotTimeChange(slotIndex, "break_start", e.target.value)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "break_start", e.target.value)
+                    }
                     className="border rounded-md px-3 py-2"
                   />
                 </div>
 
                 {/* Break End */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Break End</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Break End
+                  </label>
                   <input
                     type="time"
                     value={formatTime(slot.break_end_hr, slot.break_end_min)}
-                    onChange={(e) => handleSlotTimeChange(slotIndex, "break_end", e.target.value)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "break_end", e.target.value)
+                    }
                     className="border rounded-md px-3 py-2"
                   />
                 </div>
 
                 {/* End Time */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">End Time</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    End Time
+                  </label>
                   <input
                     type="time"
                     value={formatTime(slot.end_hr, slot.end_min)}
-                    onChange={(e) => handleSlotTimeChange(slotIndex, "end", e.target.value)}
+                    onChange={(e) =>
+                      handleSlotTimeChange(slotIndex, "end", e.target.value)
+                    }
                     className="border rounded-md px-3 py-2"
                   />
                 </div>
 
                 {/* Concurrent Slots */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Concurrent</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Concurrent
+                  </label>
                   <input
                     type="number"
                     min="0"
-                    value={slot.concurrent_slots ?? ""}
-                    onChange={(e) => handleSlotFieldChange(slotIndex, "concurrent_slots", e.target.value)}
+                    value={slot.concurrent_slots || ""}
+                    onChange={(e) =>
+                      handleSlotFieldChange(
+                        slotIndex,
+                        "concurrent_slots",
+                        e.target.value
+                      )
+                    }
                     className="border rounded-md px-3 py-2 w-24"
                   />
                 </div>
 
                 {/* Slot By */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Slot By</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Slot By
+                  </label>
                   <select
                     value={slotBy}
                     onChange={(e) => setSlotBy(e.target.value)}
@@ -2318,101 +2412,39 @@ const EditAmenitySetup = () => {
 
                 {/* Wrap Time */}
                 <div className="flex flex-col">
-                  <label className="text-sm font-medium text-gray-600">Wrap Time</label>
+                  <label className="text-sm font-medium text-gray-600">
+                    Wrap Time
+                  </label>
                   <input
                     type="number"
                     min="0"
-                    value={slot.wrap_up_time ?? ""}
-                    onChange={(e) => handleSlotFieldChange(slotIndex, "wrap_up_time", e.target.value)}
+                    value={slot.wrap_up_time || ""}
+                    onChange={(e) =>
+                      handleSlotFieldChange(
+                        slotIndex,
+                        "wrap_up_time",
+                        e.target.value
+                      )
+                    }
                     className="border rounded-md px-3 py-2 w-24"
                   />
                 </div>
-
-                {/* Remove Slot */}
-                {formData.slots.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveSlot(slotIndex)}
-                    className="text-red-500 hover:text-red-700 mb-2"
-                  >
-                    <FaTrash />
-                  </button>
-                )}
               </div>
             ))}
           </div>
-        </div>
-        {/* <div className="my-4">
-          <h2 className="border-b border-black text-lg mb-1 font-medium">
-            Configure Slot
-          </h2>
-
-          {formData.slots.map((slot, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-3 gap-2 bg-white my-2 rounded-lg"
-            >
-              <div className="flex flex-col">
-                <label htmlFor={`start-time-${index}`} className="font-medium">
-                  Start Time
-                </label>
-                <input
-                  id={`start-time-${index}`}
-                  type="time"
-                  placeholder="Start Time"
-                  value={`${String(slot.start_hr || 0).padStart(
-                    2,
-                    "0",
-                  )}:${String(slot.start_min || 0).padStart(2, "0")}`}
-                  onChange={(e) =>
-                    handleSlotTimeChange(index, "start", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex flex-col mx-3">
-                <label htmlFor={`end-time-${index}`} className="font-medium">
-                  End Time
-                </label>
-                <input
-                  id={`end-time-${index}`}
-                  type="time"
-                  placeholder="End Time"
-                  value={`${String(slot.end_hr || 0).padStart(2, "0")}:${String(
-                    slot.end_min || 0,
-                  ).padStart(2, "0")}`}
-                  onChange={(e) =>
-                    handleSlotTimeChange(index, "end", e.target.value)
-                  }
-                  className="border border-gray-300 rounded-md p-2 w-full sm:w-auto"
-                />
-              </div>
-              <div className="flex items-end justify-end">
-                <button
-                  type="button"
-                  onClick={() => handleRemoveSlot(index)}
-                  className="text-red-600 hover:text-red-800 p-2"
-                >
-                  <FaTrash size={20} />
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <div className="flex">
-            <button
+          <div className="mt-4">
+            {/* <button
               type="button"
               onClick={handleAddSlot}
-              className="flex items-center px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              className=" text-white px-4 py-2 rounded-md"
+              style={{ background: themeColor }}
             >
-              <BiPlusCircle className="h-5 w-5 mr-2" />
-              Add Slot
-            </button>
+              + Add Slot
+            </button> */}
           </div>
-        </div> */}
-
+        </div>
         <div></div>
-        <h1 className="text-[18px]"><b>Operatinal Days : </b></h1>
+        <h1 className="text-[18px]"><b>Operational Days : </b></h1>
         <div className="border rounded mt-3">
 
           {/* Header */}

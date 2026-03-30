@@ -11,11 +11,11 @@ import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 
 const BookingDetails = () => {
-   const { id } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
   const [userName, setUserName] = useState("");
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false); // state to control the modal
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [userOptions, setUserOptions] = useState([]);
   const [bookingDetails, setBookingDetails] = useState(null);
   const [error, setError] = useState(null);
@@ -35,36 +35,36 @@ const BookingDetails = () => {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
-   const [showModal, setShowModal] = useState(false);
-   
+  const [showModal, setShowModal] = useState(false);
 
- const fetchData = async () => {
-  setLoading(true);
-  try {
-    const bookingResponse = await getAmenitiesBookingById(id);
 
-    console.log("FULL RESPONSE:", bookingResponse);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const bookingResponse = await getAmenitiesBookingById(id);
 
-    const bookingD = bookingResponse?.data || bookingResponse;
+      console.log("FULL RESPONSE:", bookingResponse);
 
-    if (!bookingD || !bookingD.id) {
-      setError("Booking Data not available for the given ID.");
-      return;
+      const bookingD = bookingResponse?.data || bookingResponse;
+
+      if (!bookingD || !bookingD.id) {
+        setError("Booking Data not available for the given ID.");
+        return;
+      }
+
+      setBookingDetails(bookingD);
+      setBooking(bookingD);
+
+      // ✅ Use direct amenity
+      setFacilityDetails(bookingD.amenity);
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("Failed to fetch data. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setBookingDetails(bookingD);
-    setBooking(bookingD);
-
-    // ✅ Use direct amenity
-    setFacilityDetails(bookingD.amenity);
-
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    setError("Failed to fetch data. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     if (id) {
@@ -107,7 +107,7 @@ const BookingDetails = () => {
 
       if (response?.status === 201) {
         const updatedBookingData = {
-          status: "paid", 
+          status: "paid",
         };
 
         console.log("Booking ID to update:", id); // Log the id to check
@@ -208,7 +208,30 @@ const BookingDetails = () => {
     }
   };
 
+  const handleRefund = async () => {
+    try {
+      const updatedBookingData = {
+        status: "refunded", // or "cancelled" based on backend
+      };
 
+      const response = await updateAmenityBook(id, updatedBookingData);
+
+      if (response?.status === 200) {
+        toast.success("Refund processed successfully!");
+
+        setBookingDetails((prev) => ({
+          ...prev,
+          status: "refunded",
+        }));
+
+      } else {
+        toast.error("Refund failed!");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error processing refund!");
+    }
+  };
 
   const handleClosePopup = () => {
     setShowConfirmPopup(false); // Close the popup if canceled
@@ -228,17 +251,25 @@ const BookingDetails = () => {
   };
 
   // Find the relevant slot time based on the slot ID in the booking
-  const amenitySlotId = bookingDetails.amenity_slot_id;
-  const selectedSlot = facilityDetails.amenity_slots?.find(
-    (slot) => slot.id === amenitySlotId
-  );
+  const amenitySlotId = bookingDetails?.amenity_slot_id;
+
+  let selectedSlot = null;
+
+  if (amenitySlotId) {
+    selectedSlot = facilityDetails?.amenity_slots?.find(
+      (slot) => slot.id === amenitySlotId
+    );
+  } else if (facilityDetails?.amenity_slots?.length > 0) {
+    // fallback: take first slot
+    selectedSlot = facilityDetails.amenity_slots[0];
+  }
   const slotTime = selectedSlot
     ? `${String(selectedSlot.start_hr || 0).padStart(2, "0")}:${String(
-        selectedSlot.start_min || 0
-      ).padStart(2, "0")} - ${String(selectedSlot.end_hr || 0).padStart(
-        2,
-        "0"
-      )}:${String(selectedSlot.end_min || 0).padStart(2, "0")}`
+      selectedSlot.start_min || 0
+    ).padStart(2, "0")} - ${String(selectedSlot.end_hr || 0).padStart(
+      2,
+      "0"
+    )}:${String(selectedSlot.end_min || 0).padStart(2, "0")}`
     : "N/A";
   // console.log("slot time", slotTime);
 
@@ -249,7 +280,7 @@ const BookingDetails = () => {
   if (!booking) return <p className="p-6 text-center">Booking Not Found</p>;
 
   const amenity = booking.amenity;
-  const slot = booking.slot;
+  const selectedSlotId = bookingDetails.amenity_slot_id;
 
   return (
     <section className="flex">
@@ -258,30 +289,32 @@ const BookingDetails = () => {
       <div className="w-full p-6 overflow-y-auto">
         {/* HEADER */}
         <div className=" text-white p-2 rounded text-center text-lg font-semibold"
-        style={{background:themeColor}}>
+          style={{ background: themeColor }}>
           Amenity Booking Details
         </div>
 
-<div className="flex justify-end p-2 items-center w-full">
+        <div className="flex justify-end p-2 items-center w-full">
           <div>
             <div className="flex justify-end gap-2 w-full">
               {bookingDetails.status !== "cancelled" &&
                 bookingDetails.status !== "paid" && (
                   <button
                     className="rounded-md text-white p-2 w-[150px] cursor-pointer"
-                            style={{background:themeColor}}
-
+                    style={{ background: themeColor }}
                     onClick={() => setShowModal(true)}
                   >
                     Capture Payment
                   </button>
                 )}
-              {/* <button
-                className="bg-red-500 rounded-md text-white p-2 w-[100px] cursor-pointer"
-                onClick={() => navigate("/bookings")}
-              >
-                Cancel
-              </button> */}
+              {bookingDetails.status === "paid" && (
+                <button
+                  className="bg-orange-500 rounded-md text-white p-2 w-[150px] cursor-pointer"
+                  onClick={() => handleRefund()}
+                >
+                  Refund
+                </button>
+              )}
+
               <div>
                 {bookingDetails.status !== "paid" && (
                   <button
@@ -455,26 +488,32 @@ const BookingDetails = () => {
         <div className="bg-gray-100 p-5 rounded mt-6 grid grid-cols-4 gap-5">
           <Field label="Booking ID" value={booking.id} />
           <Field
-  label="Status"
-  value={
-    <span
-      className={`${
-        booking.status === "booked"
-          ? "bg-yellow-500"
-          : booking.status === "cancelled"
-          ? "bg-red-500"
-          : "bg-green-500"
-      } text-white px-2 py-1 rounded-md text-sm`}
-    >
-      {booking.status.charAt(0).toUpperCase() +
-        booking.status.slice(1)}
-    </span>
-  }
-/>
+            label="Status"
+            value={
+              <span
+                className={`${booking.status === "booked"
+                  ? "bg-yellow-500"
+                  : booking.status === "cancelled"
+                    ? "bg-red-500"
+                    : "bg-green-500"
+                  } text-white px-2 py-1 rounded-md text-sm`}
+              >
+                {booking.status.charAt(0).toUpperCase() +
+                  booking.status.slice(1)}
+              </span>
+            }
+          />
           <Field label="Booked By" value={booking.book_by_user} />
-          <Field label="Booking Date" value={booking.booking_date} />
-          <Field label="Booked On" value={booking.created_at?.split("T")[0]} />
-          <Field label="Slot" value={slot?.twelve_hr_slot} />
+          <Field label="Scheduled Date" value={booking.booking_date} />
+          <Field label="Booked Date" value={booking.created_at?.split("T")[0]} />
+          <Field
+            label="Slot"
+            value={
+              selectedSlot?.twelve_hr_slot
+                ? selectedSlot.twelve_hr_slot
+                : "No Slot Available"
+            }
+          />
           <Field label="Payment Mode" value={booking.payment_mode} />
           <Field label="Amount" value={`₹ ${booking.amount}`} />
         </div>
@@ -497,25 +536,55 @@ const BookingDetails = () => {
         <div className="mt-8">
           <h2 className="text-lg font-semibold mb-3">Fee Details</h2>
 
-          <div className="grid grid-cols-3 gap-5">
-            <div className="bg-gray-100 p-4 rounded">
-              <p className="font-semibold mb-2">Member</p>
-              <p>Adult: ₹ {amenity?.member_price_adult || "-"}</p>
-              <p>Child: ₹ {amenity?.member_price_child || "-"}</p>
+          {amenity?.is_fixed ? (
+            <div className="bg-gray-100 p-5 rounded">
+              <p className="font-semibold">Fixed Price</p>
+              <p>₹ {amenity?.fixed_amount ?? "-"}</p>
             </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-5">
 
-            <div className="bg-gray-100 p-4 rounded">
-              <p className="font-semibold mb-2">Guest</p>
-              <p>Adult: ₹ {amenity?.guest_price_adult || "-"}</p>
-              <p>Child: ₹ {amenity?.guest_price_child || "-"}</p>
-            </div>
+              {/* MEMBER */}
+              {(amenity?.member_price_adult || amenity?.member_price_child) && (
+                <div className="bg-gray-100 p-4 rounded">
+                  <p className="font-semibold mb-2">Member</p>
+                  {amenity?.member_price_adult && (
+                    <p>Adult: ₹ {amenity.member_price_adult}</p>
+                  )}
+                  {amenity?.member_price_child && (
+                    <p>Child: ₹ {amenity.member_price_child}</p>
+                  )}
+                </div>
+              )}
 
-            <div className="bg-gray-100 p-4 rounded">
-              <p className="font-semibold mb-2">Tenant</p>
-              <p>Adult: ₹ {amenity?.tenant_price_adult || "-"}</p>
-              <p>Child: ₹ {amenity?.tenant_price_child || "-"}</p>
+              {/* GUEST */}
+              {(amenity?.guest_price_adult || amenity?.guest_price_child) && (
+                <div className="bg-gray-100 p-4 rounded">
+                  <p className="font-semibold mb-2">Guest</p>
+                  {amenity?.guest_price_adult && (
+                    <p>Adult: ₹ {amenity.guest_price_adult}</p>
+                  )}
+                  {amenity?.guest_price_child && (
+                    <p>Child: ₹ {amenity.guest_price_child}</p>
+                  )}
+                </div>
+              )}
+
+              {/* TENANT */}
+              {(amenity?.tenant_price_adult || amenity?.tenant_price_child) && (
+                <div className="bg-gray-100 p-4 rounded">
+                  <p className="font-semibold mb-2">Tenant</p>
+                  {amenity?.tenant_price_adult && (
+                    <p>Adult: ₹ {amenity.tenant_price_adult}</p>
+                  )}
+                  {amenity?.tenant_price_child && (
+                    <p>Child: ₹ {amenity.tenant_price_child}</p>
+                  )}
+                </div>
+              )}
+
             </div>
-          </div>
+          )}
         </div>
 
         {/* BOOKING RULES */}
@@ -536,22 +605,23 @@ const BookingDetails = () => {
         </div> */}
 
         {/* SLOT LIST */}
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <h2 className="text-lg font-semibold mb-3">Amenity Slot Timings</h2>
 
           <div className="grid grid-cols-4 gap-3">
             {amenity?.amenity_slots?.map((s) => (
               <div
                 key={s.id}
-                className={`p-3 rounded text-center border ${
-                  s.id === slot?.id ? "bg-blue-600 text-white" : "bg-gray-100"
-                }`}
+                className={`p-3 rounded text-center border ${s.id === selectedSlotId
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100"
+                  }`}
               >
                 {s.twelve_hr_slot}
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* DESCRIPTION */}
         <div className="mt-8 bg-gray-100 p-5 rounded">
@@ -641,7 +711,7 @@ const BookingDetails = () => {
     </div>
   </div>
 )} */}
-</div>
+      </div>
     </section>
   );
 };

@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React, { useEffect, useState } from "react";
 import image from "/profile.png";
 import { domainPrefix } from "../../api";
@@ -175,7 +169,7 @@ const SelfRegistrationDetails = () => {
             <input
               value={details?.status || "Pending"}
               readOnly
-              className="border rounded px-2 py-1 bg-gray-100 text-sm"
+              className="rounded-lg px-1 py-1 text-md text-yellow-600  "
             />
           </div>
 
@@ -198,19 +192,112 @@ const SelfRegistrationDetails = () => {
           </div>
 
         </div>
+        {/* Additional Visitors */}
+<div className="px-6 mt-8">
+  <h3 className="text-md font-semibold border-b pb-2">
+    Additional Visitors
+  </h3>
+
+  {Array.isArray(details?.extra_visitors) && details.extra_visitors.length > 0 ? (
+    <div className="overflow-x-auto mt-4">
+      <table className="min-w-full border border-gray-200 text-sm">
+        <thead className="bg-black text-white">
+          <tr>
+            <th className="border px-3 py-2 text-left">Name</th>
+            <th className="border px-3 py-2 text-left">Mobile</th>
+            <th className="border px-3 py-2 text-left">Created At</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {details.extra_visitors.map((v, index) => (
+            <tr key={index} className="hover:bg-gray-50">
+              <td className="border px-3 py-2">{v.name || "-"}</td>
+              <td className="border px-3 py-2">{v.contact_no || "-"}</td>
+              <td className="border px-3 py-2">
+                {v.created_at
+                  ? new Date(v.created_at).toLocaleString()
+                  : "-"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <p className="text-center text-gray-500 mt-3">
+      No Additional Visitors
+    </p>
+  )}
+</div>
 
         {/* Visitor Log */}
-        <div className="px-6 mt-8">
+       <div className="px-6 mt-8">
+  <h3 className="text-md font-semibold border-b pb-2">
+    Visitor Log
+  </h3>
 
-          <h3 className="text-md font-semibold border-b pb-2">
-            Visitor Log
-          </h3>
+  {Array.isArray(details?.logs) && details.logs.length > 0 ? (
+    <div className="overflow-x-auto mt-4">
+      <table className="min-w-full border border-gray-200 text-sm mb-12">
+        <thead className="bg-black text-white">
+          <tr>
+            <th className="border px-3 py-2 text-left">Name</th>
+            <th className="border px-3 py-2 text-left">Purpose</th>
+            <th className="border px-3 py-2 text-left">Coming From</th>
+            <th className="border px-3 py-2 text-left">Vehicle No</th>
+            <th className="border px-3 py-2 text-left">Check In</th>
+            <th className="border px-3 py-2 text-left">Check Out</th>
+          </tr>
+        </thead>
 
-          <p className="text-center text-gray-500 mt-3">
-            No Log Yet
-          </p>
+        <tbody>
+          {details.logs.map((log, idx) => {
+            const visits = Array.isArray(log.visits_log) ? log.visits_log : [];
 
-        </div>
+            // If no check-in/out, still show row
+            if (visits.length === 0) {
+              return (
+                <tr key={idx} className="hover:bg-gray-50">
+                  <td className="border px-3 py-2">{log.name || "-"}</td>
+                  <td className="border px-3 py-2">{log.purpose || "-"}</td>
+                  <td className="border px-3 py-2">{log.coming_from || "-"}</td>
+                  <td className="border px-3 py-2">{log.vehicle_number || "-"}</td>
+                  <td className="border px-3 py-2 text-gray-400">-</td>
+                  <td className="border px-3 py-2 text-gray-400">-</td>
+                </tr>
+              );
+            }
+
+            // If multiple visits, show multiple rows
+            return visits.map((v, i) => (
+              <tr key={`${idx}-${i}`} className="hover:bg-gray-50">
+                <td className="border px-3 py-2">{log.name || "-"}</td>
+                <td className="border px-3 py-2">{log.purpose || "-"}</td>
+                <td className="border px-3 py-2">{log.coming_from || "-"}</td>
+                <td className="border px-3 py-2">{log.vehicle_number || "-"}</td>
+                <td className="border px-3 py-2">
+                  {v.check_in
+                    ? new Date(v.check_in).toLocaleString()
+                    : "-"}
+                </td>
+                <td className="border px-3 py-2">
+                  {v.check_out
+                    ? new Date(v.check_out).toLocaleString()
+                    : "-"}
+                </td>
+              </tr>
+            ));
+          })}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <p className="text-center text-gray-500 mt-3">
+      No Log Yet
+    </p>
+  )}
+</div>
 
       </div>
 

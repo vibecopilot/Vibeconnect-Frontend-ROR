@@ -46,7 +46,7 @@ const VisitorPage = () => {
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [securityVisitors, setSecurityVisitors] = useState([]);
- 
+
   // Pagination (All / In / Out)
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -96,18 +96,18 @@ const VisitorPage = () => {
   const expectedTimeLabel = isCompany55 ? "Planned Time" : "Expected Time";
   const expectedDateRangeLabel = isCompany55 ? "Planned Date Range" : "Expected Date Range";
 
-const dateFormat = (date) => {
-  if (!date) return "-";
+  const dateFormat = (date) => {
+    if (!date) return "-";
 
-  return new Date(date).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-};
+    return new Date(date).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
 
   const dateTimeFormat = (dateString) => {
     const date = new Date(dateString);
@@ -249,7 +249,7 @@ const dateFormat = (date) => {
           csvEscape(r.expected_date || ""),
           csvEscape(r.expected_time ? formatTime(r.expected_time) : ""),
           csvEscape(r.vehicle_number || ""),
-          csvEscape(r.skip_host_approval ? "Not Required" : "Required"),
+          csvEscape(r.skip_host_approval ? "Approved" : "Rejected"),
           csvEscape(r.start_pass ? dateFormat(r.start_pass) : ""),
           csvEscape(r.end_pass ? dateFormat(r.end_pass) : ""),
           csvEscape(r.visitor_in_out || ""),
@@ -284,32 +284,76 @@ const dateFormat = (date) => {
     }
   };
 
-  // Existing History export (kept)
-  const exportHistoryToCSV = () => {
-    if (filteredHistory.length === 0) {
-      toast.error("No data to export");
-      return;
-    }
-    const headers = ["Name", "Purpose", "Mobile", "Approval Date", "Status"];
-    const csvRows = filteredHistory.map((item) =>
-      [
-        csvEscape(item.name),
-        csvEscape(item.purpose),
-        csvEscape(item.contactno || item.contact_no),
-        csvEscape(dateTimeFormat(item.approvaldate)),
-        csvEscape(item.approved ? "Approved" : "Denied"),
-      ].join(",")
-    );
+  // ✅ UPDATED: Export ALL History records (fetches all pages)
+  const exportHistoryToCSV = async () => {
+    try {
+      toast.loading("Preparing history export... Please wait");
 
-    const blob = new Blob([headers.join(",") + "\n" + csvRows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.setAttribute("href", url);
-    a.setAttribute("download", "visitorhistory.csv");
-    a.click();
-    window.URL.revokeObjectURL(url);
+      let allRows = [];
+      let pageNum = 1;
+      let hasMoreData = true;
+      const itemsPerPage = 1000;
+
+      // Build filters from current history filter state
+      const filters = {};
+      if (historyDateFrom) filters.dateFrom = historyDateFrom;
+      if (historyDateTo) filters.dateTo = historyDateTo;
+      if (historyMobile) filters.mobile = historyMobile;
+      if (historyStatus === "approved") filters.approved = true;
+      else if (historyStatus === "denied") filters.approved = false;
+
+      while (hasMoreData) {
+        const res = await getVisitorHistory(pageNum, itemsPerPage, filters);
+        const data = res.data;
+        const historyData = data.approval_history || [];
+        const totalPages = data.total_pages || 1;
+
+        if (historyData.length === 0) {
+          hasMoreData = false;
+        } else {
+          allRows = [...allRows, ...historyData];
+          if (pageNum >= totalPages) {
+            hasMoreData = false;
+          } else {
+            pageNum++;
+          }
+        }
+      }
+
+      toast.dismiss();
+
+      if (!allRows || allRows.length === 0) {
+        toast.error("No data to export");
+        return;
+      }
+
+      const headers = ["Name", "Purpose", "Mobile", "Approval Date", "Status"];
+      const csvRows = allRows.map((item) =>
+        [
+          csvEscape(item.name),
+          csvEscape(item.purpose),
+          csvEscape(item.contactno || item.contact_no),
+          csvEscape(item.approval_date ? dateTimeFormat(item.approval_date) : ""),
+          csvEscape(item.approved ? "Approved" : "Denied"),
+        ].join(",")
+      );
+
+      const blob = new Blob([headers.join(",") + "\n" + csvRows.join("\n")], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.setAttribute("href", url);
+      a.setAttribute("download", `visitorhistory_${new Date().toISOString().split('T')[0]}.csv`);
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`visitor history records exported successfully`);
+    } catch (error) {
+      console.error("History export error:", error);
+      toast.dismiss();
+      toast.error("Export failed. Please try again");
+    }
   };
 
   const handleClick = (visitorType) => {
@@ -332,84 +376,84 @@ const dateFormat = (date) => {
     setRefetchTrigger((prev) => prev + 1);
   };
 
- const handleClearFilters = () => {
-  setFilterDateFrom("");
-  setFilterDateTo("");
-  setFilterMobile("");
-  setFilterHost("");
-  setFilterBuilding("");
-  setFilterApproval("");
+  const handleClearFilters = () => {
+    setFilterDateFrom("");
+    setFilterDateTo("");
+    setFilterMobile("");
+    setFilterHost("");
+    setFilterBuilding("");
+    setFilterApproval("");
 
-  setHistoryDateFrom("");
-  setHistoryDateTo("");
-  setHistoryMobile("");
-  setHistoryStatus("");
+    setHistoryDateFrom("");
+    setHistoryDateTo("");
+    setHistoryMobile("");
+    setHistoryStatus("");
 
-  setCurrentPage(1);
-  setApprovalPage(1);
-  setHistoryPage(1);
-  setRefetchTrigger((prev) => prev + 1);
-};
-
-
-
-useEffect(() => {
-  console.log("Security visitors useEffect running...");
-
-  const fetchSecurityVisitors = async () => {
-    try {
-      const res = await getSecurityGuardVisitors(1, 10);
-
-      console.log("Security Visitors API:", res);
-
-      let data = [];
-
-      if (Array.isArray(res.data)) {
-        data = res.data;
-      } else if (res.data.visitors) {
-        data = res.data.visitors;
-      } else if (res.data.data) {
-        data = res.data.data;
-      }
-
-      setSecurityVisitors(data);
-
-    } catch (error) {
-      console.log("Security visitor API error:", error);
-    }
+    setCurrentPage(1);
+    setApprovalPage(1);
+    setHistoryPage(1);
+    setRefetchTrigger((prev) => prev + 1);
   };
 
-  fetchSecurityVisitors();
-}, []);
 
-useEffect(() => {
-  const fetchBuildings = async () => {
-    try {
-      const res = await getBuildings(1, 10);
 
-      console.log("Buildings API response:", res.data);
+  useEffect(() => {
+    console.log("Security visitors useEffect running...");
 
-      let buildingData = [];
+    const fetchSecurityVisitors = async () => {
+      try {
+        const res = await getSecurityGuardVisitors(1, 10);
 
-      if (Array.isArray(res.data)) {
-        buildingData = res.data;
-      } 
-      else if (res.data.buildings) {
-        buildingData = res.data.buildings;
-      } 
-      else if (res.data.data) {
-        buildingData = res.data.data;
+        console.log("Security Visitors API:", res);
+
+        let data = [];
+
+        if (Array.isArray(res.data)) {
+          data = res.data;
+        } else if (res.data.visitors) {
+          data = res.data.visitors;
+        } else if (res.data.data) {
+          data = res.data.data;
+        }
+
+        setSecurityVisitors(data);
+
+      } catch (error) {
+        console.log("Security visitor API error:", error);
       }
+    };
 
-      setBuildings(buildingData);
+    fetchSecurityVisitors();
+  }, []);
 
-    } catch (error) {
-      console.log("Building fetch error:", error);
-    }
-  };
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      try {
+        const res = await getBuildings(1, 10);
 
-  fetchBuildings();
-}, []);
+        console.log("Buildings API response:", res.data);
+
+        let buildingData = [];
+
+        if (Array.isArray(res.data)) {
+          buildingData = res.data;
+        }
+        else if (res.data.buildings) {
+          buildingData = res.data.buildings;
+        }
+        else if (res.data.data) {
+          buildingData = res.data.data;
+        }
+
+        setBuildings(buildingData);
+
+      } catch (error) {
+        console.log("Building fetch error:", error);
+      }
+    };
+
+    fetchBuildings();
+  }, []);
 
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
@@ -443,9 +487,10 @@ useEffect(() => {
         if (filterMobile) filters.mobile = filterMobile;
         if (filterHost) filters.host = filterHost;
         if (filterBuilding) filters.building_id = filterBuilding;
-        if (filterApproval) {
-          if (filterApproval === "approved") filters.skip_host_approval = true;
-          else if (filterApproval === "denied") filters.skip_host_approval = false;
+        if (filterApproval === "approved") {
+          filters.skip_host_approval = true;
+        } else if (filterApproval === "rejected") {
+          filters.skip_host_approval = false;  // explicitly set false — handled in API
         }
 
         const visitorResp = await getExpectedVisitor(
@@ -550,12 +595,12 @@ useEffect(() => {
             setFilteredData(processedVisitors);
             setFilteredExpectedVisitor(processedVisitors);
           } else {
-             setUnexpectedVisitor(processedVisitors);
+            setUnexpectedVisitor(processedVisitors);
             setFilteredUnexpectedVisitor(processedVisitors);
           }
         } else if (page === "Visitor Out") {
           setVisitorOut(processedVisitors);
-        } else if (page === "all") {  
+        } else if (page === "all") {
           setAll(processedVisitors);
           if (selectedVisitor === "expected") {
             setFilteredExpectedVisitor(processedVisitors);
@@ -577,31 +622,69 @@ useEffect(() => {
       try {
         const filters = {};
 
-if (historyDateFrom) filters.dateFrom = historyDateFrom;
-if (historyDateTo) filters.dateTo = historyDateTo;
-if (historyMobile) filters.mobile = historyMobile;
-if (historyStatus) filters.status = historyStatus;
+        if (historyDateFrom) filters.dateFrom = historyDateFrom;
+        if (historyDateTo) filters.dateTo = historyDateTo;
+        if (historyMobile) filters.mobile = historyMobile;
 
-const res = await getVisitorHistory(
-  historyPage,
-  historyRowsPerPage,
-  filters
-);
+        if (historyStatus) {
+          if (historyStatus === "approved") filters.approved = true;
+          else if (historyStatus === "denied") filters.approved = false;
+        }
+
+        const res = await getVisitorHistory(
+          historyPage,
+          historyRowsPerPage,
+          filters
+        );
+
         const data = res.data;
         const historyData = data.approval_history || [];
-        console.log("History data:", historyData);
 
+        // ✅ store original
         setHistories(historyData);
-        setFilteredHistory(historyData);
+
+        // ✅ apply frontend filter ALSO (safe fallback)
+        let filtered = historyData;
+
+        if (historyMobile) {
+          filtered = filtered.filter((item) =>
+            String(item.contact_no || "")
+              .toLowerCase()
+              .includes(historyMobile.toLowerCase())
+          );
+        }
+
+        if (historyStatus) {
+          filtered = filtered.filter((item) =>
+            historyStatus === "approved"
+              ? item.approved === true
+              : item.approved === false
+          );
+        }
+
+        if (historyDateFrom) {
+          filtered = filtered.filter(
+            (item) =>
+              new Date(item.approval_date) >= new Date(historyDateFrom)
+          );
+        }
+
+        if (historyDateTo) {
+          filtered = filtered.filter(
+            (item) =>
+              new Date(item.approval_date) <= new Date(historyDateTo)
+          );
+        }
+
+        setFilteredHistory(filtered);
 
         setHistoryTotalPages(data.total_pages || 1);
-        setHistoryTotalRecords(data.total_count || historyData.length || 0);
+        setHistoryTotalRecords(data.total_count || filtered.length || 0);
       } catch (error) {
         setFilteredHistory([]);
         setHistoryTotalRecords(0);
       }
     };
-
     const fetchApprovals = async () => {
       try {
         const approvalResp = await getVisitorApprovals(
@@ -668,33 +751,33 @@ const res = await getVisitorHistory(
         setFilteredApproval([]);
       }
     };
-    
+
     fetchApprovals();
     fetchExpectedVisitor();
     fetchVisitorHistory();
   }, [
-  currentPage,
-  rowsPerPage,
-  approvalPage,
-  approvalRowsPerPage,
-  historyPage,
-  historyRowsPerPage,
-  page,
-  selectedVisitor,
-  refetchTrigger,
-  filterDateFrom,
-  filterDateTo,
-  filterMobile,
-  filterHost,
-  filterBuilding,
-  filterApproval,
+    currentPage,
+    rowsPerPage,
+    approvalPage,
+    approvalRowsPerPage,
+    historyPage,
+    historyRowsPerPage,
+    page,
+    selectedVisitor,
+    refetchTrigger,
+    filterDateFrom,
+    filterDateTo,
+    filterMobile,
+    filterHost,
+    filterBuilding,
+    filterApproval,
 
-  // ✅ ADD THESE
-  historyDateFrom,
-  historyDateTo,
-  historyMobile,
-  historyStatus
-]);
+    // ✅ ADD THESE
+    historyDateFrom,
+    historyDateTo,
+    historyMobile,
+    historyStatus
+  ]);
 
 
   const VisitorColumns = [
@@ -711,43 +794,43 @@ const res = await getVisitorHistory(
         </div>
       ),
     },
-        { name: "ID", selector: (row) => row.id, sortable: true },
-  {
-  name: "Profile",
-  cell: (row) => {
-    let profileUrl = "";
+    { name: "ID", selector: (row) => row.id, sortable: true },
+    {
+      name: "Profile",
+      cell: (row) => {
+        let profileUrl = "";
 
-    // ✅ Case 1: profile_picture is string (your current API)
-    if (typeof row.profile_picture === "string" && row.profile_picture.trim()) {
-      profileUrl = domainPrefix + row.profile_picture;
-    }
+        // ✅ Case 1: profile_picture is string (your current API)
+        if (typeof row.profile_picture === "string" && row.profile_picture.trim()) {
+          profileUrl = domainPrefix + row.profile_picture;
+        }
 
-    // ✅ Case 2: profile_picture is object (future-safe)
-    else if (row.profile_picture?.url) {
-      profileUrl = domainPrefix + row.profile_picture.url;
-    }
+        // ✅ Case 2: profile_picture is object (future-safe)
+        else if (row.profile_picture?.url) {
+          profileUrl = domainPrefix + row.profile_picture.url;
+        }
 
-    // ✅ Case 3: fallback to QR image
-    // else if (row.qr_code_image_url) {
-    //   profileUrl = domainPrefix + row.qr_code_image_url;
-    // }
+        // ✅ Case 3: fallback to QR image
+        // else if (row.qr_code_image_url) {
+        //   profileUrl = domainPrefix + row.qr_code_image_url;
+        // }
 
-    return (
-      <img
-        src={profileUrl || image} // 👈 default fallback
-        alt="Profile"
-        className="w-10 h-10 rounded-full object-cover cursor-pointer"
-        onClick={() => {
-          if (profileUrl) window.open(profileUrl, "_blank");
-        }}
-        onError={(e) => {
-          e.target.src = image; // 👈 fallback if broken image
-        }}
-      />
-    );
-  },
-  sortable: true,
-},
+        return (
+          <img
+            src={profileUrl || image} // 👈 default fallback
+            alt="Profile"
+            className="w-10 h-10 rounded-full object-cover cursor-pointer"
+            onClick={() => {
+              if (profileUrl) window.open(profileUrl, "_blank");
+            }}
+            onError={(e) => {
+              e.target.src = image; // 👈 fallback if broken image
+            }}
+          />
+        );
+      },
+      sortable: true,
+    },
     { name: "Visitor Type", selector: (row) => row.visit_type, sortable: true },
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Contact No.", selector: (row) => row.contact_no, sortable: true },
@@ -756,28 +839,28 @@ const res = await getVisitorHistory(
     { name: expectedDateLabel, selector: (row) => row.expected_date, sortable: true },
     { name: expectedTimeLabel, selector: (row) => row.expected_time, sortable: true },
     { name: "Vehicle No.", selector: (row) => row.vehicle_number, sortable: true },
-{
-  name: "Host Approval",
-  cell: (row) => {
-    let status = "Pending";
-    let colorClass = "text-yellow-600";
+    {
+      name: "Host Approval",
+      cell: (row) => {
+        let status = "Pending";
+        let colorClass = "text-yellow-600";
 
-    if (row.skip_host_approval === true) {
-      status = "Approved";
-      colorClass = "text-green-600 ";
-    } else if (row.skip_host_approval === false) {
-      status = "Rejected";
-      colorClass = "text-red-600 ";
-    }
+        if (row.skip_host_approval === true) {
+          status = "Approved";
+          colorClass = "text-green-600 ";
+        } else if (row.skip_host_approval === false) {
+          status = "Rejected";
+          colorClass = "text-red-600 ";
+        }
 
-    return (
-      <span className={`px-2 py-1 rounded text-sm font-medium ${colorClass}`}>
-        {status}
-      </span>
-    );
-  },
-  sortable: true,
-},
+        return (
+          <span className={`px-2 py-1 rounded text-sm font-medium ${colorClass}`}>
+            {status}
+          </span>
+        );
+      },
+      sortable: true,
+    },
     {
       name: "Pass Start",
       selector: (row) => (row.start_pass ? dateFormat(row.start_pass) : ""),
@@ -817,199 +900,199 @@ const res = await getVisitorHistory(
         "No Host",
       sortable: true,
     },
-{
-  name: "Check In",
-  selector: (row) =>
-    row.visits_log?.[0]?.check_in
-      ? dateFormat(row.visits_log[0].check_in)
-      : "-",
-  sortable: true,
-},
+    {
+      name: "Check In",
+      selector: (row) =>
+        row.visits_log?.[0]?.check_in
+          ? dateFormat(row.visits_log[0].check_in)
+          : "-",
+      sortable: true,
+    },
 
-{
-  name: "Check Out",
-  selector: (row) =>
-    row.visits_log?.[0]?.check_out
-      ? dateFormat(row.visits_log[0].check_out)
-      : "-",
-  sortable: true,
-},
+    {
+      name: "Check Out",
+      selector: (row) =>
+        row.visits_log?.[0]?.check_out
+          ? dateFormat(row.visits_log[0].check_out)
+          : "-",
+      sortable: true,
+    },
 
-{
-  name: "Created At",
-  selector: (row) =>
-    row.created_at ? dateFormat(row.created_at) : "-",
-  sortable: true,
-},
+    {
+      name: "Created At",
+      selector: (row) =>
+        row.created_at ? dateFormat(row.created_at) : "-",
+      sortable: true,
+    },
   ];
 
   const [searchText, setSearchText] = useState("");
 
 
-const handleSearch = (e) => {
-  const searchValue = e.target.value.toLowerCase();
-  setSearchText(e.target.value);
+  const handleSearch = (e) => {
+    const searchValue = e.target.value.toLowerCase();
+    setSearchText(e.target.value);
 
-  const filterLogic = (item) =>
-    item.name?.toLowerCase().includes(searchValue) ||
-    item.vehicle_number?.toLowerCase().includes(searchValue) ||
-    item.hosts_display?.toLowerCase().includes(searchValue);
+    const filterLogic = (item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.vehicle_number?.toLowerCase().includes(searchValue) ||
+      item.hosts_display?.toLowerCase().includes(searchValue);
 
-  // 🔁 Reset when search is empty
-  if (!searchValue.trim()) {
+    // 🔁 Reset when search is empty
+    if (!searchValue.trim()) {
+      if (page === "Visitor In") {
+        setFilteredData(visitorIn);
+      }
+      else if (page === "Visitor Out") {
+        setFilteredData(visitorOut);
+      }
+      else if (page === "all") {
+        if (selectedVisitor === "expected") {
+          setFilteredExpectedVisitor(expectedVisitor);
+        } else {
+          setFilteredUnexpectedVisitor(unexpectedVisitor);
+        }
+      }
+      return;
+    }
+
+    // 🔎 Filtering Logic (NO user_type filtering anymore)
     if (page === "Visitor In") {
-      setFilteredData(visitorIn);
-    } 
+      setFilteredData(visitorIn.filter(filterLogic));
+    }
     else if (page === "Visitor Out") {
-      setFilteredData(visitorOut);
-    } 
+      setFilteredData(visitorOut.filter(filterLogic));
+    }
     else if (page === "all") {
       if (selectedVisitor === "expected") {
-        setFilteredExpectedVisitor(expectedVisitor);
+        setFilteredExpectedVisitor(expectedVisitor.filter(filterLogic));
       } else {
-        setFilteredUnexpectedVisitor(unexpectedVisitor);
+        setFilteredUnexpectedVisitor(unexpectedVisitor.filter(filterLogic));
       }
     }
-    return;
-  }
-
-  // 🔎 Filtering Logic (NO user_type filtering anymore)
-  if (page === "Visitor In") {
-    setFilteredData(visitorIn.filter(filterLogic));
-  } 
-  else if (page === "Visitor Out") {
-    setFilteredData(visitorOut.filter(filterLogic));
-  } 
-  else if (page === "all") {
-    if (selectedVisitor === "expected") {
-      setFilteredExpectedVisitor(expectedVisitor.filter(filterLogic));
-    } else {
-      setFilteredUnexpectedVisitor(unexpectedVisitor.filter(filterLogic));
-    }
-  }
-};
-
-  const [searchAll, setSearchAll] = useState("");
-// const handleSearchAll = (e) => {
-//   const searchValue = e.target.value.toLowerCase();
-//   setSearchAll(e.target.value);
-
-//   if (!searchValue.trim()) {
-//     setFilteredExpectedVisitor(expectedVisitor);
-//     setFilteredUnexpectedVisitor(unexpectedVisitor);
-//     return;
-//   }
-
-//   const filterLogic = (item) => {
-//     const name = item.name?.toLowerCase() || "";
-//     const host = item.hosts_display?.toLowerCase() || "";
-//     const vehicle = item.vehicle_number?.toLowerCase() || "";
-//     const mobile = String(item.contact_no || "");
-//     const purpose = item.purpose?.toLowerCase() || "";
-//     const coming = item.coming_from?.toLowerCase() || "";
-
-//     return (
-//       name.includes(searchValue) ||
-//       host.includes(searchValue) ||
-//       vehicle.includes(searchValue) ||
-//       mobile.includes(searchValue) ||
-//       purpose.includes(searchValue) ||
-//       coming.includes(searchValue)
-//     );
-//   };
-
-
-//   if (selectedVisitor === "expected") {
-//     const filtered = expectedVisitor.filter((item) =>
-//       item.name?.toLowerCase().includes(searchValue) ||
-//       item.vehicle_number?.toLowerCase().includes(searchValue) ||
-//       item.hosts_display?.toLowerCase().includes(searchValue)
-//     );
-//     setFilteredExpectedVisitor(filtered);
-//   } else {
-//     const filtered = unexpectedVisitor.filter((item) =>
-//       item.name?.toLowerCase().includes(searchValue) ||
-//       item.vehicle_number?.toLowerCase().includes(searchValue) ||
-//       item.hosts_display?.toLowerCase().includes(searchValue)
-//     );
-//     setFilteredUnexpectedVisitor(filtered);
-//   }
-// };
-
-
-const handleSearchAll = (e) => {
-  const value = e.target.value.toLowerCase();
-  setSearchAll(e.target.value);
-
-  // Reset if search empty
-  if (!value.trim()) {
-    setFilteredExpectedVisitor(expectedVisitor);
-    setFilteredUnexpectedVisitor(unexpectedVisitor);
-    return;
-  }
-
-  const filterLogic = (item) => {
-    const name = item.name?.toLowerCase() || "";
-    const host = item.hosts_display?.toLowerCase() || "";
-    const vehicle = item.vehicle_number?.toLowerCase() || "";
-    const mobile = String(item.contact_no || "");
-    const purpose = item.purpose?.toLowerCase() || "";
-    const coming = item.coming_from?.toLowerCase() || "";
-
-    return (
-      name.includes(value) ||
-      host.includes(value) ||
-      vehicle.includes(value) ||
-      mobile.includes(value) ||
-      purpose.includes(value) ||
-      coming.includes(value)
-    );
   };
 
-  if (selectedVisitor === "expected") {
-    const filtered = expectedVisitor.filter(filterLogic);
-    setFilteredExpectedVisitor(filtered);
-  } else {
-    const filtered = unexpectedVisitor.filter(filterLogic);
-    setFilteredUnexpectedVisitor(filtered);
-    console.log("searchAll:", value);
-    console.log("FilteredUnexpectedVisitor:", filtered.length);
-  }
-};
+  const [searchAll, setSearchAll] = useState("");
+  // const handleSearchAll = (e) => {
+  //   const searchValue = e.target.value.toLowerCase();
+  //   setSearchAll(e.target.value);
+
+  //   if (!searchValue.trim()) {
+  //     setFilteredExpectedVisitor(expectedVisitor);
+  //     setFilteredUnexpectedVisitor(unexpectedVisitor);
+  //     return;
+  //   }
+
+  //   const filterLogic = (item) => {
+  //     const name = item.name?.toLowerCase() || "";
+  //     const host = item.hosts_display?.toLowerCase() || "";
+  //     const vehicle = item.vehicle_number?.toLowerCase() || "";
+  //     const mobile = String(item.contact_no || "");
+  //     const purpose = item.purpose?.toLowerCase() || "";
+  //     const coming = item.coming_from?.toLowerCase() || "";
+
+  //     return (
+  //       name.includes(searchValue) ||
+  //       host.includes(searchValue) ||
+  //       vehicle.includes(searchValue) ||
+  //       mobile.includes(searchValue) ||
+  //       purpose.includes(searchValue) ||
+  //       coming.includes(searchValue)
+  //     );
+  //   };
+
+
+  //   if (selectedVisitor === "expected") {
+  //     const filtered = expectedVisitor.filter((item) =>
+  //       item.name?.toLowerCase().includes(searchValue) ||
+  //       item.vehicle_number?.toLowerCase().includes(searchValue) ||
+  //       item.hosts_display?.toLowerCase().includes(searchValue)
+  //     );
+  //     setFilteredExpectedVisitor(filtered);
+  //   } else {
+  //     const filtered = unexpectedVisitor.filter((item) =>
+  //       item.name?.toLowerCase().includes(searchValue) ||
+  //       item.vehicle_number?.toLowerCase().includes(searchValue) ||
+  //       item.hosts_display?.toLowerCase().includes(searchValue)
+  //     );
+  //     setFilteredUnexpectedVisitor(filtered);
+  //   }
+  // };
+
+
+  const handleSearchAll = (e) => {
+    const value = e.target.value.toLowerCase();
+    setSearchAll(e.target.value);
+
+    // Reset if search empty
+    if (!value.trim()) {
+      setFilteredExpectedVisitor(expectedVisitor);
+      setFilteredUnexpectedVisitor(unexpectedVisitor);
+      return;
+    }
+
+    const filterLogic = (item) => {
+      const name = item.name?.toLowerCase() || "";
+      const host = item.hosts_display?.toLowerCase() || "";
+      const vehicle = item.vehicle_number?.toLowerCase() || "";
+      const mobile = String(item.contact_no || "");
+      const purpose = item.purpose?.toLowerCase() || "";
+      const coming = item.coming_from?.toLowerCase() || "";
+
+      return (
+        name.includes(value) ||
+        host.includes(value) ||
+        vehicle.includes(value) ||
+        mobile.includes(value) ||
+        purpose.includes(value) ||
+        coming.includes(value)
+      );
+    };
+
+    if (selectedVisitor === "expected") {
+      const filtered = expectedVisitor.filter(filterLogic);
+      setFilteredExpectedVisitor(filtered);
+    } else {
+      const filtered = unexpectedVisitor.filter(filterLogic);
+      setFilteredUnexpectedVisitor(filtered);
+      console.log("searchAll:", value);
+      console.log("FilteredUnexpectedVisitor:", filtered.length);
+    }
+  };
   const [searchHIstoryText, setSearchHistoryText] = useState("");
- const handleSearchHistory = (e) => {
-  const searchValue = e.target.value.toLowerCase();
-  setSearchHistoryText(e.target.value);
+  const handleSearchHistory = (e) => {
+    const searchValue = e.target.value.toLowerCase();
+    setSearchHistoryText(e.target.value);
 
-  if (!searchValue.trim()) {
-    // If empty → show all data
-    setFilteredHistory(histories);
-    return;
-  }
+    if (!searchValue.trim()) {
+      // If empty → show all data
+      setFilteredHistory(histories);
+      return;
+    }
 
-  const filteredResults = histories.filter((item) =>
-    item.name?.toLowerCase().includes(searchValue) ||
-    item.contact_no?.toLowerCase().includes(searchValue)
-  );
+    const filteredResults = histories.filter((item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.contact_no?.toLowerCase().includes(searchValue)
+    );
 
-  setFilteredHistory(filteredResults);
-};
+    setFilteredHistory(filteredResults);
+  };
   const [searchApprovalText, setSearchApprovalText] = useState("");
- const handleSearchApproval = (e) => {
-  const value = e.target.value;
-  setSearchApprovalText(value);
+  const handleSearchApproval = (e) => {
+    const value = e.target.value;
+    setSearchApprovalText(value);
 
-  const search = value.toLowerCase();
+    const search = value.toLowerCase();
 
-  const filtered = approvals.filter((item) => {
-    const name = item.name ? item.name.toLowerCase() : "";
-    const mobile = item.contact_no ? item.contact_no.toLowerCase() : "";
+    const filtered = approvals.filter((item) => {
+      const name = item.name ? item.name.toLowerCase() : "";
+      const mobile = item.contact_no ? item.contact_no.toLowerCase() : "";
 
-    return name.includes(search) || mobile.includes(search);
-  });
+      return name.includes(search) || mobile.includes(search);
+    });
 
-  setFilteredApproval(filtered);
-};
+    setFilteredApproval(filtered);
+  };
   const historyColumn = [
     {
       name: "Action",
@@ -1028,20 +1111,20 @@ const handleSearchAll = (e) => {
       selector: (row) => row.contact_no || "--",
       sortable: true,
     },
-{
-  name: "Check In",
-  selector: (row) =>
-    row.visitor_logs?.check_in
-      ? new Date(row.visitor_logs.check_in).toLocaleString()
-      : "--",
-},
-{
-  name: "Check Out",
-  selector: (row) =>
-    row.visitor_logs?.check_out
-      ? new Date(row.visitor_logs.check_out).toLocaleString()
-      : "--",
-},
+    {
+      name: "Check In",
+      selector: (row) =>
+        row.visitor_logs?.check_in
+          ? new Date(row.visitor_logs.check_in).toLocaleString()
+          : "--",
+    },
+    {
+      name: "Check Out",
+      selector: (row) =>
+        row.visitor_logs?.check_out
+          ? new Date(row.visitor_logs.check_out).toLocaleString()
+          : "--",
+    },
     {
       name: "Approval Date",
       selector: (row) => dateTimeFormat(row.approval_date),
@@ -1072,72 +1155,71 @@ const handleSearchAll = (e) => {
     }
   };
 
- const approvalColumn = [
-  {
-    name: "Action",
-    cell: (row) => (
-      <div className="flex items-center gap-4">
-        <Link to={`/admin/passes/visitors/visitor-details/${row.id}`}>
-          <BsEye size={15} />
-        </Link>
-      </div>
-    ),
-  },
+  const approvalColumn = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={`/admin/passes/visitors/visitor-details/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
+        </div>
+      ),
+    },
 
-  { name: "Name", selector: (row) => row.name, sortable: true },
+    { name: "Name", selector: (row) => row.name, sortable: true },
 
-  { name: "Purpose", selector: (row) => row.purpose, sortable: true },
+    { name: "Purpose", selector: (row) => row.purpose, sortable: true },
 
-  {
-    name: expectedDateLabel,
-    selector: (row) =>
-      row.expected_date ? dateFormat(row.expected_date) : "--",
-    sortable: true,
-  },
+    {
+      name: expectedDateLabel,
+      selector: (row) =>
+        row.expected_date ? dateFormat(row.expected_date) : "--",
+      sortable: true,
+    },
 
-  {
-    name: expectedTimeLabel,
-    selector: (row) =>
-      row.expected_time ? formatTime(row.expected_time) : "--",
-    sortable: true,
-  },
+    {
+      name: expectedTimeLabel,
+      selector: (row) =>
+        row.expected_time ? formatTime(row.expected_time) : "--",
+      sortable: true,
+    },
 
-  // ✅ STATUS COLUMN
-  {
-    name: "Status",
-    cell: (row) => (
-      <span
-        className={`font-medium ${
-          row.approved ? "text-green-500" : "text-red-500"
-        }`}
-      >
-        {row.approved ? "Approved" : "Denied"}
-      </span>
-    ),
-    sortable: true,
-  },
-
-  {
-    name: "Approval",
-    cell: (row) => (
-      <div className="flex gap-2">
-        <button
-          className="text-white bg-green-400 rounded-full p-1"
-          onClick={() => handleApproval(row.id, true)}
+    // ✅ STATUS COLUMN
+    {
+      name: "Status",
+      cell: (row) => (
+        <span
+          className={`font-medium ${row.approved ? "text-green-500" : "text-red-500"
+            }`}
         >
-          <FaCheck size={20} />
-        </button>
+          {row.approved ? "Approved" : "Denied"}
+        </span>
+      ),
+      sortable: true,
+    },
 
-        <button
-          className="text-white bg-red-400 rounded-full p-1"
-          onClick={() => handleApproval(row.id, false)}
-        >
-          <IoClose size={20} />
-        </button>
-      </div>
-    ),
-  },
-];
+    {
+      name: "Approval",
+      cell: (row) => (
+        <div className="flex gap-2">
+          <button
+            className="text-white bg-green-400 rounded-full p-1"
+            onClick={() => handleApproval(row.id, true)}
+          >
+            <FaCheck size={20} />
+          </button>
+
+          <button
+            className="text-white bg-red-400 rounded-full p-1"
+            onClick={() => handleApproval(row.id, false)}
+          >
+            <IoClose size={20} />
+          </button>
+        </div>
+      ),
+    },
+  ];
   document.title = "Passes - Vibe Connect";
 
   const getVisitorLogData = () => {
@@ -1160,7 +1242,7 @@ const handleSearchAll = (e) => {
     };
   };
 
-  
+
 
   useEffect(() => {
     const postLogs = async () => {
@@ -1220,21 +1302,21 @@ const handleSearchAll = (e) => {
   }, []);
 
   const [logSearchText, setLogSearchText] = useState("");
- const handleLogSearch = (e) => {
-  const value = e.target.value.toLowerCase();
-  setLogSearchText(e.target.value);
+  const handleLogSearch = (e) => {
+    const value = e.target.value.toLowerCase();
+    setLogSearchText(e.target.value);
 
-  if (!value.trim()) {
-    setFilteredLogs(logs);
-    return;
-  }
+    if (!value.trim()) {
+      setFilteredLogs(logs);
+      return;
+    }
 
-  const filtered = logs.filter((item) =>
-    item.name?.toLowerCase().includes(value)
-  );
+    const filtered = logs.filter((item) =>
+      item.name?.toLowerCase().includes(value)
+    );
 
-  setFilteredLogs(filtered);
-};
+    setFilteredLogs(filtered);
+  };
 
   return (
     <div className="visitors-page">
@@ -1257,8 +1339,8 @@ const handleSearchAll = (e) => {
                 <h2
                   key={t.key}
                   className={`p-2 px-4 ${page === t.key
-                      ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                      : "text-black"
+                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
+                    : "text-black"
                     } rounded-t-md cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
                   onClick={() => handlePageChange(t.key)}
                 >
@@ -1325,7 +1407,7 @@ const handleSearchAll = (e) => {
                 </div>
               </div>
 
-            
+
             </div>
           )}
 
@@ -1419,12 +1501,12 @@ const handleSearchAll = (e) => {
 
               <Table
                 columns={VisitorColumns}
-data={
-  selectedVisitor === "expected"
-    ? filteredData
-    // : FilteredUnexpectedVisitor
-     : (searchText ? FilteredUnexpectedVisitor : unexpectedVisitor)
-}
+                data={
+                  selectedVisitor === "expected"
+                    ? filteredData
+                    // : FilteredUnexpectedVisitor
+                    : (searchText ? FilteredUnexpectedVisitor : unexpectedVisitor)
+                }
 
                 paginationServer
                 paginationTotalRows={totalRecords}
@@ -1446,13 +1528,13 @@ data={
                   value={searchHIstoryText}
                   onChange={handleSearchHistory}
                 />
-                 <button
-                   onClick={() => setShowFilters(true)}
-                     className="border px-3 py-2 rounded-md flex items-center gap-1"
-                     >
-                     <BiFilterAlt />
-                      Filter
-                  </button>
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className="border px-3 py-2 rounded-md flex items-center gap-1"
+                >
+                  <BiFilterAlt />
+                  Filter
+                </button>
 
                 <button
                   onClick={exportHistoryToCSV}
@@ -1548,9 +1630,7 @@ data={
             {selectedVisitor === "expected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                // data={FilteredExpectedVisitor}
-                // data={searchText ? FilteredExpectedVisitor : expectedVisitor}
-                data={searchAll ? FilteredExpectedVisitor : expectedVisitor}
+                data={FilteredExpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1562,8 +1642,7 @@ data={
             {selectedVisitor === "unexpected" && page === "all" && (
               <Table
                 columns={VisitorColumns}
-                // data={FilteredUnexpectedVisitor}
-                data={searchAll ? FilteredUnexpectedVisitor : unexpectedVisitor}
+                data={FilteredUnexpectedVisitor}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1573,141 +1652,141 @@ data={
             )}
           </div>
         </div>
-       {/* ================= FILTER DRAWER POPUP ================= */}
-{showFilters && (
-  <>
-    {/* Overlay */}
-    <div
-      className="fixed inset-0 bg-black bg-opacity-40 z-40"
-      onClick={() => setShowFilters(false)}
-    />
+        {/* ================= FILTER DRAWER POPUP ================= */}
+        {showFilters && (
+          <>
+            {/* Overlay */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-40 z-40"
+              onClick={() => setShowFilters(false)}
+            />
 
-    {/* Drawer */}
-    <div className="absolute right-6 top-28 w-[360px] bg-white shadow-xl border rounded-lg z-50 p-5">
+            {/* Drawer */}
+            <div className="absolute right-6 top-28 w-[360px] bg-white shadow-xl border rounded-lg z-50 p-5">
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-semibold">Filter Visitors</h2>
-        <button onClick={() => setShowFilters(false)}>
-          <IoClose size={22} />
-        </button>
-      </div>
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold">Filter Visitors</h2>
+                <button onClick={() => setShowFilters(false)}>
+                  <IoClose size={22} />
+                </button>
+              </div>
 
-      {/* Expected Date Range */}
-      <div className="mb-4">
-        <label className="text-sm font-medium block mb-2">
-          {expectedDateRangeLabel}
-        </label>
+              {/* Expected Date Range */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">
+                  {expectedDateRangeLabel}
+                </label>
 
-        <div className="flex gap-2">
-          <input
-            type="date"
-            value={page === "History" ? historyDateFrom : filterDateFrom}
-            onChange={(e) =>
-              page === "History"
-                ? setHistoryDateFrom(e.target.value)
-                : setFilterDateFrom(e.target.value)
-            }
-            className="border p-2 rounded-md w-full"
-          />
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={page === "History" ? historyDateFrom : filterDateFrom}
+                    onChange={(e) =>
+                      page === "History"
+                        ? setHistoryDateFrom(e.target.value)
+                        : setFilterDateFrom(e.target.value)
+                    }
+                    className="border p-2 rounded-md w-full"
+                  />
 
-          <input
-            type="date"
-            value={page === "History" ? historyDateTo : filterDateTo}
-            onChange={(e) =>
-              page === "History"
-                ? setHistoryDateTo(e.target.value)
-                : setFilterDateTo(e.target.value)
-            }
-            className="border p-2 rounded-md w-full"
-          />
-        </div>
-      </div>
+                  <input
+                    type="date"
+                    value={page === "History" ? historyDateTo : filterDateTo}
+                    onChange={(e) =>
+                      page === "History"
+                        ? setHistoryDateTo(e.target.value)
+                        : setFilterDateTo(e.target.value)
+                    }
+                    className="border p-2 rounded-md w-full"
+                  />
+                </div>
+              </div>
 
-      {/* Mobile Number */}
-      <div className="mb-4">
-        <label className="text-sm font-medium block mb-2">
-          Mobile Number
-        </label>
+              {/* Mobile Number */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">
+                  Mobile Number
+                </label>
 
-        <input
-          type="text"
-          placeholder="Enter mobile number"
-          value={page === "History" ? historyMobile : filterMobile}
-          onChange={(e) =>
-            page === "History"
-              ? setHistoryMobile(e.target.value)
-              : setFilterMobile(e.target.value)
-          }
-          className="border p-2 rounded-md w-full"
-        />
-      </div>
+                <input
+                  type="text"
+                  placeholder="Enter mobile number"
+                  value={page === "History" ? historyMobile : filterMobile}
+                  onChange={(e) =>
+                    page === "History"
+                      ? setHistoryMobile(e.target.value)
+                      : setFilterMobile(e.target.value)
+                  }
+                  className="border p-2 rounded-md w-full"
+                />
+              </div>
 
-      {/* Building */}
-      <div className="mb-4">
-        <label className="text-sm font-medium block mb-2">
-          Building
-        </label>
+              {/* Building */}
+              <div className="mb-4">
+                <label className="text-sm font-medium block mb-2">
+                  Building
+                </label>
 
-      <select
-  value={filterBuilding}
-  onChange={(e) => setFilterBuilding(e.target.value)}
-  className="border p-2 rounded-md w-full"
->
-  <option value="">Select Building</option>
+                <select
+                  value={filterBuilding}
+                  onChange={(e) => setFilterBuilding(e.target.value)}
+                  className="border p-2 rounded-md w-full"
+                >
+                  <option value="">Select Building</option>
 
-  {buildings.map((building) => (
-    <option key={building.id} value={building.id}>
-      {building.name}
-    </option>
-  ))}
-</select>
-      </div>
+                  {buildings.map((building) => (
+                    <option key={building.id} value={building.id}>
+                      {building.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-      {/* Host Approval */}
-      <div className="mb-6">
-        <label className="text-sm font-medium block mb-2">
-          Host Approval
-        </label>
+              {/* Host Approval */}
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2">
+                  Host Approval
+                </label>
 
-        <select
-          value={page === "History" ? historyStatus : filterApproval}
-          onChange={(e) =>
-            page === "History"
-              ? setHistoryStatus(e.target.value)
-              : setFilterApproval(e.target.value)
-          }
-          className="border p-2 rounded-md w-full"
-        >
-          <option value="">All</option>
-          <option value="approved">Approved</option>
-          <option value="denied">Denied</option>
-        </select>
-      </div>
+                <select
+                  value={page === "History" ? historyStatus : filterApproval}
+                  onChange={(e) =>
+                    page === "History"
+                      ? setHistoryStatus(e.target.value)
+                      : setFilterApproval(e.target.value)
+                  }
+                  className="border p-2 rounded-md w-full"
+                >
+                  <option value="">All</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
 
-      {/* Buttons */}
-      <div className="flex gap-3">
-        <button
-          onClick={handleClearFilters}
-          className="w-full border py-2 rounded-md font-medium"
-        >
-          Reset
-        </button>
+              {/* Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleClearFilters}
+                  className="w-full border py-2 rounded-md font-medium"
+                >
+                  Reset
+                </button>
 
-        <button
-          onClick={() => {
-            handleApplyFilters();
-            setShowFilters(false);
-          }}
-          style={{ background: themeColor }}
-          className="w-full text-white py-2 rounded-md font-medium"
-        >
-          Apply Filters
-        </button>
-      </div>
-    </div>
-  </>
-)}
+                <button
+                  onClick={() => {
+                    handleApplyFilters();
+                    setShowFilters(false);
+                  }}
+                  style={{ background: themeColor }}
+                  className="w-full text-white py-2 rounded-md font-medium"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </section>
     </div>
   );

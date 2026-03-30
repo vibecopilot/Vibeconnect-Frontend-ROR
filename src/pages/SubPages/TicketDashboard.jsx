@@ -98,6 +98,8 @@ const statusTone = (key = "") => {
   return "gray";
 };
 
+const PER_PAGE = 10;
+
 const TicketDashboard = () => {
   const [totalTickets, setTotalTickets] = useState(0);
   const [statusData, setStatusData] = useState({});
@@ -106,6 +108,13 @@ const TicketDashboard = () => {
     title: "",
     records: [],
     loading: false,
+    // drill params (kept so page changes can re-fetch)
+    countType: "",
+    countValue: "",
+    // pagination
+    page: 1,
+    totalPages: 1,
+    totalRecords: 0,
   });
 
   const siteId = getItemInLocalStorage("SITEID");
@@ -123,21 +132,63 @@ const TicketDashboard = () => {
     fetchTicketInfo();
   }, [siteId]);
 
-  const handleTicketCardClick = async (filterType, filterValue, title) => {
-    setDetailPopup({ open: true, title, records: [], loading: true });
+  // ------------------------------------------------------------------
+  // Core drill-down fetcher (called on first open AND on page change)
+  // ------------------------------------------------------------------
+  const fetchDrillPage = async (countType, countValue, page, title) => {
+    setDetailPopup((prev) => ({
+      ...prev,
+      open: true,
+      title,
+      loading: true,
+      countType,
+      countValue,
+      page,
+    }));
+
     try {
-      const res = await getComplaintsDrill(filterType, filterValue, siteId, 100);
-      setDetailPopup({
-        open: true,
-        title,
-        records: res?.data?.records ?? [],
+      const res = await getComplaintsDrill(countType, countValue, siteId, page);
+
+      // Response shape differs by count_type:
+      //   total_recs → { all: { total_recs: { count: N, records: [...] } } }
+      //   status     → { by_status: { [countValue]: { count: N, records: [...] } } }
+      let records, totalRecords;
+      if (countType === "status" && countValue) {
+        const statusBlock = res?.data?.by_status?.[countValue] ?? {};
+        records = statusBlock.records ?? [];
+        totalRecords = statusBlock.count ?? records.length;
+      } else {
+        const totalRecsBlock = res?.data?.all?.total_recs ?? {};
+        records = totalRecsBlock.records ?? [];
+        totalRecords = totalRecsBlock.count ?? res?.data?.total ?? records.length;
+      }
+
+      const totalPages = Math.max(1, Math.ceil(totalRecords / PER_PAGE));
+
+      setDetailPopup((prev) => ({
+        ...prev,
+        records,
         loading: false,
-      });
+        totalRecords,
+        totalPages,
+        page,
+      }));
     } catch (err) {
       console.error("Ticket drill error:", err);
       toast.error("Failed to load ticket details");
-      setDetailPopup((p) => ({ ...p, loading: false }));
+      setDetailPopup((prev) => ({ ...prev, loading: false }));
     }
+  };
+
+  // Called when a stat-card is clicked
+  const handleTicketCardClick = (countType, countValue, title) => {
+    fetchDrillPage(countType, countValue, 1, title);
+  };
+
+  // Called by DetailPopup pagination buttons
+  const handlePageChange = (newPage) => {
+    const { countType, countValue, title } = detailPopup;
+    fetchDrillPage(countType, countValue, newPage, title);
   };
 
   const handleStatusDownload = async (key) => {
@@ -192,6 +243,7 @@ const TicketDashboard = () => {
         value,
         tone: statusTone(key),
         onDownload: () => handleStatusDownload(key),
+        // count_type=status, count_value=<StatusName>
         onClick: () => handleTicketCardClick("status", key, key),
       })),
     [statusData]
@@ -205,7 +257,8 @@ const TicketDashboard = () => {
           value={totalTickets}
           tone="blue"
           onDownload={handleTicketStatusDownload}
-          onClick={() => handleTicketCardClick("all", "", "Tickets Created")}
+          // count_type=total_recs (no count_value needed for total)
+          onClick={() => handleTicketCardClick("total_recs", "total_recs", "Tickets Created")}
         />
         {cards.map((card) => (
           <StatCard
@@ -223,9 +276,12 @@ const TicketDashboard = () => {
         isOpen={detailPopup.open}
         onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
         title={detailPopup.title}
-        subtitle={`${detailPopup.records.length} record(s)`}
+        subtitle={`${detailPopup.totalRecords ?? detailPopup.records.length} record(s)`}
         records={detailPopup.records}
         loading={detailPopup.loading}
+        page={detailPopup.page}
+        totalPages={detailPopup.totalPages}
+        onPageChange={handlePageChange}
         columns={[
           { key: "ticket_number", label: "Ticket #", accessor: (r) => r.ticket_number },
           { key: "heading", label: "Heading", accessor: (r) => r.heading },

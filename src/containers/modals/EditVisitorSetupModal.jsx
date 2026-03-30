@@ -79,7 +79,7 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
         await axios.put(`${BASE_URL}/visitor_sub_categories/${catId}.json?token=${token}`, formData);
       } 
       else {
-        formData.append("visitor_staff_category[name]", name.trim());
+        formData.append("name", name.trim());
         await axios.patch(`${BASE_URL}/visitor_staff_categories/${catId}.json?token=${token}`, formData);
       }
 
@@ -137,10 +137,10 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
           </div>
         )}
 
-        <div className="flex items-center gap-2 mb-6">
+        {/* <div className="flex items-center gap-2 mb-6">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} id="active" className="w-5 h-5" />
           <label htmlFor="active" className="text-sm font-semibold">Active Status</label>
-        </div>
+        </div> */}
 
         <button onClick={handleSubmit} style={{ background: themeColor }} className="w-full text-white py-3 rounded-xl font-bold hover:opacity-90 transition-all">
           Save Changes
