@@ -465,7 +465,7 @@ function TakeSurvey() {
 
         {/* ── Header Banner ── */}
         <div
-          style={{ backgroundColor: survey?.theme_color || "#f97316" }}
+          style={{ backgroundColor: survey?.background_color || "#f97316" }}
           className="text-white p-4 rounded-xl"
         >
           {/* Decorative circles */}
@@ -705,7 +705,7 @@ function TakeSurvey() {
               disabled={submitting}
               className="inline-flex items-center gap-2.5 px-10 py-3.5 rounded-xl text-white font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-[0.98]"
               style={{
-                backgroundColor: survey?.theme_color || "#f97316",
+                backgroundColor: survey?.background_color || "#f97316",
                 boxShadow: "0 4px 14px rgba(0,0,0,0.15)"
               }}
             >
