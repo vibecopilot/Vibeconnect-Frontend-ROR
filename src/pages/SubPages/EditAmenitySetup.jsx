@@ -406,7 +406,7 @@ const EditAmenitySetup = () => {
               break_start_min: brkStart.min,
               break_end_hr: brkEnd.hr,
               break_end_min: brkEnd.min,
-              concurrent_slots: slotConfig.concurrent_slot || "",
+              // concurrent_slots: slotConfig.concurrent_slot || "",
               slot_duration: "",
               wrap_up_time: slotConfig.wrap_time ?? "",
               concurrent_slots: slotConfig.concurrent_slot ?? facility.concurrent_slot ?? "1",
