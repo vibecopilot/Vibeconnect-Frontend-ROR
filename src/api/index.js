@@ -609,9 +609,10 @@ export const getSnagChecklistID = async (data) =>
     },
   });
 // ticket download section
-export const getTicketStatusDownload = async () =>
+export const getTicketStatusDownload = async (params = {}) =>
   axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx?`, {
     params: {
+      ...params,
       token: token,
     },
     responseType: "blob",
@@ -806,7 +807,7 @@ export const getAdminComplaints = async (
     page: page,
     per_page: perPage,
     ...(search ? { "q[search_cont]": search } : {}),
-    ...(status && status !== "all" ? { "q[issue_status_eq]": status } : {}),
+    ...(status && status !== "all" ? { "q[complaint_status_name_eq]": status } : {}),
     ...(filters.category_id ? { "q[category_type_id_eq]": filters.category_id } : {}),
     ...(filters.issueStatusId ? { "q[issue_status_eq]": filters.issueStatusId } : {}),
     ...(filters.priorityLevel ? { "q[priority_cont]": filters.priorityLevel } : {}),
@@ -3142,6 +3143,16 @@ export const getExpectedVisitor = async (
     params["q[host_user_firstname_or_host_user_lastname_cont]"] = filters.host;
   }
 
+  // Add skip_host_approval filter (boolean must be sent as string for query params)
+  if (filters.skip_host_approval !== undefined && filters.skip_host_approval !== null && filters.skip_host_approval !== "") {
+    params["q[skip_host_approval_eq]"] = filters.skip_host_approval;
+  }
+
+  // Add building filter
+  if (filters.building_id) {
+    params["q[building_id_eq]"] = filters.building_id;
+  }
+
   // Support direct q[...] object keys from VisitorFilters
   Object.keys(filters).forEach((key) => {
     if (key.startsWith("q[")) {
@@ -3262,14 +3273,21 @@ export const visitorApproval = async (id, data) =>
       token: token,
     },
   });
-export const getVisitorHistory = async (page = 1, perPage = 10) =>
-  axiosInstance.get(`/visitors/approval_history.json`, {
-    params: {
-      token: token,
-      page: page,
-      per_page: perPage,
-    },
-  });
+export const getVisitorHistory = async (page = 1, perPage = 10, filters = {}) => {
+  const params = {
+    token: token,
+    page: page,
+    per_page: perPage,
+  };
+
+  if (filters.dateFrom) params["q[approval_date_gteq]"] = filters.dateFrom;
+  if (filters.dateTo) params["q[approval_date_lteq]"] = filters.dateTo;
+  if (filters.mobile) params["q[contact_no_cont]"] = filters.mobile;
+  if (filters.approved !== undefined && filters.approved !== null && filters.approved !== "")
+    params["q[approved_eq]"] = filters.approved;
+
+  return axiosInstance.get(`/visitors/approval_history.json`, { params });
+};
 export const getVisitorDetails = async (id) =>
   axiosInstance.get(`/visitors/${id}.json`, {
     params: {
@@ -10787,6 +10805,14 @@ export const getDeviceConfiguration = async (siteId) =>
       token: token,
     },
   });
+
+export const deleteDeviceConfiguration = async (id) => {
+  axiosInstance.delete(`/hik_devices/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+};
 export const postComplianceTags = async (data) =>
   axiosInstance.post(`/compliance_tags.json`, data, {
     params: {
@@ -11634,8 +11660,8 @@ export const getCalendarBookings = async (
       token: token,
       booking_type,
       site_id,
-      ...(start_date ? { start_date } : {}),
-      ...(end_date ? { end_date } : {}),
+      ...(start_date && { start_date }),
+      ...(end_date && { end_date }),
     },
   });
 
@@ -11674,7 +11700,7 @@ export const getAmenitiesBooking = async (
       page,
       per_page: perPage,
       site_id: siteId,
-      search, // add this
+      "q[search_cont]": search, // add this
       _t: new Date().getTime(),
     },
   });
@@ -11875,8 +11901,8 @@ export const getVisitorsDashboardDrill = async (
 export const getComplaintsDrill = async (
   countType,
   countValue,
-  siteId,
-  perPage,
+  companyId,
+  page = 1,
   startDate,
   endDate
 ) =>
@@ -11884,9 +11910,11 @@ export const getComplaintsDrill = async (
     params: {
       token: getItemInLocalStorage("TOKEN"),
       ...(countType !== undefined && { count_type: countType }),
-      ...(countValue !== undefined && { count_value: countValue }),
-      ...(perPage !== undefined && { record_page: perPage }),
-      ...(siteId && { site_id: siteId }),
+      ...(countValue !== undefined && countValue !== "" && {
+        count_value: countValue,
+      }),
+      record_page: page,
+      ...(companyId && { company_id: companyId }), // ✅ FIXED
       ...(startDate && { start_date_eq: startDate }),
       ...(endDate && { end_date_eq: endDate }),
     },

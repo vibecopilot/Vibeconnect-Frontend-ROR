@@ -5,11 +5,11 @@ import Table from "../../components/table/Table";
 import { getSetupUsers, getUserCount, putSetupUser, updateUserAdminApproval } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
-import { FaCheck, FaTimes } from "react-icons/fa";
+import { FaCheck, FaCheckCircle, FaClock, FaTimes, FaTimesCircle } from "react-icons/fa";
 // import { useSelector } from "react-redux";
-// import toast from "react-hot-toast";
+import toast from "react-hot-toast";
 // import { getItemInLocalStorage } from "../../utils/localStorage";
-import { BiEdit, BiUser } from "react-icons/bi";
+import { BiEdit, BiUser, BiUserCheck } from "react-icons/bi";
 import { DNA } from "react-loader-spinner";
 import { FaDownload, FaUsers } from "react-icons/fa";
 import { MdApartment, MdDevices } from "react-icons/md";
@@ -26,37 +26,50 @@ const UserSetup = () => {
   // console.log("akshay", akshay);
   // const users = akshay.users || [];
   // console.log("Users:", users);
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true); // Start loading
-        const setupUsers = await getSetupUsers();
-        const userCount = await getUserCount();
-        setCount(userCount.data);
-        const data = setupUsers.data || [];
-        setUsers(data);
+  const fetchUsers = async () => {
+    try {
+      setLoading(true); // Start loading
+      const setupUsers = await getSetupUsers();
+      const userCount = await getUserCount();
+      setCount(userCount.data);
+      const data = setupUsers.data || [];
+      setUsers(data);
 
-        setFilteredData(setupUsers.data);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false); // Stop loading
-      }
-    };
+      setFilteredData(setupUsers.data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false); // Stop loading
+    }
+  };
+
+  useEffect(() => {
     fetchUsers();
   }, []);
 
   const tabFilteredUsers = useMemo(() => {
     if (activeTab === "approved") {
-      return users.filter((user) => user.is_admin_approved === true);
+      return users.filter(
+        (user) =>
+          user.is_admin_approved === true ||
+          user.user_type === "pms_admin" // always approved
+      );
     }
 
     if (activeTab === "pending") {
-      return users.filter((user) => user.is_admin_approved === null);
+      return users.filter(
+        (user) =>
+          user.is_admin_approved === null &&
+          user.user_type !== "pms_admin" // exclude admin
+      );
     }
 
     if (activeTab === "rejected") {
-      return users.filter((user) => user.is_admin_approved === false);
+      return users.filter(
+        (user) =>
+          user.is_admin_approved === false &&
+          user.user_type !== "pms_admin"
+      );
     }
 
     return users;
@@ -116,47 +129,97 @@ const UserSetup = () => {
   }, [searchText, tabFilteredUsers]);
 
   const handleUserApproval = async (id, isApproved) => {
-    try {
-      const token = localStorage.getItem("TOKEN");
-      await updateUserAdminApproval(id, { is_admin_approved: isApproved }, token);
-      toast.success(isApproved ? "User approved successfully" : "User rejected successfully");
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, is_admin_approved: isApproved } : u)));
-      setFilteredData((prev) => prev.map((u) => (u.id === id ? { ...u, is_admin_approved: isApproved } : u)));
-    } catch (err) {
-      toast.error("Failed to update approval");
-    }
-  };
-const handleStatusToggle = async (row) => {
-  const newStatus = !row.user_status;
-
-  try {
     const token = localStorage.getItem("TOKEN");
 
-    await putSetupUser(
-      row.id,
-      { user: { user_status: newStatus } },
-      token
-    );
-
     setUsers((prev) =>
-      prev.map((user) =>
-        user.id === row.id
-          ? { ...user, user_status: newStatus }
-          : user
+      prev.map((u) =>
+        u.id === id
+          ? {
+            ...u,
+            is_admin_approved: isApproved,
+            user_status: true,
+          }
+          : u
       )
     );
 
-    toast.success(
-      newStatus
-        ? "User Activated Successfully ✅"
-        : "User Deactivated Successfully ❌"
-    );
+    try {
+      await updateUserAdminApproval(
+        id,
+        {
+          user_status: true,
+          is_admin_approved: isApproved,
+        },
+        token
+      );
 
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to update status ❌");
-  }
-};
+      // ✅ FIXED TOAST
+      if (isApproved === true) {
+        toast.success("User approved successfully ✅");
+      } else {
+        toast.error("User rejected successfully ❌");
+      }
+
+    } catch (err) {
+      console.error(err);
+
+      toast.error("Failed to update approval ❌");
+
+      // rollback if failed
+      fetchUsers();
+    }
+  };
+
+  const handleStatusToggle = async (row) => {
+    const newStatus = !row.user_status;
+
+    try {
+      const token = localStorage.getItem("TOKEN");
+
+      await putSetupUser(
+        row.id,
+        { user: { user_status: newStatus } },
+        token
+      );
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === row.id
+            ? { ...user, user_status: newStatus }
+            : user
+        )
+      );
+
+      toast.success(
+        newStatus
+          ? "User Activated Successfully ✅"
+          : "User Deactivated Successfully ❌"
+      );
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update status ❌");
+    }
+  };
+
+  const approvedCount = users.filter(
+    (u) => u.is_admin_approved === true || u.user_type === "pms_admin"
+  ).length;
+
+  const pendingCount = users.filter(
+    (u) =>
+      u.is_admin_approved === null &&
+      u.user_type !== "pms_admin"
+  ).length;
+
+  const rejectedCount = users.filter(
+    (u) =>
+      u.is_admin_approved === false &&
+      u.user_type !== "pms_admin"
+  ).length;
+
+  // ✅ FINAL TOTAL
+  const totalUsersCount = approvedCount + pendingCount + rejectedCount;
   // const totalUsers = users.length;
   // const appDownloadedCount = users.filter((user) => user.is_downloaded).length;
   // const appDownloadTenant = users.filter(
@@ -250,34 +313,34 @@ const handleStatusToggle = async (row) => {
       wrap: true,
     },
 
-{
-  name: "Status",
-  cell: (row) => (
-    <label className="inline-flex items-center cursor-pointer">
-      <input
-        type="checkbox"
-        checked={row.user_status === true}
-        onChange={() => handleStatusToggle(row)}
-        className="sr-only peer"
-      />
+    {
+      name: "Status",
+      cell: (row) => (
+        <label className="inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={row.user_status === true}
+            onChange={() => handleStatusToggle(row)}
+            className="sr-only peer"
+          />
 
-      {/* Track */}
-      <div
-        className={`w-11 h-6 rounded-full relative transition-all duration-300
+          {/* Track */}
+          <div
+            className={`w-11 h-6 rounded-full relative transition-all duration-300
           ${row.user_status ? "bg-green-500" : "bg-red-500"}
         `}
-      >
-        {/* Thumb */}
-        <div
-          className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300
+          >
+            {/* Thumb */}
+            <div
+              className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300
             ${row.user_status ? "left-6" : "left-1"}
           `}
-        ></div>
-      </div>
-    </label>
-  ),
-  sortable: true,
-},
+            ></div>
+          </div>
+        </label>
+      ),
+      sortable: true,
+    },
     {
       name: "Approval",
       cell: (row) =>
@@ -310,38 +373,56 @@ const handleStatusToggle = async (row) => {
 
   const totalDownloads = users?.filter(user => user.is_downloaded).length || 0;
 
-  const dashboardCards = [
-    {
-      title: "Total Users",
-      value: count?.total_user || 0,
-      icon: <FaUsers size={28} />,
-      bg: "from-blue-500 to-blue-700",
-    },
-    {
-      title: "Total App Downloads",
-      value: totalDownloads || 0,
-      icon: <FaDownload size={28} />,
-      bg: "from-green-500 to-green-700",
-    },
-    {
-      title: "Device Registered",
-      value: count?.total_user_downloads || 0,
-      icon: <MdDevices size={28} />,
-      bg: "from-purple-500 to-purple-700",
-    },
-    {
-      title: "Tenant Register",
-      value: count?.total_tenant_downloads || 0,
-      icon: <MdApartment size={28} />,
-      bg: "from-orange-500 to-orange-600",
-    },
-    {
-      title: "Owner Register",
-      value: count?.total_owner_downloads || 0,
-      icon: <BiUser size={28} />,
-      bg: "from-pink-500 to-pink-700",
-    },
-  ];
+const dashboardCards = [
+  {
+    title: "Total Users",
+    value: totalUsersCount || 0,
+    icon: <FaUsers size={22} />, // 👥 all users
+    bg: "bg-blue-400 text-white",
+  },
+  {
+    title: "Total App Downloads",
+    value: totalDownloads || 0,
+    icon: <FaDownload size={22} />, // ⬇️ download
+    bg: "bg-green-400 text-white",
+  },
+  {
+    title: "Device Registered",
+    value: count?.total_user_downloads || 0,
+    icon: <MdDevices size={22} />, // 📱 device
+    bg: "bg-purple-400 ttext-white",
+  },
+  {
+    title: "Tenant Register",
+    value: count?.total_tenant_downloads || 0,
+    icon: <MdApartment size={22} />, // 🏢 tenant
+    bg: "bg-orange-400 text-white",
+  },
+  {
+    title: "Owner Register",
+    value: count?.total_owner_downloads || 0,
+    icon: <BiUserCheck size={22} />, // 👤✔ owner verified
+    bg: "bg-pink-400 text-white",
+  },
+  {
+    title: "Approved Users",
+    value: approvedCount || 0,
+    icon: <FaCheckCircle size={22} />, // ✅ approved
+    bg: "bg-emerald-400 text-white",
+  },
+  {
+    title: "Pending Users",
+    value: pendingCount || 0,
+    icon: <FaClock size={22} />, // ⏳ pending
+    bg: "bg-yellow-400 text-white",
+  },
+  {
+    title: "Rejected Users",
+    value: rejectedCount || 0,
+    icon: <FaTimesCircle size={22} />, // ❌ rejected
+    bg: "bg-red-400 text-white",
+  },
+];
   console.log("Filtered Data:", users);
 
   return (
@@ -383,7 +464,7 @@ const handleStatusToggle = async (row) => {
 
         </div>
 
-        <div className="mt-5 flex md:flex-row flex-col justify-between md:items-center gap-4">
+        <div className="mt-2 flex md:flex-row flex-col justify-between md:items-center gap-4">
           <input
             type="text"
             placeholder="Search Anything (Name, Email and Mobile) along with Spaces"
@@ -414,11 +495,11 @@ const handleStatusToggle = async (row) => {
         ) : (
           <>
             {/* Attractive Dashboard Cards */}
-            <div className="grid lg:grid-cols-5 md:grid-cols-3 grid-cols-1 gap-8">
+            <div className="grid lg:grid-cols-8 md:grid-cols-5 grid-cols-1 gap-8">
               {dashboardCards.map((card, index) => (
                 <div
                   key={index}
-                  className={`bg-gradient-to-r ${card.bg} text-white rounded-xl p-6 shadow-lg hover:scale-105 transform transition duration-300`}
+                  className={`bg-gradient-to-r ${card.bg} text-white rounded-xl p-3 shadow-lg hover:scale-90 transform transition duration-300`}
                 >
                   <div className="flex justify-between items-center">
                     <div>

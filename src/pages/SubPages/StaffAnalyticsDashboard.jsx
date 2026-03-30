@@ -28,7 +28,7 @@ const STAT_CONFIG = [
   { key: "inactive",      title: "Inactive",        accent: PALETTE[6]  },
   { key: "approved",      title: "Approved",        accent: PALETTE[4]  },
   { key: "pending",       title: "Pending",         accent: PALETTE[2]  },
-  { key: "in_date_range", title: "In Date Range",   accent: PALETTE[5]  },
+  // { key: "in_date_range", title: "In Date Range",   accent: PALETTE[5]  },
   { key: "today_in",      title: "Today In",        accent: PALETTE[9]  },
   { key: "today_out",     title: "Today Out",       accent: PALETTE[7]  },
   { key: "total_in",      title: "Total In",        accent: PALETTE[10] },

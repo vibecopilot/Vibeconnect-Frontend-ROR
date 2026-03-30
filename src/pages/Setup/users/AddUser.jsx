@@ -77,25 +77,25 @@ const AddUser = () => {
     loadDropdowns();
   }, []);
 
- const handleChange = (e) => {
-  const { name, value, files } = e.target;
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
 
-  if (files) {
-    setFormData({ ...formData, [name]: files[0] });
-    return;
-  }
+    if (files) {
+      setFormData({ ...formData, [name]: files[0] });
+      return;
+    }
 
-  if (name === "mobile") {
-    const digits = value.replace(/\D/g, "");
-    return setFormData({ ...formData, mobile: digits.slice(0, 10) });
-  }
+    if (name === "mobile") {
+      const digits = value.replace(/\D/g, "");
+      return setFormData({ ...formData, mobile: digits.slice(0, 10) });
+    }
 
-  if (name === "email") {
-    return setFormData({ ...formData, email: value.trim() });
-  }
+    if (name === "email") {
+      return setFormData({ ...formData, email: value.trim() });
+    }
 
-  setFormData({ ...formData, [name]: value });
-};
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleUnitChange = (e) => {
     const unitId = Number(e.target.value);
@@ -144,7 +144,6 @@ const AddUser = () => {
       "mobile",
       "password",
       "occupancy_type",
-      "status",
     ];
 
     for (let key of required) {
@@ -159,6 +158,10 @@ const AddUser = () => {
       return toast.error("Please select Tower, Floor & Unit");
     }
 
+const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
+  formData.userType?.toLowerCase()
+);
+
     const payload = {
       user: {
         firstname: formData.firstname,
@@ -168,8 +171,8 @@ const AddUser = () => {
         mobile: formData.mobile,
         user_type: formData.userType || "user",
         active: true,
-        user_status: false,
-
+        user_status: isAdmin ? true : false,
+        is_admin_approved: isAdmin ? true : null,
         birth_date: formData.birth_date,
         anniversary: formData.anniversary,
 
@@ -447,9 +450,8 @@ const AddUser = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-1">Unit No *</label>
                 <label className="text-sm font-medium block mb-1">
-                  Unit ID *
+                  Unit  *
                 </label>
 
                 <select
@@ -485,7 +487,7 @@ const AddUser = () => {
                   required
                 >
 
-                  
+
                   <option value="" disabled>
                     Select Ownership Type
                   </option>
@@ -494,63 +496,62 @@ const AddUser = () => {
                 </select>
               </div>
 
-              {formData.occupancy_type === "tenant" && (
+              {/* {formData.occupancy_type === "tenant" && (
 
-<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 lg:col-start-4 col-span-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 lg:col-start-4 col-span-3">
 
-  <div>
-    <label className="text-sm font-medium block mb-1">
-      Tenant Start Date *
-    </label>
-    <input
-      type="date"
-      name="tenant_start_date"
-      value={formData.tenant_start_date}
-      onChange={handleChange}
-      className="w-full border border-gray-300 rounded-md px-3 py-2"
-    />
-  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-1">
+                      Tenant Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      name="tenant_start_date"
+                      value={formData.tenant_start_date}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
 
-  <div>
-    <label className="text-sm font-medium block mb-1">
-      Tenant End Date *
-    </label>
-    <input
-      type="date"
-      name="tenant_end_date"
-      value={formData.tenant_end_date}
-      onChange={handleChange}
-      className="w-full border border-gray-300 rounded-md px-3 py-2"
-    />
-  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-1">
+                      Tenant End Date *
+                    </label>
+                    <input
+                      type="date"
+                      name="tenant_end_date"
+                      value={formData.tenant_end_date}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
 
-  <div>
-    <label className="text-sm font-medium block mb-1">
-      Tenant Agreement Attachment
-    </label>
-    <input
-      type="file"
-      name="tenant_attachment"
-      onChange={handleChange}
-      className="w-full border border-gray-300 rounded-md px-3 py-2"
-      accept=".pdf,.jpg,.png"
-    />
-  </div>
+                  <div>
+                    <label className="text-sm font-medium block mb-1">
+                      Tenant Agreement Attachment
+                    </label>
+                    <input
+                      type="file"
+                      name="tenant_attachment"
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      accept=".pdf,.jpg,.png"
+                    />
+                  </div>
 
-</div>
-
-)}
+                </div>
+`
+              )} */}
 
               <div>
                 <label className="text-sm font-medium block mb-1">
-                  Status *
+                  Status
                 </label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  required
                 >
                   <option value="" disabled>
                     Select Status
@@ -632,9 +633,9 @@ const AddUser = () => {
             </div>
 
             <div className="mt-4">
-             <label className="text-sm font-medium block mb-1">
-                 Alternate Address <span className="text-gray-500">(Optional)</span>
-             </label>
+              <label className="text-sm font-medium block mb-1">
+                Alternate Address <span className="text-gray-500">(Optional)</span>
+              </label>
               <textarea
                 name="alternateAddress"
                 value={formData.alternateAddress}
@@ -645,10 +646,10 @@ const AddUser = () => {
           </div>
 
           <div className="border-t border-gray-300 p-6">
-           <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
-               Additional Info & Utilities 
+            <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+              Additional Info & Utilities
               <span className="text-gray-400 text-sm ml-2">(Optional)</span>
-           </h3>
+            </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[
@@ -706,8 +707,8 @@ const AddUser = () => {
 
           <div className="flex justify-end px-6 py-4  rounded-b-xl border-t border-gray-200 gap-3">
             <button
-                          className="bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-gray-900"
-onClick={()=>navigate("/setup/users-setup")}
+              className="bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-gray-900"
+              onClick={() => navigate("/setup/users-setup")}
             >
               Cancel
             </button>
