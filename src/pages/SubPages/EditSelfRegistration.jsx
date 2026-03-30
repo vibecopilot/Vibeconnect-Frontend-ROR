@@ -160,9 +160,31 @@ const EditSelfRegistration = () => {
 // ✅ Proper Rails nested params format
 formData.additional_visitors.forEach((visitor, index) => {
   if (visitor.name || visitor.mobile) {
-    form.append(`visitor[extra_visitors][${index}][name]`, visitor.name || "");
-    form.append(`visitor[extra_visitors][${index}][mobile]`, visitor.mobile || "");
+
+    // ✅ Send ID if exists (for update)
+    if (visitor.id) {
+      form.append(
+        `visitor[extra_visitors_attributes][${index}][id]`,
+        visitor.id
+      );
+    }
+
+    form.append(
+      `visitor[extra_visitors_attributes][${index}][name]`,
+      visitor.name || ""
+    );
+
+    form.append(
+      `visitor[extra_visitors_attributes][${index}][contact_no]`,
+      visitor.mobile || visitor.contact_no || ""
+    );
   }
+  if (visitor._destroy) {
+  form.append(
+    `visitor[extra_visitors_attributes][${index}][_destroy]`,
+    1
+  );
+}
 });
       await updateVisitor(id, form, token);
 
