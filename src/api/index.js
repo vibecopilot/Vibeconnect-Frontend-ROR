@@ -11700,7 +11700,7 @@ export const getAmenitiesBooking = async (
       page,
       per_page: perPage,
       site_id: siteId,
-      "q[search_cont]":search, // add this
+      "q[search_cont]": search, // add this
       _t: new Date().getTime(),
     },
   });
@@ -11902,7 +11902,7 @@ export const getComplaintsDrill = async (
   countType,
   countValue,
   siteId,
-  perPage,
+  page = 1,
   startDate,
   endDate
 ) =>
@@ -11910,8 +11910,8 @@ export const getComplaintsDrill = async (
     params: {
       token: getItemInLocalStorage("TOKEN"),
       ...(countType !== undefined && { count_type: countType }),
-      ...(countValue !== undefined && { count_value: countValue }),
-      ...(perPage !== undefined && { record_page: perPage }),
+      ...(countValue !== undefined && countValue !== "" && { count_value: countValue }),
+      record_page: page,
       ...(siteId && { site_id: siteId }),
       ...(startDate && { start_date_eq: startDate }),
       ...(endDate && { end_date_eq: endDate }),

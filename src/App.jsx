@@ -7054,7 +7054,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/passes/add-self-registration"
+          path="/admin/passes/add-self-registration/:id"
           element={
             <ProtectedAdminRoutes>
               <AddSelfRegistration />

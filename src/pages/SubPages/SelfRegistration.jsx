@@ -218,30 +218,30 @@ function SelfRegistration() {
   }, []);
 
   const handleSearch = (e) => {
-  const value = e.target.value.toLowerCase();
-  setSearchText(e.target.value);
+    const value = e.target.value.toLowerCase();
+    setSearchText(e.target.value);
 
-  if (!value.trim()) {
-    setFilteredRecords(records);
-    return;
-  }
+    if (!value.trim()) {
+      setFilteredRecords(records);
+      return;
+    }
 
-  const filtered = records.filter((item) => {
-    const name = item.visitor_name?.toLowerCase() || "";
-    const host = item.hosts?.[0]?.hosts_name?.toLowerCase() || "";
-    const mobile = String(item.contact_no || "");
-    const purpose = item.purpose?.toLowerCase() || "";
+    const filtered = records.filter((item) => {
+      const name = item.visitor_name?.toLowerCase() || "";
+      const host = item.hosts?.[0]?.hosts_name?.toLowerCase() || "";
+      const mobile = String(item.contact_no || "");
+      const purpose = item.purpose?.toLowerCase() || "";
 
-    return (
-      name.includes(value) ||
-      host.includes(value) ||
-      mobile.includes(value) ||
-      purpose.includes(value)
-    );
-  });
+      return (
+        name.includes(value) ||
+        host.includes(value) ||
+        mobile.includes(value) ||
+        purpose.includes(value)
+      );
+    });
 
-  setFilteredRecords(filtered);
-};
+    setFilteredRecords(filtered);
+  };
 
   const columns = [
     {
@@ -289,29 +289,35 @@ function SelfRegistration() {
       selector: (row) => row.coming_from,
       sortable: true,
     },
-    {
-      name: "Expected Date",
-      selector: (row) => row.expected_date,
-      sortable: true,
-    },
-    {
-      name: "Expected Time",
-      selector: (row) => row.expected_time,
-      sortable: true,
-    },
+    // {
+    //   name: "Expected Date",
+    //   selector: (row) =>
+    //     row.expected_date
+    //       ? new Date(row.expected_date).toLocaleDateString()
+    //       : "-",
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Expected Time",
+    //   selector: (row) =>
+    //     row.expected_time
+    //       ? row.expected_time
+    //       : "-",
+    //   sortable: true,
+    // },
   ];
 
-  
+
   return (
     <div className="flex flex-col w-full overflow-hidden">
       <div className="grid md:grid-cols-2 gap-2 items-center">
-       <input
-  type="text"
-  className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
-  placeholder="Search using Visitor name, Host, vehicle number"
-  value={searchText}
-  onChange={handleSearch}
-/>
+        <input
+          type="text"
+          className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
+          placeholder="Search using Visitor name, Host, vehicle number"
+          value={searchText}
+          onChange={handleSearch}
+        />
         {/* <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
                 <span
                   className={` md:border-r px-2 border-gray-300 cursor-pointer hover:underline ${
@@ -336,7 +342,7 @@ function SelfRegistration() {
               </div> */}
         <div className="flex justify-end">
           <Link
-            to={`/admin/passes/add-self-registration`}
+            to={`/admin/passes/add-self-registration/${siteId}?token=${token}`}
             style={{ background: themeColor }}
             className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >
