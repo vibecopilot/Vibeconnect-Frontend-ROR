@@ -1,26 +1,63 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import Navbar from "../../../components/Navbar";
-import { FaChartBar } from "react-icons/fa";
-import { MdMenuOpen } from "react-icons/md";
-import { IoIosArrowDown, IoIosArrowForward } from "react-icons/io";
-import { getSurvey, createSurveyResponse } from "../../../api";
-import { getItemInLocalStorage } from "../../../utils/localStorage";
+import { useParams } from "react-router-dom";
+import { getSurvey } from "../../../api";
 import toast from "react-hot-toast";
+import { domainPrefix } from "../../../api";
+import { FaStar } from "react-icons/fa";
+import {
+  FiShield,
+  FiFileText,
+} from "react-icons/fi";
+
+/* ⭐ Star Rating */
+function StarRatingInput({ rating = 0, onRatingChange, scale = 5 }) {
+  const [hovered, setHovered] = useState(0);
+
+  return (
+    <div className="flex gap-1.5">
+      {Array.from({ length: scale }, (_, i) => i + 1).map((n) => (
+        <button
+          key={n}
+          type="button"
+          onMouseEnter={() => setHovered(n)}
+          onMouseLeave={() => setHovered(0)}
+          onClick={() => onRatingChange(n)}
+        >
+          <FaStar
+            size={26}
+            className={`${n <= (hovered || rating)
+              ? "text-yellow-400"
+              : "text-gray-300"
+              }`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* 🎨 Icon styles */
+const ICON_PALETTE = [
+  { bg: "bg-purple-100", text: "text-purple-600" },
+  { bg: "bg-blue-100", text: "text-blue-600" },
+  { bg: "bg-emerald-100", text: "text-emerald-600" },
+];
+
+const getIconStyle = (idx) => {
+  const style = ICON_PALETTE[idx % ICON_PALETTE.length];
+  return {
+    Icon: FiShield,
+    ...style,
+  };
+};
 
 function PreviewSurvey() {
   const { id } = useParams();
   const [survey, setSurvey] = useState(null);
-  const [loading, setLoading] = useState(!!id);
-  const [openQuestion, setOpenQuestion] = useState(null);
   const [answers, setAnswers] = useState({});
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
     getSurvey(id)
       .then((res) => setSurvey(res.data))
       .catch(() => setSurvey(null))
@@ -28,314 +65,250 @@ function PreviewSurvey() {
   }, [id]);
 
   const questions = survey?.survey_questions || [];
-  const total = questions.length;
-  const answeredCount = questions.filter((q) => {
-    const v = answers[q.id];
-    if (q.question_type === "multiple_choice") return Array.isArray(v) && v.length > 0;
-    return v !== undefined && v !== null && v !== "";
-  }).length;
-  const percentage = total ? (answeredCount / total) * 100 : 0;
 
-  const toggleQuestion = (qId) => {
-    setOpenQuestion((prev) => (prev === qId ? null : qId));
-  };
+  const setAnswer = (qid, val) =>
+    setAnswers((p) => ({ ...p, [qid]: val }));
 
-  const setAnswer = (questionId, value) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
-  };
-
-  const setMultiAnswer = (questionId, optionLabel, checked) => {
-    setAnswers((prev) => {
-      const arr = prev[questionId] || [];
-      const next = checked ? [...arr, optionLabel] : arr.filter((x) => x !== optionLabel);
-      return { ...prev, [questionId]: next };
+  const setMultiAnswer = (qid, label, checked) => {
+    setAnswers((p) => {
+      const arr = p[qid] || [];
+      return {
+        ...p,
+        [qid]: checked
+          ? [...arr, label]
+          : arr.filter((x) => x !== label),
+      };
     });
   };
 
-  const handleSubmit = async () => {
-    if (!id || !survey) return;
-    setSubmitting(true);
-    try {
-      const user = getItemInLocalStorage("USER");
-      const userId = user?.id ?? user?.user_id ?? null;
-      const survey_answers_attributes = questions.map((q) => {
-        const v = answers[q.id];
-        const attrs = { survey_question_id: q.id };
-        if (q.question_type === "text") {
-          attrs.text_value = typeof v === "string" ? v : "";
-        } else if (q.question_type === "rating" || q.question_type === "scale") {
-          attrs.numeric_value = v != null ? Number(v) : null;
-        } else if ((q.question_type === "single_choice" || q.question_type === "multiple_choice") && q.options?.length) {
-          const optionIds = q.options
-            .filter((o) => (Array.isArray(v) ? v.includes(o.label) : v === o.label))
-            .map((o) => o.id);
-          attrs.selected_option_ids = optionIds;
-        } else {
-          attrs.text_value = v != null ? String(v) : "";
-        }
-        return attrs;
-      });
-      await createSurveyResponse(id, {
-        survey_response: {
-          user_id: userId,
-          survey_answers_attributes,
-        },
-      });
-      toast.success("Response submitted.");
-      setAnswers({});
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to submit response.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const renderQuestionInput = (q, index) => {
+  const renderQuestionInput = (q) => {
     const opts = q.options || [];
     const value = answers[q.id];
 
     switch (q.question_type) {
       case "single_choice":
         return (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {opts.map((opt) => (
               <label
-                key={opt.id || opt.label}
-                className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer ${value === opt.label ? "bg-gray-100 border-2 border-gray-500" : "border-transparent"
+                key={opt.id}
+                className={`flex items-center gap-2 px-4 py-3 rounded-xl border cursor-pointer ${value === opt.label
+                  ? "bg-violet-50 border-violet-400"
+                  : "border-gray-200"
                   }`}
               >
                 <input
                   type="radio"
-                  name={`q-${q.id}`}
-                  value={opt.label}
+                  className="hidden"
                   checked={value === opt.label}
                   onChange={() => setAnswer(q.id, opt.label)}
-                  className="hidden"
                 />
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${value === opt.label ? "border-gray-700" : "border-gray-400"
-                    }`}
-                >
-                  {value === opt.label && <div className="w-2.5 h-2.5 bg-gray-700 rounded-full" />}
-                </div>
                 <span>{opt.label}</span>
               </label>
             ))}
           </div>
         );
+
       case "multiple_choice":
         return (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {opts.map((opt) => {
               const arr = Array.isArray(value) ? value : [];
               const checked = arr.includes(opt.label);
+
               return (
                 <label
-                  key={opt.id || opt.label}
-                  className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer ${checked ? "bg-gray-100 border-2 border-gray-500" : "border-transparent"
+                  key={opt.id}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-xl border cursor-pointer ${checked
+                    ? "bg-violet-50 border-violet-400"
+                    : "border-gray-200"
                     }`}
                 >
                   <input
                     type="checkbox"
-                    checked={checked}
-                    onChange={(e) => setMultiAnswer(q.id, opt.label, e.target.checked)}
                     className="hidden"
+                    checked={checked}
+                    onChange={(e) =>
+                      setMultiAnswer(
+                        q.id,
+                        opt.label,
+                        e.target.checked
+                      )
+                    }
                   />
-                  <div
-                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${checked ? "border-gray-700 bg-gray-700" : "border-gray-400"
-                      }`}
-                  >
-                    {checked && (
-                      <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </div>
                   <span>{opt.label}</span>
                 </label>
               );
             })}
           </div>
         );
+
       case "rating":
-      case "scale": {
-        const scale = q.scale || 5;
-        const color = q.color || "#FACC15"; // yellow
-
         return (
-          <div className="flex flex-col gap-2">
-
-            {/* Stars */}
-            <div className="flex gap-2 text-4xl">
-              {Array.from({ length: scale }, (_, i) => {
-                const n = i + 1;
-                const isSelected = value >= n;
-
-                return (
-                  <span
-                    key={n}
-                    onClick={() => setAnswer(q.id, n)}
-                    className="cursor-pointer transition-transform hover:scale-110"
-                    style={{
-                      color: isSelected ? color : "#D1D5DB" // gray if not selected
-                    }}
-                  >
-                    ★
-                  </span>
-                );
-              })}
-            </div>
-
-            {/* Labels */}
-            <div className="flex justify-between text-xs text-gray-500 w-[220px]">
-              <span>Poor</span>
-              <span>Fair</span>
-              <span>Average</span>
-              <span>Good</span>
-              <span>Excellent</span>
-            </div>
-
-          </div>
-        );
-      }
-      case "text":
-      default: {
-        return (
-          <textarea
-            className="w-full max-w-lg px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500"
-            placeholder="Type your answer..."
-            value={value ?? ""}
-            onChange={(e) => setAnswer(q.id, e.target.value)}
-            rows={3}
+          <StarRatingInput
+            rating={value || 0}
+            onRatingChange={(val) => setAnswer(q.id, val)}
           />
         );
-      }
+
+      case "text":
+      default:
+        return (
+          <textarea
+            className="w-full px-4 py-3 border rounded-xl"
+            placeholder="Write your answer..."
+            value={value || ""}
+            onChange={(e) =>
+              setAnswer(q.id, e.target.value)
+            }
+          />
+        );
     }
+  };
+
+  const handleSubmit = () => {
+    toast.success("Preview mode only 🚀");
   };
 
   if (loading) {
     return (
-      <section className="flex">
-        <Navbar />
-        <div className="w-full flex items-center justify-center min-h-[200px]">Loading…</div>
-      </section>
+      <div className="flex justify-center mt-10">
+        Loading...
+      </div>
     );
   }
-  if (!id) {
-    return (
-      <section className="flex">
-        <Navbar />
-        <div className="w-full flex mx-3 flex-col overflow-hidden my-5 p-5">
-          <p>No survey selected. Open a survey from the list or details page.</p>
-        </div>
-      </section>
-    );
-  }
+
   if (!survey) {
-    return (
-      <section className="flex">
-        <Navbar />
-        <div className="w-full flex mx-3 flex-col overflow-hidden my-5 p-5">
-          <p>Survey not found.</p>
-        </div>
-      </section>
-    );
+    return <div>Survey not found</div>;
   }
 
   return (
-    <section className="flex">
-      <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden my-5">
-        <div className="flex justify-center mt-5">
-          <div className="w-full max-w-3xl space-y-8 relative">
-            {/* Progress Indicator & Analyze Survey */}
-            <div className="absolute top-4 right-6 flex items-center gap-3">
-              <div className="bg-white border rounded-lg shadow px-4 py-2 flex items-center gap-3">
-                <span className="text-sm font-semibold text-gray-700">
-                  {answeredCount}/{total} Answered
-                </span>
-                <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-green-500 transition-all"
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-              </div>
-              <Link
-                to={`/admin/result-analyze-result?survey_id=${id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow"
-              >
-                <FaChartBar />
-                Analyze Survey
-              </Link>
-            </div>
-            <h2 className="text-2xl text-green-600">{survey.survey_title}</h2>
-            {survey.description && (
-              <p className="text-gray-600">{survey.description}</p>
-            )}
+    <div className="min-h-screen bg-gray-50 p-6 space-y-6">
+      
+      {survey?.background_image && (
+        <div
+          className="w-full h-40 rounded-xl overflow-hidden mb-4"
+          style={{
+            backgroundImage: `url(${survey.background_image})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+      )}
 
-            {/* Default client details preview */}
-            <div className="mt-4 bg-white rounded-xl border border-gray-200 p-5 max-w-3xl space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-gray-500">
-                    Company name
-                  </span>
-                  <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-gray-500">
-                    Floor / Unit
-                  </span>
-                  <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-gray-500">
-                    Feedback date
-                  </span>
-                  <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50 flex items-center px-3 text-xs text-gray-500">
-                    {new Date().toISOString().split("T")[0]}
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold text-gray-500">
-                    Feedback given by (name)
-                  </span>
-                  <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50" />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs font-semibold text-gray-500">
-                  Contact details
-                </span>
-                <div className="mt-1 h-9 rounded-md border border-gray-300 bg-gray-50" />
-              </div>
+
+      <div
+        style={{ backgroundColor: survey?.theme_color || "#f97316" }}
+        className="text-white p-6 rounded-xl"
+      >
+        {/* Decorative circles */}
+        <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 z-0" />
+        <div className="absolute -bottom-6 -right-6 w-32 h-32 rounded-full bg-white/10 z-0" />
+        <div className="absolute top-6 right-12 w-16 h-16 rounded-full bg-white/5 z-0" />
+
+        <div className="relative z-10 w-full px-4 sm:px-16">
+
+          <div className="grid grid-cols-3 items-center">
+
+            {/* LEFT: LOGO */}
+            <div className="flex justify-start">
+              {survey.client_logo && (
+                <img
+                  src={
+                    survey.client_logo?.startsWith("http")
+                      ? survey.client_logo
+                      : `${domainPrefix}${survey.client_logo}`
+                  }
+                  alt="Logo"
+                  className="h-12 sm:h-14 object-contain"
+                />
+              )}
             </div>
 
-            {questions.map((q, idx) => (
-              <div key={q.id}>
-                <h2 className="text-lg text-gray-900">
-                  {idx + 1}. {q.q_title}
-                </h2>
-                <div className="mt-3">{renderQuestionInput(q, idx)}</div>
-              </div>
-            ))}
-            <div className="pt-4">
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="bg-green-500 text-white px-4 py-2 rounded disabled:opacity-50"
-              >
-                {submitting ? "Submitting…" : "Submit response"}
-              </button>
+            {/* CENTER: TITLE */}
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl font-bold">
+                {survey.survey_title}
+              </h1>
             </div>
+
+            {/* RIGHT: DATES */}
+            <div className="flex justify-end text-right text-sm text-white/90">
+
+            </div>
+
           </div>
+
+          {/* DESCRIPTION */}
+          {survey.description && (
+            <p className="mt-6 text-sm sm:text-base text-white/90">
+              {survey.description}
+            </p>
+          )}
+
         </div>
       </div>
-    </section>
+
+      {/* 🔥 CLIENT DETAILS */}
+      <div className="bg-white rounded-2xl p-5 border shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <FiFileText />
+          <h2 className="font-semibold">
+            Client Details (Preview)
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <input placeholder="Company name" className="border p-2 rounded" />
+          <input placeholder="Floor / Unit" className="border p-2 rounded" />
+          <input type="date" className="border p-2 rounded" />
+          <input placeholder="Name" className="border p-2 rounded" />
+          <input placeholder="Email" className="border p-2 rounded" />
+          <input placeholder="Contact" className="border p-2 rounded" />
+        </div>
+      </div>
+
+      {/* 🔥 QUESTIONS SAME DESIGN */}
+      {questions.map((q, idx) => {
+        const { Icon, bg, text } = getIconStyle(idx);
+
+        return (
+          <div
+            key={q.id}
+            className="bg-white rounded-2xl p-5 border shadow-sm"
+          >
+            <div className="flex gap-3">
+              <div
+                className={`w-10 h-10 ${bg} flex items-center justify-center rounded`}
+              >
+                <Icon className={text} />
+              </div>
+
+              <div className="flex-1">
+                <h3 className="font-semibold">
+                  {q.q_title}
+                </h3>
+
+                <div className="mt-3">
+                  {renderQuestionInput(q)}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* 🔥 SUBMIT */}
+      <div className="text-center">
+        <button
+          onClick={handleSubmit}
+          style={{ backgroundColor: survey?.theme_color || "#f97316" }}
+          className="text-white px-4 py-2 rounded"
+        >
+          Submit (Preview)
+        </button>
+      </div>
+    </div>
   );
 }
 

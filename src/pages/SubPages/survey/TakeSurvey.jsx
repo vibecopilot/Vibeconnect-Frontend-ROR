@@ -157,6 +157,7 @@ function TakeSurvey() {
   const [email, setEmail] = useState("");
 
   useEffect(() => {
+    setFeedbackDate(new Date().toISOString().split("T")[0]); //force today's date as default on load
     if (!id) {
       setLoading(false);
       return;
@@ -443,7 +444,7 @@ function TakeSurvey() {
 
   return (
     <div
-      className="min-h-screen pb-10"
+      className="min-h-screen pb-10 bg-white"
       style={{
         background: survey.background_image
           ? `url(${domainPrefix + survey.background_image}) center/cover fixed no-repeat`
@@ -451,12 +452,21 @@ function TakeSurvey() {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-5">
+        {survey?.background_image && (
+          <div
+            className="w-full h-40 rounded-xl overflow-hidden mb-4"
+            style={{
+              backgroundImage: `url(${survey.background_image})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+        )}
+
         {/* ── Header Banner ── */}
         <div
-          className="rounded-2xl px-6 sm:px-10 pt-4 pb-6 text-white shadow-lg relative"
-          style={{
-            background: "linear-gradient(135deg, #DD3820, #ff6a4d)",
-          }}
+          style={{ backgroundColor: survey?.theme_color || "#f97316" }}
+          className="text-white p-4 rounded-xl"
         >
           {/* Decorative circles */}
           <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 z-0 pointer-events-none" />
@@ -565,12 +575,10 @@ function TakeSurvey() {
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">
                   Feedback date
                 </label>
-                <input
-                  type="date"
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-violet-500 text-sm"
-                  value={feedbackDate}
-                  onChange={(e) => setFeedbackDate(e.target.value)}
-                />
+
+                <div className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-100 text-gray-700 text-sm">
+                  {new Date().toLocaleDateString("en-GB")}
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1.5">
@@ -695,9 +703,10 @@ function TakeSurvey() {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex items-center gap-2.5 px-10 py-3.5 rounded-xl text-white font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
+              className="inline-flex items-center gap-2.5 px-10 py-3.5 rounded-xl text-white font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-[0.98]"
               style={{
-                background: `linear-gradient(135deg, ${accentColor}, #a855f7)`,
+                backgroundColor: survey?.theme_color || "#f97316",
+                boxShadow: "0 4px 14px rgba(0,0,0,0.15)"
               }}
             >
               <IoSend className="w-5 h-5" />
