@@ -103,7 +103,7 @@ function CreateScratchSurvey() {
         setStartDate(s.start_date ? new Date(s.start_date).toISOString().split("T")[0] : "");
         setEndDate(s.end_date ? new Date(s.end_date).toISOString().split("T")[0] : "");
         // Load branding fields
-        setBackgroundColor(s.background_color || "");
+        setFormThemeColor("#7C3AED");
         setHeaderText(s.header_text || "");
         setFooterText(s.footer_text || "");
         setExistingClientLogo(s.client_logo || null);
@@ -314,6 +314,7 @@ function CreateScratchSurvey() {
       formData.append("survey[start_date]", startDate || "");
       formData.append("survey[end_date]", endDate || "");
       formData.append("survey[background_color]", backgroundColor);
+      formData.append("survey[theme_color]", formThemeColor);
       if (backgroundImage) {
         formData.append("survey[background_image]", backgroundImage);
       }
@@ -381,14 +382,11 @@ function CreateScratchSurvey() {
     }
   };
 
-  const containerClass = "w-full max-w-4xl mx-auto px-4";
+  const containerClass = "w-full max-w-7xl mx-auto px-7";
   const sectionClass = "w-full bg-gray-50 rounded-xl p-6 shadow-sm border";
 
   return (
-    <div
-      className="flex min-h-screen"
-      style={{ backgroundColor: backgroundColor || "#f3e8ff" }}
-    >
+    <div className="flex min-h-screen bg-white">
       <div className="hidden md:block">
         <Navbar />
       </div>
@@ -466,7 +464,7 @@ function CreateScratchSurvey() {
             </h3>
 
             <label className="text-sm font-medium text-gray-600">
-              Background Color
+              Theme Color
             </label>
 
             <div className="flex flex-wrap gap-3 mt-3 mb-4">
@@ -475,9 +473,11 @@ function CreateScratchSurvey() {
                 <button
                   key={color}
                   type="button"
-                  onClick={() => setBackgroundColor(color)}
-                  className={`w-10 h-10 rounded-lg border-2
-${backgroundColor === color ? "border-black scale-110" : "border-gray-300"}`}
+                  onClick={() => setFormThemeColor(color)}
+                  className={`w-10 h-10 rounded-lg border-2 cursor-pointer ${formThemeColor === color
+                    ? "border-black scale-110"
+                    : "border-gray-300"
+                    }`}
                   style={{ backgroundColor: color }}
                 />
               ))}
@@ -506,7 +506,7 @@ ${backgroundColor === color ? "border-black scale-110" : "border-gray-300"}`}
             <div className="grid md:grid-cols-2 gap-5">
 
               <div className="flex flex-col">
-                <label className="font-semibold mb-1">Background Image</label>
+                <label className="font-semibold mb-1">Banner Image</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -772,8 +772,7 @@ ${backgroundColor === color ? "border-black scale-110" : "border-gray-300"}`}
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="px-6 py-2 rounded-lg text-white"
-                style={{ background: themeColor }}
+                className="px-6 py-2 rounded-lg text-white bg-purple-500 hover:bg-purple-600 disabled:opacity-50"
               >
                 {submitting ? "Saving…" : isEditMode ? "Save Changes" : "Create Survey"}
               </button>

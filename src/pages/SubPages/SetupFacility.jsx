@@ -542,7 +542,7 @@ const SetupFacility = () => {
       prev.map((rule) => {
         if (rule.id !== ruleId) return rule;
 
-        const updatedPrimeTimes = [...rule.primeTime];
+        let updatedPrimeTimes = [...rule.primeTime];
         // Ensure it's an array of objects
         if (!Array.isArray(updatedPrimeTimes)) {
           updatedPrimeTimes = [{ start_time: "", end_time: "" }];
