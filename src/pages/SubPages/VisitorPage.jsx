@@ -1723,7 +1723,7 @@ const VisitorPage = () => {
               </div>
 
               {/* Building */}
-              <div className="mb-4">
+              {/* <div className="mb-4">
                 <label className="text-sm font-medium block mb-2">
                   Building
                 </label>
@@ -1741,7 +1741,7 @@ const VisitorPage = () => {
                     </option>
                   ))}
                 </select>
-              </div>
+              </div> */}
 
               {/* Host Approval */}
               <div className="mb-6">
