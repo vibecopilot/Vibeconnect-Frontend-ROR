@@ -11,7 +11,6 @@ import { MdClose } from "react-icons/md";
 import toast from "react-hot-toast";
 import { getSurvey, updateSurvey, getSurveyResponses } from "../../../api";
 
-
 function SurveyDetails() {
   const { id } = useParams();
   const [survey, setSurvey] = useState(null);
@@ -24,7 +23,8 @@ function SurveyDetails() {
   const [chartType, setChartType] = useState("donut");
   const [activeTab, setActiveTab] = useState("send"); // "send" | "thankyou"
   const [thankYouMessage, setThankYouMessage] = useState("");
-  const [clientLogo, setClientLogo] = useState(null);
+  const [clientLogo, setClientLogo] = useState(null);      // preview URL (from server or local blob)
+  const [clientLogoFile, setClientLogoFile] = useState(null); // actual File for upload
   const [mailMessage, setMailMessage] = useState("");
   const shareableLink =
     typeof window !== "undefined"
@@ -52,6 +52,7 @@ ${survey.survey_title} Team`);
     if (survey) {
       setThankYouMessage(survey?.thank_you_message || "");
       setClientLogo(survey?.client_logo || "");
+      setClientLogoFile(null); // reset file on survey load
     }
   }, [survey]);
 
@@ -117,8 +118,8 @@ ${survey.survey_title} Team`);
     chart: { type: "donut", toolbar: { show: false } },
     labels: questionStats.length
       ? questionStats.map(
-        (s) => s.question.q_title?.substring(0, 30) || `Q${s.question.id}`,
-      )
+          (s) => s.question.q_title?.substring(0, 30) || `Q${s.question.id}`,
+        )
       : ["No Questions"],
     colors: PALETTE,
     legend: { position: "bottom", fontSize: "12px" },
@@ -138,79 +139,76 @@ ${survey.survey_title} Team`);
     chartType === "donut"
       ? overviewChartOptions
       : {
-        ...overviewChartOptions,
-        chart: { type: "bar", toolbar: { show: false } },
+          ...overviewChartOptions,
+          chart: { type: "bar", toolbar: { show: false } },
 
-        colors: PALETTE,
+          colors: PALETTE,
 
-        plotOptions: {
-          bar: {
-            borderRadius: 8,
-            columnWidth: "40%",
-            distributed: true,
-          },
-        },
-
-        grid: {
-          show: true,
-          borderColor: "#e5e7eb",
-          strokeDashArray: 4,
-          xaxis: { lines: { show: false } },
-          yaxis: { lines: { show: true } },
-        },
-
-        dataLabels: { enabled: false },
-
-        xaxis: {
-          categories: overviewChartOptions.labels,
-          labels: {
-            style: {
-              fontSize: "11px",
-              colors: "#6b7280",
+          plotOptions: {
+            bar: {
+              borderRadius: 8,
+              columnWidth: "40%",
+              distributed: true,
             },
           },
-        },
 
-        yaxis: {
-          labels: {
-            style: {
-              fontSize: "11px",
-              colors: "#6b7280",
+          grid: {
+            show: true,
+            borderColor: "#e5e7eb",
+            strokeDashArray: 4,
+            xaxis: { lines: { show: false } },
+            yaxis: { lines: { show: true } },
+          },
+
+          dataLabels: { enabled: false },
+
+          xaxis: {
+            categories: overviewChartOptions.labels,
+            labels: {
+              style: {
+                fontSize: "11px",
+                colors: "#6b7280",
+              },
             },
           },
-        },
 
-        tooltip: {
-          theme: "light",
-          y: {
-            formatter: (val) => `${val} responses`,
+          yaxis: {
+            labels: {
+              style: {
+                fontSize: "11px",
+                colors: "#6b7280",
+              },
+            },
           },
-        },
 
-        legend: { show: false },
-      };
+          tooltip: {
+            theme: "light",
+            y: {
+              formatter: (val) => `${val} responses`,
+            },
+          },
 
+          legend: { show: false },
+        };
 
   const chartSeries =
     chartType === "donut"
       ? questionStats.length
         ? questionStats.map(
-          (s) =>
-            Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
-        )
+            (s) => Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
+          )
         : [responseCount || 1]
-
       : [
-        {
-          name: "Responses",
-          data: questionStats.length
-            ? questionStats.map(
-              (s) =>
-                Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
-            )
-            : [0],
-        },
-      ];
+          {
+            name: "Responses",
+            data: questionStats.length
+              ? questionStats.map(
+                  (s) =>
+                    Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
+                )
+              : [0],
+          },
+        ];
 
   // The survey will only take a few minutes to complete, and your responses will be kept confidential.
 
@@ -257,11 +255,15 @@ ${survey.survey_title} Team`);
         message: `
 <div style="font-family: Arial, sans-serif;">
 
-  ${clientLogo ? `
+  ${
+    clientLogo
+      ? `
     <div style="text-align:center; margin-bottom:20px;">
       <img src="${clientLogo}" alt="Logo" style="max-height:80px;" />
     </div>
-  ` : ""}
+  `
+      : ""
+  }
 
   <p>Dear Participant,</p>
 
@@ -378,7 +380,8 @@ ${survey.survey_title} Team`);
     );
   }
   const isSurveyCompleted = survey?.end_date
-    ? new Date().setHours(0, 0, 0, 0) >= new Date(survey.end_date).setHours(0, 0, 0, 0)
+    ? new Date().setHours(0, 0, 0, 0) >=
+      new Date(survey.end_date).setHours(0, 0, 0, 0)
     : false;
 
   return (
@@ -392,7 +395,6 @@ ${survey.survey_title} Team`);
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 shrink-0">
-
             {/* Edit */}
             <div className="relative group">
               <Link
@@ -438,7 +440,6 @@ ${survey.survey_title} Team`);
                 <FaPaperPlane size={16} />
               </button>
             </div>
-
           </div>
         </div>
 
@@ -460,10 +461,11 @@ ${survey.survey_title} Team`);
               >
                 {/* Step Circle */}
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${isSurveyCompleted || step.id <= 2
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-300 text-gray-500"
-                    }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    isSurveyCompleted || step.id <= 2
+                      ? "bg-green-500 text-white"
+                      : "bg-gray-300 text-gray-500"
+                  }`}
                 >
                   {step.icon}
                 </div>
@@ -481,7 +483,6 @@ ${survey.survey_title} Team`);
         </div>
 
         {/* Dashboard Cards */}
-
 
         {/* Response Chart */}
         {/*  <div className="bg-white rounded-xl border shadow-sm p-8">
@@ -581,95 +582,84 @@ ${survey.survey_title} Team`);
           )}
         </div>*/}
 
-        <div className="grid grid-cols-12 gap-6 mt-4">
-
-          {/* LEFT SIDE */}
-          {/* LEFT SIDE */}
-          <div className="col-span-12 md:col-span-6 bg-white rounded-xl shadow p-5">
-
-            {/* Header */}
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Survey Overview
-              </h2>
-
-              {/* TABS */}
-              <div className="flex items-center bg-gray-100 rounded-lg p-1 text-sm">
-
-                <button
-                  onClick={() => setChartType("donut")}
-                  className={`px-3 py-1 rounded-md transition ${chartType === "donut"
-                    ? "bg-white shadow text-gray-900"
-                    : "text-gray-500"
-                    }`}
-                >
-                  Donut
-                </button>
-
-                <button
-                  onClick={() => setChartType("bar")}
-                  className={`px-3 py-1 rounded-md transition ${chartType === "bar"
-                    ? "bg-white shadow text-gray-900"
-                    : "text-gray-500"
-                    }`}
-                >
-                  Bar
-                </button>
-
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="flex justify-center">
-              <div className="w-[220px]">
-                <Chart
-                  options={chartOptions}
-                  series={chartSeries}
-                  type={chartType}
-                  height={180}
-                />
-              </div>
-            </div>
-
+        {/* Stats Cards - Top Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          {/* Total Responses */}
+          <div className="bg-white rounded-xl shadow p-4 border text-center">
+            <p className="text-xs text-gray-800">Total Responses</p>
+            <h2 className="text-5xl font-bold mt-3">
+              {survey.responses_count || 0}
+            </h2>
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="col-span-12 md:col-span-6 grid grid-cols-2 gap-4">
-
-            {/* Total Responses */}
-            <div className="bg-white rounded-xl shadow p-4 border text-center">
-              <p className="text-xs text-gray-800">Total Responses</p>
-              <h2 className="text-5xl font-bold mt-3">
-                {survey.responses_count || 0}
-              </h2>
-            </div>
-
-            {/* Survey Status */}
-            <div className="bg-white rounded-xl shadow p-4 border text-center">
-              <p className="text-xs text-gray-500">Survey Status</p>
-              <h2 className="text-4xl font-semibold text-green-600 mt-1 capitalize">
-                {survey.status || "Draft"}
-              </h2>
-            </div>
-
-            {/* Estimated Time */}
-            <div className="bg-white rounded-2xl shadow p-4 border text-center">
-              <p className="text-xs text-gray-500">Estimated Time</p>
-              <h2 className="text-3xl font-semibold mt-1">
-                {estimatedMinutes} min
-              </h2>
-            </div>
-
-            {/* NEW CARD */}
-            <div className="bg-white rounded-xl shadow p-4 border text-center">
-              <p className="text-xs text-gray-500">Completion Rate</p>
-              <h2 className="text-3xl font-bold mt-1">
-                {completionRate}%
-              </h2>
-            </div>
-
+          {/* Survey Status */}
+          <div className="bg-white rounded-xl shadow p-4 border text-center">
+            <p className="text-xs text-gray-500">Survey Status</p>
+            <h2 className="text-4xl font-semibold text-green-600 mt-1 capitalize">
+              {survey.status || "Draft"}
+            </h2>
           </div>
 
+          {/* Estimated Time */}
+          <div className="bg-white rounded-xl shadow p-4 border text-center">
+            <p className="text-xs text-gray-500">Estimated Time</p>
+            <h2 className="text-3xl font-semibold mt-1">
+              {estimatedMinutes} min
+            </h2>
+          </div>
+
+          {/* Completion Rate */}
+          <div className="bg-white rounded-xl shadow p-4 border text-center">
+            <p className="text-xs text-gray-500">Completion Rate</p>
+            <h2 className="text-3xl font-bold mt-1">{completionRate}%</h2>
+          </div>
+        </div>
+
+        {/* Survey Overview Chart - Full Width */}
+        <div className="w-full bg-white rounded-xl shadow p-5 mt-4">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Survey Overview
+            </h2>
+
+            {/* TABS */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1 text-sm">
+              <button
+                onClick={() => setChartType("donut")}
+                className={`px-3 py-1 rounded-md transition ${
+                  chartType === "donut"
+                    ? "bg-white shadow text-gray-900"
+                    : "text-gray-500"
+                }`}
+              >
+                Donut
+              </button>
+
+              <button
+                onClick={() => setChartType("bar")}
+                className={`px-3 py-1 rounded-md transition ${
+                  chartType === "bar"
+                    ? "bg-white shadow text-gray-900"
+                    : "text-gray-500"
+                }`}
+              >
+                Bar
+              </button>
+            </div>
+          </div>
+
+          {/* Chart */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-2xl">
+              <Chart
+                options={chartOptions}
+                series={chartSeries}
+                type={chartType}
+                height={350}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Send survey / Set up collector modal */}
@@ -680,20 +670,22 @@ ${survey.survey_title} Team`);
                 <div className="flex gap-4 border-b mb-4">
                   <button
                     onClick={() => setActiveTab("send")}
-                    className={`pb-2 ${activeTab === "send"
-                      ? "border-b-2 border-blue-600 text-blue-600"
-                      : "text-gray-500"
-                      }`}
+                    className={`pb-2 ${
+                      activeTab === "send"
+                        ? "border-b-2 border-blue-600 text-blue-600"
+                        : "text-gray-500"
+                    }`}
                   >
                     Send Survey
                   </button>
 
                   <button
                     onClick={() => setActiveTab("thankyou")}
-                    className={`pb-2 ${activeTab === "thankyou"
-                      ? "border-b-2 border-blue-600 text-blue-600"
-                      : "text-gray-500"
-                      }`}
+                    className={`pb-2 ${
+                      activeTab === "thankyou"
+                        ? "border-b-2 border-blue-600 text-blue-600"
+                        : "text-gray-500"
+                    }`}
                   >
                     Thank You Mail
                   </button>
@@ -710,10 +702,9 @@ ${survey.survey_title} Team`);
                 {activeTab === "send" && (
                   <>
                     <p className="text-gray-600 text-sm mb-3">
-                      Share this link with respondents. They can open it to take the
-                      survey.
+                      Share this link with respondents. They can open it to take
+                      the survey.
                     </p>
-
 
                     <div className="flex gap-2 mb-4">
                       <input
@@ -765,12 +756,8 @@ ${survey.survey_title} Team`);
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (!file) return;
-
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setClientLogo(reader.result); // base64
-                          };
-                          reader.readAsDataURL(file);
+                          setClientLogoFile(file);
+                          setClientLogo(URL.createObjectURL(file));
                         }}
                         className="w-full px-3 py-2 border rounded"
                       />
@@ -794,14 +781,28 @@ ${survey.survey_title} Team`);
                     />
                     <button
                       type="button"
-                      onClick={handleSendEmails}
+                      onClick={async () => {
+                        // Upload logo first if a new file was selected
+                        if (clientLogoFile) {
+                          try {
+                            const formData = new FormData();
+                            formData.append("survey[client_logo]", clientLogoFile);
+                            await updateSurvey(id, formData);
+                            setClientLogoFile(null);
+                          } catch (err) {
+                            toast.error("Failed to upload logo");
+                            return;
+                          }
+                        }
+                        handleSendEmails();
+                      }}
                       disabled={sendingEmails}
-                      className={`w-full px-3 py-2 rounded text-white ${sendingEmails
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700"
-                        } mb-4`}
+                      className={`w-full px-3 py-2 rounded text-white ${
+                        sendingEmails
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-blue-600 hover:bg-blue-700"
+                      } mb-4`}
                     >
-
                       {sendingEmails ? "Sending..." : "Send Survey"}
                     </button>
                   </>
@@ -819,12 +820,8 @@ ${survey.survey_title} Team`);
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (!file) return;
-
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setClientLogo(reader.result);
-                          };
-                          reader.readAsDataURL(file);
+                          setClientLogoFile(file);
+                          setClientLogo(URL.createObjectURL(file));
                         }}
                         className="w-full px-3 py-2 border rounded"
                       />
@@ -851,13 +848,15 @@ ${survey.survey_title} Team`);
                       className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-green-700"
                       onClick={async () => {
                         try {
-                          await axiosInstance.post("/survey/save-thankyou", {
-                            survey_id: id,
-                            thank_you_message: thankYouMessage,
-                            client_logo: clientLogo,
-                          });
-
+                          const formData = new FormData();
+                          formData.append("survey[thank_you_message]", thankYouMessage);
+                          if (clientLogoFile) {
+                            formData.append("survey[client_logo]", clientLogoFile);
+                          }
+                          await updateSurvey(id, formData);
+                          setClientLogoFile(null);
                           toast.success("Saved successfully!");
+                          fetchSurvey();
                         } catch (err) {
                           toast.error("Failed to save");
                         }
@@ -897,7 +896,7 @@ ${survey.survey_title} Team`);
           </div>
         )}
       </div>
-    </section >
+    </section>
   );
 }
 
