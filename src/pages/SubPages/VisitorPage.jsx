@@ -348,7 +348,7 @@ const VisitorPage = () => {
       a.click();
       window.URL.revokeObjectURL(url);
 
-      toast.success(`History export successful! Total records: ${allRows.length}`);
+      toast.success(`visitor history records exported successfully`);
     } catch (error) {
       console.error("History export error:", error);
       toast.dismiss();
