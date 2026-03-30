@@ -564,7 +564,14 @@ const VisitorsAnalyticsDashboard = () => {
 
   const onDetailPageChange = async (nextPage) => {
     if (nextPage < 1 || nextPage > detailTotalPages) return;
-    await handleChartPointClick(detailFilter.byKey, detailFilter.countValue, nextPage);
+    // Stat card pagination uses __stat__<filter> as byKey
+    if (detailFilter.byKey?.startsWith("__stat__")) {
+      const filter = detailFilter.countValue;
+      const title = detailPopup.title;
+      await handleStatClick(filter, title, nextPage);
+    } else {
+      await handleChartPointClick(detailFilter.byKey, detailFilter.countValue, nextPage);
+    }
   };
 
   // ─── Column definitions ───────────────────────────────────────────────────
@@ -638,70 +645,70 @@ const VisitorsAnalyticsDashboard = () => {
       accessor: (r) => r.staff_work_type ?? r.work_type ?? "—",
     },
     {
-    key: "punched_in_at",
-    label: "Punched In",
-    accessor: (r) => {
-      const time =
-        r.today_attendance?.punched_in_at ??
-        r.attendances?.[0]?.punched_in_at;
+      key: "punched_in_at",
+      label: "Punched In",
+      accessor: (r) => {
+        const time =
+          r.today_attendance?.punched_in_at ??
+          r.attendances?.[0]?.punched_in_at;
 
-      return time ? new Date(time).toLocaleString() : "—";
+        return time ? new Date(time).toLocaleString() : "—";
+      },
     },
-  },
-  {
-    key: "punched_out_at",
-    label: "Punched Out",
-    accessor: (r) => {
-      const time =
-        r.today_attendance?.punched_out_at ??
-        r.attendances?.[0]?.punched_out_at;
+    {
+      key: "punched_out_at",
+      label: "Punched Out",
+      accessor: (r) => {
+        const time =
+          r.today_attendance?.punched_out_at ??
+          r.attendances?.[0]?.punched_out_at;
 
-      return time ? new Date(time).toLocaleString() : "—";
+        return time ? new Date(time).toLocaleString() : "—";
+      },
     },
-  },
   ];
 
- const vehicleColumns = [
-  {
-    key: "vehicle_number",
-    label: "Vehicle No",
-    accessor: (r) => r.vehicle_number ?? "—",
-  },
-  {
-    key: "owner_name",
-    label: "Owner",
-    accessor: (r) => {
-      const user = r.user_name || r.created_by_name;
-      return user
-        ? `${user.firstname ?? ""} ${user.lastname ?? ""}`.trim()
-        : "—";
+  const vehicleColumns = [
+    {
+      key: "vehicle_number",
+      label: "Vehicle No",
+      accessor: (r) => r.vehicle_number ?? "—",
     },
-  },
-  {
-    key: "slot_name",
-    label: "Slot",
-    accessor: (r) => r.slot_name ?? "—",
-  },
-  {
-    key: "vehicle_type",
-    label: "Type",
-    accessor: (r) =>
-      `${r.vehicle_category ?? ""} ${r.vehicle_type ?? ""}`.trim() || "—",
-  },
-  {
-    key: "status",
-    label: "Status",
-    accessor: (r) => r.approved ?? (r.status ? "Active" : "Inactive") ?? "—",
-  },
-  {
-    key: "created_at",
-    label: "Created",
-    accessor: (r) =>
-      r.created_at
-        ? new Date(r.created_at).toLocaleString()
-        : "—",
-  },
-];
+    {
+      key: "owner_name",
+      label: "Owner",
+      accessor: (r) => {
+        const user = r.user_name || r.created_by_name;
+        return user
+          ? `${user.firstname ?? ""} ${user.lastname ?? ""}`.trim()
+          : "—";
+      },
+    },
+    {
+      key: "slot_name",
+      label: "Slot",
+      accessor: (r) => r.slot_name ?? "—",
+    },
+    {
+      key: "vehicle_type",
+      label: "Type",
+      accessor: (r) =>
+        `${r.vehicle_category ?? ""} ${r.vehicle_type ?? ""}`.trim() || "—",
+    },
+    {
+      key: "status",
+      label: "Status",
+      accessor: (r) => r.approved ?? (r.status ? "Active" : "Inactive") ?? "—",
+    },
+    {
+      key: "created_at",
+      label: "Created",
+      accessor: (r) =>
+        r.created_at
+          ? new Date(r.created_at).toLocaleString()
+          : "—",
+    },
+  ];
 
   const handleVehicleClick = async (title) => {
     setDetailPopup({
@@ -733,17 +740,28 @@ const VisitorsAnalyticsDashboard = () => {
 
   // ─── Click handlers ───────────────────────────────────────────────────────
 
-  const handleStatClick = async (filter, title) => {
+  const handleStatClick = async (filter, title, page = 1) => {
     setDetailPopup({ open: true, title, records: [], loading: true, columns: visitorColumns });
+    setDetailFilter({ byKey: `__stat__${filter}`, countValue: filter });
+    setDetailPage(page);
     try {
-      const res = await getVisitorsDrill(filter, siteId, 100);
-      setDetailPopup({
-        open: true,
-        title,
-        records: res?.data?.records || [],
-        loading: false,
-        columns: visitorColumns,
-      });
+      const rangeFrom = formatDateForApi(fromDate);
+      const rangeTo = formatDateForApi(toDate);
+      const res = await getVisitorsDashboardDrill(
+        filter,
+        filter,
+        siteId,
+        page,
+        rangeFrom || undefined,
+        rangeTo || undefined
+      );
+      const bucket = res?.data?.[filter] ?? res?.data ?? {};
+      const records = Array.isArray(bucket?.records) ? bucket.records : [];
+      const total = bucket?.count ?? bucket?.total ?? records.length;
+      const perPage = bucket?.per_page ?? 10;
+      const totalPages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      setDetailTotalPages(totalPages);
+      setDetailPopup({ open: true, title, records, loading: false, columns: visitorColumns });
     } catch (err) {
       console.error("Drill fetch error:", err);
       toast.error("Failed to load details");
@@ -976,17 +994,17 @@ const VisitorsAnalyticsDashboard = () => {
       {/* ── Visitor stat cards (dynamic – all API fields) ── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {[
-          { key: "total", title: "Total Visitors", note: "All time visitors", accent: CHART_PALETTE[0], icon: <FaUsers /> },
-          { key: "in", title: "Total In", note: "Currently inside", accent: CHART_PALETTE[1], icon: <FaUserCheck /> },
-          { key: "out", title: "Total Out", note: "Currently out", accent: CHART_PALETTE[2], icon: <FaUserClock /> },
-          { key: "today", title: "Today's Visitors", note: "Today", accent: CHART_PALETTE[5], icon: <FaUsers /> },
-          { key: "today_in", title: "Today's In", note: "Today check-in", accent: CHART_PALETTE[6], icon: <FaUserCheck /> },
-          { key: "today_out", title: "Today's Out", note: "Today check-out", accent: CHART_PALETTE[3], icon: <FaUserClock /> },
-          { key: "expected", title: expectedLabel, note: "Pre-registered", accent: CHART_PALETTE[9], icon: <FaUserClock /> },
-          { key: "unexpected", title: unexpectedLabel, note: "Walk-in visitors", accent: CHART_PALETTE[4], icon: <FaUsers /> },
+          { key: "total", drillKey: "total", title: "Total Visitors", note: "All time visitors", accent: CHART_PALETTE[0], icon: <FaUsers /> },
+          { key: "in", drillKey: "in", title: "Total In", note: "Currently inside", accent: CHART_PALETTE[1], icon: <FaUserCheck /> },
+          { key: "out", drillKey: "out", title: "Total Out", note: "Currently out", accent: CHART_PALETTE[2], icon: <FaUserClock /> },
+          { key: "today", drillKey: "today", title: "Today's Visitors", note: "Today", accent: CHART_PALETTE[5], icon: <FaUsers /> },
+          { key: "today_in", drillKey: "today_in", title: "Today's In", note: "Today check-in", accent: CHART_PALETTE[6], icon: <FaUserCheck /> },
+          { key: "today_out", drillKey: "today_out", title: "Today's Out", note: "Today check-out", accent: CHART_PALETTE[3], icon: <FaUserClock /> },
+          { key: "expected", drillKey: "expected_v", title: expectedLabel, note: "Pre-registered", accent: CHART_PALETTE[9], icon: <FaUserClock /> },
+          { key: "unexpected", drillKey: "unexpected_v", title: unexpectedLabel, note: "Walk-in visitors", accent: CHART_PALETTE[4], icon: <FaUsers /> },
         ]
           .filter(({ key }) => dashboardData[key] !== undefined)
-          .map(({ key, title, note, accent, icon }) => (
+          .map(({ key, drillKey, title, note, accent, icon }) => (
             <StatCard
               key={key}
               title={title}
@@ -994,9 +1012,17 @@ const VisitorsAnalyticsDashboard = () => {
               icon={icon}
               accent={accent}
               note={note}
+              onClick={() => handleStatClick(drillKey, title)}
             />
           ))
         }
+        {/* <StatCard
+          title="Total Vehicles"
+          value={vehicleData.total}
+          icon={<FaCar />}
+          accent={CHART_PALETTE[8]}
+          onClick={() => handleVehicleClick("Total Vehicles")}
+        /> */}
       </div>
 
       {/* ── Chart selector ── */}
@@ -1040,7 +1066,7 @@ const VisitorsAnalyticsDashboard = () => {
 
       {/* ── Staff & vehicle stat cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
+        {/* <StatCard
           title="Staff Total"
           value={staffData.total}
           icon={<FaUsers />}
@@ -1062,14 +1088,14 @@ const VisitorsAnalyticsDashboard = () => {
           accent={CHART_PALETTE[3]}
           note="Checked out today"
           onClick={() => handleStaffClick("out", "Punched Out Today")}
-        />
-        <StatCard
-          title="Total Vehicles"
-          value={vehicleData.total}
-          icon={<FaCar />}
-          accent={CHART_PALETTE[8]}
-          onClick={() => handleVehicleClick("Total Vehicles")}
-        />
+        /> 
+      <StatCard
+        title="Total Vehicles"
+        value={vehicleData.total}
+        icon={<FaCar />}
+        accent={CHART_PALETTE[8]}
+        onClick={() => handleVehicleClick("Total Vehicles")}
+      /> */}
       </div>
 
       {/* ── Detail popup ── */}
