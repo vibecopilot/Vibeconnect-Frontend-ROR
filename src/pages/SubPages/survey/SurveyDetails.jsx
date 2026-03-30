@@ -11,6 +11,7 @@ import { MdClose } from "react-icons/md";
 import toast from "react-hot-toast";
 import { getSurvey, updateSurvey, getSurveyResponses } from "../../../api";
 
+
 function SurveyDetails() {
   const { id } = useParams();
   const [survey, setSurvey] = useState(null);
@@ -20,6 +21,10 @@ function SurveyDetails() {
   const [activating, setActivating] = useState(false);
   const [emailList, setEmailList] = useState("");
   const [sendingEmails, setSendingEmails] = useState(false);
+  const [chartType, setChartType] = useState("donut");
+  const [activeTab, setActiveTab] = useState("send"); // "send" | "thankyou"
+  const [thankYouMessage, setThankYouMessage] = useState("");
+  const [clientLogo, setClientLogo] = useState(null);
   const [mailMessage, setMailMessage] = useState("");
   const shareableLink =
     typeof window !== "undefined"
@@ -27,28 +32,28 @@ function SurveyDetails() {
       : "";
 
   useEffect(() => {
-    setMailMessage(
-      `Dear Participant,
+    if (survey) {
+      setMailMessage(`Dear Participant,
 
-We would like to invite you to take part in our survey. Your feedback is extremely valuable and will help us improve our services and better understand user experiences.
+We would like to invite you to take part in our survey.
 
-Please click the link below to begin the survey:
+${survey.description || ""}
 
-Take the Survey
+Please click the link below:
 
 ${shareableLink}
 
-Alternatively, you may copy and paste the following link into your browser:
-${shareableLink}
+Thank you,
+${survey.survey_title} Team`);
+    }
+  }, [survey, shareableLink]);
 
-The survey will only take a few minutes to complete, and your responses will be kept confidential.
-
-Thank you for your time and participation.
-
-Best regards,
-Survey Team`,
-    );
-  }, [shareableLink]);
+  useEffect(() => {
+    if (survey) {
+      setThankYouMessage(survey?.thank_you_message || "");
+      setClientLogo(survey?.client_logo || "");
+    }
+  }, [survey]);
 
   // const responseCount = responses.length;
   const responseCount = responses.length;
@@ -119,14 +124,93 @@ Survey Team`,
     legend: { position: "bottom", fontSize: "12px" },
     dataLabels: { enabled: true, formatter: (v) => `${Math.round(v)}%` },
     tooltip: { y: { formatter: (v) => `${v} response${v !== 1 ? "s" : ""}` } },
-    plotOptions: { pie: { donut: { size: "55%" } } },
+    plotOptions: {
+      pie: {
+        customScale: 0.75, // 🔥 SHRINK WHOLE DONUT
+        donut: {
+          size: "65%", // slightly bigger hole → cleaner look
+        },
+      },
+    },
   };
 
-  const overviewChartSeries = questionStats.length
-    ? questionStats.map(
-      (s) => Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
-    )
-    : [responseCount || 1];
+  const chartOptions =
+    chartType === "donut"
+      ? overviewChartOptions
+      : {
+        ...overviewChartOptions,
+        chart: { type: "bar", toolbar: { show: false } },
+
+        colors: PALETTE,
+
+        plotOptions: {
+          bar: {
+            borderRadius: 8,
+            columnWidth: "40%",
+            distributed: true,
+          },
+        },
+
+        grid: {
+          show: true,
+          borderColor: "#e5e7eb",
+          strokeDashArray: 4,
+          xaxis: { lines: { show: false } },
+          yaxis: { lines: { show: true } },
+        },
+
+        dataLabels: { enabled: false },
+
+        xaxis: {
+          categories: overviewChartOptions.labels,
+          labels: {
+            style: {
+              fontSize: "11px",
+              colors: "#6b7280",
+            },
+          },
+        },
+
+        yaxis: {
+          labels: {
+            style: {
+              fontSize: "11px",
+              colors: "#6b7280",
+            },
+          },
+        },
+
+        tooltip: {
+          theme: "light",
+          y: {
+            formatter: (val) => `${val} responses`,
+          },
+        },
+
+        legend: { show: false },
+      };
+
+
+  const chartSeries =
+    chartType === "donut"
+      ? questionStats.length
+        ? questionStats.map(
+          (s) =>
+            Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
+        )
+        : [responseCount || 1]
+
+      : [
+        {
+          name: "Responses",
+          data: questionStats.length
+            ? questionStats.map(
+              (s) =>
+                Object.values(s.counts).reduce((a, b) => a + b, 0) || 0,
+            )
+            : [0],
+        },
+      ];
 
   // The survey will only take a few minutes to complete, and your responses will be kept confidential.
 
@@ -170,12 +254,43 @@ Survey Team`,
     try {
       await axiosInstance.post("/send-survey", {
         emails,
-        message: mailMessage,
+        message: `
+<div style="font-family: Arial, sans-serif;">
+
+  ${clientLogo ? `
+    <div style="text-align:center; margin-bottom:20px;">
+      <img src="${clientLogo}" alt="Logo" style="max-height:80px;" />
+    </div>
+  ` : ""}
+
+  <p>Dear Participant,</p>
+
+  <p>We would like to invite you to take part in our survey.</p>
+
+  <p>${mailMessage || ""}</p>
+
+  <p>
+    <a href="${shareableLink}" 
+       style="background:#4f46e5;color:white;padding:10px 16px;
+              text-decoration:none;border-radius:6px;">
+      Take Survey
+    </a>
+  </p>
+
+  <p>Or copy this link:</p>
+  <p>${shareableLink}</p>
+
+  <br/>
+
+  <p>Thank you,<br/>${survey?.survey_title} Team</p>
+
+</div>
+`,
         survey_link: shareableLink,
       });
       toast.success("Survey sent successfully!");
       setEmailList("");
-      setMailMessage("Please take this survey!");
+
       setSendModalOpen(false);
     } catch (err) {
       console.error(err);
@@ -262,6 +377,9 @@ Survey Team`,
       </section>
     );
   }
+  const isSurveyCompleted = survey?.end_date
+    ? new Date().setHours(0, 0, 0, 0) >= new Date(survey.end_date).setHours(0, 0, 0, 0)
+    : false;
 
   return (
     <section className="flex bg-gray-50 min-h-screen">
@@ -274,6 +392,7 @@ Survey Team`,
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 shrink-0">
+
             {/* Edit */}
             <div className="relative group">
               <Link
@@ -282,9 +401,6 @@ Survey Team`,
               >
                 <FaPencilAlt size={16} />
               </Link>
-              <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
-                Edit Survey
-              </span>
             </div>
 
             {/* Preview */}
@@ -295,10 +411,34 @@ Survey Team`,
               >
                 <GrShare size={16} />
               </Link>
-              <span className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
-                Preview Survey
-              </span>
             </div>
+
+            {/* 🔥 NEW SEND SURVEY BUTTON */}
+            <div className="relative group">
+              <button
+                onClick={() => {
+                  if (survey) {
+                    setMailMessage(`Dear Participant,
+
+We would like to invite you to take part in our survey.
+
+${survey.description || ""}
+
+Please click the link below:
+
+${shareableLink}
+
+Thank you,
+${survey.survey_title} Team`);
+                  }
+                  setSendModalOpen(true);
+                }}
+                className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg flex items-center justify-center"
+              >
+                <FaPaperPlane size={16} />
+              </button>
+            </div>
+
           </div>
         </div>
 
@@ -310,7 +450,7 @@ Survey Team`,
             {/* Progress Line */}
             <div
               className="absolute top-5 left-0 h-1 bg-green-500 transition-all duration-500"
-              style={{ width: "50%" }}
+              style={{ width: isSurveyCompleted ? "100%" : "50%" }}
             ></div>
 
             {steps.map((step) => (
@@ -319,7 +459,12 @@ Survey Team`,
                 className="flex flex-col items-center relative z-10 w-full"
               >
                 {/* Step Circle */}
-                <div className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center">
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${isSurveyCompleted || step.id <= 2
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-300 text-gray-500"
+                    }`}
+                >
                   {step.icon}
                 </div>
                 {/* Step Label */}
@@ -336,34 +481,7 @@ Survey Team`,
         </div>
 
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl border shadow-sm p-6 text-center">
-            <p className="text-gray-500 text-sm">Total Responses</p>
-            <p className="text-4xl font-bold mt-2">{responseCount}</p>
-          </div>
 
-          <div className="bg-white rounded-xl border shadow-sm p-6 text-center">
-            <p className="text-gray-500 text-sm">Survey Status</p>
-            <p className="text-2xl text-green-600 mt-2 capitalize">
-              {survey?.status}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-xl border shadow-sm p-6 text-center">
-            <p className="text-gray-500 text-sm">Estimated Time</p>
-            <p className="text-2xl mt-2">{estimatedMinutes} min</p>
-          </div>
-        </div>
-        <div className="w-full bg-gray-100 rounded-md my-5">
-          <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="relative flex justify-between">
-              <div className="absolute top-5 left-0 right-0 h-0.5">
-                <div className="absolute left-0 right-1/2 h-full bg-green-500"></div>
-                <div className="absolute left-1/2 right-0 h-full bg-gray-200"></div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Response Chart */}
         {/*  <div className="bg-white rounded-xl border shadow-sm p-8">
@@ -463,196 +581,123 @@ Survey Team`,
           )}
         </div>*/}
 
-        <div className="grid grid-cols-12 gap-5 mt-5">
-          <div className="flex justify-end gap-3 mx-5 col-span-12">
-            <Link
-              to={`/admin/create-scratch-survey/${id}`}
-              className="text-sky-500 border-r border-gray-700 pr-5 hover:underline"
-            >
-              Edit design
-            </Link>
-            <button
-              type="button"
-              onClick={() => setSendModalOpen(true)}
-              className="text-sky-500 border-r border-gray-700 pr-5 hover:underline text-left"
-            >
-              Send survey
-            </button>
-            <Link
-              to={`/admin/result-analyze-result?survey_id=${id}`}
-              className="text-sky-500 hover:underline"
-            >
-              Analyze Results
-            </Link>
-          </div>
-          <div className="col-span-4 space-y-5">
-            <div className="border p-6 rounded-md">
-              <div className="flex flex-col space-y-2 my-5">
-                <h2 className="font-medium px-5">Survey</h2>
-                <div className="w-full">
-                  <div className="w-[100px]">
-                    <Chart options={options} series={series} type="donut" />
-                  </div>
-                </div>
-              </div>
+        <div className="grid grid-cols-12 gap-6 mt-4">
 
-              <div className="grid grid-cols-2 gap-5 mb-5">
-                <div className="border-r border-gray-700 pr-5 flex flex-col space-y-3">
-                  <h3 className="text-gray-500 items-center text-sm">
-                    COMPLETION RATE
-                  </h3>
-                  <div>
-                    <h2 className="text-2xl">
-                      {responseCount > 0 ? `${completionRate}%` : "0%"}
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      {responseCount} response{responseCount !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col space-y-3">
-                  <h3 className="text-gray-500 items-center text-sm">
-                    ESTIMATED TIME TO COMPLETE
-                  </h3>
-                  <div>
-                    <h2 className="text-2xl">{estimatedMinutes}</h2>
-                    <p className="text-sm text-gray-500">Minutes</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="border p-6 rounded-md">
-              <div className="flex items-center justify-center">
-                <h2 className="flex items-center gap-2 text-sm">
-                  Survey Language: <span className="font-medium">English</span>
-                </h2>
-              </div>
-            </div>
-            <div className="border p-6 rounded-md">
-              <div className="flex items-center justify-center">
-                <h2 className="flex items-center gap-2 text-sm">
-                  Theme: <span className="font-medium">Simple</span>
-                </h2>
-              </div>
-            </div>
-          </div>
-          <div className="col-span-8 space-y-3">
-            <div className="border grid grid-cols-3 gap-5 p-6 rounded-md">
-              <div className="flex flex-col items-start border-r border-gray-700 pr-5 space-y-4">
-                <h2 className="text-gray-500 text-sm">TOTAL RESPONSES</h2>
-                <p className="text-2xl font-medium">{responseCount}</p>
-              </div>
-              <div className="flex flex-col items-start border-r border-gray-700 pr-5 space-y-4">
-                <div className="flex justify-between items-center gap-x-2 w-full">
-                  <h2 className="text-gray-500 text-sm">
-                    OVERALL SURVEY STATUS
-                  </h2>
-                  <span
-                    className={`h-2 w-2 rounded-full ${survey.status === "active"
-                        ? "bg-green-600"
-                        : survey.status === "closed"
-                          ? "bg-gray-500"
-                          : "bg-amber-500"
-                      }`}
-                  />
-                </div>
-                <Link
-                  to={`/admin/preview-survey/${id}`}
-                  className="text-green-600 text-2xl capitalize"
-                >
-                  {survey.status === "active"
-                    ? "Open"
-                    : survey.status || "Draft"}
-                </Link>
-              </div>
-              <div className="flex flex-col items-start space-y-4">
-                <div className="flex gap-2 items-center">
-                  <h2 className="text-gray-500 text-sm">NOTIFICATIONS</h2>
-                  <span>
-                    <AiFillQuestionCircle size={15} />
-                  </span>
-                </div>
-                <p className="font-medium">Only you</p>
-              </div>
-            </div>
-            <div>
-              <h2 className="text-2xl text-gray-800 mb-2">Collectors</h2>
-              <div className="border rounded-md">
-                <h2
-                  className={`text-white text-sm px-5 w-fit p-1 rounded-b-md mx-5 capitalize ${survey.status === "active"
-                      ? "bg-green-700"
-                      : survey.status === "closed"
-                        ? "bg-gray-600"
-                        : "bg-amber-700"
+          {/* LEFT SIDE */}
+          {/* LEFT SIDE */}
+          <div className="col-span-12 md:col-span-6 bg-white rounded-xl shadow p-5">
+
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">
+                Survey Overview
+              </h2>
+
+              {/* TABS */}
+              <div className="flex items-center bg-gray-100 rounded-lg p-1 text-sm">
+
+                <button
+                  onClick={() => setChartType("donut")}
+                  className={`px-3 py-1 rounded-md transition ${chartType === "donut"
+                    ? "bg-white shadow text-gray-900"
+                    : "text-gray-500"
                     }`}
                 >
-                  {survey.status || "Draft"}
-                </h2>
-                <div className="flex justify-between m-5">
-                  <div className="flex flex-col space-y-2">
-                    <h2 className="text-sky-500 text-sm font-medium">
-                      {survey.survey_title || "Survey"} — Share link
-                    </h2>
-                    <p className="text-gray-500 text-sm">
-                      Created: {formatDate(survey.created_at)}
-                    </p>
-                    <p className="text-gray-500 text-sm">
-                      {survey.status === "active"
-                        ? "Survey is live. Share the link below to collect responses."
-                        : "Activate the survey and share the link to collect responses."}{" "}
-                      <button
-                        type="button"
-                        onClick={() => setSendModalOpen(true)}
-                        className="text-sky-500 text-sm underline hover:no-underline"
-                      >
-                        Set up collector
-                      </button>
-                    </p>
-                  </div>
-                  <h2 className="text-gray-500 text-sm flex items-center gap-2">
-                    Invoice: <span className="font-medium">N/A</span>
-                  </h2>
-                </div>
+                  Donut
+                </button>
+
+                <button
+                  onClick={() => setChartType("bar")}
+                  className={`px-3 py-1 rounded-md transition ${chartType === "bar"
+                    ? "bg-white shadow text-gray-900"
+                    : "text-gray-500"
+                    }`}
+                >
+                  Bar
+                </button>
+
               </div>
             </div>
-            <div>
-              <h2 className="text-2xl text-gray-800 mb-2">Responses</h2>
-              <div className="border rounded-md p-5">
-                {responseCount === 0 ? (
-                  <h2 className="flex items-center justify-center gap-1 text-gray-600">
-                    No survey responses yet.{" "}
-                    <Link
-                      to={`/admin/preview-survey/${id}`}
-                      className="text-sky-500 hover:underline"
-                    >
-                      Preview & share survey
-                    </Link>
-                  </h2>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="font-medium">
-                      {responseCount} response{responseCount !== 1 ? "s" : ""}{" "}
-                      received.
-                    </p>
-                    <Link
-                      to={`/admin/result-analyze-result?survey_id=${id}`}
-                      className="text-sky-500 hover:underline text-sm"
-                    >
-                      View in Analyze Results →
-                    </Link>
-                  </div>
-                )}
+
+            {/* Chart */}
+            <div className="flex justify-center">
+              <div className="w-[220px]">
+                <Chart
+                  options={chartOptions}
+                  series={chartSeries}
+                  type={chartType}
+                  height={180}
+                />
               </div>
             </div>
+
           </div>
+
+          {/* RIGHT SIDE */}
+          <div className="col-span-12 md:col-span-6 grid grid-cols-2 gap-4">
+
+            {/* Total Responses */}
+            <div className="bg-white rounded-xl shadow p-4 border text-center">
+              <p className="text-xs text-gray-800">Total Responses</p>
+              <h2 className="text-5xl font-bold mt-3">
+                {survey.responses_count || 0}
+              </h2>
+            </div>
+
+            {/* Survey Status */}
+            <div className="bg-white rounded-xl shadow p-4 border text-center">
+              <p className="text-xs text-gray-500">Survey Status</p>
+              <h2 className="text-4xl font-semibold text-green-600 mt-1 capitalize">
+                {survey.status || "Draft"}
+              </h2>
+            </div>
+
+            {/* Estimated Time */}
+            <div className="bg-white rounded-2xl shadow p-4 border text-center">
+              <p className="text-xs text-gray-500">Estimated Time</p>
+              <h2 className="text-3xl font-semibold mt-1">
+                {estimatedMinutes} min
+              </h2>
+            </div>
+
+            {/* NEW CARD */}
+            <div className="bg-white rounded-xl shadow p-4 border text-center">
+              <p className="text-xs text-gray-500">Completion Rate</p>
+              <h2 className="text-3xl font-bold mt-1">
+                {completionRate}%
+              </h2>
+            </div>
+
+          </div>
+
         </div>
 
         {/* Send survey / Set up collector modal */}
         {sendModalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 min-h-[500px] flex flex-col">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Send survey</h3>
+                <div className="flex gap-4 border-b mb-4">
+                  <button
+                    onClick={() => setActiveTab("send")}
+                    className={`pb-2 ${activeTab === "send"
+                      ? "border-b-2 border-blue-600 text-blue-600"
+                      : "text-gray-500"
+                      }`}
+                  >
+                    Send Survey
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("thankyou")}
+                    className={`pb-2 ${activeTab === "thankyou"
+                      ? "border-b-2 border-blue-600 text-blue-600"
+                      : "text-gray-500"
+                      }`}
+                  >
+                    Thank You Mail
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => setSendModalOpen(false)}
@@ -661,65 +706,168 @@ Survey Team`,
                   <MdClose className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-gray-600 text-sm mb-3">
-                Share this link with respondents. They can open it to take the
-                survey.
-              </p>
-              <div className="flex gap-2 mb-4">
-                <input
-                  readOnly
-                  value={shareableLink}
-                  className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(shareableLink);
-                      toast.success("Link copied to clipboard.");
-                    } catch (err) {
-                      const textArea = document.createElement("textarea");
-                      textArea.value = shareableLink;
-                      document.body.appendChild(textArea);
-                      textArea.select();
-                      document.execCommand("copy");
-                      document.body.removeChild(textArea);
+              <div className="flex-1">
+                {activeTab === "send" && (
+                  <>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Share this link with respondents. They can open it to take the
+                      survey.
+                    </p>
 
-                      toast.success("Link copied (fallback).");
-                    }
-                  }}
-                  className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm"
-                >
-                  Copy
-                </button>
+
+                    <div className="flex gap-2 mb-4">
+                      <input
+                        readOnly
+                        value={shareableLink}
+                        className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(shareableLink);
+                            toast.success("Link copied to clipboard.");
+                          } catch (err) {
+                            const textArea = document.createElement("textarea");
+                            textArea.value = shareableLink;
+                            document.body.appendChild(textArea);
+                            textArea.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(textArea);
+
+                            toast.success("Link copied (fallback).");
+                          }
+                        }}
+                        className="px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Enter multiple emails separated by commas, semicolons, or
+                      spaces. Add a message if you like.
+                    </p>
+                    <textarea
+                      value={emailList}
+                      onChange={(e) => setEmailList(e.target.value)}
+                      placeholder="Enter emails separated by commas, semicolons, or spaces"
+                      className="w-full px-3 py-2 border rounded mb-3 resize-none"
+                    />
+
+                    {/* ✅ CLIENT LOGO FIELD */}
+                    <div className="mb-3">
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Upload Client Logo
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setClientLogo(reader.result); // base64
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                    </div>
+                    {clientLogo && (
+                      <div className="mb-3 flex justify-center">
+                        <img
+                          src={clientLogo}
+                          alt="Preview"
+                          className="h-16 object-contain"
+                        />
+                      </div>
+                    )}
+
+                    {/* 🔥 MESSAGE / DESCRIPTION */}
+                    <textarea
+                      value={mailMessage}
+                      onChange={(e) => setMailMessage(e.target.value)}
+                      placeholder="Add message / description"
+                      className="w-full px-3 py-2 border rounded mb-3 resize-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendEmails}
+                      disabled={sendingEmails}
+                      className={`w-full px-3 py-2 rounded text-white ${sendingEmails
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-blue-600 hover:bg-blue-700"
+                        } mb-4`}
+                    >
+
+                      {sendingEmails ? "Sending..." : "Send Survey"}
+                    </button>
+                  </>
+                )}
+
+                {activeTab === "thankyou" && (
+                  <>
+                    <div className="mb-3">
+                      <label className="block text-sm text-gray-600 mb-1">
+                        Upload Client Logo
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setClientLogo(reader.result);
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                    </div>
+
+                    {clientLogo && (
+                      <div className="mb-3 flex justify-center">
+                        <img
+                          src={clientLogo}
+                          alt="Preview"
+                          className="h-16 object-contain"
+                        />
+                      </div>
+                    )}
+
+                    <textarea
+                      value={thankYouMessage}
+                      onChange={(e) => setThankYouMessage(e.target.value)}
+                      placeholder="Enter thank you message"
+                      className="w-full px-3 py-2 border rounded mb-3 resize-none flex-1 min-h-[150px]"
+                    />
+
+                    <button
+                      className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-green-700"
+                      onClick={async () => {
+                        try {
+                          await axiosInstance.post("/survey/save-thankyou", {
+                            survey_id: id,
+                            thank_you_message: thankYouMessage,
+                            client_logo: clientLogo,
+                          });
+
+                          toast.success("Saved successfully!");
+                        } catch (err) {
+                          toast.error("Failed to save");
+                        }
+                      }}
+                    >
+                      Save
+                    </button>
+                  </>
+                )}
               </div>
-              <p className="text-gray-600 text-sm mb-3">
-                Enter multiple emails separated by commas, semicolons, or
-                spaces. Add a message if you like.
-              </p>
-              <textarea
-                value={emailList}
-                onChange={(e) => setEmailList(e.target.value)}
-                placeholder="Enter emails separated by commas, semicolons, or spaces"
-                className="w-full px-3 py-2 border rounded mb-3 resize-none"
-              />
-              <textarea
-                value={mailMessage}
-                onChange={(e) => setMailMessage(e.target.value)}
-                placeholder="Optional message"
-                className="w-full px-3 py-2 border rounded mb-3 resize-none"
-              />
-              <button
-                type="button"
-                onClick={handleSendEmails}
-                disabled={sendingEmails}
-                className={`w-full px-3 py-2 rounded text-white ${sendingEmails
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-600 hover:bg-blue-700"
-                  } mb-4`}
-              >
-                {sendingEmails ? "Sending..." : "Send Survey"}
-              </button>
 
               {survey?.status !== "active" && (
                 <p className="text-sm text-gray-500 mb-3">
@@ -749,7 +897,7 @@ Survey Team`,
           </div>
         )}
       </div>
-    </section>
+    </section >
   );
 }
 
