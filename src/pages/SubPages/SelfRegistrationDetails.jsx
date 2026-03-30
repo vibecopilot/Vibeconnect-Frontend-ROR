@@ -192,6 +192,44 @@ const SelfRegistrationDetails = () => {
           </div>
 
         </div>
+        {/* Additional Visitors */}
+<div className="px-6 mt-8">
+  <h3 className="text-md font-semibold border-b pb-2">
+    Additional Visitors
+  </h3>
+
+  {Array.isArray(details?.extra_visitors) && details.extra_visitors.length > 0 ? (
+    <div className="overflow-x-auto mt-4">
+      <table className="min-w-full border border-gray-200 text-sm">
+        <thead className="bg-black text-white">
+          <tr>
+            <th className="border px-3 py-2 text-left">Name</th>
+            <th className="border px-3 py-2 text-left">Mobile</th>
+            <th className="border px-3 py-2 text-left">Created At</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {details.extra_visitors.map((v, index) => (
+            <tr key={index} className="hover:bg-gray-50">
+              <td className="border px-3 py-2">{v.name || "-"}</td>
+              <td className="border px-3 py-2">{v.contact_no || "-"}</td>
+              <td className="border px-3 py-2">
+                {v.created_at
+                  ? new Date(v.created_at).toLocaleString()
+                  : "-"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  ) : (
+    <p className="text-center text-gray-500 mt-3">
+      No Additional Visitors
+    </p>
+  )}
+</div>
 
         {/* Visitor Log */}
        <div className="px-6 mt-8">
