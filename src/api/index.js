@@ -11901,7 +11901,7 @@ export const getVisitorsDashboardDrill = async (
 export const getComplaintsDrill = async (
   countType,
   countValue,
-  siteId,
+  companyId,
   page = 1,
   startDate,
   endDate
@@ -11910,9 +11910,11 @@ export const getComplaintsDrill = async (
     params: {
       token: getItemInLocalStorage("TOKEN"),
       ...(countType !== undefined && { count_type: countType }),
-      ...(countValue !== undefined && countValue !== "" && { count_value: countValue }),
+      ...(countValue !== undefined && countValue !== "" && {
+        count_value: countValue,
+      }),
       record_page: page,
-      ...(siteId && { site_id: siteId }),
+      ...(companyId && { company_id: companyId }), // ✅ FIXED
       ...(startDate && { start_date_eq: startDate }),
       ...(endDate && { end_date_eq: endDate }),
     },
