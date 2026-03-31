@@ -40,11 +40,7 @@ function SurveyThankYou() {
           ds,Survey Team
         </p>
 
-        {id && (
-          <p className="mt-4 text-sm text-gray-500">
-            Survey ID: {id}
-          </p>
-        )}
+        
       </div>
     </div>
   );
