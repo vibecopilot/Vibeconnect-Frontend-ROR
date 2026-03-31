@@ -1,7 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getServicesTaskList, getSoftServiceDownload, getSoftServiceStatus } from "../api";
+import {
+  getServicesTaskList,
+  getSoftServiceDownload,
+  getSoftServicesDashboardDrill,
+} from "../api";
 import DetailPopup from "./DetailPopup";
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
@@ -30,6 +34,14 @@ const CHART_PALETTE = [
   "#0EA5E9", // sky
   "#6366F1", // indigo
 ];
+
+/** Map count_type → nested response key */
+const COUNT_TYPE_TO_KEY = {
+  floor: "by_floor",
+  building: "by_building",
+  task_status: "by_task_status",
+  assigned_user: "by_assigned_user",
+};
 
 /** =========================
  *  Screenshot UI building blocks
@@ -229,11 +241,11 @@ const baseNoSelect = {
 };
 
 const toSortedEntries = (obj = {}, order = "desc") =>
-  Object.entries(obj).sort((a, b) =>
-    order === "asc"
-      ? (Number(a[1]) || 0) - (Number(b[1]) || 0)
-      : (Number(b[1]) || 0) - (Number(a[1]) || 0)
-  );
+  Object.entries(obj).sort((a, b) => {
+    const va = Number(a[1]?.count ?? a[1]) || 0;
+    const vb = Number(b[1]?.count ?? b[1]) || 0;
+    return order === "asc" ? va - vb : vb - va;
+  });
 
 /** ✅ PIE supports palette for multi colors */
 const buildPieOptions = ({ title, data, colorsMap, palette = CHART_PALETTE }) => ({
@@ -263,7 +275,7 @@ const buildPieOptions = ({ title, data, colorsMap, palette = CHART_PALETTE }) =>
       colorByPoint: true,
       data: Object.keys(data || {}).map((k, i) => ({
         name: k,
-        y: Number(data?.[k]) || 0,
+        y: Number(data?.[k]?.count ?? data?.[k]) || 0,
         color: colorsMap?.[k] || palette[i % palette.length],
       })),
     },
@@ -286,18 +298,17 @@ const buildXYOptions = ({
   const hcType =
     type === "line" ? "spline" : type === "area" ? "areaspline" : type;
 
-  // pick a “series” color for line/area
   const seriesColor = themeColor || palette[0];
 
   const areaFill =
     type === "area"
       ? {
-          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-          stops: [
-            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
-            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
-          ],
-        }
+        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+        stops: [
+          [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+          [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+        ],
+      }
       : undefined;
 
   const dataPoints = values.map((v, i) => {
@@ -349,12 +360,12 @@ const buildXYOptions = ({
         marker:
           type === "line" || type === "area"
             ? {
-                enabled: true,
-                radius: 4,
-                lineWidth: 2,
-                lineColor: seriesColor,
-                fillColor: "#FFFFFF",
-              }
+              enabled: true,
+              radius: 4,
+              lineWidth: 2,
+              lineColor: seriesColor,
+              fillColor: "#FFFFFF",
+            }
             : { enabled: false },
       },
       column: {
@@ -388,30 +399,44 @@ const SoftServiceHighCharts = () => {
   const [byStatus, setByStatus] = useState({});
   const [byBuilding, setByBuilding] = useState({});
   const [byFloor, setByFloor] = useState({});
-  const [byUnit, setByUnit] = useState({});
+  const [byAssignedUser, setByAssignedUser] = useState({});
+
   const [detailPopup, setDetailPopup] = useState({
     open: false,
     title: "",
     records: [],
     loading: false,
   });
-  const onStatusPointClickRef = useRef(null);
+  const [detailPage, setDetailPage] = useState(1);
+  const [detailTotalPages, setDetailTotalPages] = useState(1);
+  const [detailFilter, setDetailFilter] = useState({
+    countType: "",
+    countValue: "",
+  });
 
-  useSelector((state) => state.theme.color); // keep if needed
+  /* refs for highcharts click handlers */
+  const onFloorClickRef = useRef(null);
+  const onBuildingClickRef = useRef(null);
+  const onStatusClickRef = useRef(null);
+  const onUnitClickRef = useRef(null);
+
+  useSelector((state) => state.theme.color);
 
   const [statusType, setStatusType] = useState("column");
   const [buildingType, setBuildingType] = useState("line");
   const [floorType, setFloorType] = useState("area");
   const [unitType, setUnitType] = useState("column");
 
+  /* ── fetch dashboard summary ── */
   useEffect(() => {
     const fetchInfo = async () => {
       try {
         const resp = await getServicesTaskList();
-        setByStatus(resp?.data?.by_status || {});
-        setByBuilding(resp?.data?.by_building || {});
-        setByFloor(resp?.data?.by_floor || {});
-        setByUnit(resp?.data?.by_unit || {});
+        const d = resp?.data || {};
+        setByStatus(d.by_task_status || {});
+        setByBuilding(d.by_building || {});
+        setByFloor(d.by_floor || {});
+        setByAssignedUser(d.by_assigned_user || {});
       } catch (e) {
         console.log("Error fetching soft service info:", e);
       }
@@ -419,18 +444,50 @@ const SoftServiceHighCharts = () => {
     fetchInfo();
   }, []);
 
-  const handleStatusPointClick = async (statusName) => {
-    if (!statusName) return;
-    setDetailPopup({ open: true, title: `Soft Services: ${statusName}`, records: [], loading: true });
+  /* ── generic drill-down fetcher ── */
+  const fetchDrillDetails = async (countType, countValue, page = 1) => {
+    const label =
+      countType.charAt(0).toUpperCase() + countType.slice(1);
+    const title = `Soft Services – ${label}: ${countValue}`;
+
+    setDetailPopup({ open: true, title, records: [], loading: true });
+    setDetailFilter({ countType, countValue });
+    setDetailPage(page);
+
     try {
-      const res = await getSoftServiceStatus(statusName, null, null);
-      const list = res?.data?.activities ?? res?.data ?? [];
-      setDetailPopup({
-        open: true,
-        title: `Soft Services: ${statusName}`,
-        records: Array.isArray(list) ? list : [],
-        loading: false,
-      });
+      const res = await getSoftServicesDashboardDrill(
+        countType,
+        countValue,
+        page,
+      );
+      const data = res?.data || {};
+
+      /* resolve nested bucket e.g. data.by_floor["Ground Floor"] */
+      const groupKey = COUNT_TYPE_TO_KEY[countType];
+      const bucket =
+        groupKey && data[groupKey]
+          ? data[groupKey][countValue] ||
+          data[groupKey][countValue?.toLowerCase()] ||
+          {}
+          : {};
+
+      let records = [];
+
+      if (Array.isArray(bucket?.records)) {
+        records = bucket.records;
+      } else if (Array.isArray(bucket)) {
+        records = bucket;
+      } else if (Array.isArray(data?.records)) {
+        records = data.records;
+      } const totalPages =
+        Number(bucket.total_pages) ||
+        (bucket.per_page > 0
+          ? Math.max(1, Math.ceil((bucket.count || records.length) / bucket.per_page))
+          : 1);
+
+      setDetailTotalPages(totalPages);
+      setDetailPage(Number(bucket.current_page) || page);
+      setDetailPopup({ open: true, title, records, loading: false });
     } catch (err) {
       console.error("Soft service drill error:", err);
       toast.error("Failed to load task details");
@@ -438,16 +495,27 @@ const SoftServiceHighCharts = () => {
     }
   };
 
+  const handlePageChange = (nextPage) => {
+    if (!detailFilter.countType || !detailFilter.countValue) return;
+    if (nextPage < 1 || nextPage > detailTotalPages) return;
+    fetchDrillDetails(detailFilter.countType, detailFilter.countValue, nextPage);
+  };
+
+  /* keep refs up to date every render */
   useEffect(() => {
-    onStatusPointClickRef.current = handleStatusPointClick;
+    onFloorClickRef.current = (name) => fetchDrillDetails("floor", name, 1);
+    onBuildingClickRef.current = (name) => fetchDrillDetails("building", name, 1);
+    onStatusClickRef.current = (name) => fetchDrillDetails("task_status", name, 1);
+    onUnitClickRef.current = (name) => fetchDrillDetails("assigned_user", name, 1);
   });
 
+  /* ── download ── */
   const handleDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
       const response = await getSoftServiceDownload();
       const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: response.headers["content-type"] })
+        new Blob([response.data], { type: response.headers["content-type"] }),
       );
       const link = document.createElement("a");
       link.href = url;
@@ -464,136 +532,154 @@ const SoftServiceHighCharts = () => {
     }
   };
 
-  /** optional: keep explicit status colors for pie legends if you want */
-  const statusColors = useMemo(
-    () => ({
-      overdue: "#EF4444",
-      complete: "#10B981",
-      pending: "#F59E0B",
-      inprogress: "#3B82F6",
-      in_progress: "#3B82F6",
-      open: "#6366F1",
-    }),
-    []
-  );
-
-  const topTwoLegend = (obj, colorsMap) => {
-    const entries = toSortedEntries(obj, "desc").slice(0, 2);
-    return entries.map(([label, value], idx) => ({
-      label,
-      value,
-      color:
-        colorsMap?.[label] ||
-        CHART_PALETTE[idx % CHART_PALETTE.length] ||
-        "#1D4ED8",
-    }));
+  const statusColors = {
+    overdue: "#EF4444",
+    complete: "#10B981",
+    pending: "#F59E0B",
+    inprogress: "#3B82F6",
+    in_progress: "#3B82F6",
+    open: "#6366F1",
   };
+
+  const shouldColorByPoint = (type) => type === "column" || type === "bar";
 
   const calcTrendFromTotals = (obj) => {
     const total = Object.values(obj || {}).reduce(
-      (s, v) => s + (Number(v) || 0),
-      0
+      (s, v) => s + (Number(v?.count ?? v) || 0),
+      0,
     );
     if (!Number.isFinite(total)) return { pct: null, dir: "down" };
     return { pct: 0, dir: "down" };
   };
 
-  /** ✅ For Column/Bar: multi-color bars
-   *  For Line/Area: single color (palette[0]) */
-  const shouldColorByPoint = (type) => type === "column" || type === "bar";
+  /* ── inject click handler into chart options ── */
+  const withClickHandler = (options, handlerRef) => {
+    const handler = function () {
+      const name = this.name ?? this.category ?? String(this.x ?? "");
+      if (!name) return;
+      handlerRef.current?.(name);
+    };
+    return {
+      ...options,
+      plotOptions: {
+        ...options.plotOptions,
+        pie: {
+          ...(options.plotOptions?.pie || {}),
+          point: {
+            events: { click: handler },
+          },
+        },
+        series: {
+          ...(options.plotOptions?.series || {}),
+          point: {
+            events: { click: handler },
+          },
+        },
+      },
+    };
+  };
 
+  /* ── chart options ── */
   const statusOptions = useMemo(() => {
     let options;
     if (statusType === "pie") {
       options = buildPieOptions({
-        title: "Soft Services by Status",
+        title: "Soft Services by Task Status",
         data: byStatus,
         colorsMap: statusColors,
         palette: CHART_PALETTE,
       });
-      options.plotOptions = options.plotOptions || {};
-      options.plotOptions.pie = { ...(options.plotOptions.pie || {}), point: { events: { click: function () { onStatusPointClickRef.current?.(this.name); } } } };
     } else {
       const entries = toSortedEntries(byStatus, "desc");
       options = buildXYOptions({
-        title: "Soft Services by Status",
+        title: "Soft Services by Task Status",
         type: statusType,
         categories: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v),
+        values: entries.map(([, v]) => Number(v?.count ?? v) || 0),
         themeColor: CHART_PALETTE[0],
         colorByPoint: shouldColorByPoint(statusType),
         palette: CHART_PALETTE,
       });
-      options.plotOptions = options.plotOptions || {};
-      options.plotOptions.series = { ...(options.plotOptions.series || {}), point: { events: { click: function () { onStatusPointClickRef.current?.(this.name); } } } };
     }
-    return options;
-  }, [byStatus, statusType, statusColors]);
+    return withClickHandler(options, onStatusClickRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byStatus, statusType]);
 
   const buildingOptions = useMemo(() => {
+    let options;
     if (buildingType === "pie") {
-      return buildPieOptions({
+      options = buildPieOptions({
         title: "Soft Services by Building",
         data: byBuilding,
         palette: CHART_PALETTE,
       });
+    } else {
+      const entries = toSortedEntries(byBuilding, "desc");
+      options = buildXYOptions({
+        title: "Soft Services by Building",
+        type: buildingType,
+        categories: entries.map(([k]) => k),
+        values: entries.map(([, v]) => Number(v?.count ?? v) || 0),
+        themeColor: CHART_PALETTE[0],
+        colorByPoint: shouldColorByPoint(buildingType),
+        palette: CHART_PALETTE,
+      });
     }
-    const entries = toSortedEntries(byBuilding, "desc");
-    return buildXYOptions({
-      title: "Soft Services by Building",
-      type: buildingType,
-      categories: entries.map(([k]) => k),
-      values: entries.map(([, v]) => v),
-      themeColor: CHART_PALETTE[0],
-      colorByPoint: shouldColorByPoint(buildingType),
-      palette: CHART_PALETTE,
-    });
+    return withClickHandler(options, onBuildingClickRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [byBuilding, buildingType]);
 
   const floorOptions = useMemo(() => {
+    let options;
     if (floorType === "pie") {
-      return buildPieOptions({
+      options = buildPieOptions({
         title: "Soft Services by Floor",
         data: byFloor,
         palette: CHART_PALETTE,
       });
-    }
-    const entries = toSortedEntries(byFloor, "desc");
-    return buildXYOptions({
-      title: "Soft Services by Floor",
-      type: floorType,
-      categories: entries.map(([k]) => k),
-      values: entries.map(([, v]) => v),
-      themeColor: CHART_PALETTE[0],
-      colorByPoint: shouldColorByPoint(floorType),
-      palette: CHART_PALETTE,
-    });
-  }, [byFloor, floorType]);
-
-  const unitOptions = useMemo(() => {
-    if (unitType === "pie") {
-      return buildPieOptions({
-        title: "Soft Services by Unit",
-        data: byUnit,
+    } else {
+      const entries = toSortedEntries(byFloor, "desc");
+      options = buildXYOptions({
+        title: "Soft Services by Floor",
+        type: floorType,
+        categories: entries.map(([k]) => k),
+        values: entries.map(([, v]) => Number(v?.count ?? v) || 0),
+        themeColor: CHART_PALETTE[0],
+        colorByPoint: shouldColorByPoint(floorType),
         palette: CHART_PALETTE,
       });
     }
-    const entries = toSortedEntries(byUnit, "desc");
-    const limited = entries.length > 25 ? entries.slice(0, 25) : entries;
+    return withClickHandler(options, onFloorClickRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byFloor, floorType]);
 
-    return buildXYOptions({
-      title:
-        entries.length > 25
-          ? "Soft Services by Unit (Top 25)"
-          : "Soft Services by Unit",
-      type: unitType,
-      categories: limited.map(([k]) => k),
-      values: limited.map(([, v]) => v),
-      themeColor: CHART_PALETTE[0],
-      colorByPoint: shouldColorByPoint(unitType),
-      palette: CHART_PALETTE,
-    });
-  }, [byUnit, unitType]);
+  const unitOptions = useMemo(() => {
+    let options;
+    if (unitType === "pie") {
+      options = buildPieOptions({
+        title: "Soft Services by Assigned User",
+        data: byAssignedUser,
+        palette: CHART_PALETTE,
+      });
+    } else {
+      const entries = toSortedEntries(byAssignedUser, "desc");
+      const limited = entries.length > 25 ? entries.slice(0, 25) : entries;
+      options = buildXYOptions({
+        title:
+          entries.length > 25
+            ? "Soft Services by Assigned User (Top 25)"
+            : "Soft Services by Assigned User",
+        type: unitType,
+        categories: limited.map(([k]) => k),
+        values: limited.map(([, v]) => Number(v?.count ?? v) || 0),
+        themeColor: CHART_PALETTE[0],
+        colorByPoint: shouldColorByPoint(unitType),
+        palette: CHART_PALETTE,
+      });
+    }
+    return withClickHandler(options, onUnitClickRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byAssignedUser, unitType]);
 
   const Loading = () => (
     <div className="h-[320px] flex items-center justify-center">
@@ -610,7 +696,7 @@ const SoftServiceHighCharts = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartCard
           title="Soft Services"
-          subtitle="By Status"
+          subtitle="By Task Status"
           trendPercent={statusTrend.pct}
           trendDirection={statusTrend.dir}
           onDownload={handleDownload}
@@ -666,9 +752,9 @@ const SoftServiceHighCharts = () => {
       <div className="mt-6">
         <ChartCard
           title="Soft Services"
-          subtitle="By Unit"
+          subtitle="By Assigned User"
           footerText={
-            Object.keys(byUnit || {}).length > 25 ? "Showing top 25 units" : ""
+            Object.keys(byAssignedUser || {}).length > 25 ? "Showing top 25 users" : ""
           }
           footerDirection="down"
           onDownload={handleDownload}
@@ -676,7 +762,7 @@ const SoftServiceHighCharts = () => {
           setChartType={setUnitType}
           includeBar={false}
         >
-          {byUnit && Object.keys(byUnit).length ? (
+          {byAssignedUser && Object.keys(byAssignedUser).length ? (
             <HighchartsReact highcharts={Highcharts} options={unitOptions} />
           ) : (
             <Loading />
@@ -688,15 +774,73 @@ const SoftServiceHighCharts = () => {
         isOpen={detailPopup.open}
         onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
         title={detailPopup.title}
-        subtitle={`${detailPopup.records.length} record(s)`}
+        subtitle={`${detailPopup.records.length} record(s) · Page ${detailPage} of ${detailTotalPages}`}
         records={detailPopup.records}
         loading={detailPopup.loading}
+        page={detailPage}
+        totalPages={detailTotalPages}
+        onPageChange={handlePageChange}
         columns={[
-          { key: "checklist_name", label: "Checklist", accessor: (r) => r.checklist?.name ?? r.checklist_name ?? "—" },
-          { key: "status", label: "Status", accessor: (r) => r.status ?? "—" },
-          { key: "start_time", label: "Start", accessor: (r) => r.start_time },
-          { key: "assigned_to", label: "Assigned To", accessor: (r) => r.assigned_to_name ?? r.assigned_to ?? "—" },
-          { key: "soft_service", label: "Service", accessor: (r) => (r.soft_service?.name ?? r.soft_service_name ?? "—") },
+          {
+            key: "service_name",
+            label: "Service Name",
+            accessor: (r) => r.soft_service_name ?? r.name ?? "—",
+          },
+
+          {
+            key: "checklist_name",
+            label: "Checklist",
+            accessor: (r) => r.checklist_name ?? "—",
+          },
+
+          {
+            key: "building_name",
+            label: "Building",
+            accessor: (r) =>
+              r.building_name ??
+              r.building ??
+              r.site_building ??
+              "—",
+          },
+
+          {
+            key: "floor_name",
+            label: "Floor",
+            accessor: (r) =>
+              r.floor_name ??
+              r.floor ??
+              r.level_name ??
+              "—",
+          },
+
+          {
+            key: "assigned_user",
+            label: "Assigned To",
+            accessor: (r) => r.assigned_name || "Unassigned",
+          },
+
+          {
+            key: "status",
+            label: "Status",
+            accessor: (r) => {
+              const status = r.status ?? "—";
+              return (
+                <span
+                  className={
+                    status === "overdue"
+                      ? "text-red-600 font-semibold"
+                      : status === "complete"
+                        ? "text-green-600 font-semibold"
+                        : status === "pending"
+                          ? "text-yellow-600 font-semibold"
+                          : "text-gray-600"
+                  }
+                >
+                  {status}
+                </span>
+              );
+            },
+          },
         ]}
       />
     </div>

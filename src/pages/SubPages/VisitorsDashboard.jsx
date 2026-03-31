@@ -1,21 +1,20 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { FaDownload, FaCalendarAlt } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { getVisitorAnalytics, getExportVisitors, getVisitorsDashboardDrill } from "../../api";
+import { getStaffDashboard } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import DetailPopup from "../../components/DetailPopup";
 
-
-
+/* ── Stat card config ───────────────────────────────────────────────────── */
 const STAT_CONFIG = [
-  { key: "total", title: "Total Visitors", subtitle: "All time visitors", accent: "#1D4ED8", drillFilter: "total" },
-  { key: "in", title: "Total In", subtitle: "Currently inside", accent: "#10B981", drillFilter: "in" },
-  { key: "out", title: "Total Out", subtitle: "Currently out", accent: "#F59E0B", drillFilter: "out" },
-  { key: "today", title: "Today's Visitors", subtitle: "Today", accent: "#06B6D4", drillFilter: "today" },
-  { key: "today_in", title: "Today's In", subtitle: "Today check-in", accent: "#8B5CF6", drillFilter: "today_in" },
-  { key: "today_out", title: "Today's Out", subtitle: "Today check-out", accent: "#EC4899", drillFilter: "today_out" },
-  { key: "expected_v", title: "Expected", subtitle: "Pre-registered", accent: "#14B8A6", drillFilter: "expected" },
-  { key: "unexpected_v", title: "Unexpected", subtitle: "Walk-in visitors", accent: "#EF4444", drillFilter: "unexpected" },
+  { key: "total",     title: "Total Staff",   subtitle: "All registered staff",  accent: "#1D4ED8", countType: "total",     countValue: "total"     },
+  { key: "active",    title: "Active",         subtitle: "Currently active",      accent: "#10B981", countType: "active",     countValue: "active"    },
+  { key: "inactive",  title: "Inactive",       subtitle: "Inactive staff",        accent: "#6B7280", countType: "inactive",   countValue: "inactive"  },
+  { key: "approved",  title: "Approved",       subtitle: "Approved records",      accent: "#8B5CF6", countType: "approved",   countValue: "approved"  },
+  { key: "pending",   title: "Pending",        subtitle: "Pending approval",      accent: "#F59E0B", countType: "pending",    countValue: "pending"   },
+  { key: "today_in",  title: "Today's In",     subtitle: "Checked in today",      accent: "#14B8A6", countType: "today_in",   countValue: "today_in"  },
+  { key: "today_out", title: "Today's Out",    subtitle: "Checked out today",     accent: "#EC4899", countType: "today_out",  countValue: "today_out" },
+  { key: "total_in",  title: "Total In",       subtitle: "Total check-ins",       accent: "#0EA5E9", countType: "total_in",   countValue: "total_in"  },
+  { key: "total_out", title: "Total Out",      subtitle: "Total check-outs",      accent: "#EF4444", countType: "total_out",  countValue: "total_out" },
 ];
 
 const formatDateForApi = (isoDate) => {
@@ -25,36 +24,24 @@ const formatDateForApi = (isoDate) => {
   return `${day}/${month}/${year}`;
 };
 
-const IconBtn = ({ onClick, children, title, disabled = false }) => (
-  <button
-    type="button"
-    title={title}
-    onClick={onClick}
-    disabled={disabled}
-    className={[
-      "h-9 w-10 rounded-lg grid place-items-center transition",
-      disabled
-        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-        : "bg-gray-100 hover:bg-gray-200 text-gray-700",
-    ].join(" ")}
-  >
-    {children}
-  </button>
-);
+const extractCount = (raw) => {
+  if (raw === undefined || raw === null) return 0;
+  if (typeof raw === "number") return raw;
+  if (typeof raw === "object" && raw !== null) {
+    const n = Number(raw.count ?? raw.total ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  }
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : 0;
+};
 
+/* ── Sub-components ──────────────────────────────────────────────────────── */
 const StatCard = ({ title, value, accent, subtitle }) => (
   <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
-    <div
-      className="h-1 w-full rounded-full mb-4"
-      style={{ backgroundColor: accent, opacity: 0.9 }}
-    />
+    <div className="h-1 w-full rounded-full mb-4" style={{ backgroundColor: accent, opacity: 0.9 }} />
     <p className="text-[15px] font-bold text-gray-900 truncate">{title}</p>
-    {subtitle ? (
-      <p className="text-sm text-gray-500 mt-0.5 truncate">{subtitle}</p>
-    ) : null}
-    <div className="mt-4 text-3xl font-extrabold text-gray-900">
-      {Number.isFinite(Number(value)) ? Number(value) : 0}
-    </div>
+    {subtitle && <p className="text-sm text-gray-500 mt-0.5 truncate">{subtitle}</p>}
+    <div className="mt-4 text-3xl font-extrabold text-gray-900">{value}</div>
   </div>
 );
 
@@ -67,22 +54,22 @@ const SkeletonCard = () => (
   </div>
 );
 
-const VisitorsDashboard = () => {
+/* ── Main component ──────────────────────────────────────────────────────── */
+const StaffDashboard = () => {
   const siteId = getItemInLocalStorage("SITEID");
-  const companyId = getItemInLocalStorage("COMPANYID");
-  const isCompany55 = String(companyId) === "55";
 
-  const [rawStats, setRawStats] = useState({});
+  /* Dashboard summary state */
+  const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  /* Date filter state */
   const [filterOpen, setFilterOpen] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [tempFromDate, setTempFromDate] = useState("");
   const [tempToDate, setTempToDate] = useState("");
-  const [showDlModal, setShowDlModal] = useState(false);
-  const [dlStart, setDlStart] = useState("");
-  const [dlEnd, setDlEnd] = useState("");
 
+  /* Detail popup state */
   const [detailPopup, setDetailPopup] = useState({
     open: false,
     title: "",
@@ -91,49 +78,9 @@ const VisitorsDashboard = () => {
   });
   const [detailPage, setDetailPage] = useState(1);
   const [detailTotalPages, setDetailTotalPages] = useState(1);
-  const [detailFilter, setDetailFilter] = useState({ filterKey: "", title: "" });
+  const [detailFilter, setDetailFilter] = useState({ countType: "", countValue: "", title: "" });
 
-  const fetchDrillRecords = async (filterKey, title, page = 1) => {
-    setDetailPopup((p) => ({ ...p, open: true, title, loading: true, records: [] }));
-    setDetailFilter({ filterKey, title });
-    setDetailPage(page);
-
-    try {
-      const rangeFrom = formatDateForApi(fromDate);
-      const rangeTo = formatDateForApi(toDate);
-
-      const res = await getVisitorsDashboardDrill(
-        filterKey,              // count_type  e.g. "total"
-        filterKey,              // count_value e.g. "total"
-        siteId,
-        page,                   // record_page
-        rangeFrom || undefined,
-        rangeTo || undefined
-      );
-
-      const bucket = res?.data?.[filterKey] ?? res?.data ?? {};
-      const records = Array.isArray(bucket?.records) ? bucket.records : [];
-      const total = bucket?.count ?? bucket?.total ?? records.length;
-      const perPage = bucket?.per_page ?? 10;
-      const totalPages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
-
-      setDetailTotalPages(totalPages);
-      setDetailPopup({ open: true, title, records, loading: false });
-
-    } catch (err) {
-      console.error("Visitor drill error:", err);
-      toast.error("Failed to load visitor details");
-      setDetailPopup((p) => ({ ...p, loading: false }));
-    }
-  };
-
-  const handleCardClick = (filterKey, title) => fetchDrillRecords(filterKey, title, 1);
-
-  const onDetailPageChange = (nextPage) => {
-    if (nextPage < 1 || nextPage > detailTotalPages) return;
-    fetchDrillRecords(detailFilter.filterKey, detailFilter.title, nextPage);
-  };
-
+  /* ── Fetch summary counts ─────────────────────────────────────────────── */
   useEffect(() => {
     fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,77 +91,92 @@ const VisitorsDashboard = () => {
     try {
       const rangeFrom = formatDateForApi(fromDate);
       const rangeTo = formatDateForApi(toDate);
-      const resp = await getVisitorAnalytics(rangeFrom, rangeTo, siteId);
-      setRawStats(resp?.data || {});
+
+      const resp = await getStaffDashboard(siteId, null, null, 1, rangeFrom, rangeTo);
+      const data = resp?.data || {};
+
+      const visible = STAT_CONFIG
+        .filter((cfg) => data[cfg.key] !== undefined)
+        .map((cfg) => ({
+          ...cfg,
+          displayCount: extractCount(data[cfg.key]),
+        }));
+
+      setCards(visible);
     } catch (err) {
-      console.error("Error fetching visitors dashboard:", err);
-      toast.error("Failed to load visitors dashboard");
+      console.error("Error fetching staff dashboard:", err);
+      toast.error("Failed to load staff dashboard");
     } finally {
       setLoading(false);
     }
   };
 
-  /* Build visible cards from API response; rename expected/unexpected by company */
-  const visibleCards = useMemo(() => {
-    return STAT_CONFIG
-      .filter((cfg) => rawStats[cfg.key] !== undefined)
-      .map((cfg) => {
-        let title = cfg.title;
-        if (cfg.key === "expected_v") title = isCompany55 ? "Planned" : "Expected";
-        if (cfg.key === "unexpected_v") title = isCompany55 ? "Unplanned" : "Unexpected";
-        return { ...cfg, title, value: rawStats[cfg.key] };
-      });
-  }, [rawStats, isCompany55]);
+  /* ── Fetch drill-down records ─────────────────────────────────────────── */
+  const fetchDrillRecords = async (countType, countValue, title, page = 1) => {
+    setDetailPopup({ open: true, title, records: [], loading: true });
+    setDetailFilter({ countType, countValue, title });
+    setDetailPage(page);
 
-  /* ── Download helpers ────────────────────────────────────────────────────── */
-  const downloadBlob = (response, filename) => {
-    const contentType =
-      response?.headers?.["content-type"] ||
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-    const url = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
-    const link = document.createElement("a");
-    link.style.display = "none";
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(link);
-  };
-
-  const handleVisitorsDownload = async ({ mode = "overall", range = null } = {}) => {
-    const toastId = toast.loading("Downloading… Please wait");
     try {
-      let response;
-      if (mode === "date" && range?.start && range?.end) {
-        response = await getExportVisitors(range.start, range.end, null);
-        downloadBlob(response, `visitors_${range.start}_to_${range.end}.xlsx`);
-      } else {
-        response = await getExportVisitors();
-        const s = new Date();
-        const ym = `${s.getFullYear()}${String(s.getMonth() + 1).padStart(2, "0")}${String(s.getDate()).padStart(2, "0")}`;
-        downloadBlob(response, `visitors_export_${ym}.xlsx`);
-      }
-      toast.success("Downloaded successfully");
-      setShowDlModal(false);
-    } catch (error) {
-      console.error("Error downloading visitors report:", error);
-      toast.error("Failed to download. Please try again.");
-    } finally {
-      toast.dismiss(toastId);
+      const rangeFrom = formatDateForApi(fromDate);
+      const rangeTo = formatDateForApi(toDate);
+
+      const resp = await getStaffDashboard(
+        siteId,
+        countType,
+        countValue,
+        page,
+        rangeFrom || undefined,
+        rangeTo || undefined
+      );
+
+      const data = resp?.data ?? {};
+
+      // Handle both flat and nested response structures
+      const bucket = data[countValue] ?? data[countType] ?? data ?? {};
+      const records = Array.isArray(bucket?.records) ? bucket.records : [];
+      const total = bucket?.count ?? bucket?.total ?? records.length;
+      const perPage = bucket?.per_page ?? 10;
+      const totalPgs = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+
+      setDetailTotalPages(totalPgs);
+      setDetailPopup({
+        open: true,
+        title,
+        records,
+        loading: false,
+      });
+    } catch (err) {
+      console.error("[StaffDashboard] drill error:", err);
+      toast.error("Failed to load staff details");
+      setDetailPopup((prev) => ({ ...prev, loading: false }));
     }
   };
 
-  const openDlModal = () => {
-    const today = new Date().toISOString().split("T")[0];
-    setDlStart(today);
-    setDlEnd(today);
-    setShowDlModal(true);
+  const handleCardClick = (cfg) => {
+    fetchDrillRecords(cfg.countType, cfg.countValue, cfg.title, 1);
   };
 
+  const onDetailPageChange = (nextPage) => {
+    if (nextPage < 1 || nextPage > detailTotalPages) return;
+    fetchDrillRecords(
+      detailFilter.countType,
+      detailFilter.countValue,
+      detailFilter.title,
+      nextPage
+    );
+  };
+
+  const closeDetailPopup = () => {
+    setDetailPopup({ open: false, title: "", records: [], loading: false });
+    setDetailPage(1);
+    setDetailTotalPages(1);
+  };
+
+  /* ── Render ───────────────────────────────────────────────────────────── */
   return (
     <div className="w-full px-3 pb-4">
-      {/* ── Top bar ─────────────────────────────────────────────────────────── */}
+      {/* Top bar */}
       <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
         <button
           type="button"
@@ -229,29 +191,25 @@ const VisitorsDashboard = () => {
         </button>
         <button
           type="button"
-          onClick={() => { setFromDate(""); setToDate(""); }}
+          onClick={() => {
+            setFromDate("");
+            setToDate("");
+          }}
           className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
         >
           Clear Filter
         </button>
-        <IconBtn title="Download visitors report" onClick={openDlModal}>
-          <FaDownload className="text-sm" />
-        </IconBtn>
       </div>
 
-      {/* ── Date filter modal ────────────────────────────────────────────────── */}
+      {/* Date filter modal */}
       {filterOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
-            <h3 className="text-lg font-semibold text-gray-900">Filter Visitors by Date</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Choose start and end date to refresh dashboard.
-            </p>
+            <h3 className="text-lg font-semibold text-gray-900">Filter Staff by Date</h3>
+            <p className="text-sm text-gray-500 mt-1">Choose start and end date to refresh dashboard.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  Start Date
-                </label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
                 <input
                   type="date"
                   value={tempFromDate}
@@ -260,9 +218,7 @@ const VisitorsDashboard = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 mb-1">
-                  End Date
-                </label>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
                 <input
                   type="date"
                   value={tempToDate}
@@ -299,30 +255,30 @@ const VisitorsDashboard = () => {
         </div>
       )}
 
-      {/* ── Stat cards ──────────────────────────────────────────────────────── */}
+      {/* Stat cards - Made clickable like in VisitorsDashboard */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {loading
-          ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
-          : visibleCards.map((cfg) => (
-            <div
-              key={cfg.key}
-              onClick={() => handleCardClick(cfg.drillFilter, cfg.title)}
-              className="cursor-pointer"
-            >
-              <StatCard
-                title={cfg.title}
-                subtitle={cfg.subtitle}
-                value={cfg.value}
-                accent={cfg.accent}
-              />
-            </div>
-          ))
-        }
+          ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+          : cards.map((cfg) => (
+              <div
+                key={cfg.key}
+                onClick={() => handleCardClick(cfg)}
+                className="cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-transform duration-150"
+              >
+                <StatCard
+                  title={cfg.title}
+                  subtitle={cfg.subtitle}
+                  value={cfg.displayCount}
+                  accent={cfg.accent}
+                />
+              </div>
+            ))}
       </div>
 
+      {/* Detail popup */}
       <DetailPopup
         isOpen={detailPopup.open}
-        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        onClose={closeDetailPopup}
         title={detailPopup.title}
         subtitle={`Page ${detailPage} of ${detailTotalPages}`}
         records={detailPopup.records}
@@ -331,90 +287,26 @@ const VisitorsDashboard = () => {
         totalPages={detailTotalPages}
         onPageChange={onDetailPageChange}
         columns={[
-          { key: "name", label: "Name", accessor: (r) => r.name },
-          { key: "contact_no", label: "Mobile", accessor: (r) => r.contact_no },
-          { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
-          { key: "coming_from", label: "Coming From", accessor: (r) => r.coming_from },
-          { key: "expected_date", label: "Date", accessor: (r) => r.expected_date },
-          { key: "visit_type", label: "Type", accessor: (r) => r.visit_type },
-          { key: "company_name", label: "Company", accessor: (r) => r.company_name },
+          { key: "staff_id",    label: "Staff ID",   accessor: (r) => r.staff_id    },
+          { key: "name",        label: "Name",        accessor: (r) => r.name        },
+          { key: "mobile_no",   label: "Mobile",      accessor: (r) => r.mobile_no   },
+          { key: "work_type",   label: "Work Type",   accessor: (r) => r.work_type   },
+          { key: "vendor",      label: "Vendor",      accessor: (r) => r.vendor      },
+          { key: "status_type", label: "Status",      accessor: (r) => r.status_type },
+          {
+            key: "valid_from",
+            label: "Valid From",
+            accessor: (r) => (r.valid_from ? new Date(r.valid_from).toLocaleDateString("en-IN") : "—"),
+          },
+          {
+            key: "valid_till",
+            label: "Valid Till",
+            accessor: (r) => (r.valid_till ? new Date(r.valid_till).toLocaleDateString("en-IN") : "—"),
+          },
         ]}
       />
-
-      {/* ── Download modal ───────────────────────────────────────────────────── */}
-      {showDlModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3">
-          <div className="w-full max-w-md rounded-2xl border border-gray-100 bg-white shadow-[0_16px_50px_rgba(15,23,42,0.18)] p-5 relative">
-            <button
-              onClick={() => setShowDlModal(false)}
-              className="absolute top-4 right-4 h-9 w-9 rounded-lg bg-gray-100 hover:bg-gray-200 grid place-items-center text-gray-700"
-              title="Close"
-            >
-              ✕
-            </button>
-
-            <p className="text-[18px] font-bold text-gray-900">Download Visitors Report</p>
-            <p className="text-sm text-gray-500 mt-1">Download all records or choose a date range.</p>
-
-            <div className="mt-5 rounded-xl border border-gray-100 p-4">
-              <p className="font-semibold text-gray-900">Download All Records</p>
-              <button
-                onClick={() => handleVisitorsDownload({ mode: "overall" })}
-                className="mt-3 w-full h-11 rounded-xl bg-gray-900 text-white hover:bg-black transition flex items-center justify-center gap-2"
-              >
-                <FaDownload /> Download All
-              </button>
-            </div>
-
-            <div className="mt-4 rounded-xl border border-gray-100 p-4">
-              <p className="font-semibold text-gray-900">Download by Date Range</p>
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    value={dlStart}
-                    onChange={(e) => setDlStart(e.target.value)}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    value={dlEnd}
-                    onChange={(e) => setDlEnd(e.target.value)}
-                    className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  if (!dlStart || !dlEnd) { toast.error("Please select both dates"); return; }
-                  if (new Date(dlStart) > new Date(dlEnd)) { toast.error("Start must be before end"); return; }
-                  handleVisitorsDownload({ mode: "date", range: { start: dlStart, end: dlEnd } });
-                }}
-                disabled={!dlStart || !dlEnd}
-                className="mt-4 w-full h-11 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-gray-300 disabled:text-gray-600 transition flex items-center justify-center gap-2"
-              >
-                <FaCalendarAlt /> Download Date Range
-              </button>
-            </div>
-
-            <div className="mt-5 flex justify-end">
-              <button
-                onClick={() => setShowDlModal(false)}
-                className="h-10 px-5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
 
-export default VisitorsDashboard;
+export default StaffDashboard;
