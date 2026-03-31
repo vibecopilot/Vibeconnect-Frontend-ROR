@@ -2712,6 +2712,20 @@ export const getServicesTaskList = async () =>
       token: token,
     },
   });
+
+export const getSoftServicesDashboardDrill = async (
+  countType,
+  countValue,
+  page = 1,
+) =>
+  axiosInstance.get(`/soft_services/soft_services_dashboard.json`, {
+    params: {
+      token: token,
+      count_type: countType,
+      count_value: countValue,
+      record_page: page,
+    },
+  });
 export const postServicePR = async (data) =>
   axiosInstance.post(`/service_orders.json`, data, {
     params: {
@@ -10317,6 +10331,16 @@ export const getPPMcompleteDownload = async (startDate, endDate) =>
       ...(endDate && { end_time: endDate }),
     },
     responseType: "blob",
+  });
+
+export const getSiteAssetsDashboard = async (countType, countValue, page = 1) =>
+  axiosInstance.get(`/site_assets/site_assets_dashboard.json`, {
+    params: {
+      token: token,
+      count_type: countType,
+      count_value: countValue,
+      record_page: page,
+    },
   });
 
 export const getTotalAssetCounts = async (ids) =>
