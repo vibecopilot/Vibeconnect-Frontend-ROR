@@ -83,6 +83,8 @@ function CreateScratchSurvey() {
     "#BAE1FF", // pastel blue
     "#E0BBE4", // pastel purple
     "#FDFD96", // pastel light yellow
+    "#f97316" // vibrant orange (for reset button)
+    
   ];
   const [backgroundImage, setBackgroundImage] = useState(null);
   const [questions, setQuestions] = useState([]);
