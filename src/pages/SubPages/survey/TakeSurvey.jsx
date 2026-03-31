@@ -269,11 +269,10 @@ function TakeSurvey() {
             {opts.map((opt) => (
               <label
                 key={opt.id || opt.label}
-                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
-                  value === opt.label
-                    ? "bg-violet-50 border-violet-400 shadow-sm"
-                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                }`}
+                className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${value === opt.label
+                  ? "bg-violet-50 border-violet-400 shadow-sm"
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                  }`}
               >
                 <input
                   type="radio"
@@ -305,11 +304,10 @@ function TakeSurvey() {
               return (
                 <label
                   key={opt.id || opt.label}
-                  className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${
-                    checked
-                      ? "bg-violet-50 border-violet-400 shadow-sm"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                  }`}
+                  className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border cursor-pointer transition-all ${checked
+                    ? "bg-violet-50 border-violet-400 shadow-sm"
+                    : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -361,11 +359,10 @@ function TakeSurvey() {
                 key={n}
                 type="button"
                 onClick={() => setAnswer(q.id, n)}
-                className={`min-w-[2.5rem] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
-                  value === n
-                    ? "bg-violet-600 text-white border-violet-600"
-                    : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
-                }`}
+                className={`min-w-[2.5rem] px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${value === n
+                  ? "bg-violet-600 text-white border-violet-600"
+                  : "bg-white text-gray-700 border-gray-300 hover:border-violet-400"
+                  }`}
               >
                 {n}
               </button>
@@ -445,22 +442,21 @@ function TakeSurvey() {
   return (
     <div
       className="min-h-screen pb-10 bg-white"
-      style={{
-        background: survey.background_image
-          ? `url(${domainPrefix + survey.background_image}) center/cover fixed no-repeat`
-          : "linear-gradient(to bottom, #f3f4f6, #f9fafb)",
-      }}
+
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-5">
         {survey?.background_image && (
-          <div
-            className="w-full h-40 rounded-xl overflow-hidden mb-4"
-            style={{
-              backgroundImage: `url(${survey.background_image})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
+          <div className="w-full mb-6">
+            <img
+              src={
+                survey.background_image.startsWith("http")
+                  ? survey.background_image
+                  : domainPrefix + survey.background_image
+              }
+              alt="Banner"
+              className="w-full h-[200px] sm:h-[280px] object-cover rounded-xl"
+            />
+          </div>
         )}
 
         {/* ── Header Banner ── */}
