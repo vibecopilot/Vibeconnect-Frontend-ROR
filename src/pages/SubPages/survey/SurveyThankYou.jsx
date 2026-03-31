@@ -24,7 +24,7 @@ function SurveyThankYou() {
         </div>
 
         {/* ✅ THANK YOU TEXT */}
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+        <h2 className="text-4xl sm:text-3xl font-bold text-gray-800">
           Thank You!
         </h2>
 
@@ -32,13 +32,7 @@ function SurveyThankYou() {
           Your response has been successfully submitted
         </p>
 
-        <p className="mt-3 text-gray-600 leading-relaxed">
-          Dear Participant,
-          for taking the time to complete our survey. We truly appreciate your valuable feedback.
-          Your response will help us better understand user experiences and improve our services. We are grateful for your participation and support.
-          If you have any additional comments or suggestions, please feel free to share them with us.
-          ds,Survey Team
-        </p>
+        
 
         
       </div>

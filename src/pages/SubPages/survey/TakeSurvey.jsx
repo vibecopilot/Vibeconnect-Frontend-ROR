@@ -415,18 +415,10 @@ function TakeSurvey() {
   }
   if (!survey) return null;
   const accentColor = "#DD3820";
-  const defaultFieldsCount = 6;
-  const totalWithDefaults = total + defaultFieldsCount;
-  const defaultFieldsFilled = [
-    !!companyName.trim(),
-    !!floorUnit.trim(),
-    !!feedbackDate,
-    !!feedbackGivenBy.trim(),
-    !!contactDetails.trim(),
-    !!email.trim(), // ✅ ADD THIS LINE
-  ].filter(Boolean).length;
-  const progressCompleted = defaultFieldsFilled + answeredCount;
-  const progressTotal = totalWithDefaults;
+  const progressCompleted = answeredCount;
+  const progressTotal = total;
+
+  
   const progressPct = progressTotal
     ? (progressCompleted / progressTotal) * 100
     : 0;
@@ -445,19 +437,7 @@ function TakeSurvey() {
 
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 space-y-5">
-        {survey?.background_image && (
-          <div className="w-full mb-6">
-            <img
-              src={
-                survey.background_image.startsWith("http")
-                  ? survey.background_image
-                  : domainPrefix + survey.background_image
-              }
-              alt="Banner"
-              className="w-full h-[200px] sm:h-[280px] object-cover rounded-xl"
-            />
-          </div>
-        )}
+
 
         {/* ── Header Banner ── */}
         <div
@@ -502,6 +482,19 @@ function TakeSurvey() {
             </div>
           </div>
         </div>
+        {survey?.background_image && (
+          <div className="w-full mb-6">
+            <img
+              src={
+                survey.background_image.startsWith("http")
+                  ? survey.background_image
+                  : domainPrefix + survey.background_image
+              }
+              alt="Banner"
+              className="w-full h-[200px] sm:h-[280px] object-cover rounded-xl"
+            />
+          </div>
+        )}
         {/* ── Progress Bar ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-3">
