@@ -47,7 +47,7 @@ import {
   getRoutinePendingCount,
   getSiteData,
   getTotalAssetCounts,
-  getAssetsDrill,
+  getSiteAssetsDashboard,
 } from "../../api";
 import DetailPopup from "../../components/DetailPopup";
 
@@ -385,22 +385,22 @@ function AssetDashboard() {
   const [inUseCount, setInUseCount] = useState("");
   const [totalAssetCount, setTotalAssetCount] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
-const [filterType, setFilterType] = useState("");
+  const [filterType, setFilterType] = useState("");
 
-const [customStartDate, setCustomStartDate] = useState(null);
-const [customEndDate, setCustomEndDate] = useState(null);
+  const [customStartDate, setCustomStartDate] = useState(null);
+  const [customEndDate, setCustomEndDate] = useState(null);
 
-const [activeStartDate, setActiveStartDate] = useState(null);
-const [activeEndDate, setActiveEndDate] = useState(null);
-const [refreshing, setRefreshing] = useState(false);
+  const [activeStartDate, setActiveStartDate] = useState(null);
+  const [activeEndDate, setActiveEndDate] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-const fmtDate = (d) => {
-  if (!d) return null;
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  return `${mm}/${dd}/${yyyy}`;
-};
+  const fmtDate = (d) => {
+    if (!d) return null;
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+  };
   const [ppmSchedule, setPPMSchedule] = useState("");
   const [ppmOverDue, setPPMOverDue] = useState("");
   const [ppmPending, setPPMPending] = useState("");
@@ -415,73 +415,73 @@ const fmtDate = (d) => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
 
-const fetchAssetSummaryByDate = async (date) => {
-  try {
-    const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
+  const fetchAssetSummaryByDate = async (date) => {
+    try {
+      const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
 
-    const res = await getTotalAssetCount(formattedDate);
+      const res = await getTotalAssetCount(formattedDate);
 
-    const data = res.data;
+      const data = res.data;
 
-    // 🔥 MAP API RESPONSE TO STATES
-    setTotalAssetCount(data.total_assets);
-    setInUseCount(data.assets_in_use);
-    setBreakCount(data.assets_in_breakdown);
+      // 🔥 MAP API RESPONSE TO STATES
+      setTotalAssetCount(data.total_assets);
+      setInUseCount(data.assets_in_use);
+      setBreakCount(data.assets_in_breakdown);
 
-    setPPMSchedule(data.ppm_scheduled);
-    setPPMOverDue(data.ppm_overdue);
-    setPPMComplete(data.ppm_complete);
+      setPPMSchedule(data.ppm_scheduled);
+      setPPMOverDue(data.ppm_overdue);
+      setPPMComplete(data.ppm_complete);
 
-    setRoutineScheduleCount(data.routine_task_scheduled);
-    setRoutineOverdueCount(data.routine_task_overdue);
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to fetch filtered data");
-  }
-};
-
-
-const applyDateFilter = (type) => {
-  const today = new Date();
-  let start = new Date();
-  let end = new Date();
-
-  switch (type) {
-    case "today": {
-      start = new Date(today);
-      end = new Date(today);
-      break;
+      setRoutineScheduleCount(data.routine_task_scheduled);
+      setRoutineOverdueCount(data.routine_task_overdue);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to fetch filtered data");
     }
-    case "week": {
-      const firstDay = today.getDate() - today.getDay();
-      start = new Date(new Date().setDate(firstDay));
-      end = new Date();
-      break;
-    }
-    case "month": {
-      start = new Date(today.getFullYear(), today.getMonth(), 1);
-      end = new Date();
-      break;
-    }
-    case "quarter": {
-      const quarter = Math.floor(today.getMonth() / 3);
-      start = new Date(today.getFullYear(), quarter * 3, 1);
-      end = new Date();
-      break;
-    }
-    case "year": {
-      start = new Date(today.getFullYear(), 0, 1);
-      end = new Date();
-      break;
-    }
-    default:
-      return;
-  }
+  };
 
-  setActiveStartDate(start);
-  setActiveEndDate(end);
-  fetchAssetSummaryByDate(start);
-};
+
+  const applyDateFilter = (type) => {
+    const today = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    switch (type) {
+      case "today": {
+        start = new Date(today);
+        end = new Date(today);
+        break;
+      }
+      case "week": {
+        const firstDay = today.getDate() - today.getDay();
+        start = new Date(new Date().setDate(firstDay));
+        end = new Date();
+        break;
+      }
+      case "month": {
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        end = new Date();
+        break;
+      }
+      case "quarter": {
+        const quarter = Math.floor(today.getMonth() / 3);
+        start = new Date(today.getFullYear(), quarter * 3, 1);
+        end = new Date();
+        break;
+      }
+      case "year": {
+        start = new Date(today.getFullYear(), 0, 1);
+        end = new Date();
+        break;
+      }
+      default:
+        return;
+    }
+
+    setActiveStartDate(start);
+    setActiveEndDate(end);
+    fetchAssetSummaryByDate(start);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1008,32 +1008,82 @@ const applyDateFilter = (type) => {
     title: "",
     records: [],
     loading: false,
+    page: 1,
+    totalPages: 1,
+  });
+  const [activeAssetFilter, setActiveAssetFilter] = useState({
+    countType: "",
+    countValue: "",
+    title: "",
   });
 
+  /** Map card title → { countType, countValue } matching the API param pattern */
   const assetCardToFilter = {
-    "Total Asset": "all",
-    "Asset Breakdown": "breakdown",
-    "In Use Asset": "in_use",
+    "Total Asset": { countType: "total_assets", countValue: "total_assets" },
+    "Asset Breakdown": { countType: "assets_in_breakdown", countValue: "assets_in_breakdown" },
+    "In Use Asset": { countType: "assets_in_use", countValue: "assets_in_use" },
+    "PPM Scheduled": { countType: "ppm_scheduled", countValue: "ppm_scheduled" },
+    "PPM Overdue": { countType: "ppm_overdue", countValue: "ppm_overdue" },
+    "PPM Complete": { countType: "ppm_complete", countValue: "ppm_complete" },
+    "Routine Task Scheduled": { countType: "routine_task_scheduled", countValue: "routine_task_scheduled" },
+    "Routine Task Overdue": { countType: "routine_task_overdue", countValue: "routine_task_overdue" },
+    "Routine Task Complete": { countType: "routine_task_complete", countValue: "routine_task_complete" },
   };
 
-  const handleAssetCardClick = async (cardTitle) => {
-    const filter = assetCardToFilter[cardTitle];
-    if (filter === undefined) return;
-    setAssetDetailPopup({ open: true, title: cardTitle, records: [], loading: true });
+  const fetchAssetDrillRecords = async (countType, countValue, title, page = 1) => {
+    // Preserve totalPages while loading so pagination buttons stay enabled
+    setAssetDetailPopup((prev) => ({
+      ...prev,
+      open: true,
+      title,
+      records: [],
+      loading: true,
+      page,
+    }));
+    setActiveAssetFilter({ countType, countValue, title });
+
     try {
-      const res = await getAssetsDrill(filter, 1, 100);
-      const list = res?.data?.site_assets ?? res?.data ?? [];
+      const res = await getSiteAssetsDashboard(countType, countValue, page);
+      const data = res?.data || {};
+
+      // Response bucket: data[countType] e.g. data["total_assets"]
+      const bucket = data[countType] || {};
+      const records = Array.isArray(bucket.records) ? bucket.records : [];
+      const totalPages =
+        Number(bucket.total_pages) ||
+        (bucket.per_page > 0
+          ? Math.max(1, Math.ceil((bucket.count || records.length) / bucket.per_page))
+          : 1);
+
       setAssetDetailPopup({
         open: true,
-        title: cardTitle,
-        records: Array.isArray(list) ? list : [],
+        title,
+        records,
         loading: false,
+        page: Number(bucket.current_page) || page,
+        totalPages,
       });
     } catch (err) {
       console.error("Asset drill error:", err);
       toast.error("Failed to load asset list");
       setAssetDetailPopup((p) => ({ ...p, loading: false }));
     }
+  };
+
+  const handleAssetCardClick = (cardTitle) => {
+    const filter = assetCardToFilter[cardTitle];
+    if (!filter) return;
+    fetchAssetDrillRecords(filter.countType, filter.countValue, cardTitle, 1);
+  };
+
+  const onAssetPageChange = (nextPage) => {
+    if (nextPage < 1 || nextPage > assetDetailPopup.totalPages) return;
+    fetchAssetDrillRecords(
+      activeAssetFilter.countType,
+      activeAssetFilter.countValue,
+      activeAssetFilter.title,
+      nextPage,
+    );
   };
 
   const handleCheckboxChange = (title) => {
@@ -1126,78 +1176,78 @@ const applyDateFilter = (type) => {
         {/* Right: Refresh + Filter */}
         <div className="flex items-center gap-2">
 
-        {/* Refresh button */}
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          title="Reload data"
-          className="bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-xl flex items-center shadow-sm hover:bg-gray-50 disabled:opacity-50"
-        >
-          <FaSyncAlt className={refreshing ? "animate-spin" : ""} />
-        </button>
-
-        {/* Filter Dropdown */}
-        <div className="relative">
+          {/* Refresh button */}
           <button
-            onClick={() => setFilterOpen((p) => !p)}
-            className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            title="Reload data"
+            className="bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-xl flex items-center shadow-sm hover:bg-gray-50 disabled:opacity-50"
           >
-            <FaRegCalendar />
-            {activeStartDate
-              ? `${fmtDate(activeStartDate)}${activeEndDate ? ` – ${fmtDate(activeEndDate)}` : ""}`
-              : "Filter"}
-            {filterOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+            <FaSyncAlt className={refreshing ? "animate-spin" : ""} />
           </button>
 
-          {filterOpen && (
-            <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg w-52 z-30">
-              <button onClick={() => { applyDateFilter("today"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">Today</button>
-              <button onClick={() => { applyDateFilter("week"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Week</button>
-              <button onClick={() => { applyDateFilter("month"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Month</button>
-              <button onClick={() => { applyDateFilter("quarter"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Quarter</button>
-              <button onClick={() => { applyDateFilter("year"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Year</button>
-              <button onClick={() => setFilterType("custom")} className="block w-full text-left px-4 py-2 hover:bg-gray-50">Custom Range</button>
-              {activeStartDate && (
-                <button
-                  onClick={() => { setActiveStartDate(null); setActiveEndDate(null); setFilterType(""); setFilterOpen(false); }}
-                  className="block w-full text-left px-4 py-2 text-red-500 hover:bg-red-50"
-                >
-                  Clear Filter
-                </button>
-              )}
+          {/* Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setFilterOpen((p) => !p)}
+              className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm"
+            >
+              <FaRegCalendar />
+              {activeStartDate
+                ? `${fmtDate(activeStartDate)}${activeEndDate ? ` – ${fmtDate(activeEndDate)}` : ""}`
+                : "Filter"}
+              {filterOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
+            </button>
 
-              {filterType === "custom" && (
-                <div className="p-3 border-t">
-                  <DatePicker
-                    selected={customStartDate}
-                    onChange={(date) => setCustomStartDate(date)}
-                    placeholderText="Start Date"
-                    className="border p-2 w-full rounded mb-2"
-                  />
-                  <DatePicker
-                    selected={customEndDate}
-                    onChange={(date) => setCustomEndDate(date)}
-                    placeholderText="End Date"
-                    className="border p-2 w-full rounded mb-2"
-                  />
+            {filterOpen && (
+              <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg w-52 z-30">
+                <button onClick={() => { applyDateFilter("today"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">Today</button>
+                <button onClick={() => { applyDateFilter("week"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Week</button>
+                <button onClick={() => { applyDateFilter("month"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Month</button>
+                <button onClick={() => { applyDateFilter("quarter"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Quarter</button>
+                <button onClick={() => { applyDateFilter("year"); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">This Year</button>
+                <button onClick={() => setFilterType("custom")} className="block w-full text-left px-4 py-2 hover:bg-gray-50">Custom Range</button>
+                {activeStartDate && (
                   <button
-                    onClick={() => {
-                      if (customStartDate) {
-                        setActiveStartDate(customStartDate);
-                        setActiveEndDate(customEndDate || new Date());
-                        fetchAssetSummaryByDate(customStartDate);
-                      }
-                      setFilterOpen(false);
-                    }}
-                    className="w-full bg-black text-white py-2 rounded"
+                    onClick={() => { setActiveStartDate(null); setActiveEndDate(null); setFilterType(""); setFilterOpen(false); }}
+                    className="block w-full text-left px-4 py-2 text-red-500 hover:bg-red-50"
                   >
-                    Apply
+                    Clear Filter
                   </button>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+                )}
+
+                {filterType === "custom" && (
+                  <div className="p-3 border-t">
+                    <DatePicker
+                      selected={customStartDate}
+                      onChange={(date) => setCustomStartDate(date)}
+                      placeholderText="Start Date"
+                      className="border p-2 w-full rounded mb-2"
+                    />
+                    <DatePicker
+                      selected={customEndDate}
+                      onChange={(date) => setCustomEndDate(date)}
+                      placeholderText="End Date"
+                      className="border p-2 w-full rounded mb-2"
+                    />
+                    <button
+                      onClick={() => {
+                        if (customStartDate) {
+                          setActiveStartDate(customStartDate);
+                          setActiveEndDate(customEndDate || new Date());
+                          fetchAssetSummaryByDate(customStartDate);
+                        }
+                        setFilterOpen(false);
+                      }}
+                      className="w-full bg-black text-white py-2 rounded"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>{/* end right group */}
       </div>
 
@@ -1310,16 +1360,51 @@ const applyDateFilter = (type) => {
         isOpen={assetDetailPopup.open}
         onClose={() => setAssetDetailPopup((p) => ({ ...p, open: false }))}
         title={assetDetailPopup.title}
-        subtitle={`${assetDetailPopup.records.length} record(s)`}
+        subtitle={`Page ${assetDetailPopup.page} of ${assetDetailPopup.totalPages}`}
         records={assetDetailPopup.records}
         loading={assetDetailPopup.loading}
-        columns={[
-          { key: "name", label: "Name", accessor: (r) => r.name },
-          { key: "oem_name", label: "OEM", accessor: (r) => r.oem_name },
-          { key: "building", label: "Building", accessor: (r) => r.building?.name ?? r.building_name ?? "—" },
-          { key: "unit", label: "Unit", accessor: (r) => r.unit?.name ?? r.unit_name ?? "—" },
-          { key: "breakdown", label: "Breakdown", accessor: (r) => (r.breakdown ? "Yes" : "No") },
-        ]}
+        page={assetDetailPopup.page}
+        totalPages={assetDetailPopup.totalPages}
+        onPageChange={onAssetPageChange}
+        columns={
+          /* Asset records (Total Asset / In Use / Breakdown) */
+          ["total_assets", "assets_in_use", "assets_in_breakdown"].includes(
+            activeAssetFilter.countType
+          )
+            ? [
+              { key: "name", label: "Name", accessor: (r) => r.name ?? "—" ,width:"100px"},
+              { key: "asset_number", label: "Asset No.", accessor: (r) => r.asset_number ?? "—" },
+              { key: "building_name", label: "Building", accessor: (r) => r.building_name ?? "—" },
+              { key: "floor_name", label: "Floor", accessor: (r) => r.floor_name ?? "—" },
+              { key: "unit_name", label: "Unit", accessor: (r) => r.unit_name ?? "—" },
+              { key: "asset_group_name", label: "Group", accessor: (r) => r.asset_group_name ?? "—" },
+              { key: "vendor_name", label: "Vendor", accessor: (r) => r.vendor_name ?? "—" },
+              { key: "breakdown", label: "Breakdown", accessor: (r) => (r.breakdown ? "Yes" : "No") },
+            ]
+            : /* PPM / Routine activity records */
+            [
+              { key: "name", label: "Asset Name", accessor: (r) => r.name ?? r.asset_name ?? "—" ,width:"250px"},
+              { key: "checklist_name", label: "Checklist Name", accessor: (r) => r.checklist_name ?? "—" ,width:"250px"},
+              { key: "status", label: "Status", accessor: (r) => r.status ?? "—" ,width:"250px"},
+              {
+                key: "assigned_to",
+                label: "Assigned To",
+                accessor: (r) => {
+                  if (Array.isArray(r.assigned_to)) {
+                    return r.assigned_to.length
+                      ? r.assigned_to.join(", ")
+                      : "Unassigned";
+                  }
+                  return r.assigned_to_name ?? r.assigned_name ?? "Unassigned";
+                },
+                gap:"5"
+              },
+              { key: "start_time", label: "Start Time", accessor: (r) => r.start_time ? new Date(r.start_time).toLocaleDateString("en-IN") : "—" },
+              { key: "created_at", label: "Created On", accessor: (r) => r.created_at ? new Date(r.start_time).toLocaleDateString("en-IN") : "—" },
+
+              // { key: "floor_name",    label: "Floor",         accessor: (r) => r.floor_name ?? r.site_asset?.floor_name ?? "—" },
+            ]
+        }
       />
     </div >
   );
