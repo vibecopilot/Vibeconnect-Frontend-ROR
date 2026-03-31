@@ -561,7 +561,7 @@ ${survey?.survey_title} Team`);
             <div className="bg-white rounded-xl shadow p-4 border text-center">
               <p className="text-xs text-gray-800">Total Responses</p>
               <h2 className="text-4xl font-bold mt-2">
-                {survey.responses_count || 0}
+                {responseCount}
               </h2>
             </div>
 
