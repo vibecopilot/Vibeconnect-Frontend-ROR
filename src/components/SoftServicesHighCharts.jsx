@@ -780,68 +780,106 @@ const SoftServiceHighCharts = () => {
         page={detailPage}
         totalPages={detailTotalPages}
         onPageChange={handlePageChange}
-        columns={[
-          {
-            key: "service_name",
-            label: "Service Name",
-            accessor: (r) => r.soft_service_name ?? r.name ?? "—",
-          },
-
-          {
-            key: "checklist_name",
-            label: "Checklist",
-            accessor: (r) => r.checklist_name ?? "—",
-          },
-
-          {
-            key: "building_name",
-            label: "Building",
-            accessor: (r) =>
-              r.building_name ??
-              r.building ??
-              r.site_building ??
-              "—",
-          },
-
-          {
-            key: "floor_name",
-            label: "Floor",
-            accessor: (r) =>
-              r.floor_name ??
-              r.floor ??
-              r.level_name ??
-              "—",
-          },
-
-          {
-            key: "assigned_user",
-            label: "Assigned To",
-            accessor: (r) => r.assigned_name || "Unassigned",
-          },
-
-          {
-            key: "status",
-            label: "Status",
-            accessor: (r) => {
-              const status = r.status ?? "—";
-              return (
-                <span
-                  className={
-                    status === "overdue"
-                      ? "text-red-600 font-semibold"
-                      : status === "complete"
-                        ? "text-green-600 font-semibold"
-                        : status === "pending"
-                          ? "text-yellow-600 font-semibold"
-                          : "text-gray-600"
+        columns={
+          ["building", "floor", "assigned_user"].includes(detailFilter.countType)
+            ? [
+              {
+                key: "service_name",
+                label: "Service Name",
+                accessor: (r) => r.soft_service_name ?? r.name ?? "—",
+              },
+                {
+                key: "site_name",
+                label: "Site Name",
+                accessor: (r) =>
+                  r.site_name?? "—",
+              },
+             {
+                key: "building_name",
+                label: "Building",
+                accessor: (r) =>
+                  r.building_name ?? r.building ?? r.site_building ?? "—",
+              },
+              {
+                key: "floor_name",
+                label: "Floor",
+                accessor: (r) =>
+                  r.floor_name ?? r.floor ?? r.level_name ?? "—",
+              },
+              {
+                key: "assigned_user",
+                label: "Assigned To",
+                accessor: (r) => {
+                  if (Array.isArray(r.assigned_to)) {
+                    return r.assigned_to.join(", ");
                   }
-                >
-                  {status}
-                </span>
-              );
-            },
-          },
-        ]}
+                  return r.assigned_name ?? r.assigned_user ?? "Unassigned";
+                },
+                
+              },
+              {
+                key: "created_at",
+                label: "Created On",
+                accessor: (r) =>
+                  r.created_at?? "—",
+              },
+              
+            ]
+            : [
+              {
+                key: "service_name",
+                label: "Service Name",
+                accessor: (r) => r.soft_service_name ?? r.name ?? "—",
+              },
+              {
+                key: "checklist_name",
+                label: "Checklist",
+                accessor: (r) => r.checklist_name ?? "—",
+              },
+              {
+                key: "building_name",
+                label: "Building",
+                accessor: (r) =>
+                  r.building_name ?? r.building ?? r.site_building ?? "—",
+              },
+              {
+                key: "floor_name",
+                label: "Floor",
+                accessor: (r) =>
+                  r.floor_name ?? r.floor ?? r.level_name ?? "—",
+              },
+              {
+                key: "assigned_user",
+                label: "Assigned To",
+                accessor: (r) => {
+                  if (Array.isArray(r.assigned_to)) {
+                    return r.assigned_to.join(", ");
+                  }
+                  return r.assigned_name ?? r.assigned_user ?? "Unassigned";
+                },
+              },
+              {
+                key: "status",
+                label: "Status",
+                accessor: (r) => {
+                  const status = r.status ?? "—";
+                  return (
+                    <span
+                      className={
+                        status === "overdue"
+                          ? "text-red-600 font-semibold"
+                          : status === "complete"
+                            ? "text-green-600 font-semibold"
+                            : "text-yellow-600 font-semibold"
+                      }
+                    >
+                      {status}
+                    </span>
+                  );
+                },
+              },
+            ]
+        }
       />
     </div>
   );
