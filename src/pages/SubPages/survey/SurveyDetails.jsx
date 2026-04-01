@@ -25,6 +25,7 @@ function SurveyDetails() {
   const [activeTab, setActiveTab] = useState("send"); // "send" | "thankyou"
   const [thankYouMessage, setThankYouMessage] = useState("");
   const [clientLogo, setClientLogo] = useState(null);
+  const [clientLogoFile, setClientLogoFile] = useState(null); // actual File for upload
   const [mailMessage, setMailMessage] = useState("");
   const [isMessageEdited, setIsMessageEdited] = useState(false);
   const shareableLink =
@@ -223,6 +224,13 @@ function SurveyDetails() {
 
     setSendingEmails(true);
     try {
+      // Persist client logo to backend if a new file was selected
+      if (clientLogoFile) {
+        const logoFormData = new FormData();
+        logoFormData.append("survey[client_logo]", clientLogoFile);
+        await updateSurvey(id, logoFormData);
+        setClientLogoFile(null); // clear after successful upload
+      }
       await axiosInstance.post("/send-survey", {
         emails,
         message: `
@@ -702,10 +710,10 @@ ${survey?.survey_title} Team`);
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (!file) return;
-
+                          setClientLogoFile(file); // keep File for backend upload
                           const reader = new FileReader();
                           reader.onloadend = () => {
-                            setClientLogo(reader.result); // base64
+                            setClientLogo(reader.result); // base64 for preview
                           };
                           reader.readAsDataURL(file);
                         }}
@@ -758,7 +766,7 @@ ${survey?.survey_title} Team`);
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (!file) return;
-
+                          setClientLogoFile(file); // keep File for backend upload
                           const reader = new FileReader();
                           reader.onloadend = () => {
                             setClientLogo(reader.result);
@@ -790,12 +798,13 @@ ${survey?.survey_title} Team`);
                       className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-green-700"
                       onClick={async () => {
                         try {
-                          await axiosInstance.post("/survey/save-thankyou", {
-                            survey_id: id,
-                            thank_you_message: thankYouMessage,
-                            client_logo: clientLogo,
-                          });
-
+                          const formData = new FormData();
+                          formData.append("survey[thank_you_message]", thankYouMessage);
+                          if (clientLogoFile) {
+                            formData.append("survey[client_logo]", clientLogoFile);
+                          }
+                          await updateSurvey(id, formData);
+                          setClientLogoFile(null);
                           toast.success("Saved successfully!");
                         } catch (err) {
                           toast.error("Failed to save");
