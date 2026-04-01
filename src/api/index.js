@@ -10336,7 +10336,7 @@ export const getPPMcompleteDownload = async (startDate, endDate) =>
 export const getSiteAssetsDashboard = (
   countType,
   countValue,
-  page = 1,
+  record_page = 1,
   startDate,
   endDate
 ) => {
@@ -10345,7 +10345,7 @@ export const getSiteAssetsDashboard = (
       token,
       count_type: countType,
       count_value: countValue,
-      page,
+      record_page,
       start_date: startDate,
       end_date: endDate,
     },
