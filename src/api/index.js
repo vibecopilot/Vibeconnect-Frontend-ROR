@@ -12021,7 +12021,8 @@ export const getStaffDashboard = async (
   countValue,
   page = 1,
   startDate,
-  endDate
+  endDate,
+  recordPage   // ✅ NEW — separate drill-down page
 ) =>
   axiosInstance.get("/staffs/staff_dashboard.json", {
     params: {
@@ -12029,7 +12030,7 @@ export const getStaffDashboard = async (
       ...(siteId && { site_id: siteId }),
       ...(countType && { count_type: countType }),
       ...(countValue && { count_value: countValue }),
-      record_page: page,
+      record_page: recordPage ?? page,  // ✅ use recordPage if provided, else page
       ...(startDate && { start_date: startDate }),
       ...(endDate && { end_date: endDate }),
     },
