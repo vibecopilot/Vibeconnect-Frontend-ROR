@@ -100,14 +100,14 @@ const StaffDetails = () => {
       selector: (row) =>
         row.punched_in_at
           ? FormattedDateToShowProperly(row.punched_in_at)
-          : "--",
+          : "Not Checked In",
     },
     {
       name: "Check Out",
       selector: (row) =>
         row.punched_out_at
           ? FormattedDateToShowProperly(row.punched_out_at)
-          : "Still Working",
+          : "Not Checked Out",
     },
   ];
 
