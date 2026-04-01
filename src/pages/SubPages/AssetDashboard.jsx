@@ -48,6 +48,7 @@ import {
   getSiteData,
   getTotalAssetCounts,
   getSiteAssetsDashboard,
+  getAssetsDashboardSummary,
 } from "../../api";
 import DetailPopup from "../../components/DetailPopup";
 
@@ -396,10 +397,10 @@ function AssetDashboard() {
 
   const fmtDate = (d) => {
     if (!d) return null;
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
     const yyyy = d.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
+    return `${dd}/${mm}/${yyyy}`;
   };
   const [ppmSchedule, setPPMSchedule] = useState("");
   const [ppmOverDue, setPPMOverDue] = useState("");
@@ -441,6 +442,28 @@ function AssetDashboard() {
   };
 
 
+  /** Single call to site_assets_dashboard.json with dates → populates all stat cards */
+  const fetchFilteredSummary = async (startDate, endDate) => {
+    try {
+      const res = await getAssetsDashboardSummary(startDate, endDate);
+      const d = res?.data || {};
+      setTotalAssetCount(d.total_assets ?? "");
+      setInUseCount(d.assets_in_use ?? "");
+      setBreakCount(d.assets_in_breakdown ?? "");
+      setPPMSchedule(d.ppm_scheduled ?? "");
+      setPPMOverDue(d.ppm_overdue ?? "");
+      setPPMComplete(d.ppm_complete ?? "");
+      setPPMPending(d.ppm_pending ?? "");
+      setRoutineScheduleCount(d.routine_task_scheduled ?? "");
+      setRoutineOverdueCount(d.routine_task_overdue ?? "");
+      setRoutineCompleteCount(d.routine_task_complete ?? "");
+      setRoutinePendingCount(d.routine_task_pending ?? "");
+    } catch (err) {
+      console.error("Dashboard summary error:", err);
+      toast.error("Failed to fetch filtered data");
+    }
+  };
+
   const applyDateFilter = (type) => {
     const today = new Date();
     let start = new Date();
@@ -480,7 +503,8 @@ function AssetDashboard() {
 
     setActiveStartDate(start);
     setActiveEndDate(end);
-    fetchAssetSummaryByDate(start);
+    // Single API: site_assets_dashboard.json?start_date=...&end_date=...
+    fetchFilteredSummary(fmtDate(start), fmtDate(end));
   };
 
   useEffect(() => {
@@ -758,127 +782,126 @@ function AssetDashboard() {
   };
 
   /** ---------------- fetchers ---------------- */
-  const fetchAssetTotalCount = async () => {
+  const fetchAssetTotalCount = async (startDate, endDate) => {
     try {
-      const res = await getTotalAssetCounts(selectedSites);
+      const res = await getTotalAssetCounts(selectedSites, startDate, endDate);
       setTotalAssetCount(res.data.count);
     } catch (e) { }
   };
 
-  const fetchTotalBreakdownCount = async () => {
+  const fetchTotalBreakdownCount = async (startDate, endDate) => {
     try {
-      const res = await getBreakCount(selectedSites);
+      const res = await getBreakCount(selectedSites, startDate, endDate);
       setBreakCount(res.data.count);
     } catch (e) { }
   };
 
-  const fetchInUseAssetBreakDownCount = async () => {
+  const fetchInUseAssetBreakDownCount = async (startDate, endDate) => {
     try {
-      const res = await getInUseAssetBreakDown(selectedSites);
+      const res = await getInUseAssetBreakDown(selectedSites, startDate, endDate);
       setInUseCount(res.data.count);
     } catch (e) { }
   };
 
-  const fetchPPMScheduleCount = async () => {
+  const fetchPPMScheduleCount = async (startDate, endDate) => {
     try {
-      const res = await getPPMScheduleCount(selectedSites);
+      const res = await getPPMScheduleCount(selectedSites, startDate, endDate);
       setPPMSchedule(res.data.count);
     } catch (e) { }
   };
 
-  const fetchPPMOverDueCount = async () => {
+  const fetchPPMOverDueCount = async (startDate, endDate) => {
     try {
-      const res = await getPPMOverDueCount(selectedSites);
+      const res = await getPPMOverDueCount(selectedSites, startDate, endDate);
       setPPMOverDue(res.data.count);
     } catch (e) { }
   };
 
-  const fetchPPMpendingCount = async () => {
+  const fetchPPMpendingCount = async (startDate, endDate) => {
     try {
-      const res = await getPPMpendingCount(selectedSites);
+      const res = await getPPMpendingCount(selectedSites, startDate, endDate);
       setPPMPending(res.data.count);
     } catch (e) { }
   };
 
-  const fetchPPMCompleteCount = async () => {
+  const fetchPPMCompleteCount = async (startDate, endDate) => {
     try {
-      const res = await getPPMCompleteCount(selectedSites);
+      const res = await getPPMCompleteCount(selectedSites, startDate, endDate);
       setPPMComplete(res.data.count);
     } catch (e) { }
   };
 
-  const fetchRoutineScheduledCount = async () => {
+  const fetchRoutineScheduledCount = async (startDate, endDate) => {
     try {
-      const res = await getRoutineScheduledCount(selectedSites);
+      const res = await getRoutineScheduledCount(selectedSites, startDate, endDate);
       setRoutineScheduleCount(res.data.count);
     } catch (e) { }
   };
 
-  const fetchRoutineOverdueCount = async () => {
+  const fetchRoutineOverdueCount = async (startDate, endDate) => {
     try {
-      const res = await getRoutineOverdueCount(selectedSites);
+      const res = await getRoutineOverdueCount(selectedSites, startDate, endDate);
       setRoutineOverdueCount(res.data.count);
     } catch (e) { }
   };
 
-  const fetchRoutineCompleteCount = async () => {
+  const fetchRoutineCompleteCount = async (startDate, endDate) => {
     try {
-      const res = await getRoutineCompleteCount(selectedSites);
+      const res = await getRoutineCompleteCount(selectedSites, startDate, endDate);
       setRoutineCompleteCount(res.data.count);
     } catch (e) { }
   };
 
-  const fetchRoutinePendingCount = async () => {
+  const fetchRoutinePendingCount = async (startDate, endDate) => {
     try {
-      const res = await getRoutinePendingCount(selectedSites);
+      const res = await getRoutinePendingCount(selectedSites, startDate, endDate);
       setRoutinePendingCount(res.data.count);
     } catch (e) { }
   };
 
+  /** Single helper that fires all count fetches with optional dates */
+  const fetchAllCounts = (startDate, endDate) => {
+    fetchTotalBreakdownCount(startDate, endDate);
+    fetchAssetTotalCount(startDate, endDate);
+    fetchPPMOverDueCount(startDate, endDate);
+    fetchPPMpendingCount(startDate, endDate);
+    fetchPPMCompleteCount(startDate, endDate);
+    fetchInUseAssetBreakDownCount(startDate, endDate);
+    fetchRoutineScheduledCount(startDate, endDate);
+    fetchRoutineOverdueCount(startDate, endDate);
+    fetchRoutineCompleteCount(startDate, endDate);
+    fetchPPMScheduleCount(startDate, endDate);
+    fetchRoutinePendingCount(startDate, endDate);
+  };
+
   useEffect(() => {
-    fetchTotalBreakdownCount();
-    fetchAssetTotalCount();
-    fetchPPMOverDueCount();
-    fetchPPMpendingCount();
-    fetchPPMCompleteCount();
-    fetchInUseAssetBreakDownCount();
-    fetchRoutineScheduledCount();
-    fetchRoutineOverdueCount();
-    fetchRoutineCompleteCount();
-    fetchPPMScheduleCount();
-    fetchRoutinePendingCount();
+    fetchAllCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const applySelection = () => {
-    fetchTotalBreakdownCount();
-    fetchAssetTotalCount();
-    fetchPPMOverDueCount();
-    fetchPPMpendingCount();
-    fetchPPMCompleteCount();
-    fetchInUseAssetBreakDownCount();
-    fetchRoutineScheduledCount();
-    fetchRoutineOverdueCount();
-    fetchRoutineCompleteCount();
-    fetchPPMScheduleCount();
-    fetchRoutinePendingCount();
+    fetchAllCounts(fmtDate(activeStartDate), fmtDate(activeEndDate));
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await Promise.allSettled([
-      fetchTotalBreakdownCount(),
-      fetchAssetTotalCount(),
-      fetchPPMOverDueCount(),
-      fetchPPMpendingCount(),
-      fetchPPMCompleteCount(),
-      fetchInUseAssetBreakDownCount(),
-      fetchRoutineScheduledCount(),
-      fetchRoutineOverdueCount(),
-      fetchRoutineCompleteCount(),
-      fetchPPMScheduleCount(),
-      fetchRoutinePendingCount(),
-    ]);
+    if (activeStartDate || activeEndDate) {
+      await fetchFilteredSummary(fmtDate(activeStartDate), fmtDate(activeEndDate));
+    } else {
+      await Promise.allSettled([
+        fetchTotalBreakdownCount(),
+        fetchAssetTotalCount(),
+        fetchPPMOverDueCount(),
+        fetchPPMpendingCount(),
+        fetchPPMCompleteCount(),
+        fetchInUseAssetBreakDownCount(),
+        fetchRoutineScheduledCount(),
+        fetchRoutineOverdueCount(),
+        fetchRoutineCompleteCount(),
+        fetchPPMScheduleCount(),
+        fetchRoutinePendingCount(),
+      ]);
+    }
     setRefreshing(false);
   };
 
@@ -1043,7 +1066,13 @@ function AssetDashboard() {
     setActiveAssetFilter({ countType, countValue, title });
 
     try {
-      const res = await getSiteAssetsDashboard(countType, countValue, page);
+      const res = await getSiteAssetsDashboard(
+        countType,
+        countValue,
+        page,
+        fmtDate(activeStartDate),
+        fmtDate(activeEndDate)
+      );
       const data = res?.data || {};
 
       // Response bucket: data[countType] e.g. data["total_assets"]
@@ -1233,9 +1262,11 @@ function AssetDashboard() {
                     <button
                       onClick={() => {
                         if (customStartDate) {
+                          const endD = customEndDate || new Date();
                           setActiveStartDate(customStartDate);
-                          setActiveEndDate(customEndDate || new Date());
-                          fetchAssetSummaryByDate(customStartDate);
+                          setActiveEndDate(endD);
+                          // Single API: site_assets_dashboard.json?start_date=...&end_date=...
+                          fetchFilteredSummary(fmtDate(customStartDate), fmtDate(endD));
                         }
                         setFilterOpen(false);
                       }}

@@ -796,7 +796,7 @@ const SoftServiceHighCharts = () => {
               },
              {
                 key: "building_name",
-                label: "Building",
+                label: "Block",
                 accessor: (r) =>
                   r.building_name ?? r.building ?? r.site_building ?? "—",
               },
@@ -838,7 +838,7 @@ const SoftServiceHighCharts = () => {
               },
               {
                 key: "building_name",
-                label: "Building",
+                label: "Block",
                 accessor: (r) =>
                   r.building_name ?? r.building ?? r.site_building ?? "—",
               },
