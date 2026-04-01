@@ -10333,78 +10333,112 @@ export const getPPMcompleteDownload = async (startDate, endDate) =>
     responseType: "blob",
   });
 
-export const getSiteAssetsDashboard = async (countType, countValue, page = 1) =>
-  axiosInstance.get(`/site_assets/site_assets_dashboard.json`, {
+export const getSiteAssetsDashboard = (
+  countType,
+  countValue,
+  page = 1,
+  startDate,
+  endDate
+) => {
+  return axiosInstance.get("/site_assets/site_assets_dashboard.json", {
     params: {
-      token: token,
+      token,
       count_type: countType,
       count_value: countValue,
-      record_page: page,
+      page,
+      start_date: startDate,
+      end_date: endDate,
     },
   });
+};
 
-export const getTotalAssetCounts = async (ids) =>
+/** Summary call — no count_type/count_value, just dates → flat counts object */
+export const getAssetsDashboardSummary = (startDate, endDate) => {
+  return axiosInstance.get("/site_assets/site_assets_dashboard.json", {
+    params: {
+      token,
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
+    },
+  });
+};
+
+export const getTotalAssetCounts = async (ids, startDate, endDate) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
 
-export const getBreakCount = async (ids) =>
+export const getBreakCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
-      "q[breakdown_eq]": true, // add this line to include q[breakdown_eq]
+      "q[breakdown_eq]": true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
 
-export const getInUseAssetBreakDown = async (ids) =>
+export const getInUseAssetBreakDown = async (ids, startDate, endDate) =>
   axiosInstance.get(`/site_assets/count.json`, {
     params: {
       token: token,
-      "q[breakdown_eq]": false, // add this line to include q[breakdown_eq]
+      "q[breakdown_eq]": false,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
 
-export const getPPMScheduleCount = async (ids) =>
+export const getPPMScheduleCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       scheduled: true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
 
-export const getPPMOverDueCount = async (ids) =>
+export const getPPMOverDueCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       overdue: true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
 
-export const getPPMpendingCount = async (ids) =>
+export const getPPMpendingCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       pending: true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
-export const getPPMCompleteCount = async (ids) =>
+export const getPPMCompleteCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
       complete: true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
 
@@ -10455,40 +10489,48 @@ export const getRoutinePendingDownload = async (startDate, endDate) =>
     responseType: "blob",
   });
 
-export const getRoutineScheduledCount = async (ids) =>
+export const getRoutineScheduledCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       scheduled: true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
-export const getRoutineOverdueCount = async (ids) =>
+export const getRoutineOverdueCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       overdue: true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
-export const getRoutineCompleteCount = async (ids) =>
+export const getRoutineCompleteCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json?`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       complete: true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
-export const getRoutinePendingCount = async (ids) =>
+export const getRoutinePendingCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "routine",
       pending: true,
       site_ids: ids.join(","),
+      ...(startDate && { start_date: startDate }),
+      ...(endDate && { end_date: endDate }),
     },
   });
 
