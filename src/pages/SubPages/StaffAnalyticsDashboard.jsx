@@ -17,34 +17,34 @@ import { PiChartBarHorizontal } from "react-icons/pi";
 
 /* ── Palette ────────────────────────────────────────────────────────────── */
 const PALETTE = [
-  "#1D4ED8","#10B981","#F59E0B","#EF4444","#8B5CF6",
-  "#06B6D4","#EC4899","#84CC16","#F97316","#14B8A6",
-  "#0EA5E9","#6366F1",
+  "#1D4ED8", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
+  "#06B6D4", "#EC4899", "#84CC16", "#F97316", "#14B8A6",
+  "#0EA5E9", "#6366F1",
 ];
 
 const STAT_CONFIG = [
-  { key: "total",         title: "Total Staff",    accent: PALETTE[0]  },
-  { key: "active",        title: "Active",          accent: PALETTE[1]  },
-  { key: "inactive",      title: "Inactive",        accent: PALETTE[6]  },
-  { key: "approved",      title: "Approved",        accent: PALETTE[4]  },
-  { key: "pending",       title: "Pending",         accent: PALETTE[2]  },
+  { key: "total", title: "Total Staff", accent: PALETTE[0] },
+  { key: "active", title: "Active", accent: PALETTE[1] },
+  { key: "inactive", title: "Inactive", accent: PALETTE[6] },
+  { key: "approved", title: "Approved", accent: PALETTE[4] },
+  { key: "pending", title: "Pending", accent: PALETTE[2] },
   // { key: "in_date_range", title: "In Date Range",   accent: PALETTE[5]  },
-  { key: "today_in",      title: "Today In",        accent: PALETTE[9]  },
-  { key: "today_out",     title: "Today Out",       accent: PALETTE[7]  },
-  { key: "total_in",      title: "Total In",        accent: PALETTE[10] },
-  { key: "total_out",     title: "Total Out",       accent: PALETTE[3]  },
+  { key: "today_in", title: "Today In", accent: PALETTE[9] },
+  { key: "today_out", title: "Today Out", accent: PALETTE[7] },
+  { key: "total_in", title: "Total In", accent: PALETTE[10] },
+  { key: "total_out", title: "Total Out", accent: PALETTE[3] },
 ];
 
 /* ── Tab icon map ───────────────────────────────────────────────────────── */
 const TAB_ICONS = {
-  by_work_type:        "🔧",
-  by_vendor:           "🏢",
-  by_status_type:      "📋",
-  by_in_out:           "🔄",
+  by_work_type: "🔧",
+  by_vendor: "🏢",
+  by_status_type: "📋",
+  by_in_out: "🔄",
   by_attendance_today: "📅",
-  by_created_by:       "👤",
-  hourly:              "📈",
-  monthly:             "📆",
+  by_created_by: "👤",
+  hourly: "📈",
+  monthly: "📆",
 };
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
@@ -56,7 +56,7 @@ const formatDateForApi = (isoDate) => {
 };
 
 const formatByLabel = (key) => {
-  if (key === "hourly")  return "Hourly Trend";
+  if (key === "hourly") return "Hourly Trend";
   if (key === "monthly") return "Monthly Trend";
   return key
     .replace(/^by_/, "")
@@ -81,12 +81,12 @@ const baseNoSelect = {
 
 const chartIcon = (type) => {
   switch (type) {
-    case "pie":    return <RiPieChartFill className="w-4 h-4" />;
-    case "bar":    return <PiChartBarHorizontal className="w-4 h-4" />;
+    case "pie": return <RiPieChartFill className="w-4 h-4" />;
+    case "bar": return <PiChartBarHorizontal className="w-4 h-4" />;
     case "column": return <AiOutlineBarChart className="w-4 h-4" />;
-    case "line":   return <AiOutlineLineChart className="w-4 h-4" />;
-    case "area":   return <AiOutlineAreaChart className="w-4 h-4" />;
-    default:       return <RiPieChartFill className="w-4 h-4" />;
+    case "line": return <AiOutlineLineChart className="w-4 h-4" />;
+    case "area": return <AiOutlineAreaChart className="w-4 h-4" />;
+    default: return <RiPieChartFill className="w-4 h-4" />;
   }
 };
 
@@ -101,11 +101,11 @@ const ChartTypeMenu = ({ value, onChange }) => {
   }, []);
 
   const items = [
-    { key: "pie",    label: "Pie"    },
+    { key: "pie", label: "Pie" },
     { key: "column", label: "Column" },
-    { key: "bar",    label: "Bar"    },
-    { key: "line",   label: "Line"   },
-    { key: "area",   label: "Area"   },
+    { key: "bar", label: "Bar" },
+    { key: "line", label: "Line" },
+    { key: "area", label: "Area" },
   ];
 
   return (
@@ -155,8 +155,11 @@ const Card = ({ title, subtitle, right, children }) => (
   </div>
 );
 
-const StatCard = ({ title, value, accent }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
+const StatCard = ({ title, value, accent, onClick }) => (
+  <div
+    onClick={onClick}
+    className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5 cursor-pointer hover:shadow-lg transition"
+  >
     <div className="h-1 w-full rounded-full mb-4" style={{ backgroundColor: accent, opacity: 0.9 }} />
     <p className="text-[15px] font-bold text-gray-900 truncate">{title}</p>
     <div className="mt-4 text-3xl font-extrabold text-gray-900">{Number(value) || 0}</div>
@@ -208,12 +211,12 @@ const buildXYOptions = ({ title, type, categories, values, colorByPoint = false 
   const seriesColor = PALETTE[0];
   const areaFill = type === "area"
     ? {
-        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-        stops: [
-          [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
-          [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
-        ],
-      }
+      linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+      stops: [
+        [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+        [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+      ],
+    }
     : undefined;
 
   return {
@@ -236,7 +239,7 @@ const buildXYOptions = ({ title, type, categories, values, colorByPoint = false 
     plotOptions: {
       series: { ...baseNoSelect, animation: true, lineWidth: 3, marker: type === "line" || type === "area" ? { enabled: true, radius: 4, lineWidth: 2, lineColor: seriesColor, fillColor: "#FFFFFF" } : { enabled: false } },
       column: { borderRadius: 10, pointPadding: 0.12, groupPadding: 0.22 },
-      bar:    { borderRadius: 10, pointPadding: 0.12, groupPadding: 0.22 },
+      bar: { borderRadius: 10, pointPadding: 0.12, groupPadding: 0.22 },
     },
     series: [{
       name: title,
@@ -250,12 +253,12 @@ const buildXYOptions = ({ title, type, categories, values, colorByPoint = false 
 
 /* ── Staff detail columns ───────────────────────────────────────────────── */
 const STAFF_COLUMNS = [
-  { key: "name",        label: "Name",      accessor: (r) => `${r.firstname ?? ""} ${r.lastname ?? ""}`.trim() || r.name || "—" },
-  { key: "mobile_no",   label: "Contact",   accessor: (r) => r.mobile_no ?? r.contact_number ?? "—" },
-  { key: "vendor_name", label: "Vendor",    accessor: (r) => r.vendor_name ?? r.vendor?.name ?? "—" },
-  { key: "work_type",   label: "Work Type", accessor: (r) => r.work_type ?? "—" },
-  { key: "status_type", label: "Status",    accessor: (r) => r.status_type ?? "—" },
-  { key: "created_at",  label: "Created",   accessor: (r) => r.created_at ?? "—" },
+  { key: "name", label: "Name", accessor: (r) => `${r.firstname ?? ""} ${r.lastname ?? ""}`.trim() || r.name || "—" },
+  { key: "mobile_no", label: "Contact", accessor: (r) => r.mobile_no ?? r.contact_number ?? "—" },
+  { key: "vendor_name", label: "Vendor", accessor: (r) => r.vendor ?? r.vendor?.name ?? "—" },
+  { key: "work_type", label: "Work Type", accessor: (r) => r.work_type ?? "—" },
+  { key: "status_type", label: "Status", accessor: (r) => r.status_type ?? "—" },
+  { key: "created_at", label: "Created", accessor: (r) => r.created_at ?? "—" },
 ];
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -264,24 +267,25 @@ const STAFF_COLUMNS = [
 const StaffAnalyticsDashboard = () => {
   const siteId = getItemInLocalStorage("SITEID");
 
-  const [loading,       setLoading]       = useState(true);
-  const [rawStats,      setRawStats]      = useState({});
-  const [byData,        setByData]        = useState({});
-  const [hourlyData,    setHourlyData]    = useState({});
-  const [monthlyData,   setMonthlyData]   = useState({});
+  const [loading, setLoading] = useState(true);
+  const [rawStats, setRawStats] = useState({});
+  const [byData, setByData] = useState({});
+  const [hourlyData, setHourlyData] = useState({});
+  const [monthlyData, setMonthlyData] = useState({});
   const [selectedChart, setSelectedChart] = useState("");
-  const [chartType,     setChartType]     = useState("pie");
+  const [chartType, setChartType] = useState("pie");
 
-  const [filterOpen,   setFilterOpen]   = useState(false);
-  const [fromDate,     setFromDate]     = useState("");
-  const [toDate,       setToDate]       = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [tempFromDate, setTempFromDate] = useState("");
-  const [tempToDate,   setTempToDate]   = useState("");
+  const [tempToDate, setTempToDate] = useState("");
 
-  const [detailPopup,      setDetailPopup]      = useState({ open: false, title: "", records: [], loading: false });
-  const [detailPage,       setDetailPage]       = useState(1);
+  const [detailPopup, setDetailPopup] = useState({ open: false, title: "", records: [], loading: false });
+  const [detailPage, setDetailPage] = useState(1);
   const [detailTotalPages, setDetailTotalPages] = useState(1);
-  const [detailFilter,     setDetailFilter]     = useState({ byKey: "", countValue: "" });
+  // type: "stat" = opened from a stat card; "chart" = opened from a chart point
+  const [detailFilter, setDetailFilter] = useState({ byKey: "", countValue: "", title: "", type: "chart", statCfg: null });
 
   useEffect(() => {
     fetchDashboard();
@@ -292,9 +296,9 @@ const StaffAnalyticsDashboard = () => {
     setLoading(true);
     try {
       const rangeFrom = formatDateForApi(fromDate);
-      const rangeTo   = formatDateForApi(toDate);
-      const resp      = await getStaffDashboard(siteId, null, null, 1, rangeFrom, rangeTo);
-      const apiData   = resp?.data || {};
+      const rangeTo = formatDateForApi(toDate);
+      const resp = await getStaffDashboard(siteId, null, null, 1, rangeFrom, rangeTo);
+      const apiData = resp?.data || {};
 
       setRawStats(apiData);
 
@@ -326,27 +330,88 @@ const StaffAnalyticsDashboard = () => {
     }
   };
 
-  /* ── Drill-down ── */
-  const handleChartPointClick = async (byKey, countValue, page = 1) => {
-    if (!byKey || !countValue) return;
-    const countType = byKeyToCountType(byKey);
-    const title     = `${formatByLabel(byKey)}: ${countValue}`;
+  /* ── Stat card drill-down ── */
+  const handleStatCardClick = async (cfg, page = 1) => {
+    const countType = cfg.key;
+    const countValue = cfg.key;
+    const title = cfg.title;
     const rangeFrom = formatDateForApi(fromDate);
-    const rangeTo   = formatDateForApi(toDate);
+    const rangeTo = formatDateForApi(toDate);
 
-    setDetailFilter({ byKey, countValue });
+    // ✅ Store type="stat" + original cfg so pagination re-calls this handler
+    setDetailFilter({ byKey: countType, countValue, title, type: "stat", statCfg: cfg });
     setDetailPage(page);
     setDetailPopup({ open: true, title, records: [], loading: true });
 
     try {
-      const res     = await getStaffDashboard(siteId, countType, countValue, page, rangeFrom, rangeTo);
-      const bucket  = res?.data?.[byKey]?.[countValue];
-      const records = Array.isArray(bucket?.records) ? bucket.records : [];
-      const total   = bucket?.count ?? bucket?.total ?? records.length;
-      const perPage = bucket?.per_page ?? 10;
-      const pages   = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      const res = await getStaffDashboard(siteId, countType, countValue, page, rangeFrom, rangeTo);
+      console.log("[StaffAnalytics] stat card drill response:", res?.data);
 
-      setDetailTotalPages(pages);
+      const data = res?.data ?? {};
+      let bucket = null;
+
+      // Strategy 1: data[countValue] is an object with records
+      if (data[countValue] && typeof data[countValue] === "object") {
+        bucket = data[countValue];
+      }
+      // Strategy 2: data has 'records' directly
+      else if (Array.isArray(data.records)) {
+        bucket = data;
+      }
+      // Strategy 3: scan all keys for one that has a records array
+      else {
+        const matchKey = Object.keys(data).find(
+          (k) => data[k] && typeof data[k] === "object" && Array.isArray(data[k].records)
+        );
+        if (matchKey) bucket = data[matchKey];
+        else bucket = data;
+      }
+
+      const records = Array.isArray(bucket?.records)
+        ? bucket.records
+        : Array.isArray(bucket)
+        ? bucket
+        : [];
+
+      const total = bucket?.total_pages
+        ? Number(bucket.total_pages)
+        : bucket?.per_page && (bucket?.count ?? bucket?.total)
+        ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
+        : 1;
+
+      setDetailTotalPages(total);
+      setDetailPopup({ open: true, title, records, loading: false });
+    } catch (err) {
+      console.error("[StaffAnalytics] stat card drill error:", err);
+      toast.error("Failed to load staff details.");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  /* ── Chart point drill-down ── */
+  const handleChartPointClick = async (byKey, countValue, page = 1) => {
+    if (!byKey || !countValue) return;
+    const countType = byKeyToCountType(byKey);
+    const title = `${formatByLabel(byKey)}: ${countValue}`;
+    const rangeFrom = formatDateForApi(fromDate);
+    const rangeTo = formatDateForApi(toDate);
+
+    // ✅ Store type="chart" so pagination re-calls this handler
+    setDetailFilter({ byKey, countValue, title, type: "chart", statCfg: null });
+    setDetailPage(page);
+    setDetailPopup({ open: true, title, records: [], loading: true });
+
+    try {
+      const res = await getStaffDashboard(siteId, countType, countValue, page, rangeFrom, rangeTo);
+      const bucket = res?.data?.[byKey]?.[countValue];
+      const records = Array.isArray(bucket?.records) ? bucket.records : [];
+      const totalPages = bucket?.total_pages
+        ? Number(bucket.total_pages)
+        : bucket?.per_page && (bucket?.count ?? bucket?.total)
+        ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
+        : 1;
+
+      setDetailTotalPages(totalPages);
       setDetailPopup({ open: true, title, records, loading: false });
     } catch (err) {
       console.error("Staff drill error:", err);
@@ -355,17 +420,24 @@ const StaffAnalyticsDashboard = () => {
     }
   };
 
+  // ✅ FIXED: route pagination to the correct handler based on popup source
   const onDetailPageChange = (nextPage) => {
     if (nextPage < 1 || nextPage > detailTotalPages) return;
-    handleChartPointClick(detailFilter.byKey, detailFilter.countValue, nextPage);
+    if (detailFilter.type === "stat" && detailFilter.statCfg) {
+      // Stat card pagination: re-call handleStatCardClick with the stored cfg
+      handleStatCardClick(detailFilter.statCfg, nextPage);
+    } else {
+      // Chart point pagination
+      handleChartPointClick(detailFilter.byKey, detailFilter.countValue, nextPage);
+    }
   };
 
   /* ── Chart options ── */
   const selectedChartOptions = useMemo(() => {
     let dataMap;
-    if (selectedChart === "hourly")       dataMap = hourlyData;
+    if (selectedChart === "hourly") dataMap = hourlyData;
     else if (selectedChart === "monthly") dataMap = monthlyData;
-    else                                  dataMap = byData[selectedChart] || {};
+    else dataMap = byData[selectedChart] || {};
 
     const chartTitle = selectedChart ? formatByLabel(selectedChart) : "";
 
@@ -381,7 +453,7 @@ const StaffAnalyticsDashboard = () => {
         plotOptions: {
           ...options.plotOptions,
           series: { ...(options.plotOptions.series || {}), point: { ...(options.plotOptions.series?.point || {}), ...evt } },
-          pie:    { ...(options.plotOptions.pie    || {}), point: { ...(options.plotOptions.pie?.point    || {}), ...evt } },
+          pie: { ...(options.plotOptions.pie || {}), point: { ...(options.plotOptions.pie?.point || {}), ...evt } },
         },
       };
     };
@@ -410,8 +482,8 @@ const StaffAnalyticsDashboard = () => {
       ...Object.keys(byData).map((key) => ({
         id: key, label: formatByLabel(key), icon: TAB_ICONS[key] ?? "📋",
       })),
-      { id: "hourly",  label: "Hourly Trend",  icon: "📈" },
-      { id: "monthly", label: "Monthly Trend",  icon: "📆" },
+      { id: "hourly", label: "Hourly Trend", icon: "📈" },
+      { id: "monthly", label: "Monthly Trend", icon: "📆" },
     ],
     [byData]
   );
@@ -494,8 +566,14 @@ const StaffAnalyticsDashboard = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {visibleCards.length > 0
           ? visibleCards.map((cfg) => (
-              <StatCard key={cfg.key} title={cfg.title} value={cfg.value} accent={cfg.accent} />
-            ))
+            <StatCard
+              key={cfg.key}
+              title={cfg.title}
+              value={cfg.value}
+              accent={cfg.accent}
+              onClick={() => handleStatCardClick(cfg, 1)}
+            />
+          ))
           : Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
         }
       </div>
