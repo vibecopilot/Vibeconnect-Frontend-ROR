@@ -57,7 +57,7 @@ export const postTodoList = async (data) =>
 // };
 // dashboard
 export const getTicketDashboard = async (options = {}) => {
-  // Supports both getTicketDashboard(siteId) and getTicketDashboard({siteId, start_date_eq, end_date_eq, count_type, count_value, record_page})
+  // Supports both getTicketDashboard(siteId) and getTicketDashboard({siteId, filters, ...})
   const paramsObj =
     options && typeof options === "object" && !Array.isArray(options)
       ? options
@@ -70,6 +70,7 @@ export const getTicketDashboard = async (options = {}) => {
     count_type,
     count_value,
     record_page,
+    filters = {},
   } = paramsObj;
 
   return axiosInstance.get("/pms/admin/complaints/complaints_dashboard.json", {
@@ -81,6 +82,16 @@ export const getTicketDashboard = async (options = {}) => {
       ...(count_type && { count_type }),
       ...(count_value && { count_value }),
       ...(record_page && { record_page }),
+      // Filter params forwarded to the dashboard API
+      ...(filters.building_id ? { "q[unit_building_id_eq]": filters.building_id } : {}),
+      ...(filters.floor_id ? { "q[unit_floor_id_eq]": filters.floor_id } : {}),
+      ...(filters.unit_id ? { "q[unit_id_eq]": filters.unit_id } : {}),
+      ...(filters.category_id ? { "q[category_type_id_eq]": filters.category_id } : {}),
+      ...(filters.issueStatusId ? { "q[issue_status_eq]": filters.issueStatusId } : {}),
+      ...(filters.priorityLevel ? { "q[priority_cont]": filters.priorityLevel } : {}),
+      ...(filters.assign ? { "q[assigned_to_eq]": filters.assign } : {}),
+      ...(filters.startDate ? { "q[created_at_gteq]": filters.startDate } : {}),
+      ...(filters.endDate ? { "q[created_at_lteq]": filters.endDate } : {}),
     },
   });
 };
