@@ -37,7 +37,7 @@ function SurveyDetails() {
   useEffect(() => {
     if (survey) {
       setThankYouMessage(survey?.thank_you_message || "");
-      setClientLogo(survey?.client_logo || "");
+      setClientLogo(survey?.mail_logos || "");
     }
   }, [survey]);
 
@@ -227,7 +227,7 @@ function SurveyDetails() {
       // Persist client logo to backend if a new file was selected
       if (clientLogoFile) {
         const logoFormData = new FormData();
-        logoFormData.append("survey[client_logo]", clientLogoFile);
+        logoFormData.append("survey[mail_logos]", clientLogoFile);
         await updateSurvey(id, logoFormData);
         setClientLogoFile(null); // clear after successful upload
       }
@@ -786,14 +786,12 @@ ${survey?.survey_title} Team`);
                         />
                       </div>
                     )}
-
                     <textarea
                       value={thankYouMessage}
                       onChange={(e) => setThankYouMessage(e.target.value)}
                       placeholder="Enter thank you message"
                       className="w-full px-3 py-2 border rounded mb-3 resize-none flex-1 min-h-[150px]"
                     />
-
                     <button
                       className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-green-700"
                       onClick={async () => {
@@ -801,7 +799,7 @@ ${survey?.survey_title} Team`);
                           const formData = new FormData();
                           formData.append("survey[thank_you_message]", thankYouMessage);
                           if (clientLogoFile) {
-                            formData.append("survey[client_logo]", clientLogoFile);
+                            formData.append("survey[mail_logos]", clientLogoFile);
                           }
                           await updateSurvey(id, formData);
                           setClientLogoFile(null);
