@@ -184,17 +184,8 @@ function PreviewSurvey() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 space-y-6">
-      
-      {survey?.background_image && (
-        <div
-          className="w-full h-40 rounded-xl overflow-hidden mb-4"
-          style={{
-            backgroundImage: `url(${survey.background_image})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-      )}
+
+
 
 
       <div
@@ -239,6 +230,8 @@ function PreviewSurvey() {
 
           </div>
 
+          
+
           {/* DESCRIPTION */}
           {survey.description && (
             <p className="mt-6 text-sm sm:text-base text-white/90">
@@ -247,7 +240,26 @@ function PreviewSurvey() {
           )}
 
         </div>
+
+       
       </div>
+      
+
+          
+        {survey?.background_image && (
+          <div className="w-full mt-4">
+            <img
+              src={
+                survey.background_image.startsWith("http")
+                  ? survey.background_image
+                  : domainPrefix + survey.background_image
+              }
+              alt="Banner"
+              className="w-full h-[220px] sm:h-[300px] object-cover rounded-xl"
+            />
+          </div>
+        )}
+        
 
       {/* 🔥 CLIENT DETAILS */}
       <div className="bg-white rounded-2xl p-5 border shadow-sm">
@@ -302,7 +314,7 @@ function PreviewSurvey() {
       <div className="text-center">
         <button
           onClick={handleSubmit}
-          style={{ backgroundColor: survey?.theme_color || "#f97316" }}
+          style={{ backgroundColor: survey?.background_color || "#f97316" }}
           className="text-white px-4 py-2 rounded"
         >
           Submit (Preview)
