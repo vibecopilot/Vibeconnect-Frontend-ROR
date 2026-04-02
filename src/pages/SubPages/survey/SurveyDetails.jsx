@@ -119,7 +119,7 @@ function SurveyDetails() {
     chart: {
       type: "bar",
       stacked: true,
-      stackType: "normal", // ✅ ADD THIS
+      stackType: "normal",
       toolbar: { show: false },
     },
 
@@ -135,7 +135,7 @@ function SurveyDetails() {
       bar: {
         borderRadius: 6,
         columnWidth: "50%",
-        distributed: false, // ✅ ADD THIS
+        distributed: false,
       },
     },
 
@@ -262,7 +262,8 @@ function SurveyDetails() {
 
 </div>
 `,
-        survey_link: shareableLink,
+       survey_link: shareableLink,
+        client_logo: clientLogo,
       });
       toast.success("Survey sent successfully!");
       setEmailList("");
@@ -389,7 +390,7 @@ function SurveyDetails() {
               </Link>
             </div>
 
-            {/* 🔥 NEW SEND SURVEY BUTTON */}
+            {/*  NEW SEND SURVEY BUTTON */}
             <div className="relative group">
               <button
                 onClick={() => {
@@ -562,7 +563,7 @@ ${survey?.survey_title} Team`);
         {/* LEFT SIDE */}
         <div className="space-y-6 mt-4">
 
-          {/* 🔥 TOP CARDS (ONE ROW) */}
+          {/*  TOP CARDS (ONE ROW) */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
             {/* Total Responses */}
@@ -599,7 +600,7 @@ ${survey?.survey_title} Team`);
 
           </div>
 
-          {/* 🔥 FULL WIDTH GRAPH */}
+          {/*  FULL WIDTH GRAPH */}
           <div className="bg-white rounded-xl shadow p-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">
               Survey Overview
@@ -699,7 +700,7 @@ ${survey?.survey_title} Team`);
                       className="w-full px-3 py-2 border rounded mb-3 resize-none"
                     />
 
-                    {/* ✅ CLIENT LOGO FIELD */}
+                    {/* CLIENT LOGO FIELD */}
                     <div className="mb-3">
                       <label className="block text-sm text-gray-600 mb-1">
                         Upload Client Logo
@@ -710,10 +711,10 @@ ${survey?.survey_title} Team`);
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (!file) return;
-                          setClientLogoFile(file); // keep File for backend upload
+
                           const reader = new FileReader();
                           reader.onloadend = () => {
-                            setClientLogo(reader.result); // base64 for preview
+                            setClientLogo(reader.result); // base64
                           };
                           reader.readAsDataURL(file);
                         }}
@@ -730,7 +731,7 @@ ${survey?.survey_title} Team`);
                       </div>
                     )}
 
-                    {/* 🔥 MESSAGE / DESCRIPTION */}
+                    {/*  MESSAGE / DESCRIPTION */}
                     <textarea
                       value={mailMessage}
                       onChange={(e) => {
@@ -766,7 +767,7 @@ ${survey?.survey_title} Team`);
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (!file) return;
-                          setClientLogoFile(file); // keep File for backend upload
+
                           const reader = new FileReader();
                           reader.onloadend = () => {
                             setClientLogo(reader.result);
@@ -786,23 +787,24 @@ ${survey?.survey_title} Team`);
                         />
                       </div>
                     )}
+
                     <textarea
                       value={thankYouMessage}
                       onChange={(e) => setThankYouMessage(e.target.value)}
                       placeholder="Enter thank you message"
                       className="w-full px-3 py-2 border rounded mb-3 resize-none flex-1 min-h-[150px]"
                     />
+
                     <button
                       className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-green-700"
                       onClick={async () => {
                         try {
-                          const formData = new FormData();
-                          formData.append("survey[thank_you_message]", thankYouMessage);
-                          if (clientLogoFile) {
-                            formData.append("survey[mail_logos]", clientLogoFile);
-                          }
-                          await updateSurvey(id, formData);
-                          setClientLogoFile(null);
+                          await axiosInstance.post("/survey/save-thankyou", {
+                            survey_id: id,
+                            thank_you_message: thankYouMessage,
+                            client_logo: clientLogo,
+                          });
+
                           toast.success("Saved successfully!");
                         } catch (err) {
                           toast.error("Failed to save");
