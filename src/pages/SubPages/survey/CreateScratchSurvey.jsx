@@ -84,7 +84,7 @@ function CreateScratchSurvey() {
     "#E0BBE4", // pastel purple
     "#FDFD96", // pastel light yellow
     "#f97316" // vibrant orange (for reset button)
-    
+
   ];
   const [backgroundImage, setBackgroundImage] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -770,14 +770,7 @@ function CreateScratchSurvey() {
                 Add Question
               </button>
 
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="px-6 py-2 rounded-lg text-white bg-purple-500 hover:bg-purple-600 disabled:opacity-50"
-              >
-                {submitting ? "Saving…" : isEditMode ? "Save Changes" : "Create Survey"}
-              </button>
+              
 
             </div>
 

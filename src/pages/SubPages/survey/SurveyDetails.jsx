@@ -764,25 +764,7 @@ ${survey?.survey_title} Team`);
                       placeholder="Enter thank you message"
                       className="w-full px-3 py-2 border rounded mb-3 resize-none flex-1 min-h-[150px]"
                     />
-                    <button
-                      className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-green-700"
-                      onClick={async () => {
-                        try {
-                          const formData = new FormData();
-                          formData.append("survey[thank_you_message]", thankYouMessage);
-                          if (clientLogoFile) {
-                            formData.append("survey[mail_logos]", clientLogoFile);
-                          }
-                          await updateSurvey(id, formData);
-                          setClientLogoFile(null);
-                          toast.success("Saved successfully!");
-                        } catch (err) {
-                          toast.error("Failed to save");
-                        }
-                      }}
-                    >
-                      Save
-                    </button>
+                    
                   </>
                 )}
               </div>
