@@ -91,11 +91,11 @@ const handleToggle = async (id) => {
       sortable: true,
     },
     { name: "Title", selector: (row) => row.notice_title, sortable: true },
-    {
-      name: "Type",
-      selector: (row) => row.type,
-      sortable: true,
-    },
+    // {
+    //   name: "Type",
+    //   selector: (row) => row.type,
+    //   sortable: true,
+    // },
     {
       name: "Notice Description",
       selector: (row) => row.notice_discription,
