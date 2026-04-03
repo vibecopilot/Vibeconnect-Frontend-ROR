@@ -457,24 +457,21 @@ const EditAsset = () => {
           item.check_prev
         );
       });
-      (formData.invoice || []).forEach((file, index) => {
-        formDataSend.append(`purchase_invoices[]`, file);
-      });
+     formData.invoice?.forEach((file) => {
+      formDataSend.append("purchase_invoices[]", file.file || file);
+    });
 
-      (formData.insurance || []).forEach((file, index) => {
-        console.log("-----------------");
-        console.log(index);
-        console.log(file);
-        formDataSend.append(`insurances[]`, file);
-      });
+    formData.insurance?.forEach((file) => {
+      formDataSend.append("insurances[]", file.file || file);
+    });
 
-      (formData.manual || []).forEach((file, index) => {
-        formDataSend.append(`manuals[]`, file);
-      });
+    formData.manuals?.forEach((file) => {
+      formDataSend.append("manuals[]", file.file || file);
+    });
 
-      (formData.others || []).forEach((file, index) => {
-        formDataSend.append(`other_files[]`, file);
-      });
+    formData.others?.forEach((file) => {
+      formDataSend.append("other_files[]", file.file || file);
+    });
 
         await EditSiteAsset(formDataSend, id);
 
