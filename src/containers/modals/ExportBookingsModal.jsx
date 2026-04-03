@@ -21,14 +21,29 @@ const ExportBookingModal = ({ onclose }) => {
       return;
     }
 
+    const formatDate = (date) => {
+      const d = new Date(date);
+      return d.toISOString().split("T")[0];
+    };
+
     try {
       setLoading(true);
 
-      const response = await getAmenityExport(startDate, endDate, siteId);
+      const formattedStart = formatDate(startDate);
+      const formattedEnd = formatDate(endDate);
 
-      const blob = new Blob([response.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
+      const response = await getAmenityExport(
+        formattedStart,
+        formattedEnd,
+        siteId
+      );
+
+      const blob =
+        response.data instanceof Blob
+          ? response.data
+          : new Blob([response.data], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
 
       const url = window.URL.createObjectURL(blob);
 
@@ -36,7 +51,7 @@ const ExportBookingModal = ({ onclose }) => {
       link.href = url;
       link.setAttribute(
         "download",
-        `amenity_bookings_${startDate}_to_${endDate}.xlsx`
+        `amenity_bookings_${formattedStart}_to_${formattedEnd}.xlsx`
       );
 
       document.body.appendChild(link);
