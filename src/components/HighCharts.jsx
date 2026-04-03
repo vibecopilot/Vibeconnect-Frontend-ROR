@@ -789,7 +789,7 @@ const TicketHighCharts = () => {
       themeColor: chartTheme.floor,
       palette: CHART_PALETTE,
       order: "descending",
-      pointColorFn: floorPointColor, // ✅ multi-color + highlight
+      pointColorFn: floorPointColor,
     });
 
     const handlePointClick = function () {
