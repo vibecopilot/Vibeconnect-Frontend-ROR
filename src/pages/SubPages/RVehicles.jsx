@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import RVehiclesTable from "./RVehiclesTable";
 import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
 import { getRegisteredVehicle, getVehicleHistory } from "../../api";
+import axiosInstance from "../../api/axiosInstance";
 import { FaSearch } from "react-icons/fa";
-import { IoAddCircleOutline, IoCloudUploadOutline } from "react-icons/io5";
+import { IoAddCircleOutline, IoCloudUploadOutline, IoCloudDownloadOutline, IoClose, IoCheckmarkCircle, IoWarning } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
@@ -112,6 +113,15 @@ const RVehicles = () => {
 
   // ✅ after approve/reject: force refetch
   const [refreshTick, setRefreshTick] = useState(0);
+
+  // Bulk Upload Modal state
+  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState(null); // null | 'success' | 'error'
+  const [bulkMessage, setBulkMessage] = useState("");
+  const [bulkDragOver, setBulkDragOver] = useState(false);
+  const bulkFileInputRef = useRef(null);
 
   // ✅ local “recent history” (persisted)
   const [recentHistory, setRecentHistory] = useState(() =>
@@ -356,35 +366,91 @@ const RVehicles = () => {
   };
 
 
-  const handleBulkUpload = async (e) => {
-    const file = e.target.files[0];
+  const openBulkModal = () => {
+    setBulkFile(null);
+    setBulkStatus(null);
+    setBulkMessage("");
+    setBulkUploading(false);
+    setBulkDragOver(false);
+    setBulkModalOpen(true);
+  };
+
+  const closeBulkModal = () => {
+    if (bulkUploading) return; // prevent close while uploading
+    setBulkModalOpen(false);
+    setBulkFile(null);
+    setBulkStatus(null);
+    setBulkMessage("");
+    setBulkDragOver(false);
+  };
+
+  const handleBulkFileSelect = (file) => {
     if (!file) return;
+    const allowed = ["text/csv", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel"];
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!allowed.includes(file.type) && ext !== "csv" && ext !== "xlsx") {
+      setBulkStatus("error");
+      setBulkMessage("Only .csv or .xlsx files are supported.");
+      return;
+    }
+    setBulkFile(file);
+    setBulkStatus(null);
+    setBulkMessage("");
+  };
+
+  const handleBulkDrop = (e) => {
+    e.preventDefault();
+    setBulkDragOver(false);
+    const file = e.dataTransfer.files[0];
+    handleBulkFileSelect(file);
+  };
+
+  const handleBulkUploadSubmit = async () => {
+    if (!bulkFile) return;
+    setBulkUploading(true);
+    setBulkStatus(null);
+    setBulkMessage("");
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", bulkFile);
 
       const token =
         normalizeToken(tokens?.queryToken) ||
         normalizeToken(tokens?.bearerToken);
 
-      const res = await axiosInstance.post(
+      await axiosInstance.post(
         `/registered_vehicles/bulk_upload.json?token=${token}`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      alert("Bulk upload successful");
-
-      setRefreshTick((prev) => prev + 1); // refresh table
+      setBulkStatus("success");
+      setBulkMessage("Vehicles uploaded successfully!");
+      setRefreshTick((prev) => prev + 1);
     } catch (err) {
       console.error(err);
-      alert("Upload failed");
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Upload failed. Please check your file and try again.";
+      setBulkStatus("error");
+      setBulkMessage(msg);
+    } finally {
+      setBulkUploading(false);
     }
+  };
+
+  const handleDownloadSample = () => {
+    const token =
+      normalizeToken(tokens?.queryToken) ||
+      normalizeToken(tokens?.bearerToken);
+    const url = `${BASE_URL}/registered_vehicles/sample_file.csv?token=${token}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "vehicles_sample.csv";
+    a.click();
   };
 
   /** ---------------- Main fetch ---------------- */
@@ -597,16 +663,13 @@ const RVehicles = () => {
             </div>
             <div className="flex items-center gap-2 mb-3">
               {/* Bulk Upload */}
-              <label className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition">
+              <button
+                onClick={openBulkModal}
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md cursor-pointer hover:bg-blue-700 transition"
+              >
                 <IoCloudUploadOutline size={20} />
                 Bulk Upload
-                <input
-                  type="file"
-                  accept=".csv,.xlsx"
-                  onChange={handleBulkUpload}
-                  hidden
-                />
-              </label>
+              </button>
 
               {/* Add Vehicle */}
               <button
@@ -630,6 +693,139 @@ const RVehicles = () => {
           />
         </div>
       </section>
+
+      {/* ============ BULK UPLOAD MODAL ============ */}
+      {bulkModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) closeBulkModal(); }}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <IoCloudUploadOutline size={22} className="text-blue-600" />
+                <h2 className="text-base font-semibold text-gray-800">Bulk Upload Vehicles</h2>
+              </div>
+              <button
+                onClick={closeBulkModal}
+                disabled={bulkUploading}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <IoClose size={22} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4">
+              {/* Step 1 – Download sample */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">Step 1 — Download Sample</p>
+                <p className="text-xs text-gray-500 mb-3">Download the sample CSV, fill in your vehicle data, then upload it below.</p>
+                <button
+                  onClick={handleDownloadSample}
+                  className="flex items-center gap-2 text-sm font-medium text-blue-600 border border-blue-300 bg-white px-4 py-2 rounded-lg hover:bg-blue-50 transition"
+                >
+                  <IoCloudDownloadOutline size={18} />
+                  Download Sample File
+                </button>
+              </div>
+
+              {/* Step 2 – Upload file */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Step 2 — Upload Filled File</p>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setBulkDragOver(true); }}
+                  onDragLeave={() => setBulkDragOver(false)}
+                  onDrop={handleBulkDrop}
+                  onClick={() => bulkFileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition ${
+                    bulkDragOver
+                      ? "border-blue-500 bg-blue-50"
+                      : bulkFile
+                      ? "border-green-400 bg-green-50"
+                      : "border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                  }`}
+                >
+                  <IoCloudUploadOutline
+                    size={36}
+                    className={bulkFile ? "text-green-500" : "text-blue-400"}
+                  />
+                  {bulkFile ? (
+                    <>
+                      <p className="text-sm font-medium text-green-700 mt-2">{bulkFile.name}</p>
+                      <p className="text-xs text-gray-400 mt-1">{(bulkFile.size / 1024).toFixed(1)} KB · Click to change</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-600 mt-2">Drag &amp; drop or click to browse</p>
+                      <p className="text-xs text-gray-400 mt-1">Supports .csv and .xlsx</p>
+                    </>
+                  )}
+                  <input
+                    ref={bulkFileInputRef}
+                    type="file"
+                    accept=".csv,.xlsx"
+                    hidden
+                    onChange={(e) => handleBulkFileSelect(e.target.files[0])}
+                  />
+                </div>
+              </div>
+
+              {/* Status message */}
+              {bulkStatus && (
+                <div
+                  className={`flex items-start gap-2 rounded-lg p-3 text-sm ${
+                    bulkStatus === "success"
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}
+                >
+                  {bulkStatus === "success" ? (
+                    <IoCheckmarkCircle size={18} className="mt-0.5 shrink-0" />
+                  ) : (
+                    <IoWarning size={18} className="mt-0.5 shrink-0" />
+                  )}
+                  <span>{bulkMessage}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-5 flex items-center justify-end gap-3">
+              <button
+                onClick={closeBulkModal}
+                disabled={bulkUploading}
+                className="px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition disabled:opacity-50"
+              >
+                {bulkStatus === "success" ? "Close" : "Cancel"}
+              </button>
+              {bulkStatus !== "success" && (
+                <button
+                  onClick={handleBulkUploadSubmit}
+                  disabled={!bulkFile || bulkUploading}
+                  className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {bulkUploading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                      Uploading…
+                    </>
+                  ) : (
+                    <><IoCloudUploadOutline size={18} /> Upload</>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

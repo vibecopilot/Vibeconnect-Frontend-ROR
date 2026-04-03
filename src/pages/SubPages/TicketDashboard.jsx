@@ -13,7 +13,6 @@ import DetailPopup from "../../components/DetailPopup";
 const PRIMARY_BLUE = "#1D4ED8";
 const LIGHT_BLUE = "#93C5FD";
 
-
 const StatCard = ({ title, value, onDownload, onClick, tone = "blue" }) => {
   const toneMap = {
     blue: {
@@ -100,6 +99,37 @@ const statusTone = (key = "") => {
 
 const PER_PAGE = 10;
 
+const triggerXlsxDownload = async (response, filename) => {
+  const contentType = response.headers["content-type"];
+
+  // ❌ If API returns JSON (error)
+  if (contentType && contentType.includes("application/json")) {
+    const text = await response.data.text();
+    const error = JSON.parse(text);
+    throw new Error(error?.message || "Invalid file response");
+  }
+
+  const blob = new Blob([response.data], {
+    type:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+
+  if (blob.size === 0) {
+    throw new Error("Empty file received");
+  }
+
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  window.URL.revokeObjectURL(url);
+};
+
 const TicketDashboard = () => {
   const [totalTickets, setTotalTickets] = useState(0);
   const [statusData, setStatusData] = useState({});
@@ -108,10 +138,8 @@ const TicketDashboard = () => {
     title: "",
     records: [],
     loading: false,
-    // drill params (kept so page changes can re-fetch)
     countType: "",
     countValue: "",
-    // pagination
     page: 1,
     totalPages: 1,
     totalRecords: 0,
@@ -133,7 +161,7 @@ const TicketDashboard = () => {
   }, [siteId]);
 
   // ------------------------------------------------------------------
-  // Core drill-down fetcher (called on first open AND on page change)
+  // Core drill-down fetcher
   // ------------------------------------------------------------------
   const fetchDrillPage = async (countType, countValue, page, title) => {
     setDetailPopup((prev) => ({
@@ -149,9 +177,6 @@ const TicketDashboard = () => {
     try {
       const res = await getComplaintsDrill(countType, countValue, siteId, page);
 
-      // Response shape differs by count_type:
-      //   total_recs → { all: { total_recs: { count: N, records: [...] } } }
-      //   status     → { by_status: { [countValue]: { count: N, records: [...] } } }
       let records, totalRecords;
       if (countType === "status" && countValue) {
         const statusBlock = res?.data?.by_status?.[countValue] ?? {};
@@ -180,57 +205,54 @@ const TicketDashboard = () => {
     }
   };
 
-  // Called when a stat-card is clicked
   const handleTicketCardClick = (countType, countValue, title) => {
     fetchDrillPage(countType, countValue, 1, title);
   };
 
-  // Called by DetailPopup pagination buttons
   const handlePageChange = (newPage) => {
     const { countType, countValue, title } = detailPopup;
     fetchDrillPage(countType, countValue, newPage, title);
   };
 
-  const handleStatusDownload = async (key) => {
-    const toastId = toast.loading("Downloading, please wait...");
-    try {
-      const response = await getStatusDownload(key);
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: response.headers["content-type"] })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "Ticket_Status_file.xlsx";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast.dismiss(toastId);
-      toast.success("Status downloaded successfully");
-    } catch (error) {
-      toast.dismiss(toastId);
-      toast.error("Something went wrong");
-      console.error(error);
-    }
-  };
-
+  // ------------------------------------------------------------------
+  // ✅ FIXED — Download all tickets (no status filter)
+  // ------------------------------------------------------------------
   const handleTicketStatusDownload = async () => {
     const toastId = toast.loading("Downloading, please wait...");
     try {
       const response = await getTicketStatusDownload();
-      const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: response.headers["content-type"] })
+
+      await triggerXlsxDownload(
+        response,
+        `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`
       );
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "ticket_file.xlsx";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+
       toast.dismiss(toastId);
-      toast.success("Ticket downloaded successfully");
+      toast.success("Tickets downloaded successfully");
     } catch (error) {
       toast.dismiss(toastId);
-      toast.error("Something went wrong");
+      toast.error(error.message || "Download failed");
+      console.error(error);
+    }
+  };
+  // ------------------------------------------------------------------
+  // ✅ FIXED — Download tickets filtered by status
+  // ------------------------------------------------------------------
+  const handleStatusDownload = async (key) => {
+    const toastId = toast.loading("Downloading, please wait...");
+    try {
+      const response = await getStatusDownload(key);
+
+      await triggerXlsxDownload(
+        response,
+        `tickets_${key}_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+
+      toast.dismiss(toastId);
+      toast.success("Downloaded successfully");
+    } catch (error) {
+      toast.dismiss(toastId);
+      toast.error(error.message || "Download failed");
       console.error(error);
     }
   };
@@ -243,7 +265,6 @@ const TicketDashboard = () => {
         value,
         tone: statusTone(key),
         onDownload: () => handleStatusDownload(key),
-        // count_type=status, count_value=<StatusName>
         onClick: () => handleTicketCardClick("status", key, key),
       })),
     [statusData]
@@ -257,7 +278,6 @@ const TicketDashboard = () => {
           value={totalTickets}
           tone="blue"
           onDownload={handleTicketStatusDownload}
-          // count_type=total_recs (no count_value needed for total)
           onClick={() => handleTicketCardClick("total_recs", "total_recs", "Tickets Created")}
         />
         {cards.map((card) => (

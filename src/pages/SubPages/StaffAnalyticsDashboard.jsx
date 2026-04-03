@@ -370,14 +370,14 @@ const StaffAnalyticsDashboard = () => {
       const records = Array.isArray(bucket?.records)
         ? bucket.records
         : Array.isArray(bucket)
-        ? bucket
-        : [];
+          ? bucket
+          : [];
 
       const total = bucket?.total_pages
         ? Number(bucket.total_pages)
         : bucket?.per_page && (bucket?.count ?? bucket?.total)
-        ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
-        : 1;
+          ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
+          : 1;
 
       setDetailTotalPages(total);
       setDetailPopup({ open: true, title, records, loading: false });
@@ -408,8 +408,8 @@ const StaffAnalyticsDashboard = () => {
       const totalPages = bucket?.total_pages
         ? Number(bucket.total_pages)
         : bucket?.per_page && (bucket?.count ?? bucket?.total)
-        ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
-        : 1;
+          ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
+          : 1;
 
       setDetailTotalPages(totalPages);
       setDetailPopup({ open: true, title, records, loading: false });

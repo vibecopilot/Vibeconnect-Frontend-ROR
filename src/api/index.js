@@ -96,12 +96,24 @@ export const getTicketDashboard = async (options = {}) => {
   });
 };
 //Assets
-export const getPerPageSiteAsset = async (page, perPage) =>
-  axiosInstance.get(`/site_assets.json?per_page=${perPage}&page=${page}`, {
+export const getPerPageSiteAsset = (
+  page,
+  perPage,
+  building,
+  floor,
+  unit
+) => {
+  return axiosInstance.get(`/site_assets.json`, {
     params: {
       token: token,
+      page,
+      per_page: perPage,
+      building_id: building,
+      floor_id: floor,
+      unit_id: unit,
     },
   });
+};
 export const downloadQrCode = async (ids) =>
   axiosInstance.get(`/site_assets/print_qr_codes?asset_ids=${ids}`, {
     responseType: "blob",
@@ -546,6 +558,14 @@ export const getFitoutSubCategoriesSetupDetails = async (id) =>
     },
   });
 
+export const getAudits = (params) =>
+  axiosInstance.get("/audits.json", {
+    params: {
+      token: token,
+      ...params,
+    },
+  });
+
 export const getFitoutStatusSetup = async () =>
   axiosInstance.get(`/fitout_statuses.json`, {
     params: {
@@ -621,12 +641,15 @@ export const getSnagChecklistID = async (data) =>
   });
 // ticket download section
 export const getTicketStatusDownload = async (params = {}) =>
-  axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx?`, {
+  axiosInstance.get(`/pms/admin/complaints/export_complaints.xlsx`, {
     params: {
       ...params,
       token: token,
     },
     responseType: "blob",
+    headers: {
+      Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    },
   });
 
 export const getStatusDownload = async (id) =>
@@ -636,6 +659,9 @@ export const getStatusDownload = async (id) =>
       "q[complaint_status_name_eq]": id,
     },
     responseType: "blob",
+    headers: {
+      Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    },
   });
 
 // soft Service
@@ -846,12 +872,13 @@ export const getAdminComplaints = async (
 //   }
 // );
 
-export const getAdminExport = async (filters = {}, search = "", status = "") => {
+export const getAdminExport = async (filters = {}, search = "", status = "", complaintType = "") => {
   const params = {
     token: token,
 
     ...(search ? { "q[search_cont]": search } : {}),
     ...(status && status !== "all" ? { "q[issue_status_eq]": status } : {}),
+    ...(complaintType && complaintType !== "all" ? { "q[complaint_type_eq]": complaintType } : {}),
 
     ...(filters.category_id ? { "q[category_type_id_eq]": filters.category_id } : {}),
     ...(filters.issueStatusId ? { "q[issue_status_eq]": filters.issueStatusId } : {}),
@@ -1209,6 +1236,9 @@ export const getAMCDetails = async (assetId) =>
       token: token,
       // asset_id: assetId,
     },
+      headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
 export const getEditAMCDetails = async (id) =>
   axiosInstance.get(`/asset_amcs/${id}.json`, {
@@ -1223,6 +1253,9 @@ export const EditAMCDetails = async (data, id) =>
     params: {
       token: token,
       // asset_id: assetId,
+    },
+     headers: {
+      "Content-Type": "multipart/form-data",
     },
   });
 export const getSubGroupsList = async () =>
@@ -1288,10 +1321,12 @@ export const getChecklistTemplate = async () =>
       token: token,
     },
   });
-export const getMasterChecklist = async () =>
+export const getMasterChecklist = async (start_date, end_date) =>
   axiosInstance.get("/checklists/get_master_checklist.json", {
     params: {
       token: token,
+       start_date: start_date,
+      end_date: end_date
     },
   });
 export const exportChecklist = async () =>
@@ -1452,9 +1487,11 @@ export const getRoutineTask = async (
   startDate = null,
   endDate = null,
   status = null,
+  extraParams = {}
 ) => {
   const params = {
     token: token,
+    ...extraParams,
   };
   if (startDate) {
     const formattedStartDate = new Date(startDate).toISOString().split("T")[0];
@@ -1477,11 +1514,15 @@ export const getRoutineTaskStatus = async (
   status = null,
   startDate = null,
   endDate = null,
+    page = 1,
+  perPage = 10
 ) => {
   const token = localStorage.getItem("token");
 
   const params = {
     token,
+      page,
+    per_page: perPage,
   };
 
   if (status) {
@@ -1498,7 +1539,7 @@ export const getRoutineTaskStatus = async (
 
   const response = await axiosInstance.get(
     "/activities/routine_task_counts.json",
-    { params },
+    { params }
   );
 
   return response.data;
