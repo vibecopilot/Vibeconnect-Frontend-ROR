@@ -101,27 +101,43 @@ const AMC = () => {
     let dataToExport = filteredData;
 
     if (startDate && endDate) {
+      // Set end date to 23:59:59.999 so records created on that day are included
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
       dataToExport = filteredData.filter((item) => {
         const createdDate = new Date(item.created_at);
-        return (
-          createdDate >= new Date(startDate) && createdDate <= new Date(endDate)
-        );
+        return createdDate >= new Date(startDate) && createdDate <= end;
       });
     }
 
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    // Map to clean, human-readable column names for the Excel sheet
+    const exportRows = dataToExport.map((item) => ({
+      "Asset Name": item.asset_name || "",
+      "Vendor Name": item.vendor_name || "",
+      "Start Date": item.start_date || "",
+      "End Date": item.end_date || "",
+      "Frequency": item.frequency || "",
+      "AMC Cost": item.amc_cost || "",
+      "Visits": item.visits || "",
+      "Remarks": item.remarks || "",
+      "Created On": item.created_at ? new Date(item.created_at).toLocaleString() : "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportRows);
     const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
     const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
 
-    const data = new Blob([excelBuffer], {
+    const blob = new Blob([excelBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
 
-    const url = URL.createObjectURL(data);
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "AMC_data.xlsx";
+    link.download = `AMC_data${startDate && endDate ? `_${startDate}_to_${endDate}` : ""}.xlsx`;
     link.click();
+    URL.revokeObjectURL(url);
 
     setShowExportModal(false);
     setStartDate("");
