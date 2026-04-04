@@ -136,84 +136,78 @@ const TicketEscalationSetup = () => {
     return `${days} day, ${hours} hr, ${minutesLeft} min`;
   };
 
+  /* -------- DATA FETCHERS (component-level so handlers can call them) -------- */
+
+  const fetchAllCategories = async () => {
+    try {
+      const catResp = await getHelpDeskCategoriesSetup();
+      const transformedCategory = catResp.data.map((category) => ({
+        value: category.id,
+        label: category.name,
+      }));
+      setCategories(transformedCategory);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const fetchSetupUsers = async () => {
+    try {
+      const UsersResp = await getSetupUsers();
+      const usersData = UsersResp?.data?.users || UsersResp?.data || [];
+      const transformedUsers = usersData.map((user) => ({
+        value: Number(user.id),
+        label: `${user.firstname} ${user.lastname}`,
+      }));
+      setUsers(transformedUsers);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Exposed at component scope so all CRUD handlers can refresh the list
+  const fetchEscalation = async () => {
+    try {
+      const escResp = await getHelpDeskEscalationSetup();
+      const FilteredResponse = escResp.data.complaint_workers.filter(
+        (res) => res.esc_type === "response",
+      );
+      const FilteredResolution = escResp.data.complaint_workers.filter(
+        (res) => res.esc_type === "resolution",
+      );
+      setResponseEscalation(FilteredResponse);
+      setResolutionEscalation(FilteredResolution);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    
-    const fetchAllCategories = async () => {
-      try {
-        const catResp = await getHelpDeskCategoriesSetup();
-        const transformedCategory = catResp.data.map((category) => ({
-          value: category.id,
-          label: category.name,
-        }));
-        setCategories(transformedCategory);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
- const fetchSetupUsers = async () => {
-  try {
-    const UsersResp = await getSetupUsers();
-
-    const usersData = UsersResp?.data?.users || UsersResp?.data || [];
-
-    const transformedUsers = usersData.map((user) => ({
-      value: Number(user.id),
-      label: `${user.firstname} ${user.lastname}`,
-    }));
-
-    setUsers(transformedUsers);
-  } catch (error) {
-    console.log(error);
-  }
-};
-    const fetchEscalation = async () => {
-      try {
-        const escResp = await getHelpDeskEscalationSetup();
-        const FilteredResponse = escResp.data.complaint_workers.filter(
-          (res) => res.esc_type === "response",
-        );
-        const FilteredResolution = escResp.data.complaint_workers.filter(
-          (res) => res.esc_type === "resolution",
-        );
-        setResponseEscalation(FilteredResponse);
-        setResolutionEscalation(FilteredResolution);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    // if (resEscalationAdded || resolutionEscalationAdded) {
-    //   fetchEscalation();
-    //   setResEscalationAdded(true);
-    //   setResolutionEscalationAdded(false);
-    // }
-
     fetchAllCategories();
     fetchEscalation();
     fetchSetupUsers();
   }, []);
 
+
+
   const openEditModal = (rule) => {
-    setEditingRule(rule);
+    // Normalise level key so e1/E1 both map to the same slot
+    const normaliseKey = (name) => (name || "").toUpperCase();
 
-    const initialEscalations = {
-      E1: [],
-      E2: [],
-      E3: [],
-      E4: [],
-      E5: [],
-    };
+    const initialEscalations = { E1: [], E2: [], E3: [], E4: [], E5: [] };
 
-    rule.escalations.forEach((level) => {
-      const userIds = level.escalate_to_users_ids || [];
-      const userNames = level.escalate_to_users_names || [];
+    (rule.escalations || []).forEach((level) => {
+      const key = normaliseKey(level.name);
+      if (!initialEscalations.hasOwnProperty(key)) return;
 
-      initialEscalations[level.name] = userIds.map((id, index) => {
+      // API returns "escalate_to_users" (array of string IDs), NOT "escalate_to_users_ids"
+      const userIds   = Array.isArray(level.escalate_to_users)       ? level.escalate_to_users       : [];
+      const userNames = Array.isArray(level.escalate_to_users_names) ? level.escalate_to_users_names : [];
+
+      initialEscalations[key] = userIds.map((id, index) => {
         const matchedUser = users.find((u) => Number(u.value) === Number(id));
-
         return {
-          value: Number(id), // force number
+          value: Number(id),
           label: matchedUser?.label || userNames[index] || `User ${id}`,
         };
       });
@@ -228,10 +222,13 @@ const TicketEscalationSetup = () => {
       escalations: initialEscalations,
     });
 
-    setShowModal(true);
+    setEditingRule(rule); // open modal after data is ready
   };
 
-  const closeEditModal = () => setEditingRule(null);
+  const closeEditModal = () => {
+    setEditingRule(null);
+    setEditResponseData({ id: null, category: null, escalations: { E1: [], E2: [], E3: [], E4: [], E5: [] } });
+  };
   const openCloneModal = (rule) => setCloningRule(rule);
   const closeCloneModal = () => setCloningRule(null);
 
