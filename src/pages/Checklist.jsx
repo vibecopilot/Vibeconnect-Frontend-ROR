@@ -374,14 +374,14 @@ const Checklist = () => {
                 className="bg-red-500 text-white px-4 py-3 rounded-lg flex"
                 style={{ background: themeColor }}
               >
-                <MdClose className="h-5 w-5 mx-1"/> Cancel
+                <MdClose className="h-5 w-5 mx-1" /> Cancel
               </button>
               <button
                 onClick={handleExport}
                 className="bg-green-500 text-white px-4 py-3 rounded-lg flex"
                 style={{ background: themeColor }}
               >
-                <MdFileDownload className="h-5 w-5 mx-1"/> Export
+                <MdFileDownload className="h-5 w-5 mx-1" /> Export
               </button>
             </div>
           </div>
