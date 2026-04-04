@@ -201,9 +201,8 @@ export const EditSiteAsset = async (data, id) =>
     params: {
       token: token,
     },
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    // NOTE: Do NOT set Content-Type manually for FormData.
+    // axios auto-sets 'multipart/form-data; boundary=...' which the server needs.
   });
 // Site Assets API
 export const getSiteAssets = async (siteId, page = 1, perPage = 10) =>
@@ -244,9 +243,8 @@ export const getSiteAssetById = async (id) =>
 
 export const postSiteAsset = async (formData) =>
   axiosInstance.post(`/site_assets.json?token=${token}`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    // NOTE: Do NOT set Content-Type manually for FormData.
+    // axios auto-sets 'multipart/form-data; boundary=...' which the server needs.
   });
 export const updateSiteAsset = async (id, formData) =>
   axiosInstance.put(`/site_assets/${id}.json?token=${token}`, formData, {
@@ -1236,7 +1234,7 @@ export const getAMCDetails = async (assetId) =>
       token: token,
       // asset_id: assetId,
     },
-      headers: {
+    headers: {
       "Content-Type": "multipart/form-data",
     },
   });
@@ -1254,7 +1252,7 @@ export const EditAMCDetails = async (data, id) =>
       token: token,
       // asset_id: assetId,
     },
-     headers: {
+    headers: {
       "Content-Type": "multipart/form-data",
     },
   });
@@ -1325,7 +1323,7 @@ export const getMasterChecklist = async (start_date, end_date) =>
   axiosInstance.get("/checklists/get_master_checklist.json", {
     params: {
       token: token,
-       start_date: start_date,
+      start_date: start_date,
       end_date: end_date
     },
   });
@@ -1514,14 +1512,14 @@ export const getRoutineTaskStatus = async (
   status = null,
   startDate = null,
   endDate = null,
-    page = 1,
+  page = 1,
   perPage = 10
 ) => {
   const token = localStorage.getItem("token");
 
   const params = {
     token,
-      page,
+    page,
     per_page: perPage,
   };
 
@@ -1546,10 +1544,12 @@ export const getRoutineTaskStatus = async (
 };
 
 // ...existing code...
-export const getPPMTask = async () =>
+export const getPPMTask = async (page = 1, perPage = 100) =>
   axiosInstance.get("/activities.json?q[checklist_ctype_eq]=ppm", {
     params: {
       token: token,
+      page,
+      per_page: perPage,
     },
   });
 export const getRoutineTaskDetails = async (assetId, activityId) =>
@@ -2365,19 +2365,6 @@ export const verifyOtpToCheckIn = async (id, otp, mobile) => {
     otp,
   });
 };
-
-// export const updateEventEnableStatus = (id, enabled) =>
-//   axiosInstance.put(
-//     `/events/${id}.json`,
-//     {
-//       event: {
-//         important: enabled,  // <-- correct field
-//       },
-//     },
-//     {
-//       params: { token },
-//     }
-//   );
 
 export const updateEventEnableStatus = (id, enabled) =>
   axiosInstance.put(
