@@ -232,7 +232,7 @@ const AddAsset = () => {
     if (formData.asset_number === "") {
       return toast.error("Please Enter Asset Number");
     }
-    if (formData.equipment_id === "") {
+    if (formData.equipemnt_id === "") {
       return toast.error("Please Enter Equipment Id");
     }
     if (formData.purchase_cost === "") {
@@ -283,7 +283,7 @@ const AddAsset = () => {
         return;
       }
       const formDataSend = new FormData();
-formDataSend.append("site_asset[site_id]", siteId); 
+      formDataSend.append("site_asset[site_id]", siteId);
       formDataSend.append("site_asset[building_id]", formData.building_id);
       formDataSend.append("site_asset[floor_id]", formData.floor_id);
       formDataSend.append("site_asset[unit_id]", formData.unit_id);
@@ -292,7 +292,7 @@ formDataSend.append("site_asset[site_id]", siteId);
       formDataSend.append("site_asset[latitude]", formData.latitude);
       formDataSend.append("site_asset[longitude]", formData.longitude);
       formDataSend.append("site_asset[asset_number]", formData.asset_number);
-      formDataSend.append("site_asset[equipment_id]", formData.equipment_id);
+      formDataSend.append("site_asset[equipemnt_id]", formData.equipemnt_id);
       formDataSend.append("site_asset[serial_number]", formData.serial_number);
       formDataSend.append("site_asset[model_number]", formData.model_number);
       formDataSend.append("site_asset[purchased_on]", formData.purchased_on);
@@ -375,26 +375,26 @@ formDataSend.append("site_asset[site_id]", siteId);
         );
       });
       // Purchase Invoices
-    formData.invoice?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("purchase_invoices[]", actualFile);
-});
+      formData.invoice?.forEach((file) => {
+        const actualFile = file?.file || file;
+        formDataSend.append("purchase_invoices[]", actualFile);
+      });
       // Insurance Files
-     formData.insurance?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("insurances[]", actualFile);
-});
+      formData.insurance?.forEach((file) => {
+        const actualFile = file?.file || file;
+        formDataSend.append("insurances[]", actualFile);
+      });
 
       // Manuals
-    formData.manuals?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("manuals[]", actualFile);
-});
+      formData.manuals?.forEach((file) => {
+        const actualFile = file?.file || file;
+        formDataSend.append("manuals[]", actualFile);
+      });
       // Other Files
-    formData.others?.forEach((file) => {
-  const actualFile = file?.file || file;
-  formDataSend.append("other_files[]", actualFile);
-});
+      formData.others?.forEach((file) => {
+        const actualFile = file?.file || file;
+        formDataSend.append("other_files[]", actualFile);
+      });
 
       formDataSend.append("site_asset[uom]", formData.unit);
       formDataSend.append(
@@ -403,34 +403,34 @@ formDataSend.append("site_asset[site_id]", siteId);
       );
       // formDataSend.append("site_asset[installation]", formData.installation);
       // console.log(formDataSend);
-   const response = await postSiteAsset(formDataSend);
+      const response = await postSiteAsset(formDataSend);
 
-console.log("FULL RESPONSE:", response);
-console.log("FULL RESPONSE DATA:", response.data);
+      console.log("FULL RESPONSE:", response);
+      console.log("FULL RESPONSE DATA:", response.data);
 
-// ❌ Backend validation error
-// if (response?.data?.site) {
-//   toast.dismiss(toastId);
-//   toast.error(response.data.site.join(", "));
-//   return;
-// }
+      // ❌ Backend validation error
+      // if (response?.data?.site) {
+      //   toast.dismiss(toastId);
+      //   toast.error(response.data.site.join(", "));
+      //   return;
+      // }
 
-const assetId =
-  response?.data?.site_asset?.id ||
-  response?.data?.id ||
-  response?.site_asset?.id;
+      const assetId =
+        response?.data?.site_asset?.id ||
+        response?.data?.id ||
+        response?.site_asset?.id;
 
-if (!assetId) {
-  toast.dismiss(toastId);
-  toast.error("Asset created but ID not returned");
-  return;
-}
+      if (!assetId) {
+        toast.dismiss(toastId);
+        toast.error("Asset created but ID not returned");
+        return;
+      }
 
-toast.dismiss(toastId);
-toast.success("Asset Created Successfully");
+      toast.dismiss(toastId);
+      toast.success("Asset Created Successfully");
 
-navigate(`/assets/asset-details/${assetId}`);
-window.scrollTo(0, 0);
+      navigate(`/assets/asset-details/${assetId}`);
+      window.scrollTo(0, 0);
     } catch (error) {
       toast.dismiss();
       console.error("Error:", error);
@@ -661,10 +661,10 @@ window.scrollTo(0, 0);
                   </label>
                   <input
                     type="text"
-                    name="equipment_id"
+                    name="equipemnt_id"
                     id="equipment_id"
                     onChange={handleChange}
-                    value={formData.equipment_id}
+                    value={formData.equipemnt_id}
                     placeholder="Equipment Id"
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   />
