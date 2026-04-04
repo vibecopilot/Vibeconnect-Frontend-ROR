@@ -31,6 +31,9 @@ const AddAMC = () => {
     visits: "",
     remarks: "",
   });
+
+  const [contactFiles, setContactFiles] = useState([]);
+  const [invoiceFiles, setInvoiceFiles] = useState([]);
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -38,6 +41,12 @@ const AddAMC = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleFileChange = (e, type) => {
+    const files = Array.from(e.target.files);
+    if (type === "contacts") setContactFiles(files);
+    else if (type === "invoice") setInvoiceFiles(files);
   };
 
   const fetchVendors = async () => {
@@ -123,36 +132,43 @@ toast.error("Please select Service");
     try {
       const siteId = getItemInLocalStorage("SITEID");
 
-      const payload = {
-        asset_amc: {
-          site_id: siteId, 
-          asset_id: amcFor === "asset" ? formData.asset : null,
-          service_id: amcFor === "service" ? formData.service : null,
-          vendor_id: formData.vendor_id,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          first_service: formData.first_service,
-          frequency: formData.frequency,
-          visits: formData.visits,
-          amc_cost: formData.amc_cost,
-          remarks: formData.remarks,
-        },
-      };
+      // Build FormData so files (attachments) are included in multipart request
+      const payload = new FormData();
+      payload.append("asset_amc[site_id]", siteId);
+      payload.append("asset_amc[asset_id]", amcFor === "asset" ? formData.asset : "");
+      payload.append("asset_amc[service_id]", amcFor === "service" ? formData.service : "");
+      payload.append("asset_amc[vendor_id]", formData.vendor_id);
+      payload.append("asset_amc[start_date]", formData.start_date);
+      payload.append("asset_amc[end_date]", formData.end_date);
+      payload.append("asset_amc[first_service]", formData.first_service);
+      payload.append("asset_amc[frequency]", formData.frequency);
+      payload.append("asset_amc[visits]", formData.visits);
+      payload.append("asset_amc[amc_cost]", formData.amc_cost);
+      payload.append("asset_amc[remarks]", formData.remarks);
 
-      console.log("Submitting AMC:", payload);
+      // Attach contact files
+      contactFiles.forEach((file) => {
+        payload.append("asset_amc[attachments][]", file);
+      });
+
+      // Attach invoice files
+      invoiceFiles.forEach((file) => {
+        payload.append("asset_amc[attachments][]", file);
+      });
+
+      console.log("Submitting AMC with FormData");
 
       const response = await postAMC(payload);
 
       console.log("AMC Saved:", response.data);
 
       toast.success("AMC Saved Successfully");
-setTimeout(() => {
-  navigate("/assets/amc");
-}, 1500);
-      // navigate("/assets/amc");
+      setTimeout(() => {
+        navigate("/assets/amc");
+      }, 1500);
     } catch (error) {
       console.log("AMC Save Error:", error);
-     toast.error("Failed to Save AMC");
+      toast.error("Failed to Save AMC");
     }
   };
 
@@ -370,7 +386,7 @@ setTimeout(() => {
               </p>
               <input
                 type="file"
-                // onChange={(event) => handleFileChange(event, "file1")}
+                onChange={(event) => handleFileChange(event, "contacts")}
                 multiple
               />
             </div>
@@ -380,7 +396,7 @@ setTimeout(() => {
               </p>
               <input
                 type="file"
-                // onChange={(event) => handleFileChange(event, "file2")}
+                onChange={(event) => handleFileChange(event, "invoice")}
                 multiple
               />
             </div>

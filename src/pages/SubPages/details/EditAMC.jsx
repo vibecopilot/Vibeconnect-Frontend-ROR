@@ -21,8 +21,8 @@ const EditAssetAMC = () => {
   const [vendors, setVendors] = useState([]);
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
-      const themeColor = useSelector((state)=> state.theme.color)
-  
+  const themeColor = useSelector((state) => state.theme.color)
+
 
   const [formData, setFormData] = useState({
     asset: "",
@@ -36,6 +36,9 @@ const EditAssetAMC = () => {
     visits: "",
     remarks: "",
   });
+
+  const [contactFiles, setContactFiles] = useState([]);
+  const [invoiceFiles, setInvoiceFiles] = useState([]);
 
   const fetchVendors = async () => {
     try {
@@ -99,20 +102,20 @@ const EditAssetAMC = () => {
         setAmcFor("service");
       }
 
-     setFormData({
-  asset: data.asset_id || "",
-  service: data.service_id || "",
-  vendor_id: data.vendor_id || "",
-  amc_cost: data.amc_cost || "",
-  start_date: data.start_date || "",
-  end_date: data.end_date || "",
-  first_service: data.first_service || "",
-  frequency: data.frequency
-    ? data.frequency.toLowerCase().replace(" ", "_")
-    : "",
-  visits: data.visits || "",
-  remarks: data.remarks || "",
-});
+      setFormData({
+        asset: data.asset_id || "",
+        service: data.service_id || "",
+        vendor_id: data.vendor_id || "",
+        amc_cost: data.amc_cost || "",
+        start_date: data.start_date || "",
+        end_date: data.end_date || "",
+        first_service: data.first_service || "",
+        frequency: data.frequency
+          ? data.frequency.toLowerCase().replace(" ", "_")
+          : "",
+        visits: data.visits || "",
+        remarks: data.remarks || "",
+      });
     } catch (error) {
       console.log("AMC Fetch Error:", error);
     }
@@ -134,6 +137,12 @@ const EditAssetAMC = () => {
     }));
   };
 
+  const handleFileChange = (e, type) => {
+    const files = Array.from(e.target.files);
+    if (type === "contacts") setContactFiles(files);
+    else if (type === "invoice") setInvoiceFiles(files);
+  };
+
   const handleSubmit = async () => {
     if (amcFor === "asset" && !formData.asset) {
       toast.error("Please select asset");
@@ -153,23 +162,32 @@ const EditAssetAMC = () => {
     try {
       const siteId = getItemInLocalStorage("SITEID");
 
-      const payload = {
-        asset_amc: {
-          site_id: siteId,
-          asset_id: amcFor === "asset" ? formData.asset : null,
-          service_id: amcFor === "service" ? formData.service : null,
-          vendor_id: formData.vendor_id,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          first_service: formData.first_service,
-          frequency: formData.frequency,
-          visits: formData.visits,
-          amc_cost: formData.amc_cost,
-          remarks: formData.remarks,
-        },
-      };
+      // Build FormData so files (attachments) are included in multipart request
+      const payload = new FormData();
+      payload.append("asset_amc[site_id]", siteId);
+      payload.append("asset_amc[asset_id]", amcFor === "asset" ? formData.asset : "");
+      payload.append("asset_amc[service_id]", amcFor === "service" ? formData.service : "");
+      payload.append("asset_amc[vendor_id]", formData.vendor_id);
+      payload.append("asset_amc[start_date]", formData.start_date);
+      payload.append("asset_amc[end_date]", formData.end_date);
+      payload.append("asset_amc[first_service]", formData.first_service);
+      payload.append("asset_amc[frequency]", formData.frequency);
+      payload.append("asset_amc[visits]", formData.visits);
+      payload.append("asset_amc[amc_cost]", formData.amc_cost);
+      payload.append("asset_amc[remarks]", formData.remarks);
 
-await EditAMCDetails(id, payload); 
+      // Attach contact files
+      contactFiles.forEach((file) => {
+        payload.append("asset_amc[amc_contacts][]", file);
+      });
+
+      // Attach invoice files
+      invoiceFiles.forEach((file) => {
+        payload.append("asset_amc[terms][]", file);
+      });
+
+      // Fixed: was EditAMCDetails(id, payload) — args were swapped
+      await EditAMCDetails(payload, id);
       toast.success("AMC Updated Successfully");
 
       setTimeout(() => {
@@ -201,18 +219,16 @@ await EditAMCDetails(id, payload);
             <p className="font-semibold">AMC for :</p>
 
             <p
-              className={`font-medium p-1 px-4 rounded-full cursor-pointer ${
-                amcFor === "asset" && "bg-black text-white"
-              }`}
+              className={`font-medium p-1 px-4 rounded-full cursor-pointer ${amcFor === "asset" && "bg-black text-white"
+                }`}
               onClick={() => setAmcFor("asset")}
             >
               Asset
             </p>
 
             <p
-              className={`font-medium p-1 px-4 rounded-full cursor-pointer ${
-                amcFor === "service" && "bg-black text-white"
-              }`}
+              className={`font-medium p-1 px-4 rounded-full cursor-pointer ${amcFor === "service" && "bg-black text-white"
+                }`}
               onClick={() => setAmcFor("service")}
             >
               Service
@@ -287,7 +303,7 @@ await EditAMCDetails(id, payload);
             AMC Details
           </h2>
 
-           <div className="grid md:grid-cols-3 gap-5">
+          <div className="grid md:grid-cols-3 gap-5">
             <div className="flex flex-col">
               <label htmlFor="" className="font-semibold">
                 Cost :
@@ -388,7 +404,7 @@ await EditAMCDetails(id, payload);
               </p>
               <input
                 type="file"
-                // onChange={(event) => handleFileChange(event, "file1")}
+                onChange={(event) => handleFileChange(event, "contacts")}
                 multiple
               />
             </div>
@@ -398,7 +414,7 @@ await EditAMCDetails(id, payload);
               </p>
               <input
                 type="file"
-                // onChange={(event) => handleFileChange(event, "file2")}
+                onChange={(event) => handleFileChange(event, "invoice")}
                 multiple
               />
             </div>
