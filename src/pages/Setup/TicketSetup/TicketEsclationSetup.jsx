@@ -235,21 +235,23 @@ const TicketEscalationSetup = () => {
   const openResolutionEditModal = (rule) => {
     setEditingResolutionRule(rule);
 
+    const normaliseKey = (name) => (name || "").toUpperCase();
+
     const initialEscalations = JSON.parse(
       JSON.stringify(initialResolutionEscalationData),
     );
 
-    rule.escalations.forEach((level) => {
-      const levelName = level.name;
+    (rule.escalations || []).forEach((level) => {
+      const key = normaliseKey(level.name);
 
-      const userIds = level.escalate_to_users_ids || [];
-      const userNames = level.escalate_to_users_names || [];
+      // API field is "escalate_to_users" (NOT "escalate_to_users_ids")
+      const userIds   = Array.isArray(level.escalate_to_users)       ? level.escalate_to_users       : [];
+      const userNames = Array.isArray(level.escalate_to_users_names) ? level.escalate_to_users_names : [];
 
       const levelUsers = userIds.map((id, index) => {
         const matchedUser = users.find((u) => Number(u.value) === Number(id));
-
         return {
-          value: Number(id), // force number
+          value: Number(id),
           label: matchedUser?.label || userNames[index] || `User ${id}`,
         };
       });
@@ -257,19 +259,17 @@ const TicketEscalationSetup = () => {
       const timeFields = {};
       ["p1", "p2", "p3", "p4", "p5"].forEach((pField) => {
         const totalMinutes = level[pField] || 0;
-
-        const days = Math.floor(totalMinutes / (24 * 60));
-        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+        const days    = Math.floor(totalMinutes / (24 * 60));
+        const hours   = Math.floor((totalMinutes % (24 * 60)) / 60);
         const minutes = totalMinutes % 60;
-
         timeFields[pField] = {
           days: String(days),
-          hrs: String(hours),
-          min: String(minutes),
+          hrs:  String(hours),
+          min:  String(minutes),
         };
       });
 
-      initialEscalations[levelName] = {
+      initialEscalations[key] = {
         users: levelUsers,
         ...timeFields,
       };
@@ -284,10 +284,14 @@ const TicketEscalationSetup = () => {
       escalations: initialEscalations,
     });
 
-    setShowModal3(true); // IMPORTANT: open modal
+    setEditingResolutionRule(rule); // open modal after data is ready
   };
 
-  const closeResolutionEditModal = () => setEditingResolutionRule(null);
+  const closeResolutionEditModal = () => {
+    setEditingResolutionRule(null);
+    // Reset so stale data never leaks into the next edit session
+    setEditResolutionData({ id: null, category: null, escalations: initialResolutionEscalationData });
+  };
 
   const handleChange = (selected, type, level = null) => {
     if (type === "categories") {
