@@ -4,7 +4,7 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import { ImEye } from "react-icons/im";
 import { Link } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import { getEvents,updateEventEnableStatus  } from "../../api";
+import { getEvents, updateEventEnableStatus } from "../../api";
 import { BsEye } from "react-icons/bs";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
@@ -40,39 +40,39 @@ const Events = () => {
     return date.toLocaleDateString();
   };
 
-    // 🔥 FIXED: Toggle without moving row
- const handleToggle = async (id) => {
-  const eventItem = events.find((e) => e.id === id);
-  if (!eventItem) return;
+  // 🔥 FIXED: Toggle without moving row
+  const handleToggle = async (id) => {
+    const eventItem = events.find((e) => e.id === id);
+    if (!eventItem) return;
 
-  const previousStatus = eventItem.enabled;  // Assuming 'completed' field for event status
-  const newStatus = !previousStatus;  // Toggle status between completed and not completed
+    const previousStatus = eventItem.enabled;  // Assuming 'completed' field for event status
+    const newStatus = !previousStatus;  // Toggle status between completed and not completed
 
-  const updateLocal = (status) => {
-    setEvents((prev) =>
-      prev.map((ev) =>
-        ev.id === id ? { ...ev, enabled: status } : ev
-      )
-    );
+    const updateLocal = (status) => {
+      setEvents((prev) =>
+        prev.map((ev) =>
+          ev.id === id ? { ...ev, enabled: status } : ev
+        )
+      );
 
-    setFilteredData((prev) =>
-      prev.map((ev) =>
-        ev.id === id ? { ...ev, enabled: status } : ev
-      )
-    );
+      setFilteredData((prev) =>
+        prev.map((ev) =>
+          ev.id === id ? { ...ev, enabled: status } : ev
+        )
+      );
+    };
+
+    // Update UI immediately
+    updateLocal(newStatus);
+
+    try {
+      await updateEventEnableStatus(id, newStatus); // Assuming this API call updates the status
+      toast.success(newStatus ? "Event Completed" : "Event In Progress");
+    } catch (err) {
+      toast.error("Failed to update status");
+      updateLocal(previousStatus); // revert to previous status on failure
+    }
   };
-
-  // Update UI immediately
-  updateLocal(newStatus);
-
-  try {
-    await updateEventEnableStatus(id, newStatus); // Assuming this API call updates the status
-    toast.success(newStatus ? "Event Completed" : "Event In Progress");
-  } catch (err) {
-    toast.error("Failed to update status");
-    updateLocal(previousStatus); // revert to previous status on failure
-  }
-};
 
   const column = [
     {
@@ -112,19 +112,18 @@ const Events = () => {
       selector: (row) => row.scheduledOn,
       sortable: true,
     },
-   {
-  name: "Status",
-  cell: (row) => (
-    <span
-      className={`px-2 py-1 rounded text-white text-xs ${
-        row.enabled ? "bg-green-600" : "bg-red-500"
-      }`}
-    >
-      {row.enabled ? "Completed" : "In Progress"}
-    </span>
-  ),
-  sortable: true,
-},  
+    {
+      name: "Status",
+      cell: (row) => (
+        <span
+          className={`px-2 py-1 rounded text-white text-xs ${row.enabled ? "bg-green-600" : "bg-red-500"
+            }`}
+        >
+          {row.enabled ? "Completed" : "In Progress"}
+        </span>
+      ),
+      sortable: true,
+    },
     {
       name: "Expired",
       selector: (row) => row.bookingStatus,
@@ -136,7 +135,7 @@ const Events = () => {
       sortable: true,
     },
     {
-        name: "Enable / Disable",
+      name: "Enable / Disable",
       cell: (row) => (
         <label className="relative inline-flex items-center cursor-pointer">
           <input

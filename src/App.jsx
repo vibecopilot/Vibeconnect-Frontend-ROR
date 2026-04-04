@@ -933,7 +933,7 @@ function App() {
             const entry = v.visits_log.find((l) => l.check_in);
             if (entry) checkInTime = entry.check_in;
           }
-            // Fallback to expected date/time if actual check-in not available
+          // Fallback to expected date/time if actual check-in not available
           if (!checkInTime && v.expected_date && v.expected_time) {
             checkInTime = `${v.expected_date}T${v.expected_time}`;
           }
@@ -1086,7 +1086,7 @@ function App() {
           path="/grouped-dashboard"
           element={
             // <ProtectedAdminRoutes>
-              <GroupedDashboardPage />
+            <GroupedDashboardPage />
             // </ProtectedAdminRoutes>
           }
         />
@@ -1115,8 +1115,8 @@ function App() {
           path="/attendance"
           element={
             // <ProtectedAdminRoutes>
-              // {" "}
-              <Attendance />
+            // {" "}
+            <Attendance />
             // </ProtectedAdminRoutes>
           }
         />
@@ -1124,8 +1124,8 @@ function App() {
           path="/rmb-attendance"
           element={
             // <ProtectedAdminRoutes>
-              // {" "}
-              <RmbAttendance />
+            // {" "}
+            <RmbAttendance />
             // </ProtectedAdminRoutes>
           }
         />
@@ -1334,7 +1334,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        
+
         <Route
           path="/setup/users-details/:id"
           element={
@@ -1347,9 +1347,9 @@ function App() {
         <Route
           path="/setup/edit-user/:id"
           element={
-          <ProtectedAdminRoutes>
-          <EditUser />
-          </ProtectedAdminRoutes>
+            <ProtectedAdminRoutes>
+              <EditUser />
+            </ProtectedAdminRoutes>
           }
         />
 
@@ -1576,13 +1576,13 @@ function App() {
           element={<BookingDetails />}
         />
         <Route
-            path="/setup/facility-details/:id"
-            element={<BookingFacilityDetails />}
-          />
+          path="/setup/facility-details/:id"
+          element={<BookingFacilityDetails />}
+        />
         <Route
-            path="/setup/facility-details/edit/:id"
-            element={<EditAmenitySetup />}
-          />
+          path="/setup/facility-details/edit/:id"
+          element={<EditAmenitySetup />}
+        />
         <Route
           path="/setup/facility"
           element={
@@ -1918,7 +1918,7 @@ function App() {
         />
         <Route
           path="/admin/parking-view-details/:id"
-          element={ 
+          element={
             <ProtectedAdminRoutes>
               <ParkingViewDetails />
             </ProtectedAdminRoutes>
@@ -1926,7 +1926,7 @@ function App() {
         />
         <Route
           path="/admin/parking/edit-parking/:id"
-          element={ 
+          element={
             <ProtectedAdminRoutes>
               <EditParking />
             </ProtectedAdminRoutes>
@@ -1943,23 +1943,23 @@ function App() {
           }
         />
 
-          <Route
-            path="/admin/modern-parking-config"
-            element={
-              <ProtectedAdminRoutes>
-                <ModernParkingConfig />
-              </ProtectedAdminRoutes>
-            }
-          />
+        <Route
+          path="/admin/modern-parking-config"
+          element={
+            <ProtectedAdminRoutes>
+              <ModernParkingConfig />
+            </ProtectedAdminRoutes>
+          }
+        />
 
-          <Route
-            path="/admin/Vehicle-setup"
-            element={
-              <ProtectedAdminRoutes>
-                <VehicleSetup />
-              </ProtectedAdminRoutes>
-            }
-          />
+        <Route
+          path="/admin/Vehicle-setup"
+          element={
+            <ProtectedAdminRoutes>
+              <VehicleSetup />
+            </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/admin/add-parking-config"
@@ -2267,7 +2267,7 @@ function App() {
           }
         />
 
-{/* 
+        {/* 
       <Route path="/soft-service" element={<Layout />}>
   <Route
     path="schedule-task-details/:id/:taskId"
@@ -2276,7 +2276,7 @@ function App() {
 </Route> */}
 
 
-<Route path="/soft-service/schedule-task-details/:id/:taskId" element={<ServiceTaskDetails />} />
+        <Route path="/soft-service/schedule-task-details/:id/:taskId" element={<ServiceTaskDetails />} />
 
         <Route
           path="/admin/copy-checklist/:id"
@@ -2721,7 +2721,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        
+
         {/*
            <Route
             path="/employee/rvehiclesdetails/:id"
@@ -2823,7 +2823,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-                <Route
+        <Route
           path="/admin/passes/visitors/visitor-details/:id"
           element={
             <ProtectedAdminRoutes>
@@ -2848,8 +2848,8 @@ function App() {
           }
         />
         <Route
-             path="/admin/rvehicles/view/:id"
-             element={<RVehiclesView />}
+          path="/admin/rvehicles/view/:id"
+          element={<RVehiclesView />}
         />
         <Route
           path="/admin/passes/guest-vehicles"
@@ -4081,58 +4081,58 @@ function App() {
           }
         />
 
-{/*  Fit-Out OSR */ }
-          <Route
-            path="/fitout/list"
-            element={
-              <ProtectedRoute>
-                <FitOutList />
-              </ProtectedRoute>
-            }
-          />
+        {/*  Fit-Out OSR */}
+        <Route
+          path="/fitout/list"
+          element={
+            <ProtectedRoute>
+              <FitOutList />
+            </ProtectedRoute>
+          }
+        />
 
-             <Route path="/fitout/setup" element={<FitOutSetup />} />
-          <Route path="/fitout/setup/page" element={<FitOutSetupPage />} />
-          <Route
-            path="/fitout/request/create"
-            element={<FitOutRequestPage />}
-          />
-          <Route path="/fitout/request/list" element={<RequestListPage />} />
-          <Route
-            path="/fitout/checklist/create"
-            element={<FitOutChecklistPage />}
-          />
-          <Route
-            path="/fitout/checklist/form/:id"
-            element={<ChecklistForm />}
-          />
-          <Route
-            path="/fitout/checklist/answer-details/:id"
-            element={<SnagAnswerDetails />}
-          />
-          <Route
-            path="/fitout/snag-answer-details/:id"
-            element={<SnagAnswerDetails />}
-          />
+        <Route path="/fitout/setup" element={<FitOutSetup />} />
+        <Route path="/fitout/setup/page" element={<FitOutSetupPage />} />
+        <Route
+          path="/fitout/request/create"
+          element={<FitOutRequestPage />}
+        />
+        <Route path="/fitout/request/list" element={<RequestListPage />} />
+        <Route
+          path="/fitout/checklist/create"
+          element={<FitOutChecklistPage />}
+        />
+        <Route
+          path="/fitout/checklist/form/:id"
+          element={<ChecklistForm />}
+        />
+        <Route
+          path="/fitout/checklist/answer-details/:id"
+          element={<SnagAnswerDetails />}
+        />
+        <Route
+          path="/fitout/snag-answer-details/:id"
+          element={<SnagAnswerDetails />}
+        />
 
-          <Route
-            path="/fitout/checklist/list"
-            element={<FitoutChecklistList />}
-          />{/*  */}
+        <Route
+          path="/fitout/checklist/list"
+          element={<FitoutChecklistList />}
+        />{/*  */}
 
 
-          {/* OSR */}
+        {/* OSR */}
 
-         <Route path="/additional-service" element={<Osr />} />
-          <Route path="/ors-dashboard" element={<OSRDashboard />} />
-          <Route path="/ors-setups" element={<OrsSetup />} />
-           <Route path="/service-booking" element={<ServiceBooking />} />
-          <Route
-            path="/admin/unit-configurations"
-            element={<UnitConfigurations />}
-          />
-          <Route path="/admin/bookings" element={<AdminBookings />} />
-          <Route path="/residential/bookings" element={<MyBookings />} />
+        <Route path="/additional-service" element={<Osr />} />
+        <Route path="/ors-dashboard" element={<OSRDashboard />} />
+        <Route path="/ors-setups" element={<OrsSetup />} />
+        <Route path="/service-booking" element={<ServiceBooking />} />
+        <Route
+          path="/admin/unit-configurations"
+          element={<UnitConfigurations />}
+        />
+        <Route path="/admin/bookings" element={<AdminBookings />} />
+        <Route path="/residential/bookings" element={<MyBookings />} />
 
         {/* admin booking & req */}
         <Route
@@ -7075,14 +7075,14 @@ function App() {
         />
 
         <Route
-        path="/visitor_details/:id"
-        element={<SelfRegistrationDetails />}
-       />
+          path="/visitor_details/:id"
+          element={<SelfRegistrationDetails />}
+        />
 
-  <Route
-    path="/edit_visitor/:id"
-    element={<EditSelfRegistration />}
-  />
+        <Route
+          path="/edit_visitor/:id"
+          element={<EditSelfRegistration />}
+        />
         <Route
           path="/setup/visitor-setup"
           element={
@@ -7597,16 +7597,16 @@ function App() {
           element={<MycityPrivacy />}
         />
 
-      <Route
-        path="/admin/reading-dashboard"
-        element={
-          <ProtectedAdminRoutes>
-            <ReadingDashboard />
-          </ProtectedAdminRoutes>
-        }
-      />
+        <Route
+          path="/admin/reading-dashboard"
+          element={
+            <ProtectedAdminRoutes>
+              <ReadingDashboard />
+            </ProtectedAdminRoutes>
+          }
+        />
 
-      {/* <Route 
+        {/* <Route 
         path="/admin/ppm-calendar-dashboard"
         element={
           <ProtectedAdminRoutes>  
@@ -7615,33 +7615,33 @@ function App() {
         }
       /> */}
 
-      <Route 
-        path="/admin/visitors-dashboard"
-        element={
-          <ProtectedAdminRoutes>  
-            <VisitorsDashboard />
-          </ProtectedAdminRoutes>
-        }
-      />
-      <Route
-        path="/admin/visitors-analytics-dashboard"
-        element={
-          <ProtectedAdminRoutes>
-            <VisitorsAnalyticsDashboard />
-          </ProtectedAdminRoutes>
-        }
-      />
-      {/* <Route path="/setup/Pets" element={<Pets />} />
+        <Route
+          path="/admin/visitors-dashboard"
+          element={
+            <ProtectedAdminRoutes>
+              <VisitorsDashboard />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/visitors-analytics-dashboard"
+          element={
+            <ProtectedAdminRoutes>
+              <VisitorsAnalyticsDashboard />
+            </ProtectedAdminRoutes>
+          }
+        />
+        {/* <Route path="/setup/Pets" element={<Pets />} />
       
        <Route path="/pets/add" element={<PetsAdd />} /> */}
 
 
-     
-      <Route path="/setup/pets" element={<Pets />} />
-      <Route path="/setup/pets/add" element={<PetsAdd />} />
-      <Route path="/setup/pets/view/:id" element={<PetsView />} />
-      <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
-      <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
+
+        <Route path="/setup/pets" element={<Pets />} />
+        <Route path="/setup/pets/add" element={<PetsAdd />} />
+        <Route path="/setup/pets/view/:id" element={<PetsView />} />
+        <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
+        <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
 
 
 
