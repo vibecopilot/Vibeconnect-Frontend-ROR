@@ -183,7 +183,7 @@ const EditAssetAMC = () => {
 
       // Attach invoice files
       invoiceFiles.forEach((file) => {
-        payload.append("asset_amc[terms][]", file);
+        payload.append("asset_amc[amc_invoices][]", file);
       });
 
       // Fixed: was EditAMCDetails(id, payload) — args were swapped
