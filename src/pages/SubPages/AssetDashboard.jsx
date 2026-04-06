@@ -3,6 +3,7 @@ import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import * as XLSX from "xlsx";
 
 import {
   FaBuilding,
@@ -330,6 +331,193 @@ function AssetDashboard() {
   const handleRoutinePendingDownload = mkDownload(getRoutinePendingDownload, "routine_pending_file.xlsx", "Routine Pending");
   const handleRoutineCompleteDownload = mkDownload(getRoutineCompleteDownload, "routine_complete_file.xlsx", "Routine Complete");
 
+  /* ── Chart-specific Excel export helpers ────────────────────────────── */
+
+  /** Fetch ALL pages of records for a given countType from the drill-down API.
+   *  Handles two possible response shapes:
+   *    (A) nested  → res.data[countType].records   (e.g. res.data.ppm_overdue.records)
+   *    (B) flat    → res.data.records
+   */
+  const fetchAllPages = async (countType) => {
+    const allRecords = [];
+    let page = 1;
+    while (true) {
+      const res = await getSiteAssetsDashboard(countType, countType, page, fmtDate(activeStartDate), fmtDate(activeEndDate));
+      const data = res?.data || {};
+
+      // Shape (A): nested under countType key
+      const nested = data[countType];
+      const isNestedObj = nested && typeof nested === "object" && !Array.isArray(nested);
+      const bucket = isNestedObj ? nested : data;
+
+      const records = Array.isArray(bucket.records) ? bucket.records : [];
+      // Debug — check browser DevTools console if records still appear empty
+      console.log(`[fetchAllPages] ${countType} page=${page}`, {
+        dataKeys: Object.keys(data),
+        bucketKeys: Object.keys(bucket),
+        recordCount: records.length,
+        totalPages: bucket.total_pages,
+      });
+
+      allRecords.push(...records);
+      const totalPages = Number(bucket.total_pages) || 1;
+      if (page >= totalPages || records.length === 0) break;
+      page++;
+    }
+    console.log(`[fetchAllPages] ${countType} TOTAL records:`, allRecords.length);
+    return allRecords;
+  };
+
+  /**
+   * Build and trigger an xlsx download with two sheets:
+   *   Sheet 1 – "Summary"  : count totals per slice
+   *   Sheet 2 – "Records"  : all detailed rows (with a Status column prepended)
+   */
+  const exportChartToXlsx = (summaryRows, detailRows, filename) => {
+    const wb = XLSX.utils.book_new();
+
+    // Sheet 1 — Summary
+    const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+
+    // Sheet 2 — Details (only if records exist)
+    if (detailRows.length > 0) {
+      const wsDetails = XLSX.utils.json_to_sheet(detailRows);
+      XLSX.utils.book_append_sheet(wb, wsDetails, "Records");
+    }
+
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  /**
+   * Flatten an ASSET record (assets_in_use / assets_in_breakdown).
+   * API fields: name, asset_number, building_name, floor_name, unit_name,
+   *             asset_group_name, vendor_name, breakdown
+   */
+  const flattenAssetRecord = (r, status) => ({
+    "Status": status,
+    "Asset Name": r.name ?? "—",
+    "Asset No.": r.asset_number ?? "—",
+    "Building": r.building_name ?? "—",
+    "Floor": r.floor_name ?? "—",
+    "Unit": r.unit_name ?? "—",
+    "Group": r.asset_group_name ?? "—",
+    "Vendor": r.vendor_name ?? "—",
+    "Breakdown": r.breakdown !== undefined ? (r.breakdown ? "Yes" : "No") : "—",
+    "Created On": r.created_at ? new Date(r.created_at).toLocaleDateString("en-IN") : "—",
+  });
+
+  /**
+   * Flatten an ACTIVITY record (ppm_overdue, ppm_complete,
+   *                              routine_task_overdue, routine_task_complete).
+   * API fields: asset_name (or name), checklist_name, status,
+   *             assigned_to / assigned_to_name, start_time, created_at
+   */
+  const flattenActivityRecord = (r, status) => ({
+    "Status": status,
+    "Asset Name": r.asset_name ?? r.name ?? "—",
+    "Checklist": r.checklist_name ?? "—",
+    "Assigned To": Array.isArray(r.assigned_to)
+      ? (r.assigned_to.join(", ") || "Unassigned")
+      : (r.assigned_to_name ?? r.assigned_name ?? "Unassigned"),
+    "Start Time": r.start_time ? new Date(r.start_time).toLocaleDateString("en-IN") : "—",
+    "Created On": r.created_at ? new Date(r.created_at).toLocaleDateString("en-IN") : "—",
+  });
+
+  /* ── Total Asset chart download ──────────────────────────────────────── */
+  const handleAssetChartDownload = async () => {
+    const id = toast.loading("Preparing Asset report…");
+    try {
+      const [inUseRecs, breakdownRecs] = await Promise.all([
+        fetchAllPages("assets_in_use"),
+        fetchAllPages("assets_in_breakdown"),
+      ]);
+
+      const summaryRows = [
+        { "Category": "In Use Asset", "Count": counts.assets_in_use },
+        { "Category": "Asset Breakdown", "Count": counts.assets_in_breakdown },
+        { "Category": "Total", "Count": counts.assets_in_use + counts.assets_in_breakdown },
+      ];
+      const detailRows = [
+        ...inUseRecs.map((r) => flattenAssetRecord(r, "In Use")),
+        ...breakdownRecs.map((r) => flattenAssetRecord(r, "Breakdown")),
+      ];
+
+      exportChartToXlsx(summaryRows, detailRows, "Total_Asset_Chart.xlsx");
+      toast.dismiss(id);
+      toast.success("Asset report downloaded");
+    } catch (err) {
+      console.error(err);
+      toast.dismiss(id);
+      toast.error("Failed to download Asset report");
+    }
+  };
+
+  /* ── Total PPM chart download ─────────────────────────────────────────── */
+  const handlePPMChartDownload = async () => {
+    const id = toast.loading("Preparing PPM report…");
+    try {
+      const [overdueRecs, completeRecs] = await Promise.all([
+        fetchAllPages("ppm_overdue"),
+        fetchAllPages("ppm_complete"),
+      ]);
+
+      const summaryRows = [
+        { "Category": "PPM Overdue", "Count": counts.ppm_overdue },
+        { "Category": "PPM Complete", "Count": counts.ppm_complete },
+        { "Category": "Total", "Count": counts.ppm_overdue + counts.ppm_complete },
+      ];
+      const detailRows = [
+        ...overdueRecs.map((r) => flattenActivityRecord(r, "Overdue")),
+        ...completeRecs.map((r) => flattenActivityRecord(r, "Complete")),
+      ];
+
+      exportChartToXlsx(summaryRows, detailRows, "Total_PPM_Chart.xlsx");
+      toast.dismiss(id);
+      toast.success("PPM report downloaded");
+    } catch (err) {
+      console.error(err);
+      toast.dismiss(id);
+      toast.error("Failed to download PPM report");
+    }
+  };
+
+  /* ── Total Routine Task chart download ───────────────────────────────── */
+  const handleRoutineChartDownload = async () => {
+    const id = toast.loading("Preparing Routine Task report…");
+    try {
+      const [overdueRecs, completeRecs] = await Promise.all([
+        fetchAllPages("routine_task_overdue"),
+        fetchAllPages("routine_task_complete"),
+      ]);
+
+      const summaryRows = [
+        { "Category": "Routine Overdue", "Count": counts.routine_task_overdue },
+        { "Category": "Routine Complete", "Count": counts.routine_task_complete },
+        { "Category": "Total", "Count": counts.routine_task_overdue + counts.routine_task_complete },
+      ];
+      const detailRows = [
+        ...overdueRecs.map((r) => flattenActivityRecord(r, "Overdue")),
+        ...completeRecs.map((r) => flattenActivityRecord(r, "Complete")),
+      ];
+
+      exportChartToXlsx(summaryRows, detailRows, "Total_Routine_Chart.xlsx");
+      toast.dismiss(id);
+      toast.success("Routine Task report downloaded");
+    } catch (err) {
+      console.error(err);
+      toast.dismiss(id);
+      toast.error("Failed to download Routine Task report");
+    }
+  };
+
   /* ✅ Card definitions now read from counts state */
   const cardData = [
     { title: "Total Asset", count: counts.total_assets, downloadHandler: handleTotalAssetDownload, icon: <FiBriefcase className="w-4 h-4" /> },
@@ -531,9 +719,9 @@ function AssetDashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6 mx-3">
-        <ChartCard title="Total Asset" trendPercent={20.7} trendDirection="down" onDownload={handleTotalAssetDownload} chartType={assetChartType} setChartType={setAssetChartType} options={totalAssetOptions} />
-        <ChartCard title="Total PPM" trendPercent={21.7} trendDirection="down" onDownload={handleScheduledDownload} chartType={ppmChartType} setChartType={setPPMChartType} options={totalPPMOptions} />
-        <ChartCard title="Total Routine Task" trendPercent={10.2} trendDirection="up" onDownload={handleRoutineScheduledDownload} chartType={routineChartType} setChartType={setRoutineChartType} options={totalRoutineOptions} />
+        <ChartCard title="Total Asset" trendPercent={20.7} trendDirection="down" onDownload={handleAssetChartDownload} chartType={assetChartType} setChartType={setAssetChartType} options={totalAssetOptions} />
+        <ChartCard title="Total PPM" trendPercent={21.7} trendDirection="down" onDownload={handlePPMChartDownload} chartType={ppmChartType} setChartType={setPPMChartType} options={totalPPMOptions} />
+        <ChartCard title="Total Routine Task" trendPercent={10.2} trendDirection="up" onDownload={handleRoutineChartDownload} chartType={routineChartType} setChartType={setRoutineChartType} options={totalRoutineOptions} />
       </div>
 
       {/* Detail Popup */}
