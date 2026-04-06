@@ -34,6 +34,7 @@ const AddAMC = () => {
 
   const [contactFiles, setContactFiles] = useState([]);
   const [invoiceFiles, setInvoiceFiles] = useState([]);
+  const [termsFiles, setTermsFiles] = useState([]); 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -47,6 +48,7 @@ const AddAMC = () => {
     const files = Array.from(e.target.files);
     if (type === "contacts") setContactFiles(files);
     else if (type === "invoice") setInvoiceFiles(files);
+      else if (type === "terms") setTermsFiles(files); 
   };
 
   const fetchVendors = async () => {
@@ -134,26 +136,29 @@ const AddAMC = () => {
 
       // Build FormData so files (attachments) are included in multipart request
       const payload = new FormData();
-      payload.append("asset_amc[site_id]", siteId);
-      payload.append("asset_amc[asset_id]", amcFor === "asset" ? formData.asset : "");
-      payload.append("asset_amc[service_id]", amcFor === "service" ? formData.service : "");
-      payload.append("asset_amc[vendor_id]", formData.vendor_id);
-      payload.append("asset_amc[start_date]", formData.start_date);
-      payload.append("asset_amc[end_date]", formData.end_date);
-      payload.append("asset_amc[first_service]", formData.first_service);
-      payload.append("asset_amc[frequency]", formData.frequency);
-      payload.append("asset_amc[visits]", formData.visits);
-      payload.append("asset_amc[amc_cost]", formData.amc_cost);
-      payload.append("asset_amc[remarks]", formData.remarks);
+
+// ✅ Remove site_id and service_id — not in expected payload
+payload.append("asset_amc[asset_id]", amcFor === "asset" ? formData.asset : "");
+payload.append("asset_amc[vendor_id]", formData.vendor_id);
+payload.append("asset_amc[start_date]", formData.start_date);
+payload.append("asset_amc[end_date]", formData.end_date);
+payload.append("asset_amc[first_service]", formData.first_service);
+payload.append("asset_amc[frequency]", formData.frequency);
+payload.append("asset_amc[visits]", formData.visits);
+payload.append("asset_amc[amc_cost]", formData.amc_cost);
+payload.append("asset_amc[remarks]", formData.remarks);
 
       // Attach contact files
-      contactFiles.forEach((file) => {
-        payload.append("asset_amc[amc_contacts][]", file);
+      termsFiles.forEach((file) => {
+        payload.append("terms[]", file);
       });
 
-      // Attach invoice files
+      // ✅ Already correct
+      contactFiles.forEach((file) => {
+        payload.append("amc_contacts[]", file);
+      });
       invoiceFiles.forEach((file) => {
-        payload.append("asset_amc[amc_invoices][]", file);
+        payload.append("amc_invoices[]", file);
       });
 
       console.log("Submitting AMC with FormData");
@@ -377,11 +382,9 @@ const AddAMC = () => {
               className="border border-black rounded-md px-2"
             />
           </div>
-          <div className="flex flex-col gap-2">
+           <div className="flex flex-col gap-2">
             <div>
-              <p className="border-b border-black my-1 font-semibold">
-                AMC Contacts
-              </p>
+              <p className="border-b border-black my-1 font-semibold">AMC Contacts</p>
               <input
                 type="file"
                 onChange={(event) => handleFileChange(event, "contacts")}
@@ -389,12 +392,19 @@ const AddAMC = () => {
               />
             </div>
             <div>
-              <p className="border-b border-black my-1 font-semibold">
-                AMC Invoice
-              </p>
+              <p className="border-b border-black my-1 font-semibold">AMC Invoice</p>
               <input
                 type="file"
                 onChange={(event) => handleFileChange(event, "invoice")}
+                multiple
+              />
+            </div>
+            {/* ✅ Add this new Terms section */}
+            <div>
+              <p className="border-b border-black my-1 font-semibold">Terms</p>
+              <input
+                type="file"
+                onChange={(event) => handleFileChange(event, "terms")}
                 multiple
               />
             </div>
