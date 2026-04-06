@@ -800,28 +800,28 @@ export const postHelpDeskStatus = async (formData) =>
     },
   });
 
-export const updateHelpDeskStatus = async (id, formData) => {
+// export const updateHelpDeskStatus = async (id, formData) => {
 
 
-  return axiosInstance.put(
-    `/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`,
-    formData,
-    {
-      params: { token },
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-};
+//   return axiosInstance.put(
+//     `/pms/admin/helpdesk_categories/complaint_statuses/${id}.json`,
+//     formData,
+//     {
+//       params: { token },
+//       headers: {
+//         "Content-Type": "multipart/form-data",
+//       },
+//     }
+//   );
+// };
 // HelpDesk Status API
 
-// export const updateHelpDeskStatus = async (id, formData) =>
-//   axiosInstance.put(`/pms/admin/modify_complaint_status/${id}.json?token=${token}`, formData, {
-//     headers: {
-//       "Content-Type": "multipart/form-data",
-//     },
-//   });
+export const updateHelpDeskStatus = async (id, formData) =>
+  axiosInstance.put(`/pms/admin/helpdesk_categories/complaint_statuses/${id}.json?token=${token}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 export const postHelpDeskStatusSetup = async (data) =>
   axiosInstance.post(`/pms/admin/create_complaint_statuses.json`, data, {
     params: {
@@ -1363,7 +1363,7 @@ export const ChecklistImport = async (file) =>
       token: token,
     },
   });
-  
+
 export const postAssetAssociation = async (data) =>
   axiosInstance.post(`/activities.json`, data, {
     params: {
@@ -2012,7 +2012,7 @@ export const getUserCount = async () =>
   });
 
 export const updateUserAdminApproval = async (id, payload, token) =>
-  axiosInstance.patch(`users/${id}/update_approvals.json`, payload, {
+  axiosInstance.patch(`users/${id}/update_status.json`, payload, {
     params: { token },
   });
 
