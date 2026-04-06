@@ -9,15 +9,15 @@ import DetailPopup from "../../components/DetailPopup";
 // The API already applies start_date / end_date filtering server-side, so
 // today_in and today_in will naturally reflect the selected date range.
 const BASE_STAT_CONFIG = [
-  { key: "total",     title: "Total Staff",  subtitle: "All registered staff",  accent: "#1D4ED8", countType: "total",     countValue: "total"     },
-  { key: "active",    title: "Active",        subtitle: "Currently active",       accent: "#10B981", countType: "active",    countValue: "active"    },
-  { key: "inactive",  title: "Inactive",      subtitle: "Inactive staff",         accent: "#6B7280", countType: "inactive",  countValue: "inactive"  },
-  { key: "approved",  title: "Approved",      subtitle: "Approved records",       accent: "#8B5CF6", countType: "approved",  countValue: "approved"  },
-  { key: "pending",   title: "Pending",       subtitle: "Pending approval",       accent: "#F59E0B", countType: "pending",   countValue: "pending"   },
-  { key: "today_in",  title: "Today's In",   subtitle: "Checked in today",       accent: "#14B8A6", countType: "today_in",  countValue: "today_in"  },
-  { key: "today_out", title: "Today's Out",  subtitle: "Checked out today",      accent: "#EC4899", countType: "today_out", countValue: "today_out" },
-  { key: "total_in",  title: "Total In",     subtitle: "Total check-ins",        accent: "#0EA5E9", countType: "total_in",  countValue: "total_in"  },
-  { key: "total_out", title: "Total Out",    subtitle: "Total check-outs",       accent: "#EF4444", countType: "total_out", countValue: "total_out" },
+  { key: "total", title: "Total Staff", subtitle: "All registered staff", accent: "#1D4ED8", countType: "total", countValue: "total" },
+  { key: "active", title: "Active", subtitle: "Currently active", accent: "#10B981", countType: "active", countValue: "active" },
+  { key: "inactive", title: "Inactive", subtitle: "Inactive staff", accent: "#6B7280", countType: "inactive", countValue: "inactive" },
+  { key: "approved", title: "Approved", subtitle: "Approved records", accent: "#8B5CF6", countType: "approved", countValue: "approved" },
+  { key: "pending", title: "Pending", subtitle: "Pending approval", accent: "#F59E0B", countType: "pending", countValue: "pending" },
+  { key: "today_in", title: "Today's In", subtitle: "Checked in today", accent: "#14B8A6", countType: "today_in", countValue: "today_in" },
+  { key: "today_out", title: "Today's Out", subtitle: "Checked out today", accent: "#EC4899", countType: "today_out", countValue: "today_out" },
+  { key: "total_in", title: "Total In", subtitle: "Total check-ins", accent: "#0EA5E9", countType: "total_in", countValue: "total_in" },
+  { key: "total_out", title: "Total Out", subtitle: "Total check-outs", accent: "#EF4444", countType: "total_out", countValue: "total_out" },
 ];
 
 /* ── Helpers ────────────────────────────────────────────────────────────── */
