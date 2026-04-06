@@ -17,7 +17,7 @@ const AddAMC = () => {
   const [vendors, setVendors] = useState([]);
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
-    const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color)
 
   const [formData, setFormData] = useState({
     asset: "",
@@ -116,12 +116,12 @@ const AddAMC = () => {
 
   const handleSubmit = async () => {
     if (amcFor === "asset" && !formData.asset) {
-toast.error("Please select asset");
+      toast.error("Please select asset");
       return;
     }
 
     if (amcFor === "service" && !formData.service) {
-toast.error("Please select Service");
+      toast.error("Please select Service");
       return;
     }
 
@@ -148,12 +148,12 @@ toast.error("Please select Service");
 
       // Attach contact files
       contactFiles.forEach((file) => {
-        payload.append("asset_amc[attachments][]", file);
+        payload.append("asset_amc[amc_contacts][]", file);
       });
 
       // Attach invoice files
       invoiceFiles.forEach((file) => {
-        payload.append("asset_amc[attachments][]", file);
+        payload.append("asset_amc[amc_invoices][]", file);
       });
 
       console.log("Submitting AMC with FormData");
@@ -174,11 +174,11 @@ toast.error("Please select Service");
 
   return (
     <section>
-       <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={3000} />
       <div className="m-2">
         <h2
           style={{ background: themeColor }}
-           className="text-center text-xl font-bold p-2 bg-black rounded-full text-white">
+          className="text-center text-xl font-bold p-2 bg-black rounded-full text-white">
           Add AMC
         </h2>
         <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 rounded-lg sm:shadow-xl">
@@ -188,17 +188,15 @@ toast.error("Please select Service");
           <div className="flex   items-center justify-center gap-4">
             <p className="font-semibold">AMC for :</p>
             <p
-              className={`font-medium p-1 px-4 rounded-full cursor-pointer transition-all duration-500 ${
-                amcFor === "asset" && "bg-black text-white"
-              }`}
+              className={`font-medium p-1 px-4 rounded-full cursor-pointer transition-all duration-500 ${amcFor === "asset" && "bg-black text-white"
+                }`}
               onClick={() => setAmcFor("asset")}
             >
               Asset
             </p>
             <p
-              className={`font-medium p-1 px-4 rounded-full cursor-pointer transition-all duration-500 ${
-                amcFor === "service" && "bg-black text-white"
-              }`}
+              className={`font-medium p-1 px-4 rounded-full cursor-pointer transition-all duration-500 ${amcFor === "service" && "bg-black text-white"
+                }`}
               onClick={() => setAmcFor("service")}
             >
               Service

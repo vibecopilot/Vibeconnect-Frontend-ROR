@@ -1363,6 +1363,7 @@ export const ChecklistImport = async (file) =>
       token: token,
     },
   });
+  
 export const postAssetAssociation = async (data) =>
   axiosInstance.post(`/activities.json`, data, {
     params: {
