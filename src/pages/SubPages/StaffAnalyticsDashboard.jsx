@@ -258,6 +258,8 @@ const STAFF_COLUMNS = [
   { key: "vendor_name", label: "Vendor", accessor: (r) => r.vendor ?? r.vendor?.name ?? "—" },
   { key: "work_type", label: "Work Type", accessor: (r) => r.work_type ?? "—" },
   { key: "status_type", label: "Status", accessor: (r) => r.status_type ?? "—" },
+  { key: "punched_in", label: "Punched In", accessor: (r) => r.last_punched_in ?? "—" },
+  { key: "punched_out", label: "Punched Out", accessor: (r) => r.last_punched_out ?? "—" },
   { key: "created_at", label: "Created", accessor: (r) => r.created_at ?? "—" },
 ];
 
