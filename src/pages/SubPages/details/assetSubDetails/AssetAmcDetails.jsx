@@ -39,6 +39,49 @@ const AssetAmcDetails = () => {
     return decodeURIComponent(filePath.split("/").pop().split("?")[0]);
   };
 
+  // ✅ Reusable renderer
+  const renderFiles = (files) => {
+    if (!files || files.length === 0) {
+      return <p className="text-gray-500">No Data Available</p>;
+    }
+
+    return (
+      <div className="grid lg:grid-cols-6 md:grid-cols-4 sm:grid-cols-3 grid-cols-2 gap-4">
+        {files.map((doc, index) => {
+          const fileUrl = domainPrefix + doc.document;
+
+          return (
+            <div
+              key={doc.id}
+              className="border rounded-md p-2 flex flex-col items-center hover:shadow-lg transition"
+            >
+              {isImage(fileUrl) ? (
+                <img
+                  src={fileUrl}
+                  alt={`File ${index + 1}`}
+                  className="w-full h-40 object-cover rounded cursor-pointer"
+                  onClick={() => window.open(fileUrl, "_blank")}
+                />
+              ) : (
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center text-center"
+                >
+                  <FaRegFileAlt size={40} className="text-gray-600 mb-2" />
+                  <p className="text-xs break-all">
+                    {getFileName(doc.document)}
+                  </p>
+                </a>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <section className="flex bg-gray-50 min-h-screen">
 
@@ -101,53 +144,28 @@ const AssetAmcDetails = () => {
 
           </div>
 
-          {/* Attachments Section */}
+          {/* ✅ Attachments */}
           <div className="mt-8">
-
             <h2 className="text-lg font-semibold border-b pb-2 mb-4">
               Attachments
             </h2>
+            {renderFiles(amc.attachments)}
+          </div>
 
-            <div className="grid lg:grid-cols-6 md:grid-cols-4 sm:grid-cols-3 grid-cols-2 gap-4">
+          {/* ✅ AMC Contacts */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold border-b pb-2 mb-4">
+              AMC Contacts
+            </h2>
+            {renderFiles(amc.amc_contacts)}
+          </div>
 
-              {amc.attachments && amc.attachments.length > 0 ? (
-                amc.attachments.map((doc, index) => {
-                  const fileUrl = domainPrefix + doc.document;
-
-                  return (
-                    <div
-                      key={doc.id}
-                      className="border rounded-md p-2 flex flex-col items-center hover:shadow-lg transition"
-                    >
-                      {isImage(fileUrl) ? (
-                        <img
-                          src={fileUrl}
-                          alt={`Attachment ${index + 1}`}
-                          className="w-full h-75 object-cover rounded cursor-pointer"
-                          onClick={() => window.open(fileUrl, "_blank")}
-                        />
-                      ) : (
-                        <a
-                          href={fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex flex-col items-center text-center"
-                        >
-                          <FaRegFileAlt size={40} className="text-gray-600 mb-2" />
-                          <p className="text-xs break-all">
-                            {getFileName(doc.document)}
-                          </p>
-                        </a>
-                      )}
-                    </div>
-                  );
-                })
-              ) : (
-                <p className="text-gray-500">No Attachments Available</p>
-              )}
-
-            </div>
-
+          {/* ✅ AMC Invoices */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold border-b pb-2 mb-4">
+              AMC Invoices
+            </h2>
+            {renderFiles(amc.amc_invoices)}
           </div>
 
         </div>
