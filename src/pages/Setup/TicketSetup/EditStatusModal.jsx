@@ -3,10 +3,8 @@ import ModalWrapper from "../../../containers/modals/ModalWrapper";
 import { BiEditAlt } from "react-icons/bi";
 import { useSelector } from "react-redux";
 import { ColorPicker } from "antd";
-import {
-  updateHelpDeskStatus,
-  getHelpDeskStatusDetailsSetup,
-} from "../../../api";
+import { getHelpDeskStatusDetailsSetup, updateHelpDeskStatus } from "../../../api";
+import axiosInstance from "../../../api/axiosInstance";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
 
@@ -59,44 +57,44 @@ const EditStatusModal = ({ onClose, id, onUpdated }) => {
     fetchStatusDetails();
   }, [id]);
 
-const handleEditStatus = async () => {
-  if (!id) {
-    toast.error("Invalid Status ID");
-    return;
-  }
-
-  setLoading(true);
-
-  const payload = new FormData();
-
-  payload.append("complaint_status[name]", formData.status);
-  payload.append("complaint_status[fixed_state]", formData.fixedState);
-  payload.append("complaint_status[color_code]", formData.color);
-  payload.append("complaint_status[position]", formData.order);
-  payload.append("complaint_status[of_phase]", "pms");
-  payload.append("complaint_status[society_id]", siteID);
-
-  try {
-    await updateHelpDeskStatus(id, payload);
-
-    toast.success("Status updated successfully");
-
-    if (onUpdated) {
-      onUpdated();
+  const handleEditStatus = async () => {
+    if (!id) {
+      toast.error("Invalid Status ID");
+      return;
     }
 
-    onClose();
-  } catch (error) {
-    console.error(error);
-    toast.error("Update failed");
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+
+    const payload = new FormData();
+
+    payload.append("complaint_status[name]", formData.status);
+    payload.append("complaint_status[fixed_state]", formData.fixedState);
+    payload.append("complaint_status[color_code]", formData.color);
+    payload.append("complaint_status[position]", formData.order);
+    payload.append("complaint_status[of_phase]", "pms");
+    payload.append("complaint_status[society_id]", siteID);
+
+    try {
+      await updateHelpDeskStatus(id, payload);
+
+      toast.success("Status updated successfully");
+
+      if (onUpdated) {
+        onUpdated();
+      }
+
+      onClose();
+    } catch (error) {
+      console.error(error);
+      toast.error("Update failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   return (
-   <ModalWrapper onClose={onClose}>
+    <ModalWrapper onclose={onClose}>
       <div>
         <h2 className="font-medium text-xl flex items-center gap-4 border-b border-gray-300 pb-2">
           <BiEditAlt /> Edit Status
