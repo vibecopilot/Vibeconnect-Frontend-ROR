@@ -45,13 +45,13 @@ const BroadcastDetails = () => {
   const getUserIdsFromDetails = (d) => {
     return parseIds(
       d?.user_ids ??
-        d?.notice_user_ids ??
-        d?.shared_user_ids ??
-        d?.notice?.user_ids ??
-        d?.notice?.notice_user_ids ??
-        d?.notice?.shared_user_ids ??
-        d?.notice?.notice?.user_ids ??
-        []
+      d?.notice_user_ids ??
+      d?.shared_user_ids ??
+      d?.notice?.user_ids ??
+      d?.notice?.notice_user_ids ??
+      d?.notice?.shared_user_ids ??
+      d?.notice?.notice?.user_ids ??
+      []
     );
   };
 
@@ -67,12 +67,12 @@ const BroadcastDetails = () => {
 
     const multiple = parseIds(
       d?.group_ids ??
-        d?.notice_group_ids ??
-        d?.shared_group_ids ??
-        d?.notice?.group_ids ??
-        d?.notice?.notice_group_ids ??
-        d?.notice?.shared_group_ids ??
-        []
+      d?.notice_group_ids ??
+      d?.shared_group_ids ??
+      d?.notice?.group_ids ??
+      d?.notice?.notice_group_ids ??
+      d?.notice?.shared_group_ids ??
+      []
     );
 
     if (multiple.length > 0) return multiple;
@@ -105,20 +105,20 @@ const BroadcastDetails = () => {
 
 
   // 🔥 ADD THIS HERE (inside BroadcastDetails component)
-useEffect(() => {
-  const container = document.querySelector(".description-content");
-  if (!container) return;
+  useEffect(() => {
+    const container = document.querySelector(".description-content");
+    if (!container) return;
 
-  const links = container.querySelectorAll("a");
+    const links = container.querySelectorAll("a");
 
-  links.forEach((link) => {
-    link.setAttribute("target", "_blank");
-    link.setAttribute("rel", "noopener noreferrer");
-    link.style.color = "#2563eb";
-    link.style.textDecoration = "underline";
-    link.style.cursor = "pointer";
-  });
-}, [broadcastDetails]);
+    links.forEach((link) => {
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+      link.style.color = "#2563eb";
+      link.style.textDecoration = "underline";
+      link.style.cursor = "pointer";
+    });
+  }, [broadcastDetails]);
 
   const shareWithRaw =
     broadcastDetails?.shared ||
@@ -290,8 +290,8 @@ useEffect(() => {
   const attachments = Array.isArray(noticeImageRaw)
     ? noticeImageRaw
     : noticeImageRaw
-    ? [noticeImageRaw]
-    : [];
+      ? [noticeImageRaw]
+      : [];
 
   const firstAttachment = attachments?.[0] || null;
 
@@ -322,10 +322,10 @@ useEffect(() => {
     shareWithRaw === "all"
       ? "All"
       : shareWithRaw === "individual"
-      ? "Individuals"
-      : shareWithRaw === "groups"
-      ? "Groups"
-      : shareWithRaw || "";
+        ? "Individuals"
+        : shareWithRaw === "groups"
+          ? "Groups"
+          : shareWithRaw || "";
 
   const createdBy =
     broadcastDetails?.created_by_name ||
@@ -442,30 +442,50 @@ useEffect(() => {
                   <FaQrcode /> {qrValue ? "QR Code" : "Attachment"}
                 </p>
 
-                <div className="border border-dashed border-gray-400 rounded-md p-3 w-full flex justify-center">
-                  {qrValue ? (
-                    <div className="w-48 h-48 flex items-center justify-center text-gray-600">
-                      QR Available
+                <div className="border border-dashed border-gray-400 rounded-md p-3 w-full">
+                  {attachments.length > 0 ? (
+                    <div className="flex flex-wrap gap-4 justify-center">
+                      {attachments.map((file, index) => {
+                        const filePath =
+                          file?.document ||
+                          file?.document_url ||
+                          file?.file ||
+                          file?.url ||
+                          file?.path ||
+                          (typeof file === "string" ? file : "");
+
+                        const fileUrl = filePath
+                          ? isAbsoluteUrl(filePath)
+                            ? filePath
+                            : domainPrefix + filePath
+                          : "";
+
+                        if (!fileUrl) return null;
+
+                        return isImage(fileUrl) ? (
+                          <img
+                            key={index}
+                            src={fileUrl}
+                            alt={`attachment-${index}`}
+                            className="rounded-md h-32 w-32 object-cover cursor-pointer"
+                            onClick={() => window.open(fileUrl, "_blank")}
+                          />
+                        ) : (
+                          <a
+                            key={index}
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hover:text-blue-500 flex flex-col items-center"
+                          >
+                            <FaRegFileAlt size={40} />
+                            <span className="mt-1 text-xs text-center">
+                              {getFileName(filePath)}
+                            </span>
+                          </a>
+                        );
+                      })}
                     </div>
-                  ) : firstDocPath ? (
-                    isImage(firstDocUrl) ? (
-                      <img
-                        src={firstDocUrl}
-                        alt="broadcast attachment"
-                        className="rounded-md max-h-52 cursor-pointer"
-                        onClick={() => window.open(firstDocUrl, "_blank")}
-                      />
-                    ) : (
-                      <a
-                        href={firstDocUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:text-blue-500 transition-all duration-300 text-center flex flex-col items-center"
-                      >
-                        <FaRegFileAlt size={50} />
-                        <span className="mt-2">{getFileName(firstDocPath)}</span>
-                      </a>
-                    )
                   ) : (
                     <span></span>
                   )}
@@ -477,53 +497,39 @@ useEffect(() => {
           <div className="mt-6">
             <p className="font-semibold mb-2">Description:</p>
             <DashedBox>
-            <div className="min-h-[40px]">
-  {broadcastDetails?.notice_discription ? (
-<div
-  className="text-gray-900"
+             <div
+  className="text-gray-900 description-content"
   dangerouslySetInnerHTML={{
-    __html: (broadcastDetails.notice_discription || "").replace(
-      /((https?:\/\/)?(www\.[^\s<]+))/g,
-      (match) => {
-        const url = match.startsWith("http")
-          ? match
-          : `https://${match}`;
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">${match}</a>`;
-      }
-    ),
+    __html: broadcastDetails.notice_discription || "",
   }}
 />
-  ) : (
-    <div className="text-gray-900">—</div>
-  )}
-</div>
             </DashedBox>
           </div>
 
-            <div className="mt-6">
-              <p className="font-bold mb-2 flex items-center gap-2">
-                <FaUsers /> Shared With (Member)
-              </p>
-              <DashedBox>
-                {shareWithRaw === "all" ? (
-                  <div className="text-gray-900">All</div>
-                ) : (
-                  showDash(
-                    resolvedMembers?.length > 0,
-                    <div className="flex flex-wrap gap-2">
-                      {resolvedMembers.map((u, i) => (
-                        <span
-                          key={i}
-                          className="bg-green-500 text-white rounded-md px-3 py-1"
-                        >
-                          {ChipText(u)}
-                        </span>
-                      ))}
-                    </div>
-                  )
-                )}
-              </DashedBox>
-            </div>
+          <div className="mt-6">
+            <p className="font-bold mb-2 flex items-center gap-2">
+              <FaUsers /> Shared With (Member)
+            </p>
+            <DashedBox>
+              {shareWithRaw === "all" ? (
+                <div className="text-gray-900">All</div>
+              ) : (
+                showDash(
+                  resolvedMembers?.length > 0,
+                  <div className="flex flex-wrap gap-2">
+                    {resolvedMembers.map((u, i) => (
+                      <span
+                        key={i}
+                        className="bg-green-500 text-white rounded-md px-3 py-1"
+                      >
+                        {ChipText(u)}
+                      </span>
+                    ))}
+                  </div>
+                )
+              )}
+            </DashedBox>
+          </div>
 
           <div className="mt-6">
             <p className="font-bold mb-2 flex items-center gap-2">
