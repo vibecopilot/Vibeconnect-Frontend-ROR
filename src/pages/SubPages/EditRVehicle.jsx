@@ -13,6 +13,7 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 import Select from "react-select";
 import { useNavigate, useParams } from "react-router-dom";
 const EditRVehicle = () => {
+  const siteId = getItemInLocalStorage("SITEID");
   const today = new Date().toISOString().split("T")[0];
   const { id } = useParams();
   const themeColor = useSelector((state) => state.theme.color);
@@ -139,7 +140,13 @@ const EditRVehicle = () => {
     );
     postData.append("registered_vehicle[unit_id]", formData.unit);
     postData.append("registered_vehicle[created_by_id]", userId);
-    const userID = selectedUser.value;
+    postData.append("registered_vehicle[site_id]", siteId);
+    const userID = selectedUser?.value;
+
+    if (!userID) {
+      return toast.error("Please select a user");
+    }
+
     postData.append("registered_vehicle[user_id]", userID);
     try {
       const registeredRes = await editRegisteredVehicleDetails(id, postData);
@@ -333,11 +340,19 @@ const EditRVehicle = () => {
 
         <div className="flex gap-5 justify-center items-center my-4">
           <button
+            className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-1.5 px-3 rounded transition-all duration-300"
+            onClick={() => navigate("/admin/passes/registered-vehicles")}
+          >
+            Cancel
+          </button>
+          <button
             onClick={handleEditRVehicle}
-            className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300"
+            className="text-white  border-2  font-semibold py-2 px-4 rounded transition-all duration-300"
+            style={{ background: themeColor }}
           >
             Save
           </button>
+
         </div>
       </div>
     </div>
