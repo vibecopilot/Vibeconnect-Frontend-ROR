@@ -20,6 +20,8 @@ import {
   exportStaffWithDate,
   editStaffDetails,
   downloadStaffQrCodes,
+  getStaffPunchedInToday,
+  getStaffPunchedOutToday,
 } from "../../api";
 import { dateFormat } from "../../utils/dateUtils";
 import image from "/profile.png";
@@ -392,7 +394,7 @@ const fetchHistory = async () => {
 
   const fetchStaffIn = async (page = 1, perPage = rowsPerPage) => {
     try {
-      const res = await getStaffIn(page, perPage);
+      const res = await getStaffPunchedInToday(page, perPage);
       const apiData = res.data;
       const staffList = Array.isArray(apiData.staffs) ? apiData.staffs : [];
       setStaffs(staffList);
@@ -421,7 +423,7 @@ const fetchHistory = async () => {
 
   const fetchStaffOut = async (page = 1, perPage = rowsPerPage) => {
     try {
-      const res = await getStaffOut(page, perPage);
+      const res = await getStaffPunchedOutToday(page, perPage);
       const apiData = res.data;
       const staffList = Array.isArray(apiData.staffs) ? apiData.staffs : [];
       setStaffs(staffList);
