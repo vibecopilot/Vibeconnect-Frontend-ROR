@@ -342,7 +342,7 @@ function SelfRegistration() {
               </div> */}
         <div className="flex justify-end">
           <Link
-            to={`/add-self-registration/${siteId}`}
+            to={`/add-self-registration/${siteId}?token=${token}`}
             style={{ background: themeColor }}
             className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >

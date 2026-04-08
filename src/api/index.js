@@ -1327,10 +1327,12 @@ export const getMasterChecklist = async (start_date, end_date) =>
       end_date: end_date
     },
   });
-export const exportChecklist = async () =>
+export const exportChecklist = async (startDate, endDate) =>
   axiosInstance.get("/export_checklist.xlsx", {
     params: {
       token: token,
+      ...(startDate && { "q[start_date]": startDate }),
+      ...(endDate && { "q[end_date]": endDate }),
     },
     responseType: "blob",
   });
@@ -2237,19 +2239,23 @@ export const getStaffDrill = async (siteId, limit = 100) =>
   });
 
 /** Staff currently in (punched in today, not punched out) */
-export const getStaffPunchedInToday = async (siteId) =>
+export const getStaffPunchedInToday = async (page = 1, perPage = 10, siteId) =>
   axiosInstance.get("/staffs/punched_in_today.json", {
     params: {
       token: token,
+      page: page,
+      per_page: perPage,
       ...(siteId && { site_id: siteId }),
     },
   });
 
 /** Staff punched out today */
-export const getStaffPunchedOutToday = async (siteId) =>
+export const getStaffPunchedOutToday = async (page = 1, perPage = 10,siteId) =>
   axiosInstance.get("/staffs/punched_out_today.json", {
     params: {
       token: token,
+       page: page,
+      per_page: perPage,
       ...(siteId && { site_id: siteId }),
     },
   });
@@ -2477,7 +2483,7 @@ export const updateBroadcastEnableStatus = (id, status) =>
     },
   );
 
- export const updateEventEnableStatus = (id, enabled) =>
+export const updateEventEnableStatus = (id, enabled) =>
   axiosInstance.put(
     `/events/${id}.json`,
     {
