@@ -457,36 +457,36 @@ const EditAsset = () => {
           item.check_prev
         );
       });
-     formData.invoice?.forEach((file) => {
-      formDataSend.append("purchase_invoices[]", file.file || file);
-    });
+      formData.invoice?.forEach((file) => {
+        formDataSend.append("purchase_invoices[]", file.file || file);
+      });
 
-    formData.insurance?.forEach((file) => {
-      formDataSend.append("insurances[]", file.file || file);
-    });
+      formData.insurance?.forEach((file) => {
+        formDataSend.append("insurances[]", file.file || file);
+      });
 
-    formData.manuals?.forEach((file) => {
-      formDataSend.append("manuals[]", file.file || file);
-    });
+      formData.manuals?.forEach((file) => {
+        formDataSend.append("manuals[]", file.file || file);
+      });
 
-    formData.others?.forEach((file) => {
-      formDataSend.append("other_files[]", file.file || file);
-    });
+      formData.others?.forEach((file) => {
+        formDataSend.append("other_files[]", file.file || file);
+      });
 
-        await EditSiteAsset(formDataSend, id);
+      await EditSiteAsset(formDataSend, id);
 
-  toast.dismiss();
-  toast.success("Asset Edited Successfully");
+      toast.dismiss();
+      toast.success("Asset Edited Successfully");
 
-} catch (error) {
-  console.log("API error आया लेकिन redirect कर रहे हैं");
-  toast.dismiss();
-}
+    } catch (error) {
+      console.log("API error आया लेकिन redirect कर रहे हैं");
+      toast.dismiss();
+    }
 
-// Success 
-setTimeout(() => {
-  navigate("/assets/all-assets");
-}, 300);
+    // Success 
+    setTimeout(() => {
+      navigate("/assets/all-assets");
+    }, 300);
   };
 
   const [meterCategory, setMeterCategory] = useState("");
@@ -511,7 +511,7 @@ setTimeout(() => {
     setConsumptionData((prev) => [
       ...prev,
       {
-        id:"",
+        id: "",
         name: "",
         order: "",
         unit_type: "",
@@ -1522,9 +1522,9 @@ setTimeout(() => {
                               prev.map((item, i) =>
                                 i === index
                                   ? {
-                                      ...item,
-                                      multiplier_factor: e.target.value,
-                                    }
+                                    ...item,
+                                    multiplier_factor: e.target.value,
+                                  }
                                   : item
                               )
                             )
@@ -1545,9 +1545,9 @@ setTimeout(() => {
                               prev.map((item, i) =>
                                 i === index
                                   ? {
-                                      ...item,
-                                      dashboard_view: e.target.checked,
-                                    }
+                                    ...item,
+                                    dashboard_view: e.target.checked,
+                                  }
                                   : item
                               )
                             )
@@ -1569,9 +1569,9 @@ setTimeout(() => {
                               prev.map((item, i) =>
                                 i === index
                                   ? {
-                                      ...item,
-                                      consumption_view: e.target.checked,
-                                    }
+                                    ...item,
+                                    consumption_view: e.target.checked,
+                                  }
                                   : item
                               )
                             )
@@ -1667,14 +1667,21 @@ setTimeout(() => {
               />
             </div>
           </div>
-          <div className="sm:flex grid gap-2 my-5 justify-center">
-           <button
-  type="button"
-  className="bg-black text-white p-2 px-4 rounded-md font-medium"
-  onClick={handleSubmit}
->
-  Save & Show Details
-</button>
+          <div className="sm:flex grid gap-3 my-5 justify-end">
+            <button
+              className="bg-black text-white p-2 px-4 rounded-md font-medium"
+              onClick={() => navigate("/assets/checklist")}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="bg-black text-white p-2 px-4 rounded-md font-medium"
+              style={{background:themeColor}}
+              onClick={handleSubmit}
+            >
+              Save & Show Details
+            </button>
           </div>
         </div>
       </div>
