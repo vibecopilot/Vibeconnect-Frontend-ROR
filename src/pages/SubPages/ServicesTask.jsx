@@ -24,9 +24,14 @@ const ServicesTask = () => {
   const [total, setTotal] = useState(0);
   const [perPage, setPerPage] = useState(10);
 
-  const today = new Date().toISOString().split("T")[0];
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState("");
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  const formatDate = (date) => date.toISOString().split("T")[0];
+
+  const [startDate, setStartDate] = useState(formatDate(today));
+  const [endDate, setEndDate] = useState(formatDate(tomorrow));
 
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -39,7 +44,36 @@ const ServicesTask = () => {
       year: "numeric",
     });
   };
+  const [statusCounts, setStatusCounts] = useState({
+    all: 0,
+    pending: 0,
+    complete: 0,
+    overdue: 0,
+  });
 
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case "complete":
+        return selectedStatus === status
+          ? "border-green-600 bg-green-100 text-green-700"
+          : "border-green-300";
+
+      case "pending":
+        return selectedStatus === status
+          ? "border-yellow-500 bg-yellow-100 text-yellow-700"
+          : "border-yellow-300";
+
+      case "overdue":
+        return selectedStatus === status
+          ? "border-red-600 bg-red-100 text-red-700"
+          : "border-red-300";
+
+      default: // all
+        return selectedStatus === status
+          ? "border-blue-600 bg-blue-100 text-blue-700"
+          : "border-gray-300";
+    }
+  };
   /* ================= TABLE ================= */
   const routineColumn = [
     {
@@ -81,35 +115,81 @@ const ServicesTask = () => {
     try {
       let response;
 
+      const start = startDate ? `${startDate}T00:00:00` : "";
+      const end = endDate ? `${endDate}T23:59:59` : "";
+
       if (selectedStatus === "all") {
         response = await getServicesRoutineList(
           pageNo,
           perPage,
-          startDate,
-          endDate
+          start,
+          end
         );
+
+        const data = response.data.activities.filter(
+          (item) => item.soft_service_name
+        );
+
+        setFilteredRoutineData(data);
+        setRoutines(data);
+
+        // ✅ FIXED
+        setTotal(response.data.total_count || 0);
+
       } else {
         response = await getSoftServiceStatus(
           selectedStatus,
-          startDate,
-          endDate
+          start,
+          end
         );
+
+        const data = response.data.activities.filter(
+          (item) => item.soft_service_name
+        );
+
+        setRoutines(data);
+
+        // ✅ manual pagination
+        const startIndex = (pageNo - 1) * perPage;
+        const endIndex = startIndex + perPage;
+
+        setFilteredRoutineData(data.slice(startIndex, endIndex));
+
+        setTotal(data.length); // correct
       }
-
-      const data = response.data.activities.filter(
-        (item) => item.soft_service_name
-      );
-
-      setFilteredRoutineData(data);
-      setRoutines(data);
-      setTotal(response.data.total_pages || 0);
     } catch (error) {
       console.error(error);
     }
   };
 
+
+  const fetchStatusCounts = async () => {
+    try {
+      const start = startDate ? `${startDate}T00:00:00` : "";
+      const end = endDate ? `${endDate}T23:59:59` : "";
+
+      const res = await getServicesRoutineList(1, 10000, start, end);
+
+      const data = res.data.activities || [];
+
+      const counts = {
+        all: data.length,
+        pending: data.filter((i) => i.status === "pending").length,
+        complete: data.filter((i) => i.status === "complete").length,
+        overdue: data.filter((i) => i.status === "overdue").length,
+      };
+
+      setStatusCounts(counts);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+
+
   useEffect(() => {
     fetchData();
+    fetchStatusCounts();
   }, [pageNo, perPage, selectedStatus, startDate, endDate]);
 
   /* ================= STATUS FILTER ================= */
@@ -150,14 +230,61 @@ const ServicesTask = () => {
   };
 
   const handleClearDateFilter = () => {
-    setStartDate("");
-    setEndDate("");
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+
+    const formatDate = (date) => date.toISOString().split("T")[0];
+
+    setStartDate(formatDate(today));
+    setEndDate(formatDate(tomorrow));
+
     setPageNo(1);
   };
 
   /* ================= EXPORT ================= */
-  const exportToExcel = () => {
-    const exportData = filteredRoutineData.map((row) => ({
+  const exportToExcel = async () => {
+  try {
+    const start = startDate ? `${startDate}T00:00:00` : "";
+    const end = endDate ? `${endDate}T23:59:59` : "";
+
+    let data = [];
+
+    if (selectedStatus === "all") {
+      // ✅ fetch ALL records (no pagination limit)
+      const res = await getServicesRoutineList(1, 10000, start, end);
+      data = res.data.activities || [];
+    } else {
+      // ✅ already returns full data
+      const res = await getSoftServiceStatus(
+        selectedStatus,
+        start,
+        end
+      );
+      data = res.data.activities || [];
+    }
+
+    // ✅ Apply same filter (remove null names)
+    data = data.filter((item) => item.soft_service_name);
+
+    // ✅ Apply SEARCH filter also
+    if (searchRoutineText) {
+      const value = searchRoutineText.toLowerCase();
+      data = data.filter((item) =>
+        [
+          item.soft_service_name,
+          item.checklist_name,
+          item.status,
+          item.assigned_to_name,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(value)
+      );
+    }
+
+    // ✅ Prepare export data
+    const exportData = data.map((row) => ({
       "Service Name": row.soft_service_name,
       "Checklist Name": row.checklist_name,
       "Start Date": dateFormat(row.start_time),
@@ -174,8 +301,11 @@ const ServicesTask = () => {
     link.href = URL.createObjectURL(blob);
     link.download = "Service_Task.xlsx";
     link.click();
-  };
 
+  } catch (error) {
+    console.error(error);
+  }
+};
   /* ================= PAGINATION ================= */
   const handlePageChange = (page, pageSize) => {
     setPageNo(page);
@@ -195,66 +325,71 @@ const ServicesTask = () => {
             <div
               key={status}
               onClick={() => handleStatusChange(status)}
-              className={`cursor-pointer p-4 rounded-lg text-center border ${
-                selectedStatus === status
-                  ? "border-blue-500 bg-blue-100"
-                  : "border-gray-300"
-              }`}
+              className={`cursor-pointer p-4 rounded-lg text-center border ${getStatusStyle(status)}`}
             >
               <p className="capitalize">{status}</p>
+
+              <p className="text-xl font-bold">
+                {statusCounts[status] || 0}
+              </p>
             </div>
           ))}
         </div>
 
         {/* ================= FILTER ================= */}
-        <div className="flex gap-2 my-3">
+        <div className="flex justify-between items-center my-3">
+
+          {/* 🔹 LEFT: Search */}
           <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="border p-2 rounded"
-          />
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="border p-2 rounded"
+            type="text"
+            placeholder="Search..."
+            value={searchRoutineText}
+            onChange={handleRoutineSearch}
+            className="border p-2 rounded w-96"
           />
 
-          <button
-            onClick={handleApplyDateFilter}
-            style={{ background: themeColor }}
-            className="text-white px-4 rounded"
-          >
-            Apply
-          </button>
+          {/* 🔹 RIGHT: Filters */}
+          <div className="flex gap-2 items-center">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border p-2 rounded"
+            />
 
-          <button
-            onClick={handleClearDateFilter}
-            className="bg-red-500 text-white px-4 rounded"
-          >
-            Clear
-          </button>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border p-2 rounded"
+            />
 
-          <button
-            onClick={exportToExcel}
-            className="bg-green-500 text-white px-4 rounded"
-          >
-            Export ({filteredRoutineData.length})
-          </button>
+            <button
+              onClick={handleApplyDateFilter}
+              style={{ background: themeColor }}
+              className="text-white p-2 rounded"
+            >
+              Apply
+            </button>
+
+            <button
+              onClick={handleClearDateFilter}
+              className="bg-red-500 text-white p-2 rounded"
+            >
+              Clear
+            </button>
+
+            <button
+              onClick={exportToExcel}
+              className="bg-green-500 text-white p-2 rounded"
+            >
+             Export ({total})
+            </button>
+          </div>
         </div>
 
-        {/* ================= SEARCH ================= */}
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchRoutineText}
-          onChange={handleRoutineSearch}
-          className="border p-2 rounded w-96 mb-3"
-        />
-
         {/* ================= TABLE ================= */}
-        {filteredRoutineData.length ? (
+        {filteredRoutineData.length > 0 ? (
           <>
             <Table
               columns={routineColumn}
@@ -262,19 +397,22 @@ const ServicesTask = () => {
               pagination={false}
             />
 
-            <div className="flex justify-end mt-3">
+            <div className="flex justify-end mt-3 mb-6">
               <Pagination
                 current={pageNo}
-                total={total}
+                total={total}   // ✅ now correct (66)
                 pageSize={perPage}
                 onChange={handlePageChange}
                 showSizeChanger
+                showTotal={(total, range) =>
+                  `${range[0]}-${range[1]} of ${total}`
+                }
               />
             </div>
           </>
         ) : (
-          <div className="flex justify-center">
-            <DNA height={120} width={120} />
+          <div className="flex justify-center items-center h-40 text-gray-500">
+            No Data Found
           </div>
         )}
       </div>

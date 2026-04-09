@@ -247,7 +247,7 @@ const SetupNavbar = () => {
               </NavLink>
             </li>
           )}
-          {/* <li>
+          <li>
             <NavLink
               to={`/admin/checklist-group`}
               className={({ isActive }) =>
@@ -276,7 +276,7 @@ const SetupNavbar = () => {
                Checklist Group
               </h2>
             </NavLink>
-          </li> */}
+          </li>
           {feat.includes("tickets") && (
             <li>
               <NavLink
