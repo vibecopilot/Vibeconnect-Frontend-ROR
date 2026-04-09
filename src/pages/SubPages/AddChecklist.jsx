@@ -368,8 +368,7 @@ const AddChecklist = () => {
         if (q.image_for_question && q.image_for_question.length > 0) {
           q.image_for_question.forEach((file) => {
             formData.append(
-              `groups[][questions][][image_for_question_${
-                questionIndex + 1
+              `groups[][questions][][image_for_question_${questionIndex + 1
               }][]`,
               file
             );
@@ -504,14 +503,12 @@ const AddChecklist = () => {
                 <span className="mr-2">Create New</span>
                 <div
                   onClick={() => handleToggle("createNew")}
-                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
-                    createNew ? "bg-green-500" : ""
-                  }`}
+                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${createNew ? "bg-green-500" : ""
+                    }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
-                      createNew ? "translate-x-6" : ""
-                    }`}
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${createNew ? "translate-x-6" : ""
+                      }`}
                   />
                 </div>
               </div>
@@ -521,14 +518,12 @@ const AddChecklist = () => {
                 <span className="mr-2">Create Ticket</span>
                 <div
                   onClick={() => handleToggle("createTicket")}
-                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
-                    createTicket ? "bg-green-500" : ""
-                  }`}
+                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${createTicket ? "bg-green-500" : ""
+                    }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
-                      createTicket ? "translate-x-6" : ""
-                    }`}
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${createTicket ? "translate-x-6" : ""
+                      }`}
                   />
                 </div>
               </div>
@@ -538,14 +533,12 @@ const AddChecklist = () => {
                 <span className="mr-2">Weightage</span>
                 <div
                   onClick={() => handleToggle("weightage")}
-                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
-                    weightage ? "bg-green-500" : ""
-                  }`}
+                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${weightage ? "bg-green-500" : ""
+                    }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
-                      weightage ? "translate-x-6" : ""
-                    }`}
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${weightage ? "translate-x-6" : ""
+                      }`}
                   />
                 </div>
               </div>
@@ -818,13 +811,12 @@ const AddChecklist = () => {
                                   <select
                                     name={`value_type1_${questionIndex}`}
                                     id={`value_type1_${questionIndex}`}
-                                    className={`border p-1 border-gray-500 rounded-md ${
-                                      question.value_types[0] === "P"
-                                        ? "bg-green-400"
-                                        : question.value_types[0] === "N"
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[0] === "P"
+                                      ? "bg-green-400"
+                                      : question.value_types[0] === "N"
                                         ? "bg-red-400"
                                         : ""
-                                    }`}
+                                      }`}
                                     value={question.value_types[0]}
                                     onChange={(e) =>
                                       handleQuestionChange(
@@ -862,13 +854,12 @@ const AddChecklist = () => {
                                   <select
                                     name={`value_type2_${questionIndex}`}
                                     id={`value_type2_${questionIndex}`}
-                                    className={`border p-1 border-gray-500 rounded-md ${
-                                      question.value_types[1] === "P"
-                                        ? "bg-green-400"
-                                        : question.value_types[1] === "N"
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[1] === "P"
+                                      ? "bg-green-400"
+                                      : question.value_types[1] === "N"
                                         ? "bg-red-400"
                                         : ""
-                                    }`}
+                                      }`}
                                     value={question.value_types[1]}
                                     onChange={(e) =>
                                       handleQuestionChange(
@@ -907,13 +898,12 @@ const AddChecklist = () => {
                                   <select
                                     name={`value_type3_${questionIndex}`}
                                     id={`value_type3_${questionIndex}`}
-                                    className={`border p-1 border-gray-500 rounded-md ${
-                                      question.value_types[2] === "P"
-                                        ? "bg-green-400"
-                                        : question.value_types[2] === "N"
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[2] === "P"
+                                      ? "bg-green-400"
+                                      : question.value_types[2] === "N"
                                         ? "bg-red-400"
                                         : ""
-                                    }`}
+                                      }`}
                                     value={question.value_types[2]}
                                     onChange={(e) =>
                                       handleQuestionChange(
@@ -951,13 +941,12 @@ const AddChecklist = () => {
                                   <select
                                     name={`value_type4_${questionIndex}`}
                                     id={`value_type4_${questionIndex}`}
-                                    className={`border p-1 border-gray-500 rounded-md ${
-                                      question.value_types[3] === "P"
-                                        ? "bg-green-400"
-                                        : question.value_types[3] === "N"
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[3] === "P"
+                                      ? "bg-green-400"
+                                      : question.value_types[3] === "N"
                                         ? "bg-red-400"
                                         : ""
-                                    }`}
+                                      }`}
                                     value={question.value_types[3]}
                                     onChange={(e) =>
                                       handleQuestionChange(
@@ -1063,9 +1052,8 @@ const AddChecklist = () => {
                                   files
                                 )
                               }
-                              fieldName={`image_for_question_${
-                                questionIndex + 1
-                              }`}
+                              fieldName={`image_for_question_${questionIndex + 1
+                                }`}
                               isMulti={true}
                             />
                           </div>
@@ -1241,7 +1229,7 @@ const AddChecklist = () => {
                     <option value="">Select Supplier</option>
                     {suppliers.map((supplier) => (
                       <option value={supplier.id} key={supplier.id}>
-                        {supplier.company_name}
+                        {supplier.company_name || supplier.vendor_name}
                       </option>
                     ))}
                   </select>
@@ -1254,12 +1242,19 @@ const AddChecklist = () => {
             <div className="my-2 border-2 border-dashed flex items-center p-2 rounded-md border-gray-300">
               <Cron value={cronExpression} setValue={handleCronChange} />
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => navigate("/assets/checklist")}
+                className="border-2 border-gray-500 text-white p-2 px-4 rounded-md font-medium bg-gray-500"
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleSubmit}
                 className="bg-black text-white p-2 px-4 rounded-md font-medium"
+                style={{ background: themeColor }}
               >
-                Save
+                Submit
               </button>
             </div>
           </div>
