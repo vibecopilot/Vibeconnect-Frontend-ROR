@@ -74,7 +74,7 @@ const InwardPassDetails = () => {
             {details.created_by_name && (
               <div className="grid grid-cols-2">
                 <p className=" font-medium">Created by :</p>
-                <p>{`${details.created_by_name.firstname} ${details.created_by_name.lastname}`}</p>
+                <p>{` ${details.created_by_name}`}</p>
               </div>
             )}
             <div className="grid grid-cols-2">

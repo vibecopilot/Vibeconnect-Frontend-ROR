@@ -85,17 +85,17 @@ const Table = ({
         data={Array.isArray(data) ? data.filter(item => item && typeof item === 'object') : []}
         customStyles={customStyles || customStyle}
         pagination={pagination}
-        paginationServer={paginationServer}
-        paginationTotalRows={totalRows}
-        paginationDefaultPage={currentPage}
-        paginationPerPage={rowsPerPage}
-        paginationRowsPerPageOptions={[10, 25, 50, 100]}
+        paginationServer={pagination && paginationServer}
+        paginationTotalRows={pagination ? totalRows : 0}
+        paginationDefaultPage={pagination ? currentPage : 1}
+        paginationPerPage={pagination ? rowsPerPage : 10}
+        paginationRowsPerPageOptions={pagination ? [10, 25, 50, 100] : []}
         fixedHeader
         selectableRowsHighlight
         selectableRows={selectableRow}
         highlightOnHover
-        onChangePage={onChangePage}
-        onChangeRowsPerPage={onChangeRowsPerPage}
+        onChangePage={pagination ? onChangePage : undefined}
+        onChangeRowsPerPage={pagination ? onChangeRowsPerPage : undefined}
         onSelectedRowsChange={handleSelectedRowsChange}
       />
     </div>

@@ -646,6 +646,23 @@ const CopyChecklist = () => {
                   <option value="yearly">Yearly</option>
                 </select>
               </div>
+               <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
+                  Checklist Group :
+                </label>
+                <select
+                  name="checklist_group"
+                  id="checklist_group"
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  // value={checklistGroup}
+                  onChange={(e) => setChecklistGroup(e.target.value)}
+                >
+                  <option value="">Select Checklist Group</option>
+                  <option value="hourly">Cleaning</option>
+                  <option value="daily">Hygiene</option>
+                  <option value="weekly">Painting</option>
+                </select>
+              </div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold">
                   Start Date :

@@ -21,7 +21,7 @@ import * as XLSX from "xlsx";
 import { useSelector } from "react-redux";
 import FileInputBox from "../containers/Inputs/FileInputBox";
 import { FiDownload, FiUpload } from "react-icons/fi";
-import { FaCopy, FaDownload } from "react-icons/fa";
+import { FaCheckCircle, FaCopy, FaDownload, FaTimesCircle } from "react-icons/fa";
 import Switch from "../Buttons/Switch";
 import DatePicker from "react-datepicker";
 import { BsEye } from "react-icons/bs";
@@ -44,6 +44,14 @@ const Checklist = () => {
   const handleFileChange = (files) => {
     setSelectedFiles(files);
   };
+
+  const handleApprove = (row) => {
+  console.log("Approved:", row);
+};
+
+const handleReject = (row) => {
+  console.log("Rejected:", row);
+};
 
   const handleImportChecklist = async () => {
     if (selectedFiles.length === 0) {
@@ -146,6 +154,25 @@ const Checklist = () => {
       ),
       sortable: true,
     },
+    {
+  name: "Approvals",
+  cell: (row) => (
+    <div className="flex items-center gap-3">
+      <FaCheckCircle
+        className="text-green-500 cursor-pointer hover:text-green-700"
+        size={22}
+        title="Approve"
+        onClick={() => handleApprove(row)}
+      />
+      <FaTimesCircle
+        className="text-red-500 cursor-pointer hover:text-red-700"
+        size={23}
+        title="Reject"
+        onClick={() => handleReject(row)}
+      />
+    </div>
+  ),
+},
     {
       name: "Action",
       cell: (row) => (
