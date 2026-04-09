@@ -169,10 +169,13 @@ const BroadcastDetails = () => {
         }
 
         if (Array.isArray(apiUsers) && apiUsers.length > 0) {
-          setResolvedMembers(apiUsers);
+          const mappedUsers = apiUsers.map((u) => ({
+            id: u.user_id || u.id,
+            name: u.name || "",
+          }));
+          setResolvedMembers(mappedUsers);
           return;
         }
-
         const ids = getUserIdsFromDetails(broadcastDetails);
         if (ids.length === 0) {
           setResolvedMembers([]);
@@ -497,12 +500,12 @@ const BroadcastDetails = () => {
           <div className="mt-6">
             <p className="font-semibold mb-2">Description:</p>
             <DashedBox>
-             <div
-  className="text-gray-900 description-content"
-  dangerouslySetInnerHTML={{
-    __html: broadcastDetails.notice_discription || "",
-  }}
-/>
+              <div
+                className="text-gray-900 description-content"
+                dangerouslySetInnerHTML={{
+                  __html: broadcastDetails.notice_discription || "",
+                }}
+              />
             </DashedBox>
           </div>
 

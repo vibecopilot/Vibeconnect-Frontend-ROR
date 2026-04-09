@@ -207,48 +207,48 @@ const Checklist = () => {
   };
 
   const handleExport = async () => {
-  if (!startDate || !endDate) {
-    alert("Please select both Start Date and End Date");
-    return;
-  }
-
-  try {
-    // Format dates properly (YYYY-MM-DD)
-    const formattedStart = startDate.toISOString().split("T")[0];
-    const formattedEnd = endDate.toISOString().split("T")[0];
-
-    console.log("Exporting with date range:", formattedStart, "to", formattedEnd);
-
-    const response = await exportChecklist(formattedStart, formattedEnd);
-
-    if (!response.data || (Array.isArray(response.data) && response.data.length === 0)) {
-      alert("No data found for the selected date range.");
+    if (!startDate || !endDate) {
+      alert("Please select both Start Date and End Date");
       return;
     }
 
-    // Create blob and download
-    const blob = new Blob([response.data], {
-      type: response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+    try {
+      // Format dates properly (YYYY-MM-DD)
+      const formattedStart = startDate.toISOString().split("T")[0];
+      const formattedEnd = endDate.toISOString().split("T")[0];
 
-    const downloadUrl = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `checklist_report_${formattedStart}_to_${formattedEnd}.xlsx`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(downloadUrl);
+      console.log("Exporting with date range:", formattedStart, "to", formattedEnd);
 
-    closeModalDownload();
+      const response = await exportChecklist(formattedStart, formattedEnd);
 
-    // Optional: Reset date range after successful export
-    setDateRange([null, null]);
-  } catch (error) {
-    console.error("Failed to export checklist:", error);
-    alert("Error exporting checklist. Please check console for details.");
-  }
-};
+      if (!response.data || (Array.isArray(response.data) && response.data.length === 0)) {
+        alert("No data found for the selected date range.");
+        return;
+      }
+
+      // Create blob and download
+      const blob = new Blob([response.data], {
+        type: response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `checklist_report_${formattedStart}_to_${formattedEnd}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
+      closeModalDownload();
+
+      // Optional: Reset date range after successful export
+      setDateRange([null, null]);
+    } catch (error) {
+      console.error("Failed to export checklist:", error);
+      alert("Error exporting checklist. Please check console for details.");
+    }
+  };
 
   return (
     <section
@@ -355,31 +355,31 @@ const Checklist = () => {
                 <label className="text-sm font-semibold mb-1">
                   Start Date :
                 </label>
-               <DatePicker
-  selected={startDate}
-  onChange={(date) => setDateRange([date, endDate])}
-  selectsStart
-  startDate={startDate}
-  endDate={endDate}
-  placeholderText="Start Date"
-  className="border p-2 rounded w-40"
-  dateFormat="dd/MM/yyyy"
-/>
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date) => setDateRange([date, endDate])}
+                  selectsStart
+                  startDate={startDate}
+                  endDate={endDate}
+                  placeholderText="Start Date"
+                  className="border p-2 rounded w-40"
+                  dateFormat="dd/MM/yyyy"
+                />
               </div>
 
               <div className="flex flex-col">
                 <label className="text-sm font-semibold mb-1">End Date :</label>
                 <DatePicker
-  selected={endDate}
-  onChange={(date) => setDateRange([startDate, date])}
-  selectsEnd
-  startDate={startDate}
-  endDate={endDate}
-  minDate={startDate}
-  placeholderText="End Date"
-  className="border p-2 rounded w-40"
-  dateFormat="dd/MM/yyyy"
-/>
+                  selected={endDate}
+                  onChange={(date) => setDateRange([startDate, date])}
+                  selectsEnd
+                  startDate={startDate}
+                  endDate={endDate}
+                  minDate={startDate}
+                  placeholderText="End Date"
+                  className="border p-2 rounded w-40"
+                  dateFormat="dd/MM/yyyy"
+                />
               </div>
             </div>
             <div className="mt-6 flex justify-end space-x-4">
