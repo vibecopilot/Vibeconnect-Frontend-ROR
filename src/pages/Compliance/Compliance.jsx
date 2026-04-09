@@ -15,58 +15,72 @@ const Compliance = () => {
   const [filter, setFilter] = useState(false);
   const [compliances, setCompliances] = useState([]);
   const [originalCompliances, setOriginalCompliances] = useState([]);
+
   const [filters, setFilters] = useState({
-  complianceName: "",
-  vendor: ""
-});
+    complianceName: "",
+    vendor: "",
+    auditor: "",
+  });
 
   const fetchCompliances = async () => {
-  try {
-    const res = await getComplianceConfiguration();
+    try {
+      const res = await getComplianceConfiguration();
 
-    const sortedData = res?.data?.sort((a, b) => {
-      return new Date(b.created_at) - new Date(a.created_at);
+      const sortedData = res?.data?.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+
+      setCompliances(sortedData);
+      setOriginalCompliances(sortedData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleFilter = () => {
+    const filteredData = originalCompliances.filter((item) => {
+      const nameMatch =
+        !filters.complianceName ||
+        item.name?.toLowerCase().includes(filters.complianceName.toLowerCase());
+
+      const vendorMatch =
+        !filters.vendor ||
+        item.assign_to_name
+          ?.toLowerCase()
+          .includes(filters.vendor.toLowerCase());
+
+      const auditorMatch =
+        !filters.auditor ||
+        item.reviewer_name
+          ?.toLowerCase()
+          .includes(filters.auditor.toLowerCase());
+
+      return nameMatch && vendorMatch && auditorMatch;
     });
 
-    setCompliances(sortedData);
-    setOriginalCompliances(sortedData);
+    setCompliances(filteredData);
+  };
 
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-
-
-const handleFilter = () => {
-
-  const filteredData = originalCompliances.filter((item) => {
-
-    const nameMatch =
-      !filters.complianceName ||
-      item.name?.toLowerCase().includes(filters.complianceName.toLowerCase());
-
-    const vendorMatch =
-      !filters.vendor ||
-      item.assign_to_name === filters.vendor;
-
-    return nameMatch && vendorMatch;
-  });
-
-  setCompliances(filteredData);
-};
-
-const handleReset = () => {
-  setCompliances(originalCompliances);
-  setFilters({
-    complianceName: "",
-    vendor: ""
-  });
-};
+  const handleReset = () => {
+    setCompliances(originalCompliances);
+    setFilters({
+      complianceName: "",
+      vendor: "",
+      auditor: "",
+    });
+  };
 
   useEffect(() => {
     fetchCompliances();
   }, []);
+
+  const vendorList = [
+    ...new Set(originalCompliances.map((item) => item.assign_to_name)),
+  ];
+
+  const auditorList = [
+    ...new Set(originalCompliances.map((item) => item.reviewer_name)),
+  ];
 
   const columns = [
     {
@@ -98,7 +112,7 @@ const handleReset = () => {
     },
     {
       name: "Auditor",
-      selector: (row) => row.reviewer_name|| "N/A",
+      selector: (row) => row.reviewer_name || "N/A",
       sortable: true,
     },
     // {
@@ -109,6 +123,16 @@ const handleReset = () => {
     {
       name: "Due days",
       selector: (row) => `${row.due_in_days} days` || "N/A",
+      sortable: true,
+    },
+         {
+      name: "Start Date",
+      selector: (row) => row.start_date || "N/A",
+      sortable: true,
+    },
+         {
+      name: "End Date",
+      selector: (row) => row.end_date || "N/A",
       sortable: true,
     },
     {
@@ -125,12 +149,12 @@ const handleReset = () => {
               row.status === "100% Completed"
                 ? "text-green-500"
                 : row.status === "50% Completed"
-                ? "text-green-400"
-                : row.status === "25% Completed"
-                ? " text-yellow-400"
-                : row.status === "5% Completed"
-                ? "text-orange-400"
-                : ""
+                  ? "text-green-400"
+                  : row.status === "25% Completed"
+                    ? " text-yellow-400"
+                    : row.status === "5% Completed"
+                      ? "text-orange-400"
+                      : ""
             }`}
           >
             {row.status}
@@ -139,38 +163,108 @@ const handleReset = () => {
       ),
       sortable: true,
     },
+      {
+      name: "Created at",
+      selector: (row) => row.created_at || "N/A",
+      sortable: true,
+    },
+ 
     // {
     //   name: "Risk Level",
     //   selector: (row) => row.riskLevel,
     //   sortable: true,
     // },
   ];
- 
 
   const themeColor = useSelector((state) => state.theme.color);
-const userType = getItemInLocalStorage("USERTYPE")
+
+  const userType = getItemInLocalStorage("USERTYPE");
   return (
     <section className="flex">
       <Navbar />
       <div className=" w-full flex mx-3 mb-5 flex-col overflow-hidden">
         <div></div>
         <div className="my-2 flex justify-end gap-2">
-          {!filter && (
-            <button
-              className="flex items-center gap-2 bg-yellow-500 p-2 px-4 rounded-md font-medium text-white"
-              onClick={() => setFilter(true)}
-            >
-              <IoFilter /> Filter
-            </button>
-          )}
-         {userType === "pms_admin" && <Link
-            to={"/compliance/add-compliance"}
-            className="flex items-center gap-2 bg-green-500 p-2 px-4 rounded-md font-medium text-white"
+          <button
+            className="flex items-center gap-2 bg-yellow-500 p-2 px-4 rounded-md font-medium text-white"
+            onClick={() => setFilter(!filter)}
           >
-            <PiPlusCircle size={20} /> Add
-          </Link>}
+            {filter ? <MdClose /> : <IoFilter />}
+            {filter ? "Close Filter" : "Filter"}
+          </button>
+          {userType === "pms_admin" && (
+            <Link
+              to={"/compliance/add-compliance"}
+              className="flex items-center gap-2 bg-green-500 p-2 px-4 rounded-md font-medium text-white"
+            >
+              <PiPlusCircle size={20} /> Add
+            </Link>
+          )}
         </div>
         {filter && (
+          <div className="mb-5 border p-3 rounded-md">
+            <div className="grid grid-cols-3 gap-3">
+              <input
+                type="text"
+                placeholder="Compliance Name"
+                className="border rounded-md border-gray-400 p-2"
+                value={filters.complianceName}
+                onChange={(e) =>
+                  setFilters({ ...filters, complianceName: e.target.value })
+                }
+              />
+
+              <select
+                className="border rounded-md border-gray-400 p-2"
+                value={filters.vendor}
+                onChange={(e) =>
+                  setFilters({ ...filters, vendor: e.target.value })
+                }
+              >
+                <option value="">Select Vendor</option>
+
+                {vendorList.map((vendor, index) => (
+                  <option key={index} value={vendor}>
+                    {vendor}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="border rounded-md border-gray-400 p-2"
+                value={filters.auditor}
+                onChange={(e) =>
+                  setFilters({ ...filters, auditor: e.target.value })
+                }
+              >
+                <option value="">Select Auditor</option>
+
+                {auditorList.map((auditor, index) => (
+                  <option key={index} value={auditor}>
+                    {auditor}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-center gap-3 border-t p-2 mt-3">
+              <button
+                onClick={handleReset}
+                className="bg-red-500 rounded-md p-2 px-4 text-white flex items-center gap-2"
+              >
+                <MdClose /> Reset
+              </button>
+
+              <button
+                onClick={handleFilter}
+                className="bg-green-500 rounded-md p-2 px-4 text-white flex items-center gap-2"
+              >
+                <IoFilter /> Apply Filter
+              </button>
+            </div>
+          </div>
+        )}
+        {/* {filter && (
           <div className="mb-5 border p-2 rounded-md">
             <div className="grid grid-cols-4 gap-2 ">
               <div className="flex flex-col gap-1">
@@ -379,7 +473,7 @@ const userType = getItemInLocalStorage("USERTYPE")
               </button>
             </div>
           </div>
-        )}
+        )} */}
         <Table
           columns={columns}
           data={compliances}
