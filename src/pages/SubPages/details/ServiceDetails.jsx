@@ -160,14 +160,11 @@ useEffect(() => {
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
-   if (searchValue.trim() === "") {
-      setFilteredScheduleData(ScheduleData);
-    } else {
-      const filteredResult = ScheduleData.filter((item) =>
-        item.assigned_name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredScheduleData(filteredResult);
-    }
+    const searchFiltered = searchValue.trim() === "" ? ScheduleData : ScheduleData.filter((item) =>
+      item.assigned_name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+    const finalFiltered = filterByDateRange(searchFiltered);
+    setFilteredScheduleData(finalFiltered);
   };
 
   const FormatedDate = (dateString) => {
@@ -198,8 +195,8 @@ useEffect(() => {
       return data.filter((item) => {
         console.log(item.start_time);
         const itemDate = new Date(item.start_time).setHours(0, 0, 0, 0);
-        const start = startDate.setHours(0, 0, 0, 0);
-        const end = endDate.setHours(23, 59, 59, 999);
+        const start = new Date(startDate).setHours(0, 0, 0, 0);
+        const end = new Date(endDate).setHours(23, 59, 59, 999);
         // Check if the itemDate falls within the start and end date range
         return itemDate >= start && itemDate <= end;
       });
@@ -460,7 +457,11 @@ const handleDownload = (type = "pdf") => {
                   onChange={(update) => {
                     setStartDate(update[0]);
                     setEndDate(update[1]);
-                    setFilteredScheduleData(filterByDateRange(ScheduleData));
+                    const dateFiltered = filterByDateRange(ScheduleData);
+                    const finalFiltered = searchText.trim() === "" ? dateFiltered : dateFiltered.filter((item) =>
+                      item.assigned_name.toLowerCase().includes(searchText.toLowerCase())
+                    );
+                    setFilteredScheduleData(finalFiltered);
                   }}
                   isClearable={true}
                   placeholderText="Search by Date range"

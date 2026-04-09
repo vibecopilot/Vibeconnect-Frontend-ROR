@@ -2314,7 +2314,7 @@ export const sendMailToUsers = async (userId) =>
 export const getAttendance = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
-      `/employees/attendance-bulk?organization_id=${orgId}`,
+      `/employees/attendance-bulk?organization_id=${orgId}&page=${page || 1}`,
       // `/employees/attendance-bulk?organization_id=${orgId}`
       // {
       //   headers: {
@@ -11325,11 +11325,16 @@ export const postProjectLike = (data) =>
 //       "Content-Type": "multipart/form-data",
 //     },
 //   });
-export const uploadVisitorLicense = (formData) =>
-  axiosInstance.post("/visitor_licenses.json", formData);
+export const uploadVisitorLicense = (formData) =>{
+  return axiosInstance.post("/visitor_licenses.json", formData,{
+       headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
 
 export const uploadVisitorConsignment = (formData) => {
-  return axiosInstance.post("/visitor_consignments", formData, {
+  return axiosInstance.post("/visitor_consignments.json", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
