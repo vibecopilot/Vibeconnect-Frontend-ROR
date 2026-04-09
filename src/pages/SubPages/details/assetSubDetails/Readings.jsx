@@ -41,22 +41,80 @@ const Readings = () => {
     setDates([]);
   };
 const {id} = useParams()
-useEffect(()=> {
-  const fetchReading = async()=>{
+useEffect(() => {
+  const fetchReading = async () => {
     toast.loading("Please wait");
-   try {
-     const readingResp = await getAssetReadingDetails(id)
-     toast.dismiss()
-      toast.success("Reading fetched successfully");
-     console.log(readingResp.data)
-     setReadings(readingResp.data)
-   } catch (error) {
-    console.log(error)
-   }
-  }
-  fetchReading()
-},[])
+    try {
+      const readingResp = await getAssetReadingDetails(id);
+      toast.dismiss();
 
+      let data = readingResp.data || [];
+
+      // ✅ Step 1: Sort ASC for correct calculation
+      data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+      // ✅ Step 2: Group by date
+      const groupedByDate = {};
+
+      data.forEach((item) => {
+        const dateKey = item.created_at.split("T")[0];
+
+        if (!groupedByDate[dateKey]) {
+          groupedByDate[dateKey] = [];
+        }
+
+        groupedByDate[dateKey].push(item);
+      });
+
+      let finalData = [];
+      let prevKwhClosing = null;
+
+      // ✅ Step 3: Process data
+      Object.keys(groupedByDate).forEach((date) => {
+        const dayRecords = groupedByDate[date];
+
+        dayRecords.forEach((item) => {
+          if (item.asset_param_name === "KWH") {
+            const closing = Number(item.value);
+
+            const opening =
+              prevKwhClosing !== null ? prevKwhClosing : closing;
+
+            const consumption = closing - opening;
+
+            prevKwhClosing = closing;
+
+            finalData.push({
+              ...item,
+              opening: opening.toFixed(2),
+              value: closing.toFixed(2),
+              consumption: consumption.toFixed(2),
+            });
+          } else {
+            finalData.push({
+              ...item,
+              opening: "-",
+              consumption: "-",
+            });
+          }
+        });
+      });
+
+      // ✅ Step 4: Reverse for latest first display
+      finalData.reverse();
+
+      setReadings(finalData);
+
+      toast.success("Reading fetched successfully");
+    } catch (error) {
+      toast.dismiss();
+      console.log(error);
+      toast.error("Error fetching readings");
+    }
+  };
+
+  fetchReading();
+}, []);
 const dateFormat = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-GB", {
