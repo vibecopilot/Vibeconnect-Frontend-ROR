@@ -8,12 +8,14 @@ import Table from "../../components/table/Table";
 import { useNavigate } from "react-router-dom";
 
 const RVehiclesTable = ({
-
   data = [],
   loading,
   error,
   currentPageNum,
+  totalCount = 0,
+  rowsPerPage = 10,
   pageType,
+  onPageChange,
   onApprove,
   onReject,
 }) => {
@@ -217,9 +219,20 @@ const RVehiclesTable = ({
   if (loading) return <p className="p-5 text-center">Loading...</p>;
   if (error) return <p className="p-5 text-center text-red-500">{error}</p>;
 
+  const useServerPagination = ["All", "Vehicle In", "Vehicle Out", "Approvals", "History"].includes(pageType);
+
   return (
     <div className="w-full">
-      <Table columns={columns} data={data} isPagination={false} />
+      <Table
+        columns={columns}
+        data={data}
+        pagination
+        paginationServer={useServerPagination}
+        paginationTotalRows={useServerPagination ? totalCount : data.length}
+        currentPage={currentPageNum}
+        rowsPerPage={rowsPerPage}
+        onChangePage={useServerPagination ? onPageChange : undefined}
+      />
     </div>
   );
 };
