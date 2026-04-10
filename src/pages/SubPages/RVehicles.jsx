@@ -107,6 +107,7 @@ const RVehicles = () => {
 
   const [currentPageNum, setCurrentPageNum] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [tokens, setTokens] = useState(() => readTokensFromStorage());
@@ -476,20 +477,28 @@ const RVehicles = () => {
           response = await getRegisteredVehicle(params);
           data = response?.data || {};
           list = data.registered_vehicles || [];
+          setTotalCount(data?.total_count || data?.total || list.length);
+          setTotalPages(data?.total_pages || 1);
         } else if (page === "Vehicle In") {
           params["q[check_out_not_null]"] = false;
           response = await getVehicleHistory(params);
           data = response?.data || {};
           list = data.vehicle_logs || [];
+          setTotalCount(data?.total_count || list.length);
+          setTotalPages(data?.total_pages || 1);
         } else if (page === "Vehicle Out") {
           params["q[check_out_not_null]"] = true;
           response = await getVehicleHistory(params);
           data = response?.data || {};
           list = data.vehicle_logs || [];
+          setTotalCount(data?.total_count || list.length);
+          setTotalPages(data?.total_pages || 1);
         } else if (page === "History") {
           response = await getVehicleHistory(params);
           data = response?.data || {};
           list = data.vehicle_logs || [];
+          setTotalCount(data?.total_count || list.length);
+          setTotalPages(data?.total_pages || 1);
 
           const merged = [...(recentHistory || []), ...(list || [])];
 
@@ -558,6 +567,7 @@ const RVehicles = () => {
           });
 
           setVehicles(normalized);
+          setTotalCount(approvalData?.total_count || approvalData?.total || normalized.length);
           setTotalPages(approvalData?.total_pages || 1);
           setLoading(false);
           return;
@@ -687,7 +697,10 @@ const RVehicles = () => {
             loading={loading}
             error={error}
             currentPageNum={currentPageNum}
+            totalCount={totalCount}
             pageType={page}
+            rowsPerPage={PER_PAGE}
+            onPageChange={setCurrentPageNum}
             onApprove={page === "Approvals" ? handleApprove : undefined}
             onReject={page === "Approvals" ? handleReject : undefined}
           />
