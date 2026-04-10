@@ -158,9 +158,9 @@ const AddUser = () => {
       return toast.error("Please select Tower, Floor & Unit");
     }
 
-const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
-  formData.userType?.toLowerCase()
-);
+    const isAdmin = ["pms_admin", "security_guard", "employee", "pms_technician"].includes(
+      formData.userType?.toLowerCase()
+    );
 
     const payload = {
       user: {
@@ -605,10 +605,10 @@ const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="">Select</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Technician">Technician</option>
-                  <option value="Security Guard">Security Guard</option>
-                  <option value="Employee">Employee</option>
+                  <option value="pms_admin">Admin</option>
+                  <option value="pms_technician">Technician</option>
+                  <option value="security_guard">Security Guard</option>
+                  <option value="employee">Employee</option>
                 </select>
               </div>
             </div>
