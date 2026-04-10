@@ -108,6 +108,11 @@ const InwardPassDetails = () => {
               <p>{formatTime(details.goods_out_time)}</p>
             </div>
 
+             <div className="grid grid-cols-2">
+              <p className="font-medium">Returnable Type :</p>
+              <p>{details.returnable_type || "-"}</p>
+            </div>
+
             {details.created_by_name && (
               <div className="grid grid-cols-2">
                 <p className="font-medium">Created by :</p>
@@ -126,10 +131,10 @@ const InwardPassDetails = () => {
             </div>
 
           </div>
-          <div>
+          {/* <div>
             <p className="font-medium">Description</p>
             <p className="bg-gray-50 p-2 rounded-md">{details.description}</p>
-          </div>
+          </div> */}
           <div>
             <div className="mt-5">
               <p className="font-semibold mb-2">Items Details</p>
