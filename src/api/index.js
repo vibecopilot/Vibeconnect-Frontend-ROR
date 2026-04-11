@@ -2488,7 +2488,7 @@ export const updateEventEnableStatus = (id, enabled) =>
     `/events/${id}.json`,
     {
       event: {
-        important: enabled,  // <-- correct field
+        enabled,
       },
     },
     {
@@ -2712,6 +2712,35 @@ export const editChecklist = async (data, id) =>
   });
 export const getServicesChecklistDetails = async (checklistId) =>
   axiosInstance.get(`/checklists.json/${checklistId}`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const getChecklistGroups = async () =>
+  axiosInstance.get(`/generic_infos.json`, {
+    params: {
+      token: token,
+      "q[info_type_eq]": "ChecklistGroup",
+    },
+  });
+
+export const postChecklistGroup = async (data) =>
+  axiosInstance.post(`/generic_infos.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const editChecklistGroup = async (id, data) =>
+  axiosInstance.put(`/generic_infos/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const deleteChecklistGroup = async (id) =>
+  axiosInstance.delete(`/generic_infos/${id}.json`, {
     params: {
       token: token,
     },
