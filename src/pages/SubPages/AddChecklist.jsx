@@ -6,6 +6,7 @@ import {
   getAssignedTo,
   getChecklistDetails,
   getChecklistGroupReading,
+  getChecklistGroups,
   getHostList,
   getMasterChecklist,
   getSiteAsset,
@@ -34,6 +35,8 @@ const AddChecklist = () => {
   const [selectedOptionssupervisior, setSelectedOptionssupervisior] = useState(
     []
   );
+  const [checklistGroups, setChecklistGroups] = useState([]);
+  const [checklistGroup, setChecklistGroup] = useState("");
   const [optionssupervisior, setOptionssupervisior] = useState([]);
   const month = String(toDay.getMonth() + 1).padStart(2, "0");
   const day = String(toDay.getDate()).padStart(2, "0");
@@ -85,6 +88,19 @@ const AddChecklist = () => {
       }
     };
     fetchSiteOwners();
+  }, []);
+  useEffect(() => {
+    const fetchChecklistGroups = async () => {
+      try {
+        const resp = await getChecklistGroups();
+        setChecklistGroups(resp.data);
+        console.log("Checklist Groups:", resp.data);
+      } catch (error) {
+        console.log("Error fetching checklist groups:", error);
+      }
+    };
+
+    fetchChecklistGroups();
   }, []);
   const [addNewQuestion, setAddNewQuestion] = useState([
     {
@@ -676,16 +692,16 @@ const AddChecklist = () => {
                   Checklist Group :
                 </label>
                 <select
-                  name="checklist_group"
-                  id="checklist_group"
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                  // value={checklistGroup}
+                  value={checklistGroup}
                   onChange={(e) => setChecklistGroup(e.target.value)}
+                  className="p-1 px-4 border w-full border-gray-500 rounded-md"
                 >
-                  <option value="">Select Checklist Group</option>
-                  <option value="hourly">Cleaning</option>
-                  <option value="daily">Hygiene</option>
-                  <option value="weekly">Painting</option>
+                  <option value="">Select Group</option>
+                  {checklistGroups.map((group) => (
+                    <option value={group.id} key={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex flex-col">
