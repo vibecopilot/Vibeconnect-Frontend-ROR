@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
-import DataTable from "react-data-table-component";
+import { IoMdAdd } from "react-icons/io";
+import Table from "../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
-import { PiPlusCircle } from "react-icons/pi";
-import { useSelector } from "react-redux";
 import { getIncidents } from "../api";
 import { dateFormatSTD } from "../utils/dateUtils";
+import { useSelector } from "react-redux";
 
 const Incidents = () => {
-  const themeColor = useSelector((state) => state.theme.color);
-
   const [incidents, setIncidents] = useState([]);
   const [page, setPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const themeColor = useSelector((state) => state.theme.color);
   const perPage = 10;
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const columns = [
     {
@@ -32,21 +33,23 @@ const Incidents = () => {
       ),
     },
     { name: "ID", selector: (row) => row.id, sortable: true },
-    {
-      name: "Building",
-      selector: (row) => row.building_name,
-      sortable: true,
-    },
+    { name: "Building", selector: (row) => row.building_name, sortable: true },
     {
       name: "Incident Time",
-      selector: (row) => dateFormatSTD(row.time_and_date),
+      selector: (row) =>
+        row.time_and_date
+          ? new Date(row.time_and_date).toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
+          : "-",
       sortable: true,
     },
-    {
-      name: "Level",
-      selector: (row) => row.incident_level,
-      sortable: true,
-    },
+    { name: "Level", selector: (row) => row.incident_level, sortable: true },
     {
       name: "Category",
       selector: (row) => row.primary_incident_category,
@@ -62,16 +65,22 @@ const Incidents = () => {
       selector: (row) => (row.support_required ? "Yes" : "No"),
       sortable: true,
     },
-    {
-      name: "Current Status",
-      selector: (row) => row.status,
-      sortable: true,
-    },
+    { name: "Current Status", selector: (row) => row.status, sortable: true },
   ];
 
-  const fetchIncidents = async (pageNo = 1) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  /* -------------------- Fetch API -------------------- */
+  const fetchIncidents = async () => {
     try {
-      const res = await getIncidents(pageNo);
+      const res = await getIncidents(page, debouncedSearch);
+
       setIncidents(res.data?.incidents || []);
       setTotalRecords(res.data?.total_count || 0);
     } catch (error) {
@@ -80,44 +89,51 @@ const Incidents = () => {
   };
 
   useEffect(() => {
-    fetchIncidents(page);
-  }, [page]);
+    fetchIncidents();
+  }, [page, debouncedSearch]);
 
-  document.title = "VC - Incidents";
-
+  /* -------------------- Search Handler -------------------- */
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPage(1); // Reset page when searching
+  };
   return (
     <section className="flex">
       <Navbar />
-      <div className="w-full flex m-2 flex-col overflow-hidden">
-        <div className="flex flex-col sm:flex-row md:justify-between my-2 gap-2">
+
+      <div className="w-full flex mx-3 flex-col overflow-hidden">
+        <h2 className="text-lg font-semibold my-5">INCIDENTS LIST</h2>
+
+        <div className="flex flex-col sm:flex-row md:justify-between gap-3 px-3">
           <input
             type="text"
-            placeholder="Search"
-            className="border p-2 w-full border-gray-300 rounded-lg"
-            disabled
+            placeholder="Search incidents by using  Building, Category, etc."
+            value={search}
+            onChange={handleSearchChange}
+            className="border p-2 border-gray-300 rounded-lg 
+                       focus:outline-none focus:ring-2 focus:ring-gray-300 
+                       w-full md:w-[900px] px-5"
           />
-
           <Link
             to="/admin/add-incidents"
+            className="font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md text-white md:mx-3"
             style={{ background: themeColor }}
-            className="font-semibold text-white px-4 p-2 flex gap-2 items-center rounded-md"
           >
-            <PiPlusCircle /> Add
+            <IoMdAdd /> Add
           </Link>
         </div>
 
-        <DataTable
-          columns={columns}
-          data={incidents}
-          pagination
-          paginationServer
-          paginationTotalRows={totalRecords}
-          paginationPerPage={perPage}
-          onChangePage={(page) => setPage(page)}
-          highlightOnHover
-          responsive
-           persistTableHead
-        />
+        <div className="my-5 mx-3">
+          <Table
+            columns={columns}
+            data={incidents}
+            isPagination={true}
+            currentPage={page}
+            totalRecords={totalRecords}
+            perPage={perPage}
+            onPageChange={(p) => setPage(p)}
+          />
+        </div>
       </div>
     </section>
   );
