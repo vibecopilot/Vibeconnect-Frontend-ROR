@@ -116,7 +116,7 @@ const Incidents = () => {
           />
           <Link
             to="/admin/add-incidents"
-            className="font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md text-white md:mx-3"
+            className="font-semibold border-2  px-4 p-1 flex gap-2 items-center rounded-md text-white md:mx-3"
             style={{ background: themeColor }}
           >
             <IoMdAdd /> Add
