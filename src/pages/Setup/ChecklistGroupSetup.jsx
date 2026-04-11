@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../../components/Navbar";
 import { Link } from "react-router-dom";
 import { IoMdAdd } from "react-icons/io";
@@ -8,65 +8,145 @@ import CheckListAddGroupModal from "../../containers/modals/ChecklistAddGroupMod
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 import { FaEdit } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
+import {
+  getChecklistGroups,
+  postChecklistGroup,
+  editChecklistGroup,
+  deleteChecklistGroup,
+} from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 function CheckListGroupSetup() {
   const [addGroup, showAddGroup] = useState(false);
-  
-  const [groups, setGroups] = useState([
-    { id: 1, groupName: "Cleaning", status: true },
-    { id: 2, groupName: "Hygiene", status: true },
-    { id: 3, groupName: "Painting", status: false },
-    { id: 4, groupName: "Electrical", status: true },
-  ]);
-
+  const [groups, setGroups] = useState([]);
   const [editData, setEditData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [siteId] = useState(getItemInLocalStorage("SITEID") || 47);
 
-  // ✅ ADD GROUP
-  const handleSaveGroup = (groupName) => {
-  if (editData) {
-    // ✏️ UPDATE
-    const updated = groups.map((item) =>
-      item.id === editData.id
-        ? { ...item, groupName }
-        : item
-    );
-    setGroups(updated);
-    setEditData(null);
-  } else {
-    // ➕ ADD
-    const newGroup = {
-      id: Date.now(),
-      groupName,
-      status: true,
+  useEffect(() => {
+    const fetchGroups = async () => {
+      setLoading(true);
+      try {
+        const resp = await getChecklistGroups();
+        const items = resp?.data || resp?.data?.generic_infos || [];
+        const mapped = Array.isArray(items)
+          ? items.map((item) => ({
+              ...item,
+              groupName: item.name || item.groupName,
+              status: item.status !== undefined ? item.status : true,
+            }))
+          : [];
+        setGroups(mapped);
+      } catch (error) {
+        console.error("Unable to load Checklist Groups:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    setGroups([...groups, newGroup]);
-  }
 
-  showAddGroup(false);
-};
+    fetchGroups();
+  }, []);
+
+  // ✅ ADD / UPDATE GROUP
+  const handleSaveGroup = async (groupName) => {
+    if (!groupName.trim()) {
+      alert("Group name is required");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (editData) {
+        const payload = {
+          name: groupName,
+          site_id: siteId,
+          info_type: "ChecklistGroup",
+        };
+        const resp = await editChecklistGroup(editData.id, payload);
+        const updatedGroup = {
+          ...resp?.data,
+          groupName: resp?.data?.name || groupName,
+          status: resp?.data?.status !== undefined ? resp?.data?.status : editData.status,
+        };
+        setGroups((prev) =>
+          prev.map((item) =>
+            item.id === editData.id ? updatedGroup : item
+          )
+        );
+        setEditData(null);
+      } else {
+        const payload = {
+          name: groupName,
+          site_id: siteId,
+          info_type: "ChecklistGroup",
+        };
+        const resp = await postChecklistGroup(payload);
+        const newGroup = {
+          ...resp?.data,
+          groupName: resp?.data?.name || groupName,
+          status: resp?.data?.status !== undefined ? resp?.data?.status : true,
+        };
+        setGroups((prev) => [...prev, newGroup]);
+      }
+      showAddGroup(false);
+    } catch (error) {
+      console.error("Error saving group:", error);
+      alert("Failed to save group. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // ✅ DELETE GROUP
- const handleDelete = (id) => {
-  const confirmDelete = window.confirm("Are you sure you want to delete?");
-  if (confirmDelete) {
-    const filtered = groups.filter((item) => item.id !== id);
-    setGroups(filtered);
-  }
-};
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete?");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteChecklistGroup(id);
+      setGroups((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error("Error deleting group:", error);
+      alert("Failed to delete group. Please try again.");
+    }
+  };
 
   // ✅ TOGGLE STATUS
-  const handleToggle = (id) => {
-    const updated = groups.map((item) =>
-      item.id === id ? { ...item, status: !item.status } : item
+  const handleToggle = async (id) => {
+    const row = groups.find((item) => item.id === id);
+    if (!row) return;
+
+    const updatedStatus = !row.status;
+    setGroups((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, status: updatedStatus } : item
+      )
     );
-    setGroups(updated);
+
+    try {
+      const payload = {
+        name: row.groupName,
+        site_id: siteId,
+        info_type: "ChecklistGroup",
+        status: updatedStatus,
+      };
+      await editChecklistGroup(id, payload);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      setGroups((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, status: row.status } : item
+        )
+      );
+    }
   };
 
   // ✅ EDIT GROUP
   const handleEdit = (row) => {
-  setEditData(row);       // store selected row
-  showAddGroup(true);     // open modal
-};
+    setEditData(row);       // store selected row
+    showAddGroup(true);     // open modal
+  };
 
   // ✅ TABLE COLUMN
   const columnGroup = [
@@ -93,16 +173,16 @@ function CheckListGroupSetup() {
       name: "Action",
       cell: (row) => (
         <div className="flex gap-2">
-        <FaEdit
-        className="cursor-pointer text-blue-500 hover:text-blue-700 w-5 h-3"
-        onClick={() => handleEdit(row)}
-        title="Edit"
-      />
-      <MdDelete
-        className="cursor-pointer text-red-500 hover:text-red-700 w-5 h-4"
-        onClick={() => handleDelete(row.id)}
-        title="Delete"
-      />
+          <FaEdit
+            className="cursor-pointer text-blue-500 hover:text-blue-700 w-5 h-3"
+            onClick={() => handleEdit(row)}
+            title="Edit"
+          />
+          <MdDelete
+            className="cursor-pointer text-red-500 hover:text-red-700 w-5 h-4"
+            onClick={() => handleDelete(row.id)}
+            title="Delete"
+          />
         </div>
       ),
     },
@@ -140,15 +220,15 @@ function CheckListGroupSetup() {
 
         {/* ✅ MODAL */}
         {addGroup && (
-  <CheckListAddGroupModal
-    onclose={() => {
-      showAddGroup(false);
-      setEditData(null);
-    }}
-    onSave={handleSaveGroup}
-    editData={editData}   // 👈 pass this
-  />
-)}
+          <CheckListAddGroupModal
+            onclose={() => {
+              showAddGroup(false);
+              setEditData(null);
+            }}
+            onSave={handleSaveGroup}
+            editData={editData}   // 👈 pass this
+          />
+        )}
       </div>
     </section>
   );

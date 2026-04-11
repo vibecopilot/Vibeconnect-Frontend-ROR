@@ -133,6 +133,11 @@ const handleReject = (row) => {
       selector: (row) => row.frequency,
       sortable: true,
     },
+     {
+      name: "Checklist Group",
+      selector: (row) => row.checklist_group?.groupName || "-",
+      sortable: true,
+    },
     { name: "Start Date", selector: (row) => row.start_date, sortable: true },
     { name: "End Date", selector: (row) => row.end_date, sortable: true },
     {

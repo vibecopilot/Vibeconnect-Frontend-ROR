@@ -25,10 +25,13 @@ const Events = () => {
     const fetchEvents = async () => {
       try {
         const eventsResponse = await getEvents();
-
         const sortedEvents = eventsResponse.data
-          .map((ev) => ({ ...ev, enabled: ev.important ?? false })) 
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); 
+          .map((ev) => ({
+            ...ev,
+            enabled: ev.enabled ?? ev.important ?? false,
+            important: ev.enabled ?? ev.important ?? false,
+          }))
+          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
         setEvents(sortedEvents);
         setFilteredData(sortedEvents);
@@ -47,46 +50,48 @@ const Events = () => {
     return date.toLocaleDateString();
   };
 
-  // 🔥 FIXED: Toggle without moving row
- const handleToggle = async (id) => {
-  const eventItem = events.find((e) => e.id === id);
-  if (!eventItem) return;
+  const handleToggle = async (id) => {
+    const eventItem = events.find((e) => e.id === id);
+    if (!eventItem) return;
 
-  const previousStatus = eventItem.important;
-  const newStatus = !previousStatus;
+    const previousStatus = eventItem.enabled;
+    const newStatus = !previousStatus;
 
-  const updateLocal = (status) => {
-    setEvents((prev) =>
-      prev.map((ev) =>
-        ev.id === id ? { ...ev, important: status } : ev
-      )
-    );
+    const updateLocal = (status) => {
+      setEvents((prev) =>
+        prev.map((ev) =>
+          ev.id === id
+            ? { ...ev, enabled: status, important: status }
+            : ev
+        )
+      );
 
-    setFilteredData((prev) =>
-      prev.map((ev) =>
-        ev.id === id ? { ...ev, important: status } : ev
-      )
-    );
+      setFilteredData((prev) =>
+        prev.map((ev) =>
+          ev.id === id
+            ? { ...ev, enabled: status, important: status }
+            : ev
+        )
+      );
+    };
+
+    updateLocal(newStatus);
+
+    try {
+      await updateEventEnableStatus(id, newStatus);
+      toast.success(newStatus ? "Event Enabled" : "Event Disabled");
+    } catch (err) {
+      toast.error("Failed to update");
+      updateLocal(previousStatus);
+    }
   };
-
-  // Update UI immediately
-  updateLocal(newStatus);
-
-  try {
-    await updateEventEnableStatus(id, newStatus);
-    toast.success(newStatus ? "Event Enabled" : "Event Disabled");
-  } catch (err) {
-    toast.error("Failed to update");
-    updateLocal(previousStatus); // revert
-  }
-};
 
   const column = [
     {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
-          <Link to={`/communication/event/event-details/${row.id}`}>
+          <Link to={`/communication/events/details/${row.id}`}>
             <BsEye size={15} />
           </Link>
           <Link to={`/communication/event/edit-events/${row.id}`}>
@@ -154,7 +159,7 @@ const Events = () => {
           <input
             type="checkbox"
             className="sr-only peer"
-            checked={row.important}
+            checked={row.enabled}
             onChange={() => handleToggle(row.id)}
           />
           <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-600 transition-all"></div>
