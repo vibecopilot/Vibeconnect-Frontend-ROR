@@ -19,7 +19,6 @@ const VisitorDetails = () => {
 
   // Pagination
   const [devicePage, setDevicePage] = useState(1);
-  const [visitorPage, setVisitorPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
   useEffect(() => {
@@ -86,11 +85,6 @@ const VisitorDetails = () => {
   const paginatedDeviceLogs = deviceLogs.slice(
     (devicePage - 1) * ITEMS_PER_PAGE,
     devicePage * ITEMS_PER_PAGE
-  );
-
-  const paginatedVisitorLogs = visitorLogs.slice(
-    (visitorPage - 1) * ITEMS_PER_PAGE,
-    visitorPage * ITEMS_PER_PAGE
   );
 
   const visitorDeviceLogColumn = [
@@ -432,8 +426,8 @@ const VisitorDetails = () => {
         </Section>
 
         <Section title="Visitor Log">
-          {paginatedVisitorLogs.length > 0 ? (
-            <Table columns={visitorLogColumn} data={paginatedVisitorLogs} />
+          {visitorLogs.length > 0 ? (
+            <Table columns={visitorLogColumn} data={visitorLogs} />
           ) : (
             <p className="px-2 text-gray-500">No visit logs available</p>
           )}
