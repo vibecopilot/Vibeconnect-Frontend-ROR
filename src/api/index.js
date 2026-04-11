@@ -10803,12 +10803,16 @@ export const editIncidentCatDetails = async (id, data) =>
       token: token,
     },
   });
-export const getIncidents = async (page = 1) =>
+export const getIncidents = async (page = 1, search = "") =>
   axiosInstance.get(`/incidents.json`, {
     params: {
       token: token,
       page: page,
       per_page: 10,
+      ...(search && {
+        "q[building_name_or_primary_incident_category_or_primary_incident_sub_category_cont]":
+          search,
+      }),
     },
   });
 export const getIncidentDetails = async (incidentId) =>
