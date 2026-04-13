@@ -5,6 +5,7 @@ import {
   API_URL,
   ChecklistImport,
   downloadSampleChecklist,
+  editChecklist,
   exportChecklist,
   getChecklist,
   getChecklistTemplate,
@@ -25,6 +26,7 @@ import { FaCheckCircle, FaCopy, FaDownload, FaTimesCircle } from "react-icons/fa
 import Switch from "../Buttons/Switch";
 import DatePicker from "react-datepicker";
 import { BsEye } from "react-icons/bs";
+import toast from "react-hot-toast";
 
 const Checklist = () => {
   const [checklists, setChecklists] = useState([]);
@@ -45,13 +47,27 @@ const Checklist = () => {
     setSelectedFiles(files);
   };
 
-  const handleApprove = (row) => {
-  console.log("Approved:", row);
-};
+  const handleApprove = async (row) => {
+    try {
+      await editChecklist({ is_approved: true }, row.id);
+      await fetchChecklist();
+      toast.success("Checklist approved successfully");
+    } catch (error) {
+      console.error("Error approving checklist:", error);
+      toast.error("Failed to approve checklist");
+    }
+  };
 
-const handleReject = (row) => {
-  console.log("Rejected:", row);
-};
+  const handleReject = async (row) => {
+    try {
+      await editChecklist({ is_approved: false }, row.id);
+      await fetchChecklist();
+      toast.success("Checklist rejected successfully");
+    } catch (error) {
+      console.error("Error rejecting checklist:", error);
+      toast.error("Failed to reject checklist");
+    }
+  };
 
   const handleImportChecklist = async () => {
     if (selectedFiles.length === 0) {
@@ -68,7 +84,7 @@ const handleReject = (row) => {
       const response = await ChecklistImport(formData);
       if (response.status === 200) {
         setImportStatus("Checklist successfully imported!");
-        await getChecklist();
+        await fetchChecklist();
       } else {
         setImportStatus("Failed to import checklist.");
       }
@@ -98,26 +114,27 @@ const handleReject = (row) => {
 
   const themeColor = useSelector((state) => state.theme.color);
 
+  const fetchChecklist = async () => {
+    try {
+      const checklist = await getChecklist();
+
+      // FIXED: Filter only ctype: "routine" (opposite of PPMActivity)
+      const routineChecklistsOnly = checklist.data.checklists.filter(
+        (checklist) => checklist.ctype === "routine",
+      );
+
+      const sortedChecklists = routineChecklistsOnly.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      );
+      setChecklists(sortedChecklists);
+      setFilteredData(sortedChecklists);
+      console.log("Routine Checklists:", sortedChecklists);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    const fetchChecklist = async () => {
-      try {
-        const checklist = await getChecklist();
-
-        // FIXED: Filter only ctype: "routine" (opposite of PPMActivity)
-        const routineChecklistsOnly = checklist.data.checklists.filter(
-          (checklist) => checklist.ctype === "routine",
-        );
-
-        const sortedChecklists = routineChecklistsOnly.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at),
-        );
-        setChecklists(sortedChecklists);
-        setFilteredData(sortedChecklists);
-        console.log("Routine Checklists:", sortedChecklists);
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchChecklist();
   }, []);
 
@@ -143,6 +160,17 @@ const handleReject = (row) => {
     {
       name: "No. of Groups",
       selector: (row) => row?.groups?.length,
+      sortable: true,
+    },
+     {
+      name: "Status",
+      selector: (row) => row.is_approved === null ? (
+        <span className="text-yellow-500">Pending</span>
+      ) : row.is_approved ? (
+        <span className="text-green-500">Approved</span>
+      ) : (
+        <span className="text-red-500">Rejected</span>
+      ),
       sortable: true,
     },
     {
