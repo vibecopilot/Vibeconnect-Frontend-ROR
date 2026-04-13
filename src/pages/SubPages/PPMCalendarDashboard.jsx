@@ -104,8 +104,13 @@ function PPMCalendarDashboard() {
   const [statusFilter, setStatusFilter] = useState("all"); // all | pending | inprogress | complete | overdue
   const [view, setView] = useState("dayGridMonth"); // dayGridMonth | timeGridWeek | timeGridDay
 
+  // ✅ Prevent duplicate API calls
+const [currentStart, setCurrentStart] = useState(null);
+const [currentEnd, setCurrentEnd] = useState(null);
+
   // ✅ Reference to control FullCalendar API
   const calendarRef = useRef(null);
+  const lastRangeRef = useRef({ start: null, end: null });
 
   const initialDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -164,56 +169,40 @@ function PPMCalendarDashboard() {
   const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
     if (!startStr || !endStr) return;
 
-    // const toastId = toast.loading("Loading calendar...");
+    const toastId = toast.loading("Loading calendar...");
 
     try {
       const data = await getCalendarActivities(startStr, endStr);
 
       const rawList = Array.isArray(data?.data)
         ? data.data
-        : (data?.data?.events ?? []);
-
-      // ✅ filter only ppm & amc
-      const list = rawList.filter((item) => {
-        const name = (
-          item?.title ||
-          item?.checklist_name ||
-          item?.name ||
-          ""
-        ).toLowerCase();
-
-        return name.includes("ppm") || name.includes("amc");
-      });
+        : data?.data?.events ?? [];
 
       const parseDate = (val) => {
         if (!val) return null;
 
-        // ✅ Force local time parsing (prevents shifting)
         const d = new Date(val);
-
         return isNaN(d.getTime()) ? null : d;
       };
 
-      const formattedEvents = list.map((ev, idx) => {
-        const startDate = ev.start || "";
+      const formattedEvents = rawList.map((ev, idx) => {
+        const startDate = ev.start || ev.start_date || ev.date || "";
         const startTime = ev.start_time || "00:00:00";
 
-        const start =
-          parseDate(
-            startDate.includes("T")
-              ? startDate
-              : `${startDate}T${startTime || "00:00:00"}`
-          );
+        const start = parseDate(
+          startDate.includes("T")
+            ? startDate
+            : `${startDate}T${startTime || "00:00:00"}`
+        );
 
-        let end = parseDate(ev.end);
-
+        let end = parseDate(ev.end || ev.end_date);
         if (!end && ev.end_time) {
-          end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
+          end = parseDate(`${startDate}T${ev.end_time}`);
         }
 
         return {
           id: String(ev?.id ?? idx),
-          title: ev?.title || ev?.checklist_name || "Activity",
+          title: ev?.title || ev?.checklist_name || ev?.name || "Activity",
           start,
           end,
           extendedProps: {
@@ -225,6 +214,8 @@ function PPMCalendarDashboard() {
                 : "—"),
             status: normalizeStatus(ev?.status ?? ""),
             raw: ev,
+            startStr: start ? start.toISOString() : "",
+            endStr: end ? end.toISOString() : "",
           },
         };
       });
@@ -242,10 +233,13 @@ function PPMCalendarDashboard() {
       if (arg?.view?.currentStart && arg?.view?.currentEnd) {
         const startStr = arg.view.currentStart.toISOString().slice(0, 10);
         const endStr = arg.view.currentEnd.toISOString().slice(0, 10);
+        if (startStr === currentStart && endStr === currentEnd) return;
+        setCurrentStart(startStr);
+        setCurrentEnd(endStr);
         fetchCalendarEvents(startStr, endStr);
       }
     },
-    [fetchCalendarEvents]
+    [fetchCalendarEvents, currentStart, currentEnd]
   );
 
   const handleDateClick = (arg) => {
