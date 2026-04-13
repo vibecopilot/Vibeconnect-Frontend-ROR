@@ -394,11 +394,27 @@ const CreateTicket = () => {
   };
 
   const handleReset = () => {
-    setAttachments([]);
-    setSelectedSubCategory("");
-    setSelectedCategory("");
-    setSelectedCustomerPriority("");
-    setSelectedCategory("");
+    setFormData({
+      category_type_id: "",
+      sub_category_id: "",
+      priority: "",
+      of_phase: "pms",
+      heading: "",
+      text: "",
+      documents: [],
+      building_name: "",
+      unit_id: "",
+      floor_name: "",
+      assigned_to: "",
+      issue_type_id: "",
+      complaint_type: "",
+      complaint_mode_id: "",
+    });
+
+    setUnits([]);
+    setFloor([]);
+    setUnitName([]);
+    setSelectedUser(null);
   };
 
   useEffect(() => {
@@ -772,13 +788,13 @@ const CreateTicket = () => {
                 >
                   <FaCheck /> Submit
                 </button>
-                <button
-                  type="reset"
-                  className="bg-red-400 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"
-                  onClick={handleReset}
-                >
-                  <MdClose /> Reset
-                </button>
+                 <button
+                type="button"
+                onClick={handleReset}
+                className="bg-red-400 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"
+              >
+                <MdClose /> Reset
+              </button>
               </div>
             </form>
           )}
