@@ -169,14 +169,12 @@ const [currentEnd, setCurrentEnd] = useState(null);
   const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
     if (!startStr || !endStr) return;
 
-    // const toastId = toast.loading("Loading calendar...");
-
     try {
       const data = await getCalendarActivities(startStr, endStr);
 
-      const rawList = Array.isArray(data?.data)
-        ? data.data
-        : data?.data?.events ?? [];
+      const rawList = Array.isArray(data?.activities)
+        ? data.activities
+        : data?.data?.activities || [];
 
       const parseDate = (val) => {
         if (!val) return null;
@@ -186,32 +184,16 @@ const [currentEnd, setCurrentEnd] = useState(null);
       };
 
       const formattedEvents = rawList.map((ev, idx) => {
-        const startDate = ev.start || ev.start_date || ev.date || "";
-        const startTime = ev.start_time || "00:00:00";
-
-        const start = parseDate(
-          startDate.includes("T")
-            ? startDate
-            : `${startDate}T${startTime || "00:00:00"}`
-        );
-
-        let end = parseDate(ev.end || ev.end_date);
-        if (!end && ev.end_time) {
-          end = parseDate(`${startDate}T${ev.end_time}`);
-        }
+        const start = parseDate(ev.start_time);
+        const end = parseDate(ev.end_time);
 
         return {
           id: String(ev?.id ?? idx),
-          title: ev?.title || ev?.checklist_name || ev?.name || "Activity",
+          title: ev?.checklist_name || "Activity",
           start,
           end,
           extendedProps: {
-            assignTo:
-              ev?.assigned_to_name ||
-              ev?.assign_to ||
-              (Array.isArray(ev?.assigned_users)
-                ? ev.assigned_users.join(", ")
-                : "—"),
+            assignTo: ev?.assigned_to_name || "—",
             status: normalizeStatus(ev?.status ?? ""),
             raw: ev,
             startStr: start ? start.toISOString() : "",
@@ -221,9 +203,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
       });
 
       setEvents(formattedEvents);
-      toast.dismiss(toastId);
     } catch (error) {
-      toast.dismiss(toastId);
       console.error(error);
       toast.error("Failed to load calendar");
     }
