@@ -1625,9 +1625,12 @@ export const getPPMCalendar = async (startdate, enddate) =>
 
 /** Fetch all calendar activities (PPM, routine, soft services) for a date range */
 export const getCalendarActivities = async (startdate, enddate, siteIds = null) =>
-  axiosInstance.get("/activities/calendar_data.json", {
+  axiosInstance.get("/activities.json", {
     params: {
       token: token,
+      "q[checklist_ctype_eq]": "ppm",
+      page: 1,
+      per_page: 1000, // Adjust as needed to fetch all activities
       startdate,
       enddate,
       ...(siteIds && siteIds.length ? { site_ids: Array.isArray(siteIds) ? siteIds.join(",") : siteIds } : {}),
