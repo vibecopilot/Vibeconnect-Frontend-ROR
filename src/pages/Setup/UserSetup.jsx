@@ -76,6 +76,26 @@ const UserSetup = () => {
   }, [users, activeTab]);
 
 
+  const buildSearchableText = (item) => {
+    const userSitesHierarchy = Array.isArray(item.user_sites)
+      ? item.user_sites.map((site) => site.hierarchy || site.full_unit_name || "").join(" ")
+      : "";
+
+    return [
+      item.firstname,
+      item.lastname,
+      item.email,
+      item.mobile,
+      item.user_type,
+      item.full_unit_name,
+      item.unit?.name,
+      userSitesHierarchy,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  };
+
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
@@ -85,21 +105,7 @@ const UserSetup = () => {
     } else {
       const searchWords = searchValue.toLowerCase().split(" ").filter(Boolean);
       const filteredResults = users.filter((item) => {
-        // Combine searchable fields into one string
-        const searchable = [
-          item.firstname,
-          item.lastname,
-          // item.unit_name,
-          item.email,
-          item.mobile,
-          item.user_type,
-          item.unit?.name || "",
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-
-        // Check if every search word is present in the combined string
+        const searchable = buildSearchableText(item);
         return searchWords.every((word) => searchable.includes(word));
       });
       setFilteredData(filteredResults);
@@ -112,18 +118,7 @@ const UserSetup = () => {
     const searchWords = searchText.toLowerCase().split(" ").filter(Boolean);
 
     return tabFilteredUsers.filter((item) => {
-      const searchable = [
-        item.firstname,
-        item.lastname,
-        item.email,
-        item.mobile,
-        item.user_type,
-        item.unit?.name || "",
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
+      const searchable = buildSearchableText(item);
       return searchWords.every((word) => searchable.includes(word));
     });
   }, [searchText, tabFilteredUsers]);
@@ -467,7 +462,7 @@ const dashboardCards = [
         <div className="mt-2 flex md:flex-row flex-col justify-between md:items-center gap-4">
           <input
             type="text"
-            placeholder="Search Anything (Name, Email and Mobile) along with Spaces"
+            placeholder="Search Anything (Name, Email, Mobile and Flat) along with Spaces"
             className="p-2 w-full border border-gray-300 rounded-md placeholder:text-sm outline-none"
             value={searchText}
             onChange={handleSearch}

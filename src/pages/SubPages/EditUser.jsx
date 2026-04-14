@@ -18,7 +18,10 @@ const UserEdit = () => {
 
   const handleProfileUpload = (e) => {
     const file = e.target.files?.[0];
-    if (file) setProfilePreview(URL.createObjectURL(file));
+    if (file) {
+      setProfilePreview(URL.createObjectURL(file));
+      setFormData((prev) => ({ ...prev, profile_picture: file }));
+    }
   };
 
   useEffect(() => {
@@ -80,7 +83,36 @@ const UserEdit = () => {
     setSaving(true);
 
     try {
-      await putSetupUser(id, formData);
+      const payload = {
+        firstname,
+        lastname,
+        email,
+        mobile,
+        user_status,
+        email_1,
+        landline_number,
+        intercom_number,
+        user_address,
+        gst_number,
+        pan_number,
+        user_type,
+        is_downloaded,
+        lives_here: formData.lives_here,
+      };
+
+      if (formData.profile_picture instanceof File) {
+        const uploadData = new FormData();
+        Object.entries(payload).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            uploadData.append(key, String(value));
+          }
+        });
+        uploadData.append("profile_picture", formData.profile_picture);
+        await putSetupUser(id, uploadData);
+      } else {
+        await putSetupUser(id, payload);
+      }
+
       toast.success("User updated successfully");
       navigate(`/setup/users-details/${id}`);
     } catch (err) {
@@ -118,6 +150,7 @@ const UserEdit = () => {
     full_unit_name,
     is_downloaded,
     user_type,
+    lives_here,
     created_at,
     updated_at,
   } = formData;
@@ -323,6 +356,27 @@ const UserEdit = () => {
                       value={user_type}
                       onChange={handleChange}
                     />
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700">
+                        Lives Here
+                      </label>
+                      <select
+                        name="lives_here"
+                        value={
+                          lives_here === true
+                            ? "Yes"
+                            : lives_here === false
+                            ? "No"
+                            : ""
+                        }
+                        onChange={handleSelectChange}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      >
+                        <option value="">Select</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    </div>
                   </Grid2>
                 </div>
               </Section>
