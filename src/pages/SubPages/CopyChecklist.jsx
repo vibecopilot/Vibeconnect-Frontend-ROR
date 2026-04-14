@@ -184,6 +184,7 @@ const CopyChecklist = () => {
       setStartDate(data.start_date);
       setEndDate(data.end_date);
       setWeightage(data.weightage_enabled);
+      setChecklistGroup(data.group_id || "");
       setSections(
         data.groups.map((group) => ({
           group: group.group_id,
@@ -205,6 +206,7 @@ const CopyChecklist = () => {
     };
     fetchServicesChecklistDetails();
   }, [masterid]);
+
   useEffect(() => {
     const fetchServicesChecklistDetails = async () => {
       const checklistDetailsResponse = await getChecklistDetails(id);
@@ -219,6 +221,7 @@ const CopyChecklist = () => {
       setCronExpression(data?.checklist_cron?.expression || "0 0 * * *");
       setCreateTicket(data.ticket_enabled);
       setWeightage(data.weightage_enabled);
+      setChecklistGroup(data.group_id || "");
       setSelectedOptionssupervisior(
         data.supervisors?.map((sup) => ({
           value: sup,
@@ -298,6 +301,7 @@ const CopyChecklist = () => {
     formData.append("checklist[ticket_enabled]", createTicket);
     formData.append("checklist[ticket_level_type]", ticketType);
     formData.append("checklist[category_id]", catid);
+    formData.append("checklist[group_id]", checklistGroup || "");
     formData.append("assigned_to", assignid);
     // Add supervisor IDs
     selectedOptionssupervisior.forEach((option) => {
