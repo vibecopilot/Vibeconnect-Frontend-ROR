@@ -83,8 +83,10 @@ const Checklist = () => {
     try {
       const response = await ChecklistImport(formData);
       if (response.status === 200) {
-        setImportStatus("Checklist successfully imported!");
+        // setImportStatus("Checklist successfully imported!");
+        toast.success("Checklist successfully imported!");
         await fetchChecklist();
+           closeModalImport(); 
       } else {
         setImportStatus("Failed to import checklist.");
       }
