@@ -677,7 +677,7 @@ const AddUser = () => {
                   </select>
                 </div>
                 </div>
-              ))}
+              {/* ))} */}
             </div>
 {/* </div> */}
             <div className="mt-4">
