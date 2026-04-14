@@ -341,6 +341,7 @@ const AddChecklist = () => {
     formData.append("checklist[ticket_enabled]", createTicket);
     formData.append("checklist[ticket_level_type]", ticketType);
     formData.append("checklist[category_id]", catid);
+    formData.append("checklist[group_id]", checklistGroup || "");
     formData.append("assigned_to", assignid);
 
     // Add supervisor IDs
