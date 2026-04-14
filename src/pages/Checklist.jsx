@@ -152,7 +152,7 @@ const Checklist = () => {
     },
      {
       name: "Checklist Group",
-      selector: (row) => row.checklist_group?.groupName || "-",
+      selector: (row) => row.group_name || "-",
       sortable: true,
     },
     { name: "Start Date", selector: (row) => row.start_date, sortable: true },
