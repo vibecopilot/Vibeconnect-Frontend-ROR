@@ -1335,7 +1335,7 @@ const VisitorPage = () => {
                 { key: "Visitor Out", label: "Visitor Out" },
                 { key: "approval", label: "Approvals" },
                 { key: "History", label: "History" },
-                { key: "logs", label: "Logs" },
+                // { key: "logs", label: "Logs" },
                 { key: "self-registration", label: "Self-Registration" },
               ].map((t) => (
                 <h2

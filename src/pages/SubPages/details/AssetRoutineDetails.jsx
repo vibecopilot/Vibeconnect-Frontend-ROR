@@ -118,7 +118,7 @@ const AssetRoutineDetails = () => {
         </div>
 
         <div>
-          <p className="text-sm opacity-80">Created At</p>
+          <p className="text-sm opacity-80">Updated At</p>
           <p className="font-semibold text-lg">
             {dateFormat(created_at)}
           </p>
