@@ -185,45 +185,58 @@ const fetchTasks = async (
 };
   /* ---------------------- EXPORT ---------------------- */
 
-  const exportToExcel = () => {
-    if (!filteredData || filteredData.length === 0) {
-      toast.error("No data to export");
-      return;
-    }
+const exportToExcel = () => {
+  if (!filteredData || filteredData.length === 0) {
+    toast.error("No data to export");
+    return;
+  }
 
-    const headers = [
-      "ID",
-      "Asset Name",
-      "Checklist",
-      "Start Date",
-      "Status",
-      "Assigned To",
-    ];
+  const headers = [
+    "ID",
+    "Asset Name",
+    "Checklist",
+    "Start Date",
+    "Status",
+    "Assigned To",
+    "Updated By",
+    "Created At",
+    "Updated At",
+  ];
 
-    const rows = filteredData.map((row) => [
-      row.id,
-      row.asset_name,
-      row.checklist_name,
-      dateFormat(row.start_time),
-      row.status,
-      row.assigned_to_name,
-    ]);
+  const rows = filteredData.map((row) => [
+    row.id || "",
+    row.asset_name || "",
+    row.checklist_name || "",
+    dateFormat(row.start_time || row.created_at),
 
-    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
+    row.status || "N/A", // API doesn't have status
+    row.assigned_to_name || "N/A", // API doesn't have assigned_to_name
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    // ✅ FIX HERE
+    row.user_name ? row.user_name : "N/A",
 
-    const link = document.createElement("a");
+    dateFormat(row.created_at),
+    dateFormat(row.updated_at),
+  ]);
 
-    const url = URL.createObjectURL(blob);
+  const csvContent = [headers, ...rows]
+    .map((e) => e.map((val) => `"${val}"`).join(","))
+    .join("\n");
 
-    link.setAttribute("href", url);
-    link.setAttribute("download", "routine_tasks_filtered.csv");
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+
+  link.href = url;
+  link.download = "routine_tasks_filtered.csv";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
   /* ---------------------- TABLE COLUMNS ---------------------- */
 
   const RoutineColumns = [
