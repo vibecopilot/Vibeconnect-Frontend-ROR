@@ -27,6 +27,7 @@ import Switch from "../Buttons/Switch";
 import DatePicker from "react-datepicker";
 import { BsEye } from "react-icons/bs";
 import toast from "react-hot-toast";
+import { Filter } from "lucide-react";
 
 const Checklist = () => {
   const [checklists, setChecklists] = useState([]);
@@ -42,6 +43,16 @@ const Checklist = () => {
   const [startDate, endDate] = dateRange;
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [importStatus, setImportStatus] = useState("");
+  const [showFilter, setShowFilter] = useState(false);
+
+  const [filterValues, setFilterValues] = useState({
+    name: "",
+    frequency: "",
+    status: "",
+    startDate: "",
+    endDate: "",
+    group: "",
+  });
 
   const handleFileChange = (files) => {
     setSelectedFiles(files);
@@ -86,7 +97,7 @@ const Checklist = () => {
         // setImportStatus("Checklist successfully imported!");
         toast.success("Checklist successfully imported!");
         await fetchChecklist();
-           closeModalImport(); 
+        closeModalImport();
       } else {
         setImportStatus("Failed to import checklist.");
       }
@@ -152,7 +163,7 @@ const Checklist = () => {
       selector: (row) => row.frequency,
       sortable: true,
     },
-     {
+    {
       name: "Checklist Group",
       selector: (row) => row.group_name || "-",
       sortable: true,
@@ -164,7 +175,7 @@ const Checklist = () => {
       selector: (row) => row?.groups?.length,
       sortable: true,
     },
-     {
+    {
       name: "Status",
       selector: (row) => row.is_approved === null ? (
         <span className="text-yellow-500">Pending</span>
@@ -190,24 +201,24 @@ const Checklist = () => {
       sortable: true,
     },
     {
-  name: "Approvals",
-  cell: (row) => (
-    <div className="flex items-center gap-3">
-      <FaCheckCircle
-        className="text-green-500 cursor-pointer hover:text-green-700"
-        size={22}
-        title="Approve"
-        onClick={() => handleApprove(row)}
-      />
-      <FaTimesCircle
-        className="text-red-500 cursor-pointer hover:text-red-700"
-        size={23}
-        title="Reject"
-        onClick={() => handleReject(row)}
-      />
-    </div>
-  ),
-},
+      name: "Approvals",
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <FaCheckCircle
+            className="text-green-500 cursor-pointer hover:text-green-700"
+            size={22}
+            title="Approve"
+            onClick={() => handleApprove(row)}
+          />
+          <FaTimesCircle
+            className="text-red-500 cursor-pointer hover:text-red-700"
+            size={23}
+            title="Reject"
+            onClick={() => handleReject(row)}
+          />
+        </div>
+      ),
+    },
     {
       name: "Action",
       cell: (row) => (
@@ -312,6 +323,70 @@ const Checklist = () => {
     }
   };
 
+  const applyFilter = () => {
+    let data = [...checklists];
+
+    if (filterValues.name) {
+      data = data.filter((item) =>
+        item.name?.toLowerCase().includes(filterValues.name.toLowerCase())
+      );
+    }
+
+    if (filterValues.frequency) {
+      data = data.filter(
+        (item) =>
+          item.frequency?.toLowerCase() ===
+          filterValues.frequency.toLowerCase()
+      );
+    }
+
+    if (filterValues.status) {
+      data = data.filter((item) => {
+        if (filterValues.status === "pending") return item.is_approved === null;
+        if (filterValues.status === "approved") return item.is_approved === true;
+        if (filterValues.status === "rejected") return item.is_approved === false;
+        return true;
+      });
+    }
+
+    if (filterValues.startDate) {
+      data = data.filter(
+        (item) =>
+          new Date(item.start_date) >= new Date(filterValues.startDate)
+      );
+    }
+
+    if (filterValues.endDate) {
+      data = data.filter(
+        (item) => new Date(item.end_date) <= new Date(filterValues.endDate)
+      );
+    }
+
+    // ✅ GROUP FILTER FIX
+    if (filterValues.group) {
+      data = data.filter((item) =>
+        item.group_name
+          ?.toLowerCase()
+          .includes(filterValues.group.toLowerCase())
+      );
+    }
+
+    setFilteredData(data);
+    setShowFilter(false);
+  };
+
+  const clearFilter = () => {
+    setFilterValues({
+      name: "",
+      frequency: "",
+      status: "",
+      startDate: "",
+      endDate: "",
+      group: "",
+    });
+    setFilteredData(checklists);
+  };
+
   return (
     <section
       className="flex"
@@ -339,6 +414,12 @@ const Checklist = () => {
               <IoAddCircleOutline size={20} />
               Add
             </Link>
+            <button
+              onClick={() => setShowFilter(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2"
+            >
+              <Filter size={20} />   Filter
+            </button>
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2"
               onClick={openModalImport}
@@ -403,6 +484,132 @@ const Checklist = () => {
               </button>
             </div>
             {importStatus && <p className="mt-4 text-center">{importStatus}</p>}
+          </div>
+        </div>
+      )}
+      {showFilter && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-xl w-[700px] shadow-lg relative">
+
+            {/* Close */}
+            <button
+              className="absolute top-3 right-3 text-[30px] text-gray-500 hover:text-gray-700 transition"
+              onClick={() => setShowFilter(false)}
+            >
+              ×
+            </button>
+
+            <h2 className="text-lg font-semibold mb-4">Filter By</h2>
+
+            <div className="grid grid-cols-3 gap-4">
+
+              {/* Name */}
+              <div className="flex flex-col">
+                <label className="text-sm mb-1">Name</label>
+                <input
+                  type="text"
+                  className="border p-2 rounded"
+                  value={filterValues.name}
+                  onChange={(e) =>
+                    setFilterValues({ ...filterValues, name: e.target.value })
+                  }
+                />
+              </div>
+
+              {/* Frequency */}
+              <div className="flex flex-col">
+                <label className="text-sm mb-1">Frequency</label>
+                <select
+                  className="border p-2 rounded"
+                  value={filterValues.frequency}
+                  onChange={(e) =>
+                    setFilterValues({ ...filterValues, frequency: e.target.value })
+                  }
+                >
+                  <option value="">Select Frequency</option>
+                  <option value="hourly">Hourly</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="half_yearly">Half Yearly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+              </div>
+
+              {/* Status */}
+              <div className="flex flex-col">
+                <label className="text-sm mb-1">Status</label>
+                <select
+                  className="border p-2 rounded"
+                  value={filterValues.status}
+                  onChange={(e) =>
+                    setFilterValues({ ...filterValues, status: e.target.value })
+                  }
+                >
+                  <option value="">Select Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              {/* Start Date */}
+              <div className="flex flex-col">
+                <label className="text-sm mb-1">Start Date</label>
+                <input
+                  type="date"
+                  className="border p-2 rounded"
+                  value={filterValues.startDate}
+                  onChange={(e) =>
+                    setFilterValues({ ...filterValues, startDate: e.target.value })
+                  }
+                />
+              </div>
+
+              {/* End Date */}
+              <div className="flex flex-col">
+                <label className="text-sm mb-1">End Date</label>
+                <input
+                  type="date"
+                  className="border p-2 rounded"
+                  value={filterValues.endDate}
+                  onChange={(e) =>
+                    setFilterValues({ ...filterValues, endDate: e.target.value })
+                  }
+                />
+              </div>
+
+              {/* Group */}
+              <div className="flex flex-col">
+                <label className="text-sm mb-1">Checklist Group</label>
+                <input
+                  type="text"
+                  className="border p-2 rounded"
+                  value={filterValues.group}
+                  onChange={(e) =>
+                    setFilterValues({ ...filterValues, group: e.target.value })
+                  }
+                />
+              </div>
+
+            </div>
+
+            <div className="flex justify-center gap-4 mt-6">
+              <button
+                onClick={applyFilter}
+                className="bg-gray-700 text-white px-6 py-2 rounded"
+              >
+                Filter
+              </button>
+
+              <button
+                onClick={clearFilter}
+                className="border px-6 py-2 rounded"
+              >
+                Reset
+              </button>
+            </div>
           </div>
         </div>
       )}
