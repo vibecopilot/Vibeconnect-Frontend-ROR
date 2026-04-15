@@ -10569,6 +10569,18 @@ export const getRoutinePendingDownload = async (startDate, endDate) =>
     responseType: "blob",
   });
 
+export const exportRoutineTasks = async (startDate, endDate) =>
+  axiosInstance.get(`/activities/export_routine.xlsx`, {
+    params: {
+      token: token,
+      page: 1,
+      per_page: 10,
+      ...(startDate && { "q[start_time_gteq]": startDate }),
+      ...(endDate && { "q[start_time_lteq]": endDate }),
+    },
+    responseType: "blob",
+  });
+
 export const getRoutineScheduledCount = async (ids, startDate, endDate) =>
   axiosInstance.get(`/activities/count.json`, {
     params: {

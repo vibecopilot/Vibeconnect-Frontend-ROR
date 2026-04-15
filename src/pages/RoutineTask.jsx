@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Table from "../components/table/Table";
 import { BsEye } from "react-icons/bs";
-import { API_URL, getRoutineTaskStatus, getVibeBackground } from "../api";
+import { API_URL, getRoutineTaskStatus, getVibeBackground, exportRoutineTasks } from "../api";
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import Navbar from "../components/Navbar";
@@ -185,57 +185,32 @@ const fetchTasks = async (
 };
   /* ---------------------- EXPORT ---------------------- */
 
-const exportToExcel = () => {
-  if (!filteredData || filteredData.length === 0) {
-    toast.error("No data to export");
-    return;
+const exportToExcel = async () => {
+  try {
+    const response = await exportRoutineTasks(
+      startDate,
+      endDate
+    );
+
+    const blob = new Blob([response.data], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.href = url;
+    link.download = "routine_tasks_export.xlsx";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("Export downloaded successfully");
+  } catch (error) {
+    console.error("Export error:", error);
+    toast.error("Failed to export data");
   }
-
-  const headers = [
-    "ID",
-    "Asset Name",
-    "Checklist",
-    "Start Date",
-    "Status",
-    "Assigned To",
-    "Updated By",
-    "Created At",
-    "Updated At",
-  ];
-
-  const rows = filteredData.map((row) => [
-    row.id || "",
-    row.asset_name || "",
-    row.checklist_name || "",
-    dateFormat(row.start_time || row.created_at),
-
-    row.status || "N/A", // API doesn't have status
-    row.assigned_to_name || "N/A", // API doesn't have assigned_to_name
-
-    // ✅ FIX HERE
-    row.user_name ? row.user_name : "N/A",
-
-    dateFormat(row.created_at),
-    dateFormat(row.updated_at),
-  ]);
-
-  const csvContent = [headers, ...rows]
-    .map((e) => e.map((val) => `"${val}"`).join(","))
-    .join("\n");
-
-  const blob = new Blob([csvContent], {
-    type: "text/csv;charset=utf-8;",
-  });
-
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-
-  link.href = url;
-  link.download = "routine_tasks_filtered.csv";
-
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 };
   /* ---------------------- TABLE COLUMNS ---------------------- */
 
