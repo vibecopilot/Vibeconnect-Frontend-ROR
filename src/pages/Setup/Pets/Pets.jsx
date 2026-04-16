@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import Navbar from "../../../components/Navbar";
-import { getPets, deletePet } from "../../../api";
+import { getPets, deletePet, domainPrefix } from "../../../api";
 import Table from "../../../components/table/Table";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
@@ -87,7 +87,7 @@ const Pets = () => {
     );
 
     const imageUrl = profileDoc
-      ? `https://app.vibecopilot.ai${profileDoc.document}`
+      ? `${domainPrefix}${profileDoc.document}`
       : null;
 
     return imageUrl ? (
