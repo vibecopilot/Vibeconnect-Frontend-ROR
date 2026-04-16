@@ -238,9 +238,9 @@ const Checklist = () => {
           <Link to={`/admin/edit-checklist/${row.id}`}>
             <BsEye size={15} />
           </Link>
-           <Link to={`/admin/edit-checklist/${row.id}`}>
+          {/* <Link to={`/admin/edit-checklist/${row.id}`}>
             <BiEdit size={15} />
-          </Link>
+          </Link> */}
           <Link to={`/admin/copy-checklist/${row.id}`}>
             <FaCopy size={15} />
           </Link>
@@ -338,59 +338,31 @@ const Checklist = () => {
     }
   };
 
-  const applyFilter = () => {
-    let data = [...checklists];
+  const applyFilter = async () => {
+    try {
+      const payload = {
+        name: filterValues.name,
+        frequency: filterValues.frequency,
+        startDate: filterValues.startDate,
+        endDate: filterValues.endDate,
+        group: filterValues.group, // should be ID (see below)
+      };
 
-    if (filterValues.name) {
-      data = data.filter((item) =>
-        item.name?.toLowerCase().includes(filterValues.name.toLowerCase())
-      );
+      console.log("Filter Payload:", payload);
+
+      const response = await getChecklist(payload);
+
+      setFilteredData(response.data.checklists);
+      setChecklists(response.data.checklists);
+
+      setShowFilter(false);
+    } catch (error) {
+      console.error("Filter API error:", error);
     }
-
-    if (filterValues.frequency) {
-      data = data.filter(
-        (item) =>
-          item.frequency?.toLowerCase() ===
-          filterValues.frequency.toLowerCase()
-      );
-    }
-
-    if (filterValues.status) {
-      data = data.filter((item) => {
-        if (filterValues.status === "pending") return item.is_approved === null;
-        if (filterValues.status === "approved") return item.is_approved === true;
-        if (filterValues.status === "rejected") return item.is_approved === false;
-        return true;
-      });
-    }
-
-    if (filterValues.startDate) {
-      data = data.filter(
-        (item) =>
-          new Date(item.start_date) >= new Date(filterValues.startDate)
-      );
-    }
-
-    if (filterValues.endDate) {
-      data = data.filter(
-        (item) => new Date(item.end_date) <= new Date(filterValues.endDate)
-      );
-    }
-
-    // ✅ GROUP FILTER FIX
-    if (filterValues.group) {
-      data = data.filter((item) =>
-        item.group_name
-          ?.toLowerCase()
-          .includes(filterValues.group.toLowerCase())
-      );
-    }
-
-    setFilteredData(data);
-    setShowFilter(false);
   };
 
-  const clearFilter = () => {
+  const clearFilter = async () => {
+  try {
     setFilterValues({
       name: "",
       frequency: "",
@@ -399,8 +371,24 @@ const Checklist = () => {
       endDate: "",
       group: "",
     });
-    setFilteredData(checklists);
-  };
+
+    const response = await getChecklist(); // ✅ call API again
+
+    const routineChecklistsOnly = response.data.checklists.filter(
+      (item) => item.ctype === "routine"
+    );
+
+    const sortedData = routineChecklistsOnly.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+
+    setChecklists(sortedData);     // ✅ reset main list
+    setFilteredData(sortedData);   // ✅ reset table
+
+  } catch (error) {
+    console.error("Reset filter error:", error);
+  }
+};
 
   return (
     <section
@@ -553,7 +541,7 @@ const Checklist = () => {
               </div>
 
               {/* Status */}
-              <div className="flex flex-col">
+              {/* <div className="flex flex-col">
                 <label className="text-sm mb-1">Status</label>
                 <select
                   className="border p-2 rounded"
@@ -567,7 +555,7 @@ const Checklist = () => {
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
-              </div>
+              </div> */}
 
               {/* Start Date */}
               <div className="flex flex-col">
@@ -607,7 +595,7 @@ const Checklist = () => {
                 >
                   <option value="">Select Checklist Category</option>
                   {checklistGroups.map((group) => (
-                    <option key={group.id} value={group.name}>
+                    <option key={group.id} value={group.id}>
                       {group.name}
                     </option>
                   ))}

@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import Navbar from "../components/Navbar";
 import AssetNav from "../components/navbars/AssetNav";
+import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 
 const RoutineTask = () => {
   const [tasks, setTasks] = useState([]);
@@ -263,6 +264,36 @@ const exportToExcel = async () => {
     {
       name: "Assigned To",
       selector: (row) => row.assigned_to_name,
+    },
+     {
+      name: "Approvals Status",
+      // selector: (row) => row.is_approved === null ? (
+      //   <span className="text-yellow-500">Pending</span>
+      // ) : row.is_approved ? (
+      //   <span className="text-green-500">Approved</span>
+      // ) : (
+      //   <span className="text-red-500">Rejected</span>
+      // ),
+      sortable: true,
+    },
+     {
+      name: "Approvals",
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <FaCheckCircle
+            className="text-green-500 cursor-pointer hover:text-green-700"
+            size={22}
+            title="Approve"
+            onClick={() => handleApprove(row)}
+          />
+          <FaTimesCircle
+            className="text-red-500 cursor-pointer hover:text-red-700"
+            size={23}
+            title="Reject"
+            onClick={() => handleReject(row)}
+          />
+        </div>
+      ),
     },
   ];
 
