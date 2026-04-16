@@ -690,7 +690,7 @@ const AddChecklist = () => {
               </div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold">
-                  Checklist Group :
+                  Checklist Category :
                 </label>
                 <select
                   value={checklistGroup}

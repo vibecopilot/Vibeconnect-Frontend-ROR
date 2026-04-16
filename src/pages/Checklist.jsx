@@ -10,6 +10,7 @@ import {
   getChecklist,
   getChecklistTemplate,
   getVibeBackground,
+  getChecklistGroups,
 } from "../api";
 import Table from "../components/table/Table";
 import { BiEdit } from "react-icons/bi";
@@ -53,6 +54,7 @@ const Checklist = () => {
     endDate: "",
     group: "",
   });
+  const [checklistGroups, setChecklistGroups] = useState([]);
 
   const handleFileChange = (files) => {
     setSelectedFiles(files);
@@ -149,6 +151,16 @@ const Checklist = () => {
 
   useEffect(() => {
     fetchChecklist();
+    const fetchChecklistCategories = async () => {
+      try {
+        const response = await getChecklistGroups();
+        setChecklistGroups(Array.isArray(response.data) ? response.data : []);
+      } catch (error) {
+        console.error("Error fetching checklist categories:", error);
+      }
+    };
+
+    fetchChecklistCategories();
   }, []);
 
   const columns = [
@@ -164,7 +176,7 @@ const Checklist = () => {
       sortable: true,
     },
     {
-      name: "Checklist Group",
+      name: "Checklist Category",
       selector: (row) => row.group_name || "-",
       sortable: true,
     },
@@ -175,17 +187,17 @@ const Checklist = () => {
       selector: (row) => row?.groups?.length,
       sortable: true,
     },
-    {
-      name: "Status",
-      selector: (row) => row.is_approved === null ? (
-        <span className="text-yellow-500">Pending</span>
-      ) : row.is_approved ? (
-        <span className="text-green-500">Approved</span>
-      ) : (
-        <span className="text-red-500">Rejected</span>
-      ),
-      sortable: true,
-    },
+    // {
+    //   name: "Status",
+    //   selector: (row) => row.is_approved === null ? (
+    //     <span className="text-yellow-500">Pending</span>
+    //   ) : row.is_approved ? (
+    //     <span className="text-green-500">Approved</span>
+    //   ) : (
+    //     <span className="text-red-500">Rejected</span>
+    //   ),
+    //   sortable: true,
+    // },
     {
       name: "Associations",
       selector: (row) => (
@@ -200,31 +212,34 @@ const Checklist = () => {
       ),
       sortable: true,
     },
-    {
-      name: "Approvals",
-      cell: (row) => (
-        <div className="flex items-center gap-3">
-          <FaCheckCircle
-            className="text-green-500 cursor-pointer hover:text-green-700"
-            size={22}
-            title="Approve"
-            onClick={() => handleApprove(row)}
-          />
-          <FaTimesCircle
-            className="text-red-500 cursor-pointer hover:text-red-700"
-            size={23}
-            title="Reject"
-            onClick={() => handleReject(row)}
-          />
-        </div>
-      ),
-    },
+    // {
+    //   name: "Approvals",
+    //   cell: (row) => (
+    //     <div className="flex items-center gap-3">
+    //       <FaCheckCircle
+    //         className="text-green-500 cursor-pointer hover:text-green-700"
+    //         size={22}
+    //         title="Approve"
+    //         onClick={() => handleApprove(row)}
+    //       />
+    //       <FaTimesCircle
+    //         className="text-red-500 cursor-pointer hover:text-red-700"
+    //         size={23}
+    //         title="Reject"
+    //         onClick={() => handleReject(row)}
+    //       />
+    //     </div>
+    //   ),
+    // },
     {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <Link to={`/admin/edit-checklist/${row.id}`}>
             <BsEye size={15} />
+          </Link>
+           <Link to={`/admin/edit-checklist/${row.id}`}>
+            <BiEdit size={15} />
           </Link>
           <Link to={`/admin/copy-checklist/${row.id}`}>
             <FaCopy size={15} />
@@ -489,7 +504,7 @@ const Checklist = () => {
       )}
       {showFilter && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-xl w-[700px] shadow-lg relative">
+          <div className="bg-white p-6 rounded-xl w-[800px] shadow-lg relative">
 
             {/* Close */}
             <button
@@ -582,15 +597,21 @@ const Checklist = () => {
 
               {/* Group */}
               <div className="flex flex-col">
-                <label className="text-sm mb-1">Checklist Group</label>
-                <input
-                  type="text"
+                <label className="text-sm mb-1">Checklist Category</label>
+                <select
                   className="border p-2 rounded"
                   value={filterValues.group}
                   onChange={(e) =>
                     setFilterValues({ ...filterValues, group: e.target.value })
                   }
-                />
+                >
+                  <option value="">Select Checklist Category</option>
+                  {checklistGroups.map((group) => (
+                    <option key={group.id} value={group.name}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
             </div>

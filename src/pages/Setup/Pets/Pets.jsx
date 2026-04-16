@@ -9,8 +9,10 @@ import { BiEdit } from "react-icons/bi";
 import { MdDeleteOutline } from "react-icons/md";
 import { DNA } from "react-loader-spinner";
 import toast from "react-hot-toast";
+import { useSelector } from "react-redux";
 
 const Pets = () => {
+    const themeColor = useSelector((state) => state.theme.color);
   const [pets, setPets] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
@@ -85,7 +87,7 @@ const Pets = () => {
     );
 
     const imageUrl = profileDoc
-      ? `https://app.myciti.life${profileDoc.document}`
+      ? `https://app.vibecopilot.ai${profileDoc.document}`
       : null;
 
     return imageUrl ? (
@@ -142,7 +144,7 @@ const Pets = () => {
           />
           <Link
             to="/setup/pets/add"
-            style={{ background: "rgb(19 27 32)" }}
+            style={{ background: themeColor }}
             className="font-semibold p-2 px-4 rounded-md text-white flex items-center gap-2 whitespace-nowrap"
           >
             <PiPlusCircle size={20} /> Add Pet
