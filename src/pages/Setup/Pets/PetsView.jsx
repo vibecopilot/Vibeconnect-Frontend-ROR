@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { getPetById } from "../../../api";
+import { getPetById, domainPrefix } from "../../../api";
 import { DNA } from "react-loader-spinner";
 import { toast } from "react-toastify";
 import Navbar from "../../../components/Navbar";
@@ -27,14 +27,14 @@ function PetsView() {
       );
 
       if (profileDoc) {
-        petData.profile_image = `https://app.vibecopilot.ai${profileDoc.document}`;
+        petData.profile_image = `${domainPrefix}${profileDoc.document}`;
       }
 
       const petImageDocs =
         petData.documents?.filter((doc) => doc.relation === "PetsImage") || [];
 
       petData.pet_images = petImageDocs.map(
-        (doc) => `https://app.vibecopilot.ai${doc.document}`
+        (doc) => `${domainPrefix}${doc.document}`
       );
 
       setPet(petData);
