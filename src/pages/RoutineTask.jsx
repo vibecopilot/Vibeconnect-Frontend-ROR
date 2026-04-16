@@ -72,9 +72,7 @@ const RoutineTask = () => {
     };
   };
 
-  /* ---------------------- FETCH DATA ---------------------- */
 
- /* ---------------------- FETCH DATA ---------------------- */
 
 const fetchTasks = async (
   status = null,
@@ -229,8 +227,9 @@ const exportToExcel = async () => {
     {
       name: "Checklist",
       selector: (row) => row.checklist_name,
-      width: "350px",
+      width: "150px",
     },
+    { name: "Checklist Group", selector: (row) => row.checklist_group || "-", sortable: true  },
 
     {
       name: "Start Date",
