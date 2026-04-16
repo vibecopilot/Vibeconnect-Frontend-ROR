@@ -169,7 +169,7 @@ const handleFileChange = (files, fieldName) => {
       (formData.attachments || []).forEach((fileObj) => {
         const file = fileObj?.file || fileObj;
         if (file instanceof File) {
-          dataToSend.append("Attachfile[]", file);
+          dataToSend.append("attachfiles[]", file);
         }
       });
       const serviceResponse = await postSoftServices(dataToSend);
