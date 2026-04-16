@@ -1,136 +1,248 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import SetupNavbar from "../../../components/navbars/SetupNavbar";
+import { useParams, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { getPetById } from "../../../api";
+import { DNA } from "react-loader-spinner";
+import { toast } from "react-toastify";
+import Navbar from "../../../components/Navbar";
+import { BiEdit } from "react-icons/bi";
+import SetupNavbar from "../../../components/navbars/SetupNavbar";
 
-const PetsView = () => {
+function PetsView() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [pet, setPet] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPet();
+    fetchPetsView();
   }, [id]);
 
-  const fetchPet = async () => {
+  const fetchPetsView = async () => {
     try {
+      setLoading(true);
       const response = await getPetById(id);
-      setPet(response.data);
+      const petData = response.data;
+
+      const profileDoc = petData.documents?.find(
+        (doc) => doc.relation === "PetProfile"
+      );
+
+      if (profileDoc) {
+        petData.profile_image = `https://app.vibecopilot.ai${profileDoc.document}`;
+      }
+
+      const petImageDocs =
+        petData.documents?.filter((doc) => doc.relation === "PetsImage") || [];
+
+      petData.pet_images = petImageDocs.map(
+        (doc) => `https://app.vibecopilot.ai${doc.document}`
+      );
+
+      setPet(petData);
     } catch (error) {
-      console.error("Error fetching pet:", error);
+      toast.error("Failed to fetch pet details");
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <DNA height={80} width={80} />
+      </div>
+    );
+  }
+
   if (!pet) {
-    return <div className="p-10">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-gray-500 text-lg">Pet not found</p>
+      </div>
+    );
   }
 
   return (
-    <div className="flex bg-gray-100 min-h-screen">
+    <section className="flex bg-gray-100 min-h-screen">
       <SetupNavbar />
 
-      <div className="w-full p-8">
-        <h1 className="text-2xl font-semibold mb-6">Pet Details</h1>
+      <div className="flex-1 p-6">
+        <div className="max-w-6xl mx-auto">
 
-        <div className="bg-white rounded-2xl shadow-md p-6">
+          {/* Page Title */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-800">
+              Pet Details
+            </h1>
+          </div>
 
-          {/* HEADER */}
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              {pet.profile_image ? (
-                <img
-                  src={pet.profile_image}
-                  alt="pet"
-                  className="w-24 h-24 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                  No Image
+          {/* Main Card */}
+          <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+
+            {/* Header */}
+            <div className="border-b bg-gray-50 px-6 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-4">
+                {pet.profile_image ? (
+                  <img
+                    src={pet.profile_image}
+                    alt={pet.pet_name}
+                    className="w-20 h-20 rounded-full object-cover border-4 border-indigo-100 shadow-sm"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                    No Image
+                  </div>
+                )}
+
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-800">
+                    {pet.pet_name}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {pet.pet_breed} • {pet.gender}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Link
+                  to={`/setup/pets/edit/${id}`}
+                  className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm"
+                >
+                  <BiEdit /> Edit
+                </Link>
+
+                <Link
+                  to="/setup/pets"
+                  className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm"
+                >
+                  Back
+                </Link>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-10">
+
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Basic Information
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { label: "Pet Name", value: pet.pet_name },
+                    { label: "Breed", value: pet.pet_breed },
+                    { label: "Gender", value: pet.gender },
+                    { label: "Colour", value: pet.colour },
+                    { label: "Age", value: pet.age },
+                    { label: "Date of Birth", value: pet.dob },
+                    { label: "Owner Mobile", value: pet.owner_mobile_no },
+                  ].map((item, index) => (
+                    <div
+                      key={index}
+                      className="bg-gray-50 border border-gray-200 rounded-xl p-4"
+                    >
+                      <p className="text-xs text-gray-500 uppercase">
+                        {item.label}
+                      </p>
+                      <p className="text-gray-800 font-medium mt-1">
+                        {item.value || "N/A"}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Additional Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Additional Information
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { key: "is_pet_transfered", label: "Pet Transferred" },
+                    { key: "brought", label: "Brought" },
+                    { key: "stray_pet_adopted", label: "Stray Pet Adopted" },
+                    { key: "whether_brought_from_current_city", label: "From Current City" },
+                    { key: "pet_born_to_owner_dog", label: "Born to Owner's Dog" },
+                  ].map((item) => (
+                    <div
+                      key={item.key}
+                      className="flex justify-between items-center bg-gray-50 border border-gray-200 rounded-xl p-4"
+                    >
+                      <span className="text-sm text-gray-600">
+                        {item.label}
+                      </span>
+                      <span
+                        className={`text-sm font-semibold ${
+                          pet[item.key]
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {pet[item.key] ? "Yes" : "No"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gallery */}
+              {pet.pet_images && pet.pet_images.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Pet Gallery
+                  </h3>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {pet.pet_images.map((image, index) => (
+                      <div
+                        key={index}
+                        className="overflow-hidden rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition"
+                      >
+                        <img
+                          src={image}
+                          alt={`${pet.pet_name} ${index + 1}`}
+                          className="w-full h-40 object-cover hover:scale-105 transition duration-300"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+
+              {/* Record Info */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {pet.created_at && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 uppercase">
+                      Created At
+                    </p>
+                    <p className="text-gray-800 mt-1">
+                      {new Date(pet.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+
+                {pet.updated_at && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                    <p className="text-xs text-gray-500 uppercase">
+                      Updated At
+                    </p>
+                    <p className="text-gray-800 mt-1">
+                      {new Date(pet.updated_at).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+
             </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => navigate(`/setup/pets/edit/${id}`)}
-                className="bg-purple-600 text-white px-5 py-2 rounded-md"
-              >
-                Edit
-              </button>
-
-              <button
-                onClick={() => navigate("/setup/pets")}
-                className="bg-gray-800 text-white px-5 py-2 rounded-md"
-              >
-                Back
-              </button>
-            </div>
           </div>
-
-          {/* BASIC INFORMATION */}
-          <h2 className="text-lg font-semibold mb-4">
-            Basic Information
-          </h2>
-
-          <div className="grid grid-cols-3 gap-6 mb-10">
-            <InfoCard label="Pet Name" value={pet.pet_name} />
-            <InfoCard label="Breed" value={pet.pet_breed} />
-            <InfoCard label="Gender" value={pet.gender} />
-            <InfoCard label="Colour" value={pet.colour} />
-            <InfoCard label="Age" value={pet.age} />
-            <InfoCard label="Date of Birth" value={pet.dob} />
-            <InfoCard label="Owner Mobile" value={pet.owner_mobile_no} />
-          </div>
-
-          {/* ADDITIONAL INFORMATION */}
-          <h2 className="text-lg font-semibold mb-4">
-            Additional Information
-          </h2>
-
-          <div className="grid grid-cols-3 gap-6 mb-10">
-            <BooleanCard label="Pet Transferred" value={pet.is_pet_transfered} />
-            <BooleanCard label="Brought" value={pet.brought} />
-            <BooleanCard label="Stray Pet Adopted" value={pet.stray_pet_adopted} />
-            <BooleanCard label="From Current City" value={pet.whether_brought_from_current_city} />
-            <BooleanCard label="Born to Owner's Dog" value={pet.pet_born_to_owner_dog} />
-          </div>
-
-          {/* CREATED & UPDATED */}
-          <div className="grid grid-cols-2 gap-6">
-            <InfoCard label="Created At" value={formatDate(pet.created_at)} />
-            <InfoCard label="Updated At" value={formatDate(pet.updated_at)} />
-          </div>
-
         </div>
       </div>
-    </div>
+    </section>
   );
-};
-
-const InfoCard = ({ label, value }) => (
-  <div className="bg-gray-50 border rounded-xl p-4">
-    <p className="text-xs text-gray-500 uppercase tracking-wide">
-      {label}
-    </p>
-    <p className="font-semibold mt-1">
-      {value ? value : "N/A"}
-    </p>
-  </div>
-);
-
-const BooleanCard = ({ label, value }) => (
-  <div className="bg-gray-50 border rounded-xl p-4 flex justify-between">
-    <p className="text-sm">{label}</p>
-    <p className={`font-semibold ${value ? "text-green-600" : "text-red-500"}`}>
-      {value ? "Yes" : "No"}
-    </p>
-  </div>
-);
-
-const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
-  const date = new Date(dateString);
-  return date.toLocaleString("en-GB");
-};
+}
 
 export default PetsView;
