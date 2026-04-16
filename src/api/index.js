@@ -165,6 +165,14 @@ export const getSiteAsset = async (page) =>
     },
   });
 
+export const getFilteredSiteAssets = async (filters = {}) =>
+  axiosInstance.get(`/site_assets.json`, {
+    params: {
+      token: token,
+      ...filters,
+    },
+  });
+
 export const getMeteredSiteAsset = async () =>
   axiosInstance.get(`/site_assets.json?q[is_meter]=true`, {
     params: {

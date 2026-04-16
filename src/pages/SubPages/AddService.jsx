@@ -166,13 +166,12 @@ const handleFileChange = (files, fieldName) => {
         dataToSend.append("soft_service[unit_id][]", option.value);
       });
       dataToSend.append("soft_service[user_id]", formData.user_id);
-     (formData.attachments || []).forEach((fileObj) => {
-  const file = fileObj?.file || fileObj; // handle both cases
-
-  if (file instanceof File) {
-    dataToSend.append("attachfiles[]", file);
-  }
-});
+      (formData.attachments || []).forEach((fileObj) => {
+        const file = fileObj?.file || fileObj;
+        if (file instanceof File) {
+          dataToSend.append("Attachfile[]", file);
+        }
+      });
       const serviceResponse = await postSoftServices(dataToSend);
       console.log(serviceResponse);
       navigate("/services/soft-service");
