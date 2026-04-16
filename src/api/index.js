@@ -12,7 +12,7 @@ import DigestFetch from "digest-fetch";
 // import DigestAuth from "@mhoc/axios-digest-auth";
 import AxiosDigestAuth from "@mhoc/axios-digest-auth";
 // export const hrmsDomain = "http://13.126.205.205";
-const token = getItemInLocalStorage("TOKEN");
+export const token = getItemInLocalStorage("TOKEN");
 export const domainPrefix = "https://admin.vibecopilot.ai";
 //export const domainPrefix = "http://localhost:3000";
 
@@ -165,13 +165,22 @@ export const getSiteAsset = async (page) =>
     },
   });
 
-export const getFilteredSiteAssets = async (filters = {}) =>
-  axiosInstance.get(`/site_assets.json`, {
-    params: {
-      token: token,
-      ...filters,
-    },
-  });
+export const getFilteredSiteAssets = async (filters = {}, page = 1, perPage = 10) => {
+  const params = {
+    token: token,
+    page: page,
+    per_page: perPage,
+  };
+
+  if (filters.building_id) params["q[building_id_eq]"] = filters.building_id;
+  if (filters.floor_id) params["q[floor_id_eq]"] = filters.floor_id;
+  if (filters.unit_id) params["q[unit_id_eq]"] = filters.unit_id;
+  if (filters.group_id) params["q[asset_group_id_eq]"] = filters.group_id;
+  if (filters.sub_group_id) params["q[sub_group_id_eq]"] = filters.sub_group_id;
+  if (filters.vendor_id) params["q[vendor_id_eq]"] = filters.vendor_id;
+
+  return axiosInstance.get(`/site_assets.json`, { params });
+};
 
 export const getMeteredSiteAsset = async () =>
   axiosInstance.get(`/site_assets.json?q[is_meter]=true`, {
@@ -1132,10 +1141,12 @@ export const getAssetGroups = async () =>
   });
 
 // Sub Groups API
-export const getSubGroups = async () =>
+export const getSubGroups = async (groupId) =>
   axiosInstance.get("/sub_groups.json", {
     params: {
       token: token,
+      group_id: groupId,
+
     },
   });
 
@@ -1315,12 +1326,20 @@ export const getInventoryDetails = async (id) =>
     },
   });
 
-export const getChecklist = async () =>
-  axiosInstance.get("/checklists.json?q[ctype_eq]=routine", {
+export const getChecklist = async (filters = {}) =>
+  axiosInstance.get("/checklists.json", {
     params: {
       token: token,
+      "q[ctype_eq]": "routine",
+
+      ...(filters.name && { "q[name_cont]": filters.name }), // contains search
+      ...(filters.frequency && { "q[frequency_eq]": filters.frequency }),
+      ...(filters.startDate && { "q[start_date_eq]": filters.startDate }),
+      ...(filters.endDate && { "q[end_date_eq]": filters.endDate }),
+      ...(filters.group && { "q[group_id_eq]": filters.group }), // ✅ FIXED
     },
   });
+  
 export const getChecklistTemplate = async () =>
   axiosInstance.get("/checklists/download_template", {
     params: {
