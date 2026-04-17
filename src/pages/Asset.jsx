@@ -49,6 +49,7 @@ import toast from "react-hot-toast";
 
 const Asset = () => {
   const [searchText, setSearchText] = useState("");
+  const [loading, setLoading] = useState(false);
   const [isFilterApplied, setIsFilterApplied] = useState(false);
   const [filter, setFilter] = useState(false);
   // const [omitColumn, setOmitColumn] = useState(false);
@@ -99,23 +100,23 @@ const Asset = () => {
   }, []);
 
   useEffect(() => {
-  const fetchDropdowns = async () => {
-    try {
-      const vendorRes = await getVendors();
-      const groupRes = await getAssetGroups();
+    const fetchDropdowns = async () => {
+      try {
+        const vendorRes = await getVendors();
+        const groupRes = await getAssetGroups();
 
-      setVendors(vendorRes.data);
-      setGroups(groupRes.data);
-      setSubGroups([]); // ✅ initially empty
-    } catch (err) {
-      console.error(err);
-    }
-  };
+        setVendors(vendorRes.data);
+        setGroups(groupRes.data);
+        setSubGroups([]); // ✅ initially empty
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-  fetchDropdowns();
-}, []);
+    fetchDropdowns();
+  }, []);
 
-useEffect(() => {
+  useEffect(() => {
     const fetchDropdowns = async () => {
       try {
         const vendorRes = await getVendors();
@@ -134,22 +135,22 @@ useEffect(() => {
     fetchDropdowns();
   }, []);
 
- const handleGroupChange = async (e) => {
-  const groupId = e.target.value;
+  const handleGroupChange = async (e) => {
+    const groupId = e.target.value;
 
-  setSelectedGroup(groupId);
-  setSelectedSubGroup(""); // reset
+    setSelectedGroup(groupId);
+    setSelectedSubGroup(""); // reset
 
-  try {
-    const res = await getSubGroups(groupId); // ✅ pass groupId
+    try {
+      const res = await getSubGroups(groupId); // ✅ pass groupId
 
-    console.log("Subgroups:", res.data); // debug
+      console.log("Subgroups:", res.data); // debug
 
-    setSubGroups(res.data); // ✅ update dropdown
-  } catch (error) {
-    console.error("SubGroup fetch error:", error);
-  }
-};
+      setSubGroups(res.data); // ✅ update dropdown
+    } catch (error) {
+      console.error("SubGroup fetch error:", error);
+    }
+  };
 
 
   const dateFormat = (dateString) => {
@@ -361,7 +362,7 @@ useEffect(() => {
 
       // Build search query with filters if applied
       let searchQuery = `q[oem_name_or_name_or_building_name_or_unit_name_cont]=${searchValue}`;
-      
+
       if (isFilterApplied) {
         if (selectedBuilding) searchQuery += `&q[building_id_eq]=${selectedBuilding}`;
         if (selectedFloor) searchQuery += `&q[floor_id_eq]=${selectedFloor}`;
@@ -403,35 +404,40 @@ useEffect(() => {
   //   }
   // };
 
-useEffect(() => {
-  const fetchData = async () => {
-    if (searchText.trim()) return; // ✅ stop override for search
+  useEffect(() => {
+    const fetchData = async () => {
+      if (searchText.trim()) return;
 
-    if (isFilterApplied) {
-      // Build filter payload from current filter state
-      const payload = {};
-      if (selectedBuilding) payload.building_id = selectedBuilding;
-      if (selectedFloor) payload.floor_id = selectedFloor;
-      if (selectedUnit) payload.unit_id = selectedUnit;
-      if (selectedGroup) payload.group_id = selectedGroup;
-      if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
-      if (selectedVendor) payload.vendor_id = selectedVendor;
+      setLoading(true); // 🔥
 
-      const response = await getFilteredSiteAssets(payload, pageNo, perPage);
-      setFilteredData(response.data.site_assets);
-      setTotal(response.data.total_count);
-      return;
-    }
+      try {
+        if (isFilterApplied) {
+          const payload = {};
+          if (selectedBuilding) payload.building_id = selectedBuilding;
+          if (selectedFloor) payload.floor_id = selectedFloor;
+          if (selectedUnit) payload.unit_id = selectedUnit;
+          if (selectedGroup) payload.group_id = selectedGroup;
+          if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
+          if (selectedVendor) payload.vendor_id = selectedVendor;
 
-    const response = await getPerPageSiteAsset(pageNo, perPage);
+          const response = await getFilteredSiteAssets(payload, pageNo, perPage);
+          setFilteredData(response.data.site_assets);
+          setTotal(response.data.total_count);
+        } else {
+          const response = await getPerPageSiteAsset(pageNo, perPage);
+          setFilteredData(response.data.site_assets);
+          setAssets(response.data.site_assets);
+          setTotal(response.data.total_count);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false); // 🔥
+      }
+    };
 
-    setFilteredData(response.data.site_assets);
-    setAssets(response.data.site_assets);
-    setTotal(response.data.total_count);
-  };
-
-  fetchData();
-}, [pageNo, perPage, searchText, isFilterApplied, selectedBuilding, selectedFloor, selectedUnit, selectedGroup, selectedSubGroup, selectedVendor]);
+    fetchData();
+  }, [pageNo, perPage, searchText, isFilterApplied, selectedBuilding, selectedFloor, selectedUnit, selectedGroup, selectedSubGroup, selectedVendor]);
 
   const handlePageChange = async (page, pageSize) => {
     setPageNo(page);
@@ -442,7 +448,7 @@ useEffect(() => {
       if (selectedBuilding) payload.building_id = selectedBuilding;
       if (selectedFloor) payload.floor_id = selectedFloor;
       if (selectedUnit) payload.unit_id = selectedUnit;
-if (selectedGroup) payload.asset_group_id = selectedGroup;
+      if (selectedGroup) payload.asset_group_id = selectedGroup;
       if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
       if (selectedVendor) payload.vendor_id = selectedVendor;
 
@@ -497,42 +503,44 @@ if (selectedGroup) payload.asset_group_id = selectedGroup;
 
   const buildings = getItemInLocalStorage("Building");
 
- const handleFilterApply = async () => {
-  try {
-    setPageNo(1); // ✅ reset page
+  const handleFilterApply = async () => {
+    try {
+      setLoading(true); // 🔥 start loading
+      setPageNo(1);
 
-    const payload = {};
+      const payload = {};
 
-    if (selectedBuilding) payload.building_id = selectedBuilding;
-    if (selectedFloor) payload.floor_id = selectedFloor;
-    if (selectedUnit) payload.unit_id = selectedUnit;
-    if (selectedGroup) payload.group_id = selectedGroup;
-    if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
-    if (selectedVendor) payload.vendor_id = selectedVendor;
+      if (selectedBuilding) payload.building_id = selectedBuilding;
+      if (selectedFloor) payload.floor_id = selectedFloor;
+      if (selectedUnit) payload.unit_id = selectedUnit;
+      if (selectedGroup) payload.group_id = selectedGroup;
+      if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
+      if (selectedVendor) payload.vendor_id = selectedVendor;
 
-    console.log("Filter Payload:", payload); // ✅ debug
+      const response = await getFilteredSiteAssets(payload, 1, perPage);
 
-    const response = await getFilteredSiteAssets(payload, 1, perPage);
-    setIsFilterApplied(true);
-    setFilteredData(response.data.site_assets);
-    setTotal(response.data.total_count);
+      setIsFilterApplied(true);
+      setFilteredData(response.data.site_assets);
+      setTotal(response.data.total_count);
 
-  } catch (error) {
-    console.error("Filter error:", error);
-  }
-};
+    } catch (error) {
+      console.error("Filter error:", error);
+    } finally {
+      setLoading(false); // 🔥 stop loading
+    }
+  };
 
- const handleFilterReset = () => {
-  setSelectedBuilding("");
-  setSelectedFloor("");
-  setSelectedUnit("");
-  setSelectedGroup("");
-  setSelectedSubGroup("");
-  setSelectedVendor("");
+  const handleFilterReset = () => {
+    setSelectedBuilding("");
+    setSelectedFloor("");
+    setSelectedUnit("");
+    setSelectedGroup("");
+    setSelectedSubGroup("");
+    setSelectedVendor("");
 
-  setIsFilterApplied(false); // ✅ important
-  setPageNo(1);
-};
+    setIsFilterApplied(false); // ✅ important
+    setPageNo(1);
+  };
 
   const handleBuildingChange = async (e) => {
     const buildingId = e.target.value;
@@ -854,7 +862,11 @@ if (selectedGroup) payload.asset_group_id = selectedGroup;
           </div>
         </div>
 
-        {filteredData.length !== 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-full">
+            <DNA height="120" width="120" />
+          </div>
+        ) : filteredData.length > 0 ? (
           <>
             <Table
               selectableRows
@@ -864,17 +876,15 @@ if (selectedGroup) payload.asset_group_id = selectedGroup;
               data={filteredData}
               fixedHeader
               pagination={false}
-              selectableRow={true}
               onSelectedRows={handleSelectedRows}
             />
+
             <div className="bg-white mb-10 p-2 flex justify-end">
               <Pagination
                 current={pageNo}
                 total={total}
-                defaultPageSize={50}
                 pageSize={perPage}
                 onChange={handlePageChange}
-                responsive
                 showSizeChanger
                 onShowSizeChange={handlePageChange}
                 pageSizeOptions={["10", "20", "50", "100"]}
@@ -882,16 +892,11 @@ if (selectedGroup) payload.asset_group_id = selectedGroup;
             </div>
           </>
         ) : (
-          <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
-            />
-          </div>
+    <div className="bg-white shadow rounded-lg p-10 text-center mt-4">
+    <h2 className="text-xl font-semibold text-gray-600">
+      No Submission Yet
+    </h2>
+  </div>
         )}
         {/* </>
         )} */}

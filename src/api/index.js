@@ -1339,7 +1339,7 @@ export const getChecklist = async (filters = {}) =>
       ...(filters.group && { "q[group_id_eq]": filters.group }), // ✅ FIXED
     },
   });
-  
+
 export const getChecklistTemplate = async () =>
   axiosInstance.get("/checklists/download_template", {
     params: {
@@ -2592,6 +2592,20 @@ export const getServicesTaskDetails = async (serviceId, activityId) =>
 //       token: token,
 //     },
 //   });
+export const exportSoftServices = (startDate, endDate) => {
+  return axiosInstance.get(
+    `/soft_services/export_soft_service.xlsx`,
+    {
+      params: {
+        token: token,
+        start_date: startDate,
+        end_date: endDate,
+      },
+      responseType: "blob", // 🔥 VERY IMPORTANT
+    }
+  );
+};
+
 export const EditSoftServices = async (data, id) =>
   axiosInstance.put(`/soft_services/${id}.json`, data, {
     params: {

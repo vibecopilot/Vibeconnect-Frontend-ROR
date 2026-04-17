@@ -16,7 +16,7 @@ import { useParams } from "react-router-dom";
 
 const EditChecklist = () => {
   const { id } = useParams();
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [update, setUpdate] = useState(false);
   const categories = getItemInLocalStorage("categories");
   const [assignedUser, setAssignedUser] = useState([]);
