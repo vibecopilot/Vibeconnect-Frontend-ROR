@@ -4,7 +4,7 @@ import { IoClose } from "react-icons/io5";
 import { CloseCircle, CloseOutline } from "react-ionicons";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import { deleteQuestionChecklist, editChecklist, getAssignedTo, getChecklistDetails, getChecklistGroupReading, getChecklistGroups, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
@@ -16,7 +16,14 @@ import { useParams } from "react-router-dom";
 
 const EditChecklist = () => {
   const { id } = useParams();
-  const [isEditing, setIsEditing] = useState(false);
+ const location = useLocation();
+
+const getMode = () => {
+  const params = new URLSearchParams(location.search);
+  return params.get("mode"); // 'edit' or 'view'
+};
+
+const [isEditing, setIsEditing] = useState(getMode() === "edit");
   const [update, setUpdate] = useState(false);
   const categories = getItemInLocalStorage("categories");
   const [assignedUser, setAssignedUser] = useState([]);
@@ -90,6 +97,12 @@ const EditChecklist = () => {
     fetchAssignedTo();
 
   }, []);
+
+  useEffect(() => {
+  const mode = getMode();
+  setIsEditing(mode === "edit");
+}, [location.search]);
+
   useEffect(() => {
     const fetchSiteOwners = async () => {
       try {
