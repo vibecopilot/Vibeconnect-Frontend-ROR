@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { getSoftServices, softServiceDownloadQrCode } from "../../api";
+import { exportSoftServices, getSoftServices, softServiceDownloadQrCode } from "../../api";
 import { BiEdit } from "react-icons/bi";
 import { IoAddCircleOutline } from "react-icons/io5";
 import Table from "../../components/table/Table";
@@ -34,28 +34,39 @@ const ServicePage = () => {
     return date.toLocaleString();
   };
 
-  const filterByDate = () => {
-    if (!startDate || !endDate) {
-      toast.error("Select both dates");
-      return;
-    }
+   const filterByDate = async () => {
+  if (!startDate || !endDate) {
+    return toast.error("Select both dates");
+  }
 
-    const start = new Date(startDate).setHours(0, 0, 0, 0);
-    const end = new Date(endDate).setHours(23, 59, 59, 999);
+  const toastId = toast.loading("Exporting...");
 
-    const filtered = servicess.filter((item) => {
-      const time = new Date(item.created_at).getTime();
-      return time >= start && time <= end;
-    });
+  try {
+    const response = await exportSoftServices(startDate, endDate);
 
-    if (!filtered.length) {
-      toast.error("No data found for selected range");
-      return;
-    }
+    const url = window.URL.createObjectURL(new Blob([response.data]));
 
-    exportToExcel(filtered);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `soft_services_${startDate}_to_${endDate}.xlsx`
+    );
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.URL.revokeObjectURL(url);
+
+    toast.success("Export successful", { id: toastId });
     setShowExportModal(false);
-  };
+
+  } catch (error) {
+    console.error(error);
+    toast.error("Export failed", { id: toastId });
+  }
+};
 
   const column = [
     {
@@ -118,6 +129,8 @@ const ServicePage = () => {
       );
     }
   };
+
+ 
 
   const exportToExcel = (data) => {
     const formatted = data.map((item) => ({

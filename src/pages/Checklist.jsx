@@ -45,6 +45,7 @@ const Checklist = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [importStatus, setImportStatus] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [filterValues, setFilterValues] = useState({
     name: "",
@@ -131,21 +132,25 @@ const Checklist = () => {
 
   const fetchChecklist = async () => {
     try {
+      setLoading(true);
+
       const checklist = await getChecklist();
 
-      // FIXED: Filter only ctype: "routine" (opposite of PPMActivity)
       const routineChecklistsOnly = checklist.data.checklists.filter(
-        (checklist) => checklist.ctype === "routine",
+        (checklist) => checklist.ctype === "routine"
       );
 
       const sortedChecklists = routineChecklistsOnly.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
+
       setChecklists(sortedChecklists);
       setFilteredData(sortedChecklists);
-      console.log("Routine Checklists:", sortedChecklists);
+
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -340,15 +345,15 @@ const Checklist = () => {
 
   const applyFilter = async () => {
     try {
+      setLoading(true);
+
       const payload = {
         name: filterValues.name,
         frequency: filterValues.frequency,
         startDate: filterValues.startDate,
         endDate: filterValues.endDate,
-        group: filterValues.group, // should be ID (see below)
+        group: filterValues.group,
       };
-
-      console.log("Filter Payload:", payload);
 
       const response = await getChecklist(payload);
 
@@ -358,37 +363,43 @@ const Checklist = () => {
       setShowFilter(false);
     } catch (error) {
       console.error("Filter API error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const clearFilter = async () => {
-  try {
-    setFilterValues({
-      name: "",
-      frequency: "",
-      status: "",
-      startDate: "",
-      endDate: "",
-      group: "",
-    });
+    try {
+      setLoading(true);
 
-    const response = await getChecklist(); // ✅ call API again
+      setFilterValues({
+        name: "",
+        frequency: "",
+        status: "",
+        startDate: "",
+        endDate: "",
+        group: "",
+      });
 
-    const routineChecklistsOnly = response.data.checklists.filter(
-      (item) => item.ctype === "routine"
-    );
+      const response = await getChecklist();
 
-    const sortedData = routineChecklistsOnly.sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
+      const routineChecklistsOnly = response.data.checklists.filter(
+        (item) => item.ctype === "routine"
+      );
 
-    setChecklists(sortedData);     // ✅ reset main list
-    setFilteredData(sortedData);   // ✅ reset table
+      const sortedData = routineChecklistsOnly.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
 
-  } catch (error) {
-    console.error("Reset filter error:", error);
-  }
-};
+      setChecklists(sortedData);
+      setFilteredData(sortedData);
+
+    } catch (error) {
+      console.error("Reset filter error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <section
@@ -439,19 +450,22 @@ const Checklist = () => {
             </button>
           </div>
         </div>
-        {checklists.length !== 0 ? (
-          <Table columns={columns} data={filteredData} isPagination={true} />
-        ) : (
+        {loading ? (
           <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
-            />
+            <DNA height="120" width="120" />
           </div>
+        ) : filteredData.length > 0 ? (
+          <Table
+            columns={columns}
+            data={filteredData}
+            isPagination={true}
+          />
+        ) : (
+          <div className="bg-white shadow rounded-lg p-10 text-center mt-4">
+    <h2 className="text-xl font-semibold text-gray-600">
+      No Submission Yet
+    </h2>
+  </div>
         )}
       </div>
       {showImport && ( // FIXED: Use correct state variable
