@@ -236,22 +236,29 @@ const Checklist = () => {
     //     </div>
     //   ),
     // },
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/admin/edit-checklist/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-          {/* <Link to={`/admin/edit-checklist/${row.id}`}>
-            <BiEdit size={15} />
-          </Link> */}
-          <Link to={`/admin/copy-checklist/${row.id}`}>
-            <FaCopy size={15} />
-          </Link>
-        </div>
-      ),
-    },
+  {
+  name: "Action",
+  cell: (row) => (
+    <div className="flex items-center gap-4">
+
+      {/* VIEW */}
+      <Link to={`/admin/edit-checklist/${row.id}?mode=view`}>
+        <BsEye size={15} />
+      </Link>
+
+      {/* EDIT */}
+      <Link to={`/admin/edit-checklist/${row.id}?mode=edit`}>
+        <BiEdit size={15} />
+      </Link>
+
+      {/* COPY */}
+      <Link to={`/admin/copy-checklist/${row.id}`}>
+        <FaCopy size={15} />
+      </Link>
+
+    </div>
+  ),
+},
   ];
 
   let selectedImageSrc = "";
