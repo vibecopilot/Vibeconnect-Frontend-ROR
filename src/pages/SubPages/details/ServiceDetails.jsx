@@ -34,16 +34,25 @@ const ServiceDetails = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [genericSubInfos, setGenericSubInfos] = useState([]);
+
   useEffect(() => {
     const fetchServiceDetails = async () => {
-      const ServiceDetailsResponse = await getSoftServicesDetails(id);
-      setDetails(ServiceDetailsResponse.data.soft_service || ServiceDetailsResponse.data);
-      console.log(ServiceDetailsResponse);
-      console.log("Service Details API:", ServiceDetailsResponse.data);
+      const res = await getSoftServicesDetails(id);
 
+      console.log("FULL API RESPONSE:", res.data);
+
+      const service =
+        res.data.soft_service ||
+        res.data.soft_services?.[0] ||
+        res.data;
+
+      setDetails(service);
     };
+
     fetchServiceDetails();
-  }, []);
+  }, [id]);
+
+
   const fetchScheduleData = async () => {
     try {
       const scheduleRes = await getSoftServiceSchedule(id);
@@ -255,13 +264,20 @@ const ServiceDetails = () => {
     },
   ];
 
-  const attachments =
-    details?.attachments ??
-    details?.documents ??
-    details?.files ??
-    details?.service_attachments ??
-    details?.soft_service_attachments ??
-    [];
+ const attachments =
+  details?.soft_service_attach?.length > 0
+    ? details.soft_service_attach
+    : details?.attachments?.length > 0
+    ? details.attachments
+    : details?.soft_service_attachments?.length > 0
+    ? details.soft_service_attachments
+    : details?.service_attachments?.length > 0
+    ? details.service_attachments
+    : details?.documents?.length > 0
+    ? details.documents
+    : details?.files?.length > 0
+    ? details.files
+    : [];
 
   console.log("Attachments array:", attachments);
   const selectedSubInfo = genericSubInfos.find(
@@ -321,43 +337,43 @@ const ServiceDetails = () => {
   };
 
   useEffect(() => {
-  if (!ScheduleData || ScheduleData.length === 0) return;
+    if (!ScheduleData || ScheduleData.length === 0) return;
 
-  let filtered = [...ScheduleData];
+    let filtered = [...ScheduleData];
 
-  // ✅ Apply date filter ONLY when both dates exist
-  if (startDate && endDate) {
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0);
+    // ✅ Apply date filter ONLY when both dates exist
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
 
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
 
-    filtered = filtered.filter((item) => {
-      const itemDate = new Date(item.start_time);
-      itemDate.setHours(0, 0, 0, 0);
+      filtered = filtered.filter((item) => {
+        const itemDate = new Date(item.start_time);
+        itemDate.setHours(0, 0, 0, 0);
 
-      return itemDate >= start && itemDate <= end;
-    });
-  }
+        return itemDate >= start && itemDate <= end;
+      });
+    }
 
-  // ✅ Apply search filter
-  if (searchText.trim() !== "") {
-    filtered = filtered.filter((item) =>
-      item.assigned_name
-        ?.toLowerCase()
-        .includes(searchText.toLowerCase())
-    );
-  }
+    // ✅ Apply search filter
+    if (searchText.trim() !== "") {
+      filtered = filtered.filter((item) =>
+        item.assigned_name
+          ?.toLowerCase()
+          .includes(searchText.toLowerCase())
+      );
+    }
 
-  setFilteredScheduleData(filtered);
-}, [startDate, endDate, searchText, ScheduleData]);
+    setFilteredScheduleData(filtered);
+  }, [startDate, endDate, searchText, ScheduleData]);
 
-useEffect(() => {
-  if (!startDate && !endDate && searchText === "") {
-    setFilteredScheduleData(ScheduleData);
-  }
-}, [startDate, endDate, searchText, ScheduleData]);
+  useEffect(() => {
+    if (!startDate && !endDate && searchText === "") {
+      setFilteredScheduleData(ScheduleData);
+    }
+  }, [startDate, endDate, searchText, ScheduleData]);
   return (
     <section>
       <div className="m-2">
@@ -447,11 +463,11 @@ useEffect(() => {
                 <div key={doc.id || index}>
                   {isImage(domainPrefix + doc.document) ? (
                     <img
-                      src={domainPrefix + doc.document}
+                      src={`${domainPrefix}${doc.document || doc.file_url || doc.url}`}
                       alt={`Attachment ${index + 1}`}
                       className="w-40 h-28 object-cover rounded-md"
                       onClick={() =>
-                        window.open(domainPrefix + doc.document, "_blank")
+                        window.open(`${domainPrefix}${doc.document || doc.file_url || doc.url}`, "_blank")
                       }
                     />
                   ) : (
@@ -512,12 +528,12 @@ useEffect(() => {
                   selectsRange
                   startDate={startDate}
                   endDate={endDate}
-                 onChange={(update) => {
-  const [start, end] = update;
+                  onChange={(update) => {
+                    const [start, end] = update;
 
-  setStartDate(start);
-  setEndDate(end);
-}}
+                    setStartDate(start);
+                    setEndDate(end);
+                  }}
                   isClearable
                   placeholderText="Search by Date range"
                   className="p-2 border-gray-300 rounded-md w-64 my-2 outline-none border"
