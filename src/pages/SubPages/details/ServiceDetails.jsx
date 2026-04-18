@@ -75,6 +75,27 @@ const ServiceDetails = () => {
       const filteredData = activities.filter((activity) => {
         const activityDate = new Date(activity.start_time);
 
+        const activityTime = activityDate.setHours(0, 0, 0, 0);
+
+        const start = startDate
+          ? new Date(startDate).setHours(0, 0, 0, 0)
+          : null;
+
+        const end = endDate
+          ? new Date(endDate).setHours(23, 59, 59, 999)
+          : null;
+
+        // ✅ RANGE FILTER
+        if (start && end) {
+          return (
+            activityTime >= start &&
+            activityTime <= end &&
+            activity.status !== "pending" &&
+            activity.status !== "overdue"
+          );
+        }
+
+        // ✅ SINGLE DATE FILTER (fallback)
         const activityLocalDate =
           activityDate.getFullYear() +
           "-" +
@@ -89,13 +110,16 @@ const ServiceDetails = () => {
         );
       });
 
-      console.log("Filtered Logs:", filteredData);
-
       setlogsDetails(filteredData);
     } catch (error) {
       console.error("Error fetching logs:", error);
     }
   };
+
+  useEffect(() => {
+    fetchLogsDetails();
+  }, [startDate, endDate]);
+
   useEffect(() => {
 
     const fetchGenericSubInfos = async () => {
@@ -158,13 +182,7 @@ const ServiceDetails = () => {
 
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-    const searchFiltered = searchValue.trim() === "" ? ScheduleData : ScheduleData.filter((item) =>
-      item.assigned_name.toLowerCase().includes(searchValue.toLowerCase())
-    );
-    const finalFiltered = filterByDateRange(searchFiltered);
-    setFilteredScheduleData(finalFiltered);
+    setSearchText(e.target.value);
   };
 
   const FormatedDate = (dateString) => {
@@ -301,6 +319,45 @@ const ServiceDetails = () => {
       doc.save("soft_service_schedule.pdf");
     }
   };
+
+  useEffect(() => {
+  if (!ScheduleData || ScheduleData.length === 0) return;
+
+  let filtered = [...ScheduleData];
+
+  // ✅ Apply date filter ONLY when both dates exist
+  if (startDate && endDate) {
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    filtered = filtered.filter((item) => {
+      const itemDate = new Date(item.start_time);
+      itemDate.setHours(0, 0, 0, 0);
+
+      return itemDate >= start && itemDate <= end;
+    });
+  }
+
+  // ✅ Apply search filter
+  if (searchText.trim() !== "") {
+    filtered = filtered.filter((item) =>
+      item.assigned_name
+        ?.toLowerCase()
+        .includes(searchText.toLowerCase())
+    );
+  }
+
+  setFilteredScheduleData(filtered);
+}, [startDate, endDate, searchText, ScheduleData]);
+
+useEffect(() => {
+  if (!startDate && !endDate && searchText === "") {
+    setFilteredScheduleData(ScheduleData);
+  }
+}, [startDate, endDate, searchText, ScheduleData]);
   return (
     <section>
       <div className="m-2">
@@ -325,9 +382,9 @@ const ServiceDetails = () => {
             >
               Download PDF
             </button>
-            <button 
-            onClick={() => handleDownload("csv")}
-            className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white transition-all duration-300"
+            <button
+              onClick={() => handleDownload("csv")}
+              className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white transition-all duration-300"
             >
               Download CSV
 
@@ -420,8 +477,8 @@ const ServiceDetails = () => {
               <div className="flex items-center gap-4 border-b border-gray-200">
                 <button
                   className={`font-medium ${serviceFor === "schedule"
-                      ? "text-black border-b border-black"
-                      : "text-gray-400"
+                    ? "text-black border-b border-black"
+                    : "text-gray-400"
                     }`}
                   onClick={() => setserviceFor("schedule")}
                 >
@@ -429,8 +486,8 @@ const ServiceDetails = () => {
                 </button>
                 <button
                   className={`font-medium ${serviceFor === "logs"
-                      ? "border-b border-black text-black"
-                      : "text-gray-400"
+                    ? "border-b border-black text-black"
+                    : "text-gray-400"
                     }`}
                   onClick={() => setserviceFor("logs")}
                 >
@@ -452,21 +509,18 @@ const ServiceDetails = () => {
                   className="p-2 border-gray-300 rounded-md w-full  my-2 outline-none border"
                 />
                 <DatePicker
-                  selectsRange={true}
+                  selectsRange
                   startDate={startDate}
                   endDate={endDate}
-                  onChange={(update) => {
-                    setStartDate(update[0]);
-                    setEndDate(update[1]);
-                    const dateFiltered = filterByDateRange(ScheduleData);
-                    const finalFiltered = searchText.trim() === "" ? dateFiltered : dateFiltered.filter((item) =>
-                      item.assigned_name.toLowerCase().includes(searchText.toLowerCase())
-                    );
-                    setFilteredScheduleData(finalFiltered);
-                  }}
-                  isClearable={true}
+                 onChange={(update) => {
+  const [start, end] = update;
+
+  setStartDate(start);
+  setEndDate(end);
+}}
+                  isClearable
                   placeholderText="Search by Date range"
-                  className="p-2 border-gray-300 rounded-md w-64  my-2 outline-none border"
+                  className="p-2 border-gray-300 rounded-md w-64 my-2 outline-none border"
                 />
               </div>
               <Table columns={ScheduleColumn} data={filteredScheduleData || []} />

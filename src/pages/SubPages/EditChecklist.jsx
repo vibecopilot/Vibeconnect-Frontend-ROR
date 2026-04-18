@@ -16,14 +16,14 @@ import { useParams } from "react-router-dom";
 
 const EditChecklist = () => {
   const { id } = useParams();
- const location = useLocation();
+  const location = useLocation();
 
-const getMode = () => {
-  const params = new URLSearchParams(location.search);
-  return params.get("mode"); // 'edit' or 'view'
-};
+  const getMode = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get("mode"); // 'edit' or 'view'
+  };
 
-const [isEditing, setIsEditing] = useState(getMode() === "edit");
+  const [isEditing, setIsEditing] = useState(getMode() === "edit");
   const [update, setUpdate] = useState(false);
   const categories = getItemInLocalStorage("categories");
   const [assignedUser, setAssignedUser] = useState([]);
@@ -58,6 +58,7 @@ const [isEditing, setIsEditing] = useState(getMode() === "edit");
   const [extensionHours, setExtensionHours] = useState(0);
   const [extensionMinutes, setExtensionMinutes] = useState(0);
   const [prioritylevel, setPrioritylevel] = useState("");
+  
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
@@ -99,9 +100,9 @@ const [isEditing, setIsEditing] = useState(getMode() === "edit");
   }, []);
 
   useEffect(() => {
-  const mode = getMode();
-  setIsEditing(mode === "edit");
-}, [location.search]);
+    const mode = getMode();
+    setIsEditing(mode === "edit");
+  }, [location.search]);
 
   useEffect(() => {
     const fetchSiteOwners = async () => {
@@ -405,18 +406,19 @@ const [isEditing, setIsEditing] = useState(getMode() === "edit");
       });
     });
 
-    try {
-      const response = await editChecklist(formData, id);
-      console.log(response);
-      toast.success("Routine Checklist Updated");
-      setUpdate(true);
-setIsEditing(false);
-      toast.dismiss()
+   try {
+  const response = await editChecklist(formData, id);
+  console.log(response);
 
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to update checklist");
-    }
+  toast.success("Checklist updated successfully");
+navigate("/assets/checklist"); 
+  setUpdate(true);
+  setIsEditing(false);
+
+} catch (error) {
+  console.error("Error:", error);
+  toast.error("Failed to update checklist");
+}
   };
 
 
@@ -501,19 +503,30 @@ setIsEditing(false);
     }
   };
 
-  useEffect(() => {
-    const fetchChecklistGroups = async () => {
-      try {
-        const resp = await getChecklistGroups();
-        setChecklistGroup(data.checklist_group_id || "");
-        console.log("Checklist Groups:", resp.data);
-      } catch (error) {
-        console.log("Error fetching checklist groups:", error);
-      }
-    };
+useEffect(() => {
+  const fetchChecklistGroups = async () => {
+    try {
+      const resp = await getChecklistGroups();
 
-    fetchChecklistGroups();
-  }, []);
+      console.log("Checklist Groups API:", resp);
+
+      // ✅ Set dropdown data properly
+      if (Array.isArray(resp.data)) {
+        setChecklistGroups(resp.data);
+      } else if (Array.isArray(resp.data?.data)) {
+        setChecklistGroups(resp.data.data);
+      } else {
+        setChecklistGroups([]);
+      }
+
+    } catch (error) {
+      console.log("Error fetching checklist groups:", error);
+      setChecklistGroups([]);
+    }
+  };
+
+  fetchChecklistGroups();
+}, []);
 
 
   const convertedSubmitMinutes =
