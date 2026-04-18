@@ -2592,6 +2592,18 @@ export const getServicesTaskDetails = async (serviceId, activityId) =>
 //       token: token,
 //     },
 //   });
+
+export const downloadSoftServiceSample = async () => {
+  return axiosInstance.get(
+    `/soft_services/sample_file.xlsx`,
+    {
+      params: {
+        token: token, 
+      },
+      responseType: "blob", 
+    }
+  );
+};
 export const exportSoftServices = (startDate, endDate) => {
   return axiosInstance.get(
     `/soft_services/export_soft_service.xlsx`,
@@ -2601,11 +2613,21 @@ export const exportSoftServices = (startDate, endDate) => {
         start_date: startDate,
         end_date: endDate,
       },
-      responseType: "blob", // 🔥 VERY IMPORTANT
+      responseType: "blob",
     }
   );
 };
 
+export const importSoftServices = (file) => {
+  const formData = new FormData();
+  formData.append("file", file); 
+
+  return axiosInstance.post("/soft_services/import.json", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
 export const EditSoftServices = async (data, id) =>
   axiosInstance.put(`/soft_services/${id}.json`, data, {
     params: {
