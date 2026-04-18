@@ -35,7 +35,9 @@ const OtpAndQr = () => {
   }, [id]);
 
   const ProfilePic = userData.profile_picture ? domainPrefix + userData.profile_picture : "/visitor.png";
-  const QrCodePic = userData.qr_code ? domainPrefix + userData.qr_code : null;
+  const QrCodePic = userData.qr_code
+    ? domainPrefix + userData.qr_code
+    : null;
   const isApproved = userData?.hosts?.some((host) => host.is_approved === true);
   // ? "approved" : "blurr";
   // console.log("Is Approved:", isApproved);
