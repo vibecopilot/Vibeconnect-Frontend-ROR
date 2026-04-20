@@ -999,6 +999,12 @@ export const getAssignedTo = async (data) =>
     },
   });
 
+  export const getPmsAdmins = async () => {
+   return axiosInstance.get(
+    `/users/pms_admins.json?admin=true`
+  );
+};
+
 export const getFacilitySetup = async (data) =>
   axiosInstance.get(`/amenities.json`, data, {
     params: {
