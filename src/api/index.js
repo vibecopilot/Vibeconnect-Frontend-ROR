@@ -10434,6 +10434,29 @@ export const getAssetInDownload = async (startDate, endDate) =>
     responseType: "blob",
   });
 
+  export const downloadSampleAsset = () => {
+  return axiosInstance.get(
+    `/site_assets/download_sample.json?token=${token}`,
+    {
+      responseType: "blob",
+    }
+  );
+};
+
+export const importAsset = (file) => {
+  const formData = new FormData();
+
+  formData.append("file", file);
+  return axiosInstance.post(
+    `/site_assets/import.json?token=${token}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+};
 export const getScheduledDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
     params: {

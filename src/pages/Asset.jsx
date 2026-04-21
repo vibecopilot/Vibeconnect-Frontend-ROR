@@ -247,7 +247,7 @@ const Asset = () => {
         <label className="inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
-            checked={!row.breakdown} // In Use = ON
+            checked={!row.breakdown} 
             onChange={() => handleStatusToggle(row)}
             className="sr-only peer"
           />
@@ -332,6 +332,8 @@ const Asset = () => {
   //   }
   // };
 
+  
+
   const handleSearch = async (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
@@ -381,28 +383,32 @@ const Asset = () => {
     }
   };
 
-  //   const handleStatusToggle = async (row) => {
-  //   try {
-  //     const updatedStatus = !row.breakdown;
+  const handleStatusToggle = async (row) => {
+    try {
+      const newBreakdownStatus = !row.breakdown;
+      // toggle value
 
-  //     // 🔥 Call your API here
-  //     // await updateAssetStatus(row.id, { breakdown: !updatedStatus });
+      // 🔥 API call (IMPORTANT)
+      await axiosInstance.put(`/site_assets/${row.id}.json`, {
+        breakdown: newBreakdownStatus,
+        token: token,
+      });
 
-  //     // Update UI instantly
-  //     const updatedData = filteredData.map((item) =>
-  //       item.id === row.id
-  //         ? { ...item, breakdown: !updatedStatus }
-  //         : item
-  //     );
+      // 🔥 Update UI instantly
+      const updatedData = filteredData.map((item) =>
+        item.id === row.id
+          ? { ...item, breakdown: newBreakdownStatus }
+          : item
+      );
 
-  //     setFilteredData(updatedData);
+      setFilteredData(updatedData);
 
-  //     toast.success("Status updated");
-  //   } catch (error) {
-  //     console.error(error);
-  //     toast.error("Failed to update status");
-  //   }
-  // };
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update status");
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -892,11 +898,11 @@ const Asset = () => {
             </div>
           </>
         ) : (
-    <div className="bg-white shadow rounded-lg p-10 text-center mt-4">
-    <h2 className="text-xl font-semibold text-gray-600">
-      No Submission Yet
-    </h2>
-  </div>
+          <div className="bg-white shadow rounded-lg p-10 text-center mt-4">
+            <h2 className="text-xl font-semibold text-gray-600">
+              No Submission Yet
+            </h2>
+          </div>
         )}
         {/* </>
         )} */}

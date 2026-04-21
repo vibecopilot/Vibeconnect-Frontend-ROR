@@ -45,6 +45,7 @@ const Patrolling = () => {
   const [PatrollingHistories, setPatrollingHistories] = useState([]);
   const [filteredHistories, setFilteredHistories] = useState([]);
   const [page, setPage] = useState("schedule");
+  const [historyPage, setHistoryPage] = useState(1);
   const [formData, setFormData] = useState({
     buildingId: "",
     floorId: "",
@@ -64,34 +65,45 @@ const Patrolling = () => {
     setModalVisible(false);
   };
 
-  useEffect(() => {
+
     const fetchPatrolling = async () => {
       try {
         const patrollingResp = await getPatrollings();
-        const sortedData = patrollingResp.data.sort(
+
+        const data = patrollingResp.data.patrollings || [];
+
+        const sortedData = data.sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
+
         setPatrollings(sortedData);
         setFilteredData(sortedData);
+
       } catch (error) {
         console.log(error);
       }
     };
-    const fetchPatrollingHistory = async () => {
-      try {
-        const patrollingHistoryResp = await getPatrollingHistory();
-        const sortedData = patrollingHistoryResp.data.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
-        setPatrollingHistories(sortedData);
-        setFilteredHistories(sortedData)
-      } catch (error) {
-        console.log(error);
-      }
-    };
+    const fetchPatrollingHistory = async (page = 1) => {
+  try {
+    const response = await getPatrollingHistory(page);
+
+    const histories = response.data.patrolling_histories || [];
+
+    setPatrollingHistories(histories);
+    setFilteredHistories(histories);
+
+  } catch (error) {
+    console.log(error);
+  }
+};
+useEffect(() => {
     fetchPatrolling();
     fetchPatrollingHistory();
   }, [patrollingAdded]);
+
+useEffect(() => {
+  fetchPatrollingHistory(historyPage);
+}, [historyPage]);
 
   const columns = [
     {
@@ -334,19 +346,17 @@ const Patrolling = () => {
         <Passes />
         <div className="flex gap-4 border-b border-gray-200 ml-1 items-center">
           <h2
-            className={` cursor-pointer ${
-              page === "schedule" &&
+            className={` cursor-pointer ${page === "schedule" &&
               "shadow-custom-all-sides px-2 p-1 rounded-t-md text-blue-500 font-medium"
-            }`}
+              }`}
             onClick={() => setPage("schedule")}
           >
             Schedule
           </h2>
           <h2
-            className={`cursor-pointer ${
-              page === "logs" &&
+            className={`cursor-pointer ${page === "logs" &&
               "shadow-custom-all-sides px-2 p-1 rounded-t-md text-blue-500 font-medium"
-            }`}
+              }`}
             onClick={() => setPage("logs")}
           >
             Logs
@@ -389,7 +399,14 @@ const Patrolling = () => {
                 placeholder="Search by building, floor, unit"
               />
             </div>
-            <Table columns={HistoryColumns} data={filteredHistories} />
+            <Table
+              columns={HistoryColumns}
+              data={filteredHistories}
+              pagination
+              paginationServer
+              paginationTotalRows={6562} // or response.data.total_count
+              onChangePage={(page) => setHistoryPage(page)}
+            />
           </div>
         )}
       </div>
@@ -542,19 +559,17 @@ const Patrolling = () => {
                 <div className="flex items-center gap-2 my-2">
                   <p
                     onClick={() => setInterval("hrs")}
-                    className={`font-medium cursor-pointer transition-all border px-4 rounded-full p-1 border-gray-300 duration-300 ${
-                      interval === "hrs" &&
+                    className={`font-medium cursor-pointer transition-all border px-4 rounded-full p-1 border-gray-300 duration-300 ${interval === "hrs" &&
                       "bg-black text-white  rounded-full p-1 px-2"
-                    }`}
+                      }`}
                   >
                     Time Interval(hrs)
                   </p>
                   <p
                     onClick={() => setInterval("specific")}
-                    className={`font-medium cursor-pointer transition-all duration-300 border px-4 rounded-full p-1 border-gray-300  ${
-                      interval === "specific" &&
+                    className={`font-medium cursor-pointer transition-all duration-300 border px-4 rounded-full p-1 border-gray-300  ${interval === "specific" &&
                       "bg-black text-white  rounded-full p-1 "
-                    }`}
+                      }`}
                   >
                     Specific Time
                   </p>
@@ -576,11 +591,10 @@ const Patrolling = () => {
                     {hours.map((hour) => (
                       <p
                         key={hour}
-                        className={`p-2 rounded cursor-pointer ${
-                          selectedHours.includes(hour)
-                            ? "bg-gray-500 text-white"
-                            : "bg-gray-200 text-black"
-                        }`}
+                        className={`p-2 rounded cursor-pointer ${selectedHours.includes(hour)
+                          ? "bg-gray-500 text-white"
+                          : "bg-gray-200 text-black"
+                          }`}
                         onClick={() => toggleHourSelection(hour)}
                       >
                         {hour}

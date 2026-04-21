@@ -142,37 +142,48 @@ const PatrollingDetails = () => {
   };
 
   const PatrollingColumn = [
-    {
-      name: " Name",
-      selector: (row) => row.user_name,
-      sortable: true,
-    },
-    {
-      name: "Expected Time",
-      selector: (row) => dateTimeFormat(row.expected_time),
-      sortable: true,
-    },
-    {
-      name: "Actual Time",
-      selector: (row) =>
-        row.actual_time ? dateTimeFormat(row.actual_time) : "",
-      sortable: true,
-    },
+      {
+    name: "User",
+    selector: (row) => row.user_id || "-",
+    sortable: true,
+  },
+  {
+    name: "Expected Time",
+    selector: (row) => dateTimeFormat(row.expected_time),
+    sortable: true,
+  },
+  {
+    name: "Actual Time",
+    selector: (row) =>
+      row.actual_time ? dateTimeFormat(row.actual_time) : "-",
+    sortable: true,
+  },
     {
       name: "Status",
       selector: (row) => row.status,
       sortable: true,
     },
     {
-      name: "Remark",
-      selector: (row) => row.remark,
-      sortable: true,
-    },
-    {
-      name: "Attachment",
-      selector: (row) => row.attachment,
-      sortable: true,
-    },
+    name: "Remark",
+    selector: (row) => row.comment || "-",
+    sortable: true,
+  },
+  {
+    name: "Attachment",
+    cell: (row) =>
+      row.attachments && row.attachments.length > 0 ? (
+        <a
+          href={domainPrefix + row.attachments[0].image_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 underline"
+        >
+          View
+        </a>
+      ) : (
+        "No File"
+      ),
+  },
   ];
 
   return (
