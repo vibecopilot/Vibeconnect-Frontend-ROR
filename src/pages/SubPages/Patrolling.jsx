@@ -105,6 +105,21 @@ useEffect(() => {
   fetchPatrollingHistory(historyPage);
 }, [historyPage]);
 
+  const formatTime = (time) => {
+  if (!time) return "-";
+  const date = new Date(time);
+
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const formattedHour = hours % 12 || 12;
+
+  return `${formattedHour.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")} ${period}`;
+};
+
   const columns = [
     {
       name: "Action",
@@ -147,12 +162,12 @@ useEffect(() => {
 
     {
       name: "Start Time",
-      selector: (row) => convertToIST(row.start_time),
+      selector: (row) => formatTime(row.start_time),
       sortable: true,
     },
     {
       name: "End Time",
-      selector: (row) => convertToIST(row.end_time),
+      selector: (row) => formatTime(row.end_time),
       sortable: true,
     },
     {
