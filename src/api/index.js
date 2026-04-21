@@ -10445,17 +10445,16 @@ export const getAssetInDownload = async (startDate, endDate) =>
 
 export const importAsset = (file) => {
   const formData = new FormData();
+  formData.append("file", file); 
 
-  formData.append("file", file);
-  return axiosInstance.post(
-    `/site_assets/import.json?token=${token}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+  return axiosInstance.post("/site_assets/import.json", formData, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 export const getScheduledDownload = async (startDate, endDate) =>
   axiosInstance.get(`/activities/export.xlsx`, {
