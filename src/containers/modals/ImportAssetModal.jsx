@@ -3,7 +3,7 @@ import { IoAddCircle } from 'react-icons/io5';
 import ModalWrapper from './ModalWrapper';
 import { getItemInLocalStorage } from '../../utils/localStorage';
 import toast from 'react-hot-toast';
-import { importAsset } from '../../api';
+import { downloadSampleAsset, importAsset } from '../../api';
 
 const ImportAssetModal = ({ onClose }) => {
   const [file, setFile] = useState(null);
@@ -20,7 +20,7 @@ const ImportAssetModal = ({ onClose }) => {
   try {
     toast.loading("Uploading...");
 
-    await importAsset(file);
+    await importAsset(file,token);
 
     toast.dismiss();
     toast.success("File uploaded successfully");
