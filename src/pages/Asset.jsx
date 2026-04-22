@@ -22,6 +22,7 @@ import {
   getSubGroups,
   token,
   getAssetGroups,
+  updateBreakdown,
 } from "../api";
 import axiosInstance from "../api/axiosInstance";
 import { getItemInLocalStorage } from "../utils/localStorage";
@@ -384,31 +385,27 @@ const Asset = () => {
   };
 
   const handleStatusToggle = async (row) => {
-    try {
-      const newBreakdownStatus = !row.breakdown;
-      // toggle value
+  try {
+    const newBreakdownStatus = !row.breakdown;
 
-      // 🔥 API call (IMPORTANT)
-      await axiosInstance.put(`/site_assets/${row.id}.json`, {
-        breakdown: newBreakdownStatus,
-        token: token,
-      });
+    // ✅ Call correct API
+    await updateBreakdown(row.id, newBreakdownStatus, token);
 
-      // 🔥 Update UI instantly
-      const updatedData = filteredData.map((item) =>
-        item.id === row.id
-          ? { ...item, breakdown: newBreakdownStatus }
-          : item
-      );
+    // ✅ Update UI instantly
+    const updatedData = filteredData.map((item) =>
+      item.id === row.id
+        ? { ...item, breakdown: newBreakdownStatus }
+        : item
+    );
 
-      setFilteredData(updatedData);
+    setFilteredData(updatedData);
 
-      toast.success("Status updated successfully");
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to update status");
-    }
-  };
+    toast.success("Status updated successfully");
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to update status");
+  }
+};
 
   useEffect(() => {
     const fetchData = async () => {
