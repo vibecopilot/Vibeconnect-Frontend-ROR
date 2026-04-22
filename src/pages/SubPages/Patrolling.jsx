@@ -30,6 +30,7 @@ import { getUnit } from "@mui/material/styles/cssUtils";
 import toast from "react-hot-toast";
 const Patrolling = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [totalRows, setTotalRows] = useState(0);
   const themeColor = useSelector((state) => state.theme.color);
   const [modalVisible, setModalVisible] = useState(false);
   const [interval, setInterval] = useState("hrs");
@@ -66,59 +67,62 @@ const Patrolling = () => {
   };
 
 
-    const fetchPatrolling = async () => {
-      try {
-        const patrollingResp = await getPatrollings();
+  const fetchPatrolling = async () => {
+    try {
+      const patrollingResp = await getPatrollings();
 
-        const data = patrollingResp.data.patrollings || [];
+      const data = patrollingResp.data.patrollings || [];
 
-        const sortedData = data.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
+      const sortedData = data.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
 
-        setPatrollings(sortedData);
-        setFilteredData(sortedData);
+      setPatrollings(sortedData);
+      setFilteredData(sortedData);
 
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    const fetchPatrollingHistory = async (page = 1) => {
-  try {
-    const response = await getPatrollingHistory(page);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchPatrollingHistory = async (page = 1) => {
+    try {
+      const response = await getPatrollingHistory(page);
 
-    const histories = response.data.patrolling_histories || [];
+      const histories = response.data.patrolling_histories || [];
 
-    setPatrollingHistories(histories);
-    setFilteredHistories(histories);
+      setPatrollingHistories(histories);
+      setFilteredHistories(histories);
 
-  } catch (error) {
-    console.log(error);
-  }
-};
-useEffect(() => {
+      // ✅ IMPORTANT
+      setTotalRows(response.data.total_count || 0);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  useEffect(() => {
     fetchPatrolling();
     fetchPatrollingHistory();
   }, [patrollingAdded]);
 
-useEffect(() => {
-  fetchPatrollingHistory(historyPage);
-}, [historyPage]);
+  useEffect(() => {
+    fetchPatrollingHistory(historyPage);
+  }, [historyPage]);
 
   const formatTime = (time) => {
-  if (!time) return "-";
-  const date = new Date(time);
+    if (!time) return "-";
+    const date = new Date(time);
 
-  const hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes();
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
 
-  const period = hours >= 12 ? "PM" : "AM";
-  const formattedHour = hours % 12 || 12;
+    const period = hours >= 12 ? "PM" : "AM";
+    const formattedHour = hours % 12 || 12;
 
-  return `${formattedHour.toString().padStart(2, "0")}:${minutes
-    .toString()
-    .padStart(2, "0")} ${period}`;
-};
+    return `${formattedHour.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")} ${period}`;
+  };
 
   const columns = [
     {
@@ -419,7 +423,7 @@ useEffect(() => {
               data={filteredHistories}
               pagination
               paginationServer
-              paginationTotalRows={6562} // or response.data.total_count
+              paginationTotalRows={totalRows}
               onChangePage={(page) => setHistoryPage(page)}
             />
           </div>

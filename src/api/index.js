@@ -10434,6 +10434,22 @@ export const getAssetInDownload = async (startDate, endDate) =>
     responseType: "blob",
   });
 
+export const updateBreakdown = (id, value, token) => {
+  return axiosInstance.put(
+    `/site_assets/${id}.json`,
+    {
+      site_asset: {
+        breakdown: value,
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+};
+
   export const downloadSampleAsset = () => {
   return axiosInstance.get(
     `/site_assets/download_sample.json?token=${token}`,
@@ -10443,14 +10459,13 @@ export const getAssetInDownload = async (startDate, endDate) =>
   );
 };
 
-export const importAsset = (file) => {
+export const importAsset = (file, token) => {
   const formData = new FormData();
-  formData.append("file", file); 
+
+  formData.append("file", file);
+  formData.append("token", token); // ✅ FIX
 
   return axiosInstance.post("/site_assets/import.json", formData, {
-    params: {
-      token: token,
-    },
     headers: {
       "Content-Type": "multipart/form-data",
     },
