@@ -20,15 +20,38 @@ const ImportAssetModal = ({ onClose }) => {
   try {
     toast.loading("Uploading...");
 
-    await importAsset(file,token);
+    const response = await importAsset(file, token);
 
     toast.dismiss();
-    toast.success("File uploaded successfully");
-    onClose();
+
+    // ✅ API returns HTTP 200 but with an array of row-level errors
+    // e.g. [{"row_number":2,"message":"Building must exist, Site must exist"}]
+    const responseData = response?.data;
+
+    if (Array.isArray(responseData) && responseData.length > 0) {
+      // Some rows have errors — display each one
+      responseData.forEach((err) => {
+        toast.error(`Row ${err.row_number}: ${err.message}`, { duration: 6000 });
+      });
+      // Do NOT close the modal so user can fix the file and re-upload
+    } else {
+      toast.success("File imported successfully!");
+      onClose();
+    }
   } catch (error) {
     toast.dismiss();
     console.error(error);
-    toast.error("File upload failed");
+
+    // HTTP error responses (4xx / 5xx)
+    if (error.response && Array.isArray(error.response.data)) {
+      error.response.data.forEach((err) => {
+        toast.error(`Row ${err.row_number}: ${err.message}`, { duration: 6000 });
+      });
+    } else if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error("File upload failed. Please check the file and try again.");
+    }
   }
 };
 
