@@ -1332,13 +1332,17 @@ export const getInventoryDetails = async (id) =>
     },
   });
 
-  export const downloadInventorySample = async () =>
-  axiosInstance.get(`/inventories/download_sample.json`, {
-    params: {
-      token: token,
-    },
-    responseType: "blob",
-  });
+export const downloadInventorySample = async () => {
+  const freshToken = getItemInLocalStorage("TOKEN");
+  const response = await fetch(
+    `https://admin.vibecopilot.ai/inventories/download_sample.json?token=${freshToken}`,
+    { method: "GET" }
+  );
+  if (!response.ok) {
+    throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+  }
+  return response.blob();
+};
 
   export const importInventory = async (formData) =>
   axiosInstance.post(`/inventories/import.json`, formData, {
