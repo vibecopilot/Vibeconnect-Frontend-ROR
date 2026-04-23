@@ -30,6 +30,68 @@ const Readings = () => {
   const [readings, setReadings] = useState([])
   const themeColor = useSelector((state) => state.theme.color);
   const [dates, setDates] = useState([]);
+  const [showExportModal, setShowExportModal] = useState(false);
+const [exportStartDate, setExportStartDate] = useState("");
+const [exportEndDate, setExportEndDate] = useState("");
+
+const handleExport = () => {
+  if (!exportStartDate || !exportEndDate) {
+    toast.error("Please select date range");
+    return;
+  }
+
+  const filteredData = readings.filter((item) => {
+    const itemDate = item.created_at.split("T")[0];
+    return itemDate >= exportStartDate && itemDate <= exportEndDate;
+  });
+
+  if (filteredData.length === 0) {
+    toast.error("No data found for selected range");
+    return;
+  }
+
+  // Convert to CSV
+  const headers = [
+    "Date",
+    "Time",
+    "Parameter",
+    "Opening",
+    "Closing",
+    "Consumption",
+    "Submitted By",
+  ];
+
+  const rows = filteredData.map((row) => [
+    dateFormat(row.created_at),
+    TimeFormat(row.created_at),
+    row.asset_param_name,
+    row.opening,
+    row.value,
+    row.consumption,
+    row.user_name,
+  ]);
+
+  let csvContent =
+    "data:text/csv;charset=utf-8," +
+    [headers, ...rows].map((e) => e.join(",")).join("\n");
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+
+  link.setAttribute("href", encodedUri);
+  link.setAttribute(
+    "download",
+    `readings_${exportStartDate}_to_${exportEndDate}.xlsx`
+  );
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  toast.success("Export successful");
+  setShowExportModal(false);
+};
+
   // const dates =
   const handleDateRangeSubmit = () => {
     if (startDate && endDate) {
@@ -175,6 +237,14 @@ const column = [
 ]
   return (
     <div className="p-4">
+      <div className="flex justify-end mb-3">
+  <button
+    onClick={() => setShowExportModal(true)}
+    className="bg-blue-600 text-white px-4 py-2 rounded-md"
+  >
+    Export
+  </button>
+</div>
       {/* <div className="flex md:flex-row flex-col gap-2 items-center my-2">
         <div>
           <label htmlFor="startDate" className="font-medium">
@@ -247,7 +317,48 @@ const column = [
       </div> */}
       
       <Table columns={column} data={readings} />
+{showExportModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg w-96">
+      <h2 className="text-lg font-semibold mb-4">Export Data</h2>
 
+      <div className="mb-3">
+        <label className="block mb-1">Start Date</label>
+        <input
+          type="date"
+          className="w-full border px-3 py-2 rounded"
+          value={exportStartDate}
+          onChange={(e) => setExportStartDate(e.target.value)}
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-1">End Date</label>
+        <input
+          type="date"
+          className="w-full border px-3 py-2 rounded"
+          value={exportEndDate}
+          onChange={(e) => setExportEndDate(e.target.value)}
+        />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <button
+          onClick={() => setShowExportModal(false)}
+          className="px-4 py-2 border rounded"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={handleExport}
+          className="px-4 py-2 bg-green-600 text-white rounded"
+        >
+          Export
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       {/* <iframe src={`https://admin.vibecopilot.ai/show_readings?asset_id=${id}&wv=true&token=efe990d24b0379af8b5ba3d0a986ac802796bc2e0db15552`} width="100%" height="600px"></iframe> */}
     </div>
   );
