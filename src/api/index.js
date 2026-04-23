@@ -1332,6 +1332,24 @@ export const getInventoryDetails = async (id) =>
     },
   });
 
+  export const downloadInventorySample = async () =>
+  axiosInstance.get(`/inventories/download_sample.json`, {
+    params: {
+      token: token,
+    },
+    responseType: "blob",
+  });
+
+  export const importInventory = async (formData) =>
+  axiosInstance.post(`/inventories/import.json`, formData, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
 export const getChecklist = async (filters = {}) =>
   axiosInstance.get("/checklists.json", {
     params: {
