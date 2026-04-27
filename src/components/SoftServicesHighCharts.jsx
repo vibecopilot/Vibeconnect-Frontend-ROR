@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import {
@@ -9,7 +11,7 @@ import {
 import DetailPopup from "./DetailPopup";
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
-import { FaDownload, FaChevronDown } from "react-icons/fa";
+import { FaDownload, FaChevronDown, FaFileExcel, FaFilePdf } from "react-icons/fa";
 import toast from "react-hot-toast";
 import {
   AiOutlineAreaChart,
@@ -114,6 +116,37 @@ const chartIcon = (type) => {
   }
 };
 
+const DownloadMenu = ({ onExcelDownload, onChartDownload }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" onClick={() => setOpen(!open)}
+        className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+        title="Download Options">
+        <FaDownload className="text-sm" />
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
+          <button onClick={() => { onExcelDownload(); setOpen(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium flex items-center gap-2">
+            <FaFileExcel className="text-green-600" /> Download Excel
+          </button>
+          <button onClick={() => { onChartDownload(); setOpen(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium flex items-center gap-2">
+            <FaFilePdf className="text-red-500" /> Download Chart
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ChartTypeMenu = ({ value, onChange, includeBar = false }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -181,15 +214,15 @@ const ChartCard = ({
   legendItems = [],
   footerText = "",
   footerDirection = "down",
-  onDownload,
+  onExcelDownload,
+  onChartDownload,
   chartType,
   setChartType,
   includeBar = false,
   children,
 }) => {
   const footerArrow = footerDirection === "up" ? "↑" : "↓";
-  const footerColor =
-    footerDirection === "up" ? "text-red-600" : "text-emerald-700";
+  const footerColor = footerDirection === "up" ? "text-red-600" : "text-emerald-700";
 
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
@@ -200,29 +233,17 @@ const ChartCard = ({
             <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
           ) : null}
         </div>
-
         <div className="flex items-center gap-2 shrink-0">
           <TrendPill percent={trendPercent} direction={trendDirection} />
-          <ChartTypeMenu
-            value={chartType}
-            onChange={setChartType}
-            includeBar={includeBar}
-          />
-          <IconBtn onClick={onDownload} title="Download">
-            <FaDownload className="text-sm" />
-          </IconBtn>
+          <ChartTypeMenu value={chartType} onChange={setChartType} includeBar={includeBar} />
+          <DownloadMenu onExcelDownload={onExcelDownload} onChartDownload={onChartDownload} />
         </div>
       </div>
-
       <LegendRow items={legendItems} />
-
       <div className="mt-2">{children}</div>
-
       {footerText ? (
         <div className="mt-2 text-center text-sm">
-          <span className={footerColor}>
-            {footerArrow} {footerText}
-          </span>
+          <span className={footerColor}>{footerArrow} {footerText}</span>
         </div>
       ) : null}
     </div>
@@ -426,6 +447,31 @@ const SoftServiceHighCharts = () => {
   const [buildingType, setBuildingType] = useState("line");
   const [floorType, setFloorType] = useState("area");
   const [unitType, setUnitType] = useState("column");
+
+  const statusChartRef = useRef(null);
+  const buildingChartRef = useRef(null);
+  const floorChartRef = useRef(null);
+  const unitChartRef = useRef(null);
+
+  const downloadSingleChartPdf = async (ref, fileName) => {
+    const toastId = toast.loading("Generating chart PDF...");
+    try {
+      if (!ref?.current) { toast.error("Chart not found"); return; }
+      const canvas = await html2canvas(ref.current, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const width = 190;
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(imgData, "PNG", 10, 15, width, height);
+      pdf.save(`${fileName}.pdf`);
+      toast.dismiss(toastId);
+      toast.success("Chart PDF downloaded");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error("Chart PDF download failed");
+    }
+  };
 
   /* ── fetch dashboard summary ── */
   useEffect(() => {
@@ -699,13 +745,16 @@ const SoftServiceHighCharts = () => {
           subtitle="By Task Status"
           trendPercent={statusTrend.pct}
           trendDirection={statusTrend.dir}
-          onDownload={handleDownload}
+          onExcelDownload={handleDownload}
+          onChartDownload={() => downloadSingleChartPdf(statusChartRef, "SoftServices_By_Status")}
           chartType={statusType}
           setChartType={setStatusType}
           includeBar={false}
         >
           {byStatus && Object.keys(byStatus).length ? (
-            <HighchartsReact highcharts={Highcharts} options={statusOptions} />
+            <div ref={statusChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={statusOptions} />
+            </div>
           ) : (
             <Loading />
           )}
@@ -716,16 +765,16 @@ const SoftServiceHighCharts = () => {
           subtitle="By Building"
           trendPercent={buildingTrend.pct}
           trendDirection={buildingTrend.dir}
-          onDownload={handleDownload}
+          onExcelDownload={handleDownload}
+          onChartDownload={() => downloadSingleChartPdf(buildingChartRef, "SoftServices_By_Building")}
           chartType={buildingType}
           setChartType={setBuildingType}
           includeBar={true}
         >
           {byBuilding && Object.keys(byBuilding).length ? (
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={buildingOptions}
-            />
+            <div ref={buildingChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={buildingOptions} />
+            </div>
           ) : (
             <Loading />
           )}
@@ -736,13 +785,16 @@ const SoftServiceHighCharts = () => {
           subtitle="By Floor"
           trendPercent={floorTrend.pct}
           trendDirection={floorTrend.dir}
-          onDownload={handleDownload}
+          onExcelDownload={handleDownload}
+          onChartDownload={() => downloadSingleChartPdf(floorChartRef, "SoftServices_By_Floor")}
           chartType={floorType}
           setChartType={setFloorType}
           includeBar={true}
         >
           {byFloor && Object.keys(byFloor).length ? (
-            <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+            <div ref={floorChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+            </div>
           ) : (
             <Loading />
           )}
@@ -757,13 +809,16 @@ const SoftServiceHighCharts = () => {
             Object.keys(byAssignedUser || {}).length > 25 ? "Showing top 25 users" : ""
           }
           footerDirection="down"
-          onDownload={handleDownload}
+          onExcelDownload={handleDownload}
+          onChartDownload={() => downloadSingleChartPdf(unitChartRef, "SoftServices_By_User")}
           chartType={unitType}
           setChartType={setUnitType}
           includeBar={false}
         >
           {byAssignedUser && Object.keys(byAssignedUser).length ? (
-            <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+            <div ref={unitChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+            </div>
           ) : (
             <Loading />
           )}
@@ -788,13 +843,13 @@ const SoftServiceHighCharts = () => {
                 label: "Service Name",
                 accessor: (r) => r.soft_service_name ?? r.name ?? "—",
               },
-                {
+              {
                 key: "site_name",
                 label: "Site Name",
                 accessor: (r) =>
-                  r.site_name?? "—",
+                  r.site_name ?? "—",
               },
-             {
+              {
                 key: "building_name",
                 label: "Block",
                 accessor: (r) =>
@@ -815,15 +870,15 @@ const SoftServiceHighCharts = () => {
                   }
                   return r.assigned_name ?? r.assigned_user ?? "Unassigned";
                 },
-                
+
               },
               {
                 key: "created_at",
                 label: "Created On",
                 accessor: (r) =>
-                  r.created_at?? "—",
+                  r.created_at ?? "—",
               },
-              
+
             ]
             : [
               {

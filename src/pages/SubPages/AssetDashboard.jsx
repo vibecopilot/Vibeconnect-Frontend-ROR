@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import DatePicker from "react-datepicker";
@@ -11,6 +13,8 @@ import {
   FaChevronUp,
   FaDownload,
   FaSpinner,
+  FaFileExcel,
+  FaFilePdf,
 } from "react-icons/fa";
 import { IoSettingsOutline } from "react-icons/io5";
 import {
@@ -139,6 +143,37 @@ const buildTwoMetricOptions = ({ type, labels, values, colors = [], seriesName }
   };
 };
 
+const DownloadMenu = ({ onExcelDownload, onChartDownload }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" onClick={() => setOpen(!open)}
+        className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+        title="Download Options">
+        <FaDownload className="text-sm" />
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-48 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
+          <button onClick={() => { onExcelDownload(); setOpen(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium flex items-center gap-2 text-sm">
+            <FaFileExcel className="text-green-600" /> Download Excel
+          </button>
+          <button onClick={() => { onChartDownload(); setOpen(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium flex items-center gap-2 text-sm">
+            <FaFilePdf className="text-red-500" /> Download Chart
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ChartTypeMenu = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
   const items = [{ key: "pie", label: "Pie" }, { key: "column", label: "Column" }, { key: "line", label: "Line" }, { key: "area", label: "Area" }];
@@ -163,8 +198,7 @@ const ChartTypeMenu = ({ value, onChange }) => {
   );
 };
 
-const ChartCard = ({ title, subtitle, trendPercent = null, trendDirection = "down", onDownload, chartType, setChartType, options }) => {
-  const footerColor = trendDirection === "up" ? "text-red-600" : "text-emerald-700";
+const ChartCard = ({ title, subtitle, trendPercent = null, trendDirection = "down", onExcelDownload, onChartDownload, chartRef, chartType, setChartType, options }) => {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
       <div className="flex items-start justify-between gap-3">
@@ -175,10 +209,14 @@ const ChartCard = ({ title, subtitle, trendPercent = null, trendDirection = "dow
         <div className="flex items-center gap-2 shrink-0">
           <TrendPill percent={trendPercent} direction={trendDirection} />
           <ChartTypeMenu value={chartType} onChange={setChartType} />
-          <DownloadIconButton onClick={onDownload} variant="primary" />
+          <DownloadMenu onExcelDownload={onExcelDownload} onChartDownload={onChartDownload} />
         </div>
       </div>
-      <div className="mt-2"><HighchartsReact highcharts={Highcharts} options={options} /></div>
+      <div className="mt-2">
+        <div ref={chartRef}>
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        </div>
+      </div>
     </div>
   );
 };
@@ -217,6 +255,32 @@ function AssetDashboard() {
   const [assetChartType, setAssetChartType] = useState("pie");
   const [ppmChartType, setPPMChartType] = useState("pie");
   const [routineChartType, setRoutineChartType] = useState("pie");
+
+  const assetChartRef = useRef(null);
+  const ppmChartRef = useRef(null);
+  const routineChartRef = useRef(null);
+
+  const downloadSingleChartPdf = async (ref, fileName) => {
+    const toastId = toast.loading("Generating chart PDF...");
+    try {
+      if (!ref?.current) { toast.dismiss(toastId); toast.error("Chart not found"); return; }
+      const canvas = await html2canvas(ref.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("landscape", "mm", "a4");
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const imgW = pageW - 20;
+      const imgH = (canvas.height * imgW) / canvas.width;
+      pdf.addImage(imgData, "PNG", 10, (pageH - imgH) / 2, imgW, imgH);
+      pdf.save(`${fileName}.pdf`);
+      toast.dismiss(toastId);
+      toast.success("Chart PDF downloaded");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error("Chart PDF download failed");
+    }
+  };
 
   const [site, setSite] = useState(false);
   const [siteData, setSiteData] = useState([]);
@@ -719,9 +783,21 @@ function AssetDashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6 mx-3">
-        <ChartCard title="Total Asset" trendPercent={20.7} trendDirection="down" onDownload={handleAssetChartDownload} chartType={assetChartType} setChartType={setAssetChartType} options={totalAssetOptions} />
-        <ChartCard title="Total PPM" trendPercent={21.7} trendDirection="down" onDownload={handlePPMChartDownload} chartType={ppmChartType} setChartType={setPPMChartType} options={totalPPMOptions} />
-        <ChartCard title="Total Routine Task" trendPercent={10.2} trendDirection="up" onDownload={handleRoutineChartDownload} chartType={routineChartType} setChartType={setRoutineChartType} options={totalRoutineOptions} />
+        <ChartCard title="Total Asset" trendPercent={20.7} trendDirection="down"
+          onExcelDownload={handleAssetChartDownload}
+          onChartDownload={() => downloadSingleChartPdf(assetChartRef, "Total_Asset_Chart")}
+          chartRef={assetChartRef}
+          chartType={assetChartType} setChartType={setAssetChartType} options={totalAssetOptions} />
+        <ChartCard title="Total PPM" trendPercent={21.7} trendDirection="down"
+          onExcelDownload={handlePPMChartDownload}
+          onChartDownload={() => downloadSingleChartPdf(ppmChartRef, "Total_PPM_Chart")}
+          chartRef={ppmChartRef}
+          chartType={ppmChartType} setChartType={setPPMChartType} options={totalPPMOptions} />
+        <ChartCard title="Total Routine Task" trendPercent={10.2} trendDirection="up"
+          onExcelDownload={handleRoutineChartDownload}
+          onChartDownload={() => downloadSingleChartPdf(routineChartRef, "Total_Routine_Chart")}
+          chartRef={routineChartRef}
+          chartType={routineChartType} setChartType={setRoutineChartType} options={totalRoutineOptions} />
       </div>
 
       {/* Detail Popup */}

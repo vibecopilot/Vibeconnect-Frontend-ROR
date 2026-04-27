@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import toast from "react-hot-toast";
-import { FaDownload, FaSpinner, FaChevronDown } from "react-icons/fa";
+import { FaDownload, FaSpinner, FaChevronDown, FaFileExcel, FaFilePdf } from "react-icons/fa";
 import {
   AiOutlineBarChart,
   AiOutlineLineChart,
@@ -187,6 +189,37 @@ const chartTypeIcon = (type) => {
   }
 };
 
+const DownloadMenu = ({ onExcelDownload, onChartDownload }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" onClick={() => setOpen(!open)}
+        className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+        title="Download Options">
+        <FaDownload className="text-sm" />
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
+          <button onClick={() => { onExcelDownload(); setOpen(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium flex items-center gap-2">
+            <FaFileExcel className="text-green-600" /> Download Excel
+          </button>
+          <button onClick={() => { onChartDownload(); setOpen(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium flex items-center gap-2">
+            <FaFilePdf className="text-red-500" /> Download Chart
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ChartTypeMenu = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -247,14 +280,15 @@ const ChartCard = ({
   legendItems = [],
   footerText = "",
   footerDirection = "down",
-  onDownload,
+  onExcelDownload,
+  onChartDownload,
+  chartRef,
   chartType,
   setChartType,
   options,
 }) => {
   const footerArrow = footerDirection === "up" ? "↑" : "↓";
-  const footerColor =
-    footerDirection === "up" ? "text-red-600" : "text-emerald-700";
+  const footerColor = footerDirection === "up" ? "text-red-600" : "text-emerald-700";
 
   return (
     <CardShell className="p-5">
@@ -265,34 +299,21 @@ const ChartCard = ({
             <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
           ) : null}
         </div>
-
         <div className="flex items-center gap-2 shrink-0">
           <TrendPill percent={trendPercent} direction={trendDirection} />
-
           <ChartTypeMenu value={chartType} onChange={setChartType} />
-
-          <button
-            type="button"
-            onClick={onDownload}
-            className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-            title="Download Excel"
-          >
-            <FaDownload className="text-sm" />
-          </button>
+          <DownloadMenu onExcelDownload={onExcelDownload} onChartDownload={onChartDownload} />
         </div>
       </div>
-
       <LegendRow items={legendItems} />
-
       <div className="mt-2">
-        <HighchartsReact highcharts={Highcharts} options={options} />
+        <div ref={chartRef}>
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        </div>
       </div>
-
       {footerText ? (
         <div className="mt-2 text-center text-sm">
-          <span className={footerColor}>
-            {footerArrow} {footerText}
-          </span>
+          <span className={footerColor}>{footerArrow} {footerText}</span>
         </div>
       ) : null}
     </CardShell>
@@ -328,12 +349,12 @@ const makeTwoValueOptions = ({
   const areaFill =
     type === "area"
       ? {
-          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-          stops: [
-            [0, Highcharts.color(aColor).setOpacity(0.25).get("rgba")],
-            [1, Highcharts.color(aColor).setOpacity(0).get("rgba")],
-          ],
-        }
+        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+        stops: [
+          [0, Highcharts.color(aColor).setOpacity(0.25).get("rgba")],
+          [1, Highcharts.color(aColor).setOpacity(0).get("rgba")],
+        ],
+      }
       : undefined;
 
   const common = {
@@ -362,12 +383,12 @@ const makeTwoValueOptions = ({
         marker:
           type === "line" || type === "area"
             ? {
-                enabled: true,
-                radius: 4,
-                lineWidth: 2,
-                lineColor: aColor,
-                fillColor: "#FFFFFF",
-              }
+              enabled: true,
+              radius: 4,
+              lineWidth: 2,
+              lineColor: aColor,
+              fillColor: "#FFFFFF",
+            }
             : { enabled: false },
       },
       pie: {
@@ -461,6 +482,30 @@ function ComplianceDashboard() {
   const [assetChartType, setAssetChartType] = useState("pie");
   const [ppmChartType, setPPMChartType] = useState("pie");
   const [routineChartType, setRoutineChartType] = useState("pie");
+
+  const assetChartRef = useRef(null);
+  const ppmChartRef = useRef(null);
+  const routineChartRef = useRef(null);
+
+  const downloadSingleChartPdf = async (ref, fileName) => {
+    const toastId = toast.loading("Generating chart PDF...");
+    try {
+      if (!ref?.current) { toast.error("Chart not found"); return; }
+      const canvas = await html2canvas(ref.current, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const width = 190;
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(imgData, "PNG", 10, 15, width, height);
+      pdf.save(`${fileName}.pdf`);
+      toast.dismiss(toastId);
+      toast.success("Chart PDF downloaded");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error("Chart PDF download failed");
+    }
+  };
 
   // optional loading flags per card
   const [dl, setDl] = useState({
@@ -655,17 +700,12 @@ function ComplianceDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6">
         <ChartCard
           title="Total Compliance"
-          // subtitle="In Use vs Breakdown" 
-          // set to null if you don't want the pill
           trendPercent={20.7}
           trendDirection="down"
-          // legendItems={[
-          //   { label: "In Use", value: inUseCount, color: "#1D4ED8" },
-          //   { label: "Breakdown", value: breakCount, color: "#93C5FD" },
-          // ]}
-          // footerText="Improved compliance"
           footerDirection="down"
-          onDownload={handleTotalAssetDownload}
+          onExcelDownload={handleTotalAssetDownload}
+          onChartDownload={() => downloadSingleChartPdf(assetChartRef, "Total_Compliance_Chart")}
+          chartRef={assetChartRef}
           chartType={assetChartType}
           setChartType={setAssetChartType}
           options={optionsTotalCompliance}
@@ -673,16 +713,12 @@ function ComplianceDashboard() {
 
         <ChartCard
           title="Total PPM"
-          // subtitle="Overdue vs Complete"
           trendPercent={21.7}
           trendDirection="down"
-          // legendItems={[
-          //   { label: "PPM Overdue", value: ppmOverDue, color: "#1D4ED8" },
-          //   { label: "PPM Complete", value: ppmComplete, color: "#93C5FD" },
-          // ]}
-          // footerText="Reduced pending load"
           footerDirection="down"
-          onDownload={handleScheduledDownload}
+          onExcelDownload={handleScheduledDownload}
+          onChartDownload={() => downloadSingleChartPdf(ppmChartRef, "Total_PPM_Chart")}
+          chartRef={ppmChartRef}
           chartType={ppmChartType}
           setChartType={setPPMChartType}
           options={optionsTotalPPM}
@@ -690,27 +726,14 @@ function ComplianceDashboard() {
 
         <ChartCard
           title="Total Routine Task"
-          // subtitle="Overdue vs Complete"
           trendPercent={10.2}
           trendDirection="up"
-          // legendItems={[
-          //   {
-          //     label: "Routine Overdue",
-          //     value: routineOverdueCount,
-          //     color: "#1D4ED8",
-          //   },
-          //   {
-          //     label: "Routine Complete",
-          //     value: routineCompleteCount,
-          //     color: "#93C5FD",
-          //   },
-          // ]}
-          // footerText="Increased routine load"
           footerDirection="up"
-          onDownload={handleRoutineScheduledDownload}
+          onExcelDownload={handleRoutineScheduledDownload}
+          onChartDownload={() => downloadSingleChartPdf(routineChartRef, "Total_Routine_Chart")}
+          chartRef={routineChartRef}
           chartType={routineChartType}
           setChartType={setRoutineChartType}
-          allowBar={true}
           options={optionsRoutine}
         />
       </div>
