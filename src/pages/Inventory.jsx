@@ -228,6 +228,7 @@ const Inventory = () => {
     try {
       await importInventory(formData);
 
+      toast.success("Masters  successfully imported!");
       setImportStatus("Masters successfully imported!");
       closeModalImport();
 
