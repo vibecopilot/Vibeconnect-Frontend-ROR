@@ -1985,23 +1985,23 @@ export const getAssetReadingDetails = async (assetId) =>
     },
   );
 
-  export const exportAssetReadings = (
-  assetId,
-  startDate,
-  endDate
-) => {
-  return axiosInstance.get(
-    `/submissions/export_readings.xlsx`,
-    {
-      params: {
-        "q[asset_id_eq]": assetId,
-        "q[asset_param_id_null]": 0,
-        "q[created_at_gteq]": startDate,
-        "q[created_at_lteq]": endDate,
-      },
-      responseType: "blob",
-    }
-  );
+export const exportAssetReadings = (
+ assetId,
+ startDate,
+ endDate
+)=>{
+ return axiosInstance.get(
+   "/submissions/export_readings.xlsx",
+   {
+     params:{
+       "q[asset_id_eq]":assetId,
+       "q[asset_param_id_null]":0,
+       "q[created_at_gteq]":startDate,
+       "q[created_at_lteq]":endDate
+     },
+     responseType:"blob"
+   }
+ );
 };
 
 export const postBusinesscard = async (data) =>

@@ -24,6 +24,14 @@ const tasks = [
   { name: "Consumption 3", start: "2024-06-07", end: "2024-06-15" },
 ];
 
+const formatDateForApi = (date) => {
+ if(!date) return "";
+
+ const [year,month,day] = date.split("-");
+
+ return `${day}/${month}/${year}`;
+};
+
 const Readings = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -48,11 +56,11 @@ const Readings = () => {
     try {
 
       const response =
-        await exportAssetReadings(
-          id,
-          exportStartDate,
-          exportEndDate
-        );
+      await exportAssetReadings(
+ id,
+ formatDateForApi(exportStartDate),
+ formatDateForApi(exportEndDate)
+);
 
       const url =
         window.URL.createObjectURL(
