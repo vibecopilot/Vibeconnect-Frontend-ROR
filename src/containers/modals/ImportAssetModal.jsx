@@ -8,52 +8,69 @@ import { downloadSampleAsset, importAsset } from '../../api';
 const ImportAssetModal = ({ onClose }) => {
   const [file, setFile] = useState(null);
   const token = getItemInLocalStorage("TOKEN")
- 
+
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!file) {
-    toast.error("Please select a file");
-    return;
-  }
+    if (!file) {
+      toast.error("Please select a file");
+      return;
+    }
 
-  try {
-    toast.loading("Uploading...");
+    const loadingToast = toast.loading("Uploading...");
 
-    const response = await importAsset(file, token);
+    try {
+      const response = await importAsset(file, token);
 
-    toast.dismiss();
+      toast.dismiss(loadingToast);
 
-    // ✅ API returns HTTP 200 but with an array of row-level errors
-    // e.g. [{"row_number":2,"message":"Building must exist, Site must exist"}]
-    const responseData = response?.data;
+      const responseData = response?.data;
 
-    if (Array.isArray(responseData) && responseData.length > 0) {
-      // Some rows have errors — display each one
-      responseData.forEach((err) => {
-        toast.error(`Row ${err.row_number}: ${err.message}`, { duration: 6000 });
-      });
-      // Do NOT close the modal so user can fix the file and re-upload
-    } else {
+      // If API returns row errors
+      if (Array.isArray(responseData) && responseData.length > 0) {
+
+        // check if rows contain actual errors
+        const hasErrors = responseData.some(
+          item => item.message?.toLowerCase() !== "success"
+        );
+
+        if (hasErrors) {
+          responseData.forEach((err) => {
+            toast.error(`Row ${err.row_number}: ${err.message}`, {
+              duration: 6000,
+            });
+          });
+          return;
+        }
+      }
+
+      // success case
       toast.success("File imported successfully!");
-      onClose();
-    }
-  } catch (error) {
-    toast.dismiss();
-    console.error(error);
 
-    // HTTP error responses (4xx / 5xx)
-    if (error.response && Array.isArray(error.response.data)) {
-      error.response.data.forEach((err) => {
-        toast.error(`Row ${err.row_number}: ${err.message}`, { duration: 6000 });
-      });
-    } else if (error.response?.data?.message) {
-      toast.error(error.response.data.message);
-    } else {
-      toast.error("File upload failed. Please check the file and try again.");
+      setTimeout(() => {
+        onClose();
+      }, 1000);
+
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error(error);
+
+      if (error.response && Array.isArray(error.response.data)) {
+        error.response.data.forEach((err) => {
+          toast.error(
+            `Row ${err.row_number}: ${err.message}`,
+            { duration: 6000 }
+          );
+        });
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error(
+          "File upload failed. Please check the file and try again."
+        );
+      }
     }
-  }
-};
+  };
 
   const handleSampleDownload = async () => {
     try {
