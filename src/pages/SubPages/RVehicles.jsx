@@ -8,7 +8,8 @@ import { FaSearch } from "react-icons/fa";
 import { IoAddCircleOutline, IoCloudUploadOutline, IoCloudDownloadOutline, IoClose, IoCheckmarkCircle, IoWarning } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 
 /** ---------------- Token helpers ---------------- */
@@ -407,7 +408,11 @@ const RVehicles = () => {
   };
 
   const handleBulkUploadSubmit = async () => {
-    if (!bulkFile) return;
+    if (!bulkFile) {
+      toast.warning("Please select a file first");
+      return;
+    }
+
     setBulkUploading(true);
     setBulkStatus(null);
     setBulkMessage("");
@@ -421,37 +426,89 @@ const RVehicles = () => {
         normalizeToken(tokens?.bearerToken);
 
       await axiosInstance.post(
-        `/registered_vehicles/bulk_upload.json?token=${token}`,
+        `/registered_vehicles/import.json?token=${token}`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       setBulkStatus("success");
       setBulkMessage("Vehicles uploaded successfully!");
       setRefreshTick((prev) => prev + 1);
+
+      // ✅ Success Toast
+      toast.success("Vehicles imported successfully!");
+      setTimeout(() => {
+        setBulkModalOpen(false);
+        setBulkFile(null);
+        setBulkStatus(null);
+        setBulkMessage("");
+        setBulkDragOver(false);
+      }, 1200);
     } catch (err) {
       console.error(err);
+
       const msg =
         err?.response?.data?.message ||
         err?.response?.data?.error ||
         err?.message ||
         "Upload failed. Please check your file and try again.";
+
       setBulkStatus("error");
       setBulkMessage(msg);
+
+      // ❌ Error Toast
+      toast.error(msg);
     } finally {
       setBulkUploading(false);
     }
   };
 
-  const handleDownloadSample = () => {
-    const token =
-      normalizeToken(tokens?.queryToken) ||
-      normalizeToken(tokens?.bearerToken);
-    const url = `${BASE_URL}/registered_vehicles/sample_file.csv?token=${token}`;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "vehicles_sample.csv";
-    a.click();
+  const handleDownloadSample = async () => {
+    try {
+      const token =
+        normalizeToken(tokens?.queryToken) ||
+        normalizeToken(tokens?.bearerToken);
+
+      if (!token) {
+        toast.error("Token missing. Please login again.");
+        return;
+      }
+
+      const response = await axiosInstance.get(
+        `/registered_vehicles/download_sample.json?token=${token}`,
+        {
+          responseType: "blob",
+        }
+      );
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "vehicles_sample.xlsx";
+
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      // ✅ Download Success Toast
+      toast.success("Sample file downloaded successfully!");
+    } catch (error) {
+      console.error("Sample download failed:", error);
+
+      // ❌ Download Error Toast
+      toast.error("Failed to download sample file");
+    }
   };
 
   /** ---------------- Main fetch ---------------- */
@@ -755,13 +812,12 @@ const RVehicles = () => {
                   onDragLeave={() => setBulkDragOver(false)}
                   onDrop={handleBulkDrop}
                   onClick={() => bulkFileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition ${
-                    bulkDragOver
-                      ? "border-blue-500 bg-blue-50"
-                      : bulkFile
+                  className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition ${bulkDragOver
+                    ? "border-blue-500 bg-blue-50"
+                    : bulkFile
                       ? "border-green-400 bg-green-50"
                       : "border-gray-200 hover:border-blue-400 hover:bg-blue-50"
-                  }`}
+                    }`}
                 >
                   <IoCloudUploadOutline
                     size={36}
@@ -791,11 +847,10 @@ const RVehicles = () => {
               {/* Status message */}
               {bulkStatus && (
                 <div
-                  className={`flex items-start gap-2 rounded-lg p-3 text-sm ${
-                    bulkStatus === "success"
-                      ? "bg-green-50 text-green-700 border border-green-200"
-                      : "bg-red-50 text-red-700 border border-red-200"
-                  }`}
+                  className={`flex items-start gap-2 rounded-lg p-3 text-sm ${bulkStatus === "success"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                    }`}
                 >
                   {bulkStatus === "success" ? (
                     <IoCheckmarkCircle size={18} className="mt-0.5 shrink-0" />
@@ -839,6 +894,16 @@ const RVehicles = () => {
           </div>
         </div>
       )}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        draggable
+      // theme="colored"
+      />
     </div>
   );
 };
