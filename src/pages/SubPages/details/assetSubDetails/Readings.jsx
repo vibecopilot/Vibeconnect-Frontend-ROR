@@ -8,6 +8,7 @@ import { useSelector } from "react-redux";
 import { exportAssetReadings, getAssetReadingDetails } from "../../../../api";
 import Table from "../../../../components/table/Table";
 import toast from "react-hot-toast";
+import { IoClose } from "react-icons/io5";
 
 const getDateArray = (start, end) => {
   let arr = [];
@@ -24,12 +25,14 @@ const tasks = [
   { name: "Consumption 3", start: "2024-06-07", end: "2024-06-15" },
 ];
 
-const formatDateForApi = (date) => {
- if(!date) return "";
+const formatDateForApi = (date, isEndDate = false) => {
+  if (!date) return "";
 
- const [year,month,day] = date.split("-");
+  const [year, month, day] = date.split("-");
 
- return `${day}/${month}/${year}`;
+  return isEndDate
+    ? `${day}/${month}/${year} 23:59:59`
+    : `${day}/${month}/${year} 00:00:00`;
 };
 
 const Readings = () => {
@@ -56,11 +59,11 @@ const Readings = () => {
     try {
 
       const response =
-      await exportAssetReadings(
- id,
- formatDateForApi(exportStartDate),
- formatDateForApi(exportEndDate)
-);
+        await exportAssetReadings(
+          id,
+          formatDateForApi(exportStartDate),
+          formatDateForApi(exportEndDate, true)
+        );
 
       const url =
         window.URL.createObjectURL(
@@ -319,26 +322,45 @@ const Readings = () => {
       <Table columns={column} data={readings} />
       {showExportModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
-            <h2 className="text-lg font-semibold mb-4">Export Data</h2>
+          <div className="bg-white p-6 rounded-lg w-96 relative">
+
+            {/* Close Icon */}
+            <button
+              onClick={() => setShowExportModal(false)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-red-600 text-2xl"
+            >
+              <IoClose />
+            </button>
+
+            <h2 className="text-lg font-semibold mb-4">
+              Export Data
+            </h2>
 
             <div className="mb-3">
-              <label className="block mb-1">Start Date</label>
+              <label className="block mb-1">
+                Start Date
+              </label>
               <input
                 type="date"
                 className="w-full border px-3 py-2 rounded"
                 value={exportStartDate}
-                onChange={(e) => setExportStartDate(e.target.value)}
+                onChange={(e) =>
+                  setExportStartDate(e.target.value)
+                }
               />
             </div>
 
             <div className="mb-4">
-              <label className="block mb-1">End Date</label>
+              <label className="block mb-1">
+                End Date
+              </label>
               <input
                 type="date"
                 className="w-full border px-3 py-2 rounded"
                 value={exportEndDate}
-                onChange={(e) => setExportEndDate(e.target.value)}
+                onChange={(e) =>
+                  setExportEndDate(e.target.value)
+                }
               />
             </div>
 
@@ -349,6 +371,7 @@ const Readings = () => {
               >
                 Cancel
               </button>
+
               <button
                 onClick={handleExport}
                 className="px-4 py-2 bg-green-600 text-white rounded"
@@ -356,6 +379,7 @@ const Readings = () => {
                 Export
               </button>
             </div>
+
           </div>
         </div>
       )}
