@@ -1114,7 +1114,7 @@ const VisitorsAnalyticsDashboard = () => {
           { key: "total", drillKey: "total", title: "Total Visitors", note: "All time visitors", accent: CHART_PALETTE[0], icon: <FaUsers /> },
           { key: "in", drillKey: "in", title: "Total In", note: "Currently inside", accent: CHART_PALETTE[1], icon: <FaUserCheck /> },
           { key: "out", drillKey: "out", title: "Total Out", note: "Currently out", accent: CHART_PALETTE[2], icon: <FaUserClock /> },
-          { key: "today", drillKey: "today", title: "Today's Visitors", note: "Today", accent: CHART_PALETTE[5], icon: <FaUsers /> },
+          { key: "today", drillKey: "today", title: "Today's Activities", note: "Today", accent: CHART_PALETTE[5], icon: <FaUsers /> },
           { key: "today_in", drillKey: "today_in", title: "Today's In", note: "Today check-in", accent: CHART_PALETTE[6], icon: <FaUserCheck /> },
           { key: "today_out", drillKey: "today_out", title: "Today's Out", note: "Today check-out", accent: CHART_PALETTE[3], icon: <FaUserClock /> },
           { key: "expected", drillKey: "expected_v", title: expectedLabel, note: "Pre-registered", accent: CHART_PALETTE[9], icon: <FaUserClock /> },
