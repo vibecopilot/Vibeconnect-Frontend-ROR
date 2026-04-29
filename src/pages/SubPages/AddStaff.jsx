@@ -180,7 +180,24 @@ const EmployeeAddStaff = () => {
       navigate("/admin/passes/staff");
       console.log(res);
     } catch (error) {
-      console.log(error);
+      if (error.response && error.response.data) {
+    const message =
+      error.response.data.message ||
+      error.response.data.error ||
+      "Something went wrong";
+
+    // Check duplicate mobile specifically
+    if (
+      message.toLowerCase().includes("mobile") &&
+      message.toLowerCase().includes("exist")
+    ) {
+      toast.error("Mobile number already exists");
+    } else {
+      toast.error(message);
+    }
+  } else {
+    toast.error("Server error");
+  }
     }
   };
 

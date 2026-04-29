@@ -40,7 +40,7 @@ const EmployeeAddStaff = () => {
     lastName: "",
     email: "",
     mobile: "",
-unit: [],
+    unit: [],
     workType: "",
     staffId: "",
     vendorId: "",
@@ -49,7 +49,7 @@ unit: [],
     status: true,
     documents: [],
     workingSchedule: initialSchedule,
- 
+
   });
   const daysOfWeek = [
     "Monday",
@@ -83,17 +83,22 @@ unit: [],
           email: editData.email,
           mobile: editData.mobile_no,
           status: editData.status,
-unit: editData.units?.map((u) => ({
-  value: u.id,
-  label: u.name,
-})) || [],          validFrom: SendDateFormat(editData.valid_from),
+          unit: editData.units?.map((u) => ({
+            value: u.id,
+            label: u.name,
+          })) || [],
+          validFrom: SendDateFormat(editData.valid_from),
           validTill: SendDateFormat(editData.valid_till),
           vendorId: editData.vendor_id,
           workType: editData.work_type,
-          
-          workingSchedule: initializeWorkingSchedule(editData.working_schedule),
+
+          workingSchedule: initializeWorkingSchedule(editData.working_schedule || {}),
         });
-        setCapturedImage(domainPrefix + editData.profile_picture.url);
+        if (editData.profile_picture && editData.profile_picture.url) {
+          setCapturedImage(domainPrefix + editData.profile_picture.url);
+        } else {
+          setCapturedImage(null);
+        }
 
         console.log(editData);
       } catch (error) {
@@ -198,9 +203,9 @@ unit: editData.units?.map((u) => ({
     sendData.append("staff[lastname]", formData.lastName);
     sendData.append("staff[mobile_no]", formData.mobile);
     sendData.append("staff[email]", formData.email);
-//  formData.unit.forEach((unit) => {
-//    sendData.append("staff[units][]", unit.value);});
-  if (formData.unit.length > 0) {
+    //  formData.unit.forEach((unit) => {
+    //    sendData.append("staff[units][]", unit.value);});
+    if (formData.unit.length > 0) {
       formData.unit.forEach((unit) => {
         sendData.append("staff[unit_ids][]", unit.value);
       });
@@ -234,15 +239,15 @@ unit: editData.units?.map((u) => ({
     //   sendData.append("staff[profile_picture]", blob, "staff_image.jpg");
     // }
 
-   if (capturedImage && capturedImage.startsWith("data:image")) {
-  try {
-    const response = await fetch(capturedImage);
-    const blob = await response.blob();
-    sendData.append("staff[profile_picture]", blob, "staff_image.jpg");
-  } catch (error) {
-    console.error("Image conversion error:", error);
-  }
-}
+    if (capturedImage && capturedImage.startsWith("data:image")) {
+      try {
+        const response = await fetch(capturedImage);
+        const blob = await response.blob();
+        sendData.append("staff[profile_picture]", blob, "staff_image.jpg");
+      } catch (error) {
+        console.error("Image conversion error:", error);
+      }
+    }
     formData.documents.forEach((docs) => {
       sendData.append("attachfiles[]", docs);
     });
@@ -400,21 +405,21 @@ unit: editData.units?.map((u) => ({
                 <label htmlFor="unit" className="font-semibold">
                   Unit
                 </label>
-               <Select
-  options={units.map((unit) => ({
-    value: unit.id,
-    label: unit.name,
-  }))}
-  isMulti
-  placeholder="Select Units"
-  value={formData.unit}
-  onChange={(selectedOptions) =>
-    setFormData({
-      ...formData,
-      unit: selectedOptions || [],
-    })
-  }
-/>
+                <Select
+                  options={units.map((unit) => ({
+                    value: unit.id,
+                    label: unit.name,
+                  }))}
+                  isMulti
+                  placeholder="Select Units"
+                  value={formData.unit}
+                  onChange={(selectedOptions) =>
+                    setFormData({
+                      ...formData,
+                      unit: selectedOptions || [],
+                    })
+                  }
+                />
               </div>
 
               <div className="grid gap-2 items-center w-full">
@@ -466,11 +471,11 @@ unit: editData.units?.map((u) => ({
                   onChange={handleChange}
                 >
                   <option value="">Select Vendor</option>
-                 {vendors.map((vendor) => (
-  <option value={vendor.id} key={vendor.id}>
-    {vendor.company_name || vendor.vendor_name}
-  </option>
-))}
+                  {vendors.map((vendor) => (
+                    <option value={vendor.id} key={vendor.id}>
+                      {vendor.company_name || vendor.vendor_name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="grid gap-2 items-center w-full">
@@ -503,11 +508,11 @@ unit: editData.units?.map((u) => ({
                 <label htmlFor="status" className="font-semibold">
                   Active/Inactive
                 </label>
-               <div className="flex items-center gap-4">
-                <p>Inactive</p>
-                <Switch checked={formData.status} onChange={()=>setFormData({...formData, status: !formData.status})} />
-                <p>Active</p>
-               </div>
+                <div className="flex items-center gap-4">
+                  <p>Inactive</p>
+                  <Switch checked={formData.status} onChange={() => setFormData({ ...formData, status: !formData.status })} />
+                  <p>Active</p>
+                </div>
               </div>
             </div>
             <div className="grid gap-2 items-center w-full mt-2">
@@ -575,8 +580,8 @@ unit: editData.units?.map((u) => ({
 
             <div className="flex gap-5 justify-end items-center my-4 gap-3">
               <button
-                              className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300"
-onClick={()=>navigate("/admin/passes/staff")}
+                className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300"
+                onClick={() => navigate("/admin/passes/staff")}
               >
                 Cancel
               </button>
@@ -584,8 +589,8 @@ onClick={()=>navigate("/admin/passes/staff")}
                 type="submit"
                 onClick={handleEditStaff}
                 className="text-white bg-black hover:bg-white font-semibold py-2 px-4 rounded transition-all duration-300"
-             style={{background:themeColor}}
-             >
+                style={{ background: themeColor }}
+              >
                 Update Staff
               </button>
             </div>

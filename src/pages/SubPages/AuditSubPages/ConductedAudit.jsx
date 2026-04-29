@@ -6,6 +6,8 @@ import { IoMdPrint } from "react-icons/io";
 const ConductedAudit = ({ audits = [] }) => {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [priority, setPriority] = useState("");
+
 
   const columns = [
     {
@@ -45,20 +47,29 @@ const ConductedAudit = ({ audits = [] }) => {
     },
     {
       name: "Created Date",
-      selector: (row) => new Date(row.created_at).toLocaleDateString(),
-      sortable: true,
+      selector: (row) =>
+        row.created_at
+          ? new Date(row.created_at).toLocaleDateString()
+          : "-", sortable: true,
     },
   ];
 
   const filteredData = useMemo(() => {
     return audits.filter((audit) => {
-      const matchesSearch =
-        audit.activity_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        audit.audit_for?.toLowerCase().includes(searchText.toLowerCase());
+      const search = searchText.toLowerCase();
 
-      return matchesSearch;
+      const matchesSearch =
+        audit.activity_name?.toLowerCase().includes(search) ||
+        audit.audit_for?.toLowerCase().includes(search);
+
+      // ✅ Priority filter
+      const matchesPriority =
+        priority === "" ||
+        (audit.priority || "").toLowerCase() === priority;
+
+      return matchesSearch && matchesPriority;
     });
-  }, [audits, searchText]);
+  }, [audits, searchText, priority]);
 
   const handleExport = () => {
     const csv = [
@@ -87,64 +98,49 @@ const ConductedAudit = ({ audits = [] }) => {
     <div className="flex flex-col gap-2">
       <div className="flex md:flex-row md:justify-between flex-col gap-10 my-2">
         <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="all"
-              name="status"
-              checked={statusFilter === "all"}
-              onChange={() => setStatusFilter("all")}
-            />
-            <label htmlFor="all" className="text-sm">
-              All
+          <div className="flex gap-4">
+            <label>
+              <input
+                type="radio"
+                name="priority"
+                value=""
+                checked={priority === ""}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+              &nbsp;All
             </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="open"
-              name="status"
-              checked={statusFilter === "open"}
-              onChange={() => setStatusFilter("open")}
-            />
-            <label htmlFor="open" className="text-sm">
-              Open
+
+            <label>
+              <input
+                type="radio"
+                name="priority"
+                value="high"
+                checked={priority === "high"}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+              &nbsp;High
             </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="closed"
-              name="status"
-              checked={statusFilter === "closed"}
-              onChange={() => setStatusFilter("closed")}
-            />
-            <label htmlFor="closed" className="text-sm">
-              Closed
+
+            <label>
+              <input
+                type="radio"
+                name="priority"
+                value="medium"
+                checked={priority === "medium"}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+              &nbsp;Medium
             </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="pending"
-              name="status"
-              checked={statusFilter === "pending"}
-              onChange={() => setStatusFilter("pending")}
-            />
-            <label htmlFor="pending" className="text-sm">
-              Pending
-            </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="completed"
-              name="status"
-              checked={statusFilter === "completed"}
-              onChange={() => setStatusFilter("completed")}
-            />
-            <label htmlFor="completed" className="text-sm">
-              Completed
+
+            <label>
+              <input
+                type="radio"
+                name="priority"
+                value="low"
+                checked={priority === "low"}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+              &nbsp;Low
             </label>
           </div>
         </div>

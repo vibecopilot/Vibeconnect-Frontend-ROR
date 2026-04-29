@@ -34,30 +34,9 @@ function SurveyDetails() {
       : "";
 
 
-  const defaultInvitationMessage = `Dear Participant,
-
-${survey?.description || "We would love to hear your feedback."}
-
-Please fill the survey below:
-
-${shareableLink}
-
-Thank you,
-${survey?.survey_title || "Survey"} Team`;
-
-  const defaultThankYouMessage = `Dear Participant,
-
-Thank you for taking the time to complete our survey. Your feedback is valuable and will help us improve our services.
-
-We appreciate your participation!
-
-Best regards,
-${survey?.survey_title || "Survey"} Team`;
-
   useEffect(() => {
     if (survey) {
-      setThankYouMessage(survey?.thank_you_message || defaultThankYouMessage);
-      setMailMessage(survey?.invitation_message || defaultInvitationMessage);
+      setThankYouMessage(survey?.thank_you_message || "");
       setClientLogo(survey?.mail_logos || "");
     }
   }, [survey]);
@@ -245,49 +224,16 @@ ${survey?.survey_title || "Survey"} Team`;
 
     setSendingEmails(true);
     try {
-      // Persist invitation_message, thank_you_message and client logo to backend
-      const saveFormData = new FormData();
-      saveFormData.append("survey[invitation_message]", mailMessage);
-      saveFormData.append("survey[thank_you_message]", thankYouMessage);
+      // Persist client logo to backend if a new file was selected
       if (clientLogoFile) {
-        saveFormData.append("survey[mail_logos]", clientLogoFile);
+        const logoFormData = new FormData();
+        logoFormData.append("survey[mail_logos]", clientLogoFile);
+        await updateSurvey(id, logoFormData);
+        setClientLogoFile(null); // clear after successful upload
       }
-      await updateSurvey(id, saveFormData);
-      setClientLogoFile(null);
-
       await axiosInstance.post("/send-survey", {
         emails,
-        invitation_message: mailMessage,
-        thank_you_message: thankYouMessage,
-        message: `
-<div style="font-family: Arial, sans-serif;">
-
-  ${clientLogo ? `
-    <div style="text-align:center; margin-bottom:20px;">
-      <img src="${clientLogo}" alt="Logo" style="max-height:80px;" />
-    </div>
-  ` : ""}
-
-  <div style="white-space: pre-line;">
-    ${mailMessage || ""}
-  </div>
-
-  <p>
-    <a href="${shareableLink}" 
-       style="background:#4f46e5;color:white;padding:10px 16px;
-              text-decoration:none;border-radius:6px;">
-      Take Survey
-    </a>
-  </p>
-
-  <p>${shareableLink}</p>
-
-  <br/>
-
-  <p>Thank you,<br/>${survey?.survey_title} Team</p>
-
-</div>
-`,
+        message: mailMessage,  
         survey_link: shareableLink,
       });
       toast.success("Survey sent successfully!");
@@ -419,6 +365,19 @@ ${survey?.survey_title || "Survey"} Team`;
             <div className="relative group">
               <button
                 onClick={() => {
+                  if (!mailMessage) {
+                    setMailMessage(`Dear Participant,
+
+${survey?.description || ""}
+
+Please fill the survey below:
+
+${shareableLink}
+
+Thank you,
+${survey?.survey_title} Team`);
+                  }
+
                   setSendModalOpen(true);
                 }}
                 className="bg-purple-500 hover:bg-purple-600 text-white p-3 rounded-lg flex items-center justify-center"
@@ -811,7 +770,6 @@ ${survey?.survey_title || "Survey"} Team`;
                         try {
                           const formData = new FormData();
                           formData.append("survey[thank_you_message]", thankYouMessage);
-                          formData.append("survey[invitation_message]", mailMessage);
                           if (clientLogoFile) {
                             formData.append("survey[mail_logos]", clientLogoFile);
                           }

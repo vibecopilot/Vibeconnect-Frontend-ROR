@@ -31,7 +31,7 @@ const Meter = () => {
   const [selectedUnit, setSelectedUnit] = useState("");
   const [page, setPage] = useState("assets");
   const [assets, setAssets] = useState([]);
-const themeColor =useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color)
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString(); // Adjust the format as needed
@@ -64,8 +64,8 @@ const themeColor =useSelector((state)=> state.theme.color)
       name: "Asset Name",
       selector: (row) => row.name,
       sortable: true,
-      width: "350px",
-      
+      width: "200px",
+
     },
 
     {
@@ -180,12 +180,12 @@ const themeColor =useSelector((state)=> state.theme.color)
     } else {
       const filteredResults = assets.filter(
         (item) =>
-         (item.building_name && item.building_name
+          (item.building_name && item.building_name
             .toLowerCase()
             .includes(searchValue.toLowerCase())) ||
           (item.name && item.name.toLowerCase().includes(searchValue.toLowerCase())) ||
-          (item.unit && item.unit_name.toLowerCase().includes(searchValue.toLowerCase()))
-      );
+          (item.unit_name &&
+            item.unit_name.toLowerCase().includes(searchValue)));
       setFilteredData(filteredResults);
     }
   };
@@ -241,19 +241,19 @@ const themeColor =useSelector((state)=> state.theme.color)
       "Floor": asset.floor_name,
       "Unit": asset.unit_name,
       "Vendor": asset.vendor_name,
-      "Asset Group": asset.group_name, 
-      "Asset Sub Group": asset.sub_group_name, 
+      "Asset Group": asset.group_name,
+      "Asset Sub Group": asset.sub_group_name,
       "Purchased On": asset.purchased_on,
       "Purchased Cost": asset.purchase_cost,
-      "Critical": asset.critical? "Yes": "No",
-      "Breakdown": asset.breakdown? "Yes": "No",
-      "Meter Configured": asset.is_meter?"Yes":"No",
+      "Critical": asset.critical ? "Yes" : "No",
+      "Breakdown": asset.breakdown ? "Yes" : "No",
+      "Meter Configured": asset.is_meter ? "Yes" : "No",
       "Created On": dateFormat(asset.created_at),
       "Updated On": dateFormat(asset.updated_at),
       "Comment": asset.remarks,
       "Installation": asset.installation,
       "Warranty Start": asset.warranty_start,
-      "Warranty Expiry" : asset.warranty_expiry
+      "Warranty Expiry": asset.warranty_expiry
     }));
     const fileType =
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
@@ -322,39 +322,39 @@ const themeColor =useSelector((state)=> state.theme.color)
   //   }
   // };
 
- const handleFilterApply = () => {
-  let filteredResults = [...assets];   // ✅ Always start from original data
+  const handleFilterApply = () => {
+    let filteredResults = [...assets];   // ✅ Always start from original data
 
-  if (selectedBuilding) {
-    filteredResults = filteredResults.filter(
-      (item) => item.building_id == selectedBuilding
-    );
-  }
+    if (selectedBuilding) {
+      filteredResults = filteredResults.filter(
+        (item) => item.building_id == selectedBuilding
+      );
+    }
 
-  if (selectedFloor) {
-    filteredResults = filteredResults.filter(
-      (item) => item.floor_id == selectedFloor
-    );
-  }
+    if (selectedFloor) {
+      filteredResults = filteredResults.filter(
+        (item) => item.floor_id == selectedFloor
+      );
+    }
 
-  if (selectedUnit) {
-    filteredResults = filteredResults.filter(
-      (item) => item.unit_id == selectedUnit
-    );
-  }
+    if (selectedUnit) {
+      filteredResults = filteredResults.filter(
+        (item) => item.unit_id == selectedUnit
+      );
+    }
 
-  setFilteredData(filteredResults);
-};
+    setFilteredData(filteredResults);
+  };
 
 
-const handleResetFilter = () => {
-  setSelectedBuilding("");
-  setSelectedFloor("");
-  setSelectedUnit("");
-  setFloors([]);
-  setUnitName([]);
-  setFilteredData(assets);   // original data restore
-};
+  const handleResetFilter = () => {
+    setSelectedBuilding("");
+    setSelectedFloor("");
+    setSelectedUnit("");
+    setFloors([]);
+    setUnitName([]);
+    setFilteredData(assets);   // original data restore
+  };
   const handleBuildingChange = async (e) => {
     const buildingId = e.target.value;
     setSelectedBuilding(buildingId);
@@ -380,47 +380,47 @@ const handleResetFilter = () => {
   const defaultImage = { index: 0, src: "" };
   let selectedImageSrc = defaultImage.src;
   let selectedImageIndex = defaultImage.index;
-const [selectedImage, setSelectedImage] = useState(defaultImage);
-const [selectedIndex, setSelectedIndex] = useState(null);
-const Get_Background = async () => {
-  try {
-    // const params = {
-    //   user_id: user_id,
-    // };
-    const user_id = getItemInLocalStorage("VIBEUSERID");
-    console.log(user_id);
-    const data = await getVibeBackground(user_id);
+  const [selectedImage, setSelectedImage] = useState(defaultImage);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const Get_Background = async () => {
+    try {
+      // const params = {
+      //   user_id: user_id,
+      // };
+      const user_id = getItemInLocalStorage("VIBEUSERID");
+      console.log(user_id);
+      const data = await getVibeBackground(user_id);
 
-    if (data.success) {
-      console.log("sucess");
+      if (data.success) {
+        console.log("sucess");
 
-      console.log(data.data);
-      selectedImageSrc = API_URL + data.data.image;
+        console.log(data.data);
+        selectedImageSrc = API_URL + data.data.image;
 
-      
-      selectedImageIndex = data.data.index;
 
-      // Now, you can use selectedImageSrc and selectedImageIndex as needed
-      console.log("Received response:", data);
+        selectedImageIndex = data.data.index;
 
-      // For example, update state or perform any other actions
-      setSelectedImage(selectedImageSrc);
-      setSelectedIndex(selectedImageIndex);
-      console.log("Received selectedImageSrc:", selectedImageSrc);
-      console.log("Received selectedImageIndex:", selectedImageIndex);
-      console.log(selectedImage);
-      // dispatch(setBackground(selectedImageSrc));
-    } else {
-      console.log("Something went wrong");
+        // Now, you can use selectedImageSrc and selectedImageIndex as needed
+        console.log("Received response:", data);
+
+        // For example, update state or perform any other actions
+        setSelectedImage(selectedImageSrc);
+        setSelectedIndex(selectedImageIndex);
+        console.log("Received selectedImageSrc:", selectedImageSrc);
+        console.log("Received selectedImageIndex:", selectedImageIndex);
+        console.log(selectedImage);
+        // dispatch(setBackground(selectedImageSrc));
+      } else {
+        console.log("Something went wrong");
+      }
+    } catch (error) {
+      console.error("Error:", error);
     }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-};
-useEffect(() => {
-  // Call the function to get the background image when the component mounts
-  Get_Background();
-}, []);
+  };
+  useEffect(() => {
+    // Call the function to get the background image when the component mounts
+    Get_Background();
+  }, []);
 
   return (
     <section
@@ -431,16 +431,16 @@ useEffect(() => {
     >
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-        <AssetNav/>
-       
+        <AssetNav />
+
         {filter && (
           <div className="flex flex-col md:flex-row mt-1 items-center justify-center gap-2">
-           <select
-  name="building_name"
-  value={selectedBuilding}   // ✅ ADD THIS
-  onChange={handleBuildingChange}
-  className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
->
+            <select
+              name="building_name"
+              value={selectedBuilding}   // ✅ ADD THIS
+              onChange={handleBuildingChange}
+              className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
+            >
               <option value="">Select Building</option>
               {buildings?.map((building) => (
                 <option key={building.id} value={building.id}>
@@ -480,12 +480,12 @@ useEffect(() => {
               Apply
             </button>
 
-             <button
-      className="bg-gray-500 p-1 px-4 text-white rounded-md"
-      onClick={handleResetFilter}
-    >
-      Reset
-    </button>
+            <button
+              className="bg-gray-500 p-1 px-4 text-white rounded-md"
+              onClick={handleResetFilter}
+            >
+              Reset
+            </button>
           </div>
         )}
         {page === "assets" && (
@@ -509,7 +509,7 @@ useEffect(() => {
                 </button>
 
                 <Link
-                style={{ background: themeColor }}
+                  style={{ background: themeColor }}
                   to={"/assets/add-asset"}
                   className="  text-sm rounded-lg flex justify-center font-semibold items-center gap-2 text-white py-2 px-4  transition-all duration-300 "
                 >
@@ -538,22 +538,22 @@ useEffect(() => {
               </div>
             </div>
 
-           {assets.length !==0 ? <Table
+            {assets.length !== 0 ? <Table
               // selectableRows
               // columns={column.filter((col) => visibleColumns.includes(col.name))}
               columns={column}
               data={filteredData}
               isPagination={true}
-              // customStyles={customStyle}
-              // responsive
-              // onSelectedRowsChange={handleRowSelected}
-              // fixedHeader
-              // // fixedHeaderScrollHeight="450px"
-              // pagination
-              // selectableRowsHighlight
-              // highlightOnHover
-              // omitColumn={column}
-            />: (
+            // customStyles={customStyle}
+            // responsive
+            // onSelectedRowsChange={handleRowSelected}
+            // fixedHeader
+            // // fixedHeaderScrollHeight="450px"
+            // pagination
+            // selectableRowsHighlight
+            // highlightOnHover
+            // omitColumn={column}
+            /> : (
               <div className="flex justify-center items-center h-full">
                 <DNA
                   visible={true}
@@ -565,12 +565,12 @@ useEffect(() => {
                 />
               </div>
             )
-          
-          }
+
+            }
           </>
         )}
 
-       
+
       </div>
     </section>
   );

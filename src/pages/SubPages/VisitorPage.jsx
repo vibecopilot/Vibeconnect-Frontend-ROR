@@ -842,25 +842,27 @@ const VisitorPage = () => {
     {
       name: "Host Approval",
       cell: (row) => {
-        let status = "Pending";
-        let colorClass = "text-yellow-600";
+         const hostApproval = row.hosts?.[0]?.is_approved;
 
-        if (row.skip_host_approval === true) {
-          status = "Approved";
-          colorClass = "text-green-600 ";
-        } else if (row.skip_host_approval === false) {
-          status = "Rejected";
-          colorClass = "text-red-600 ";
-        }
+    let status = "Pending";
+    let colorClass = "text-yellow-600";
 
-        return (
-          <span className={`px-2 py-1 rounded text-sm font-medium ${colorClass}`}>
-            {status}
-          </span>
-        );
-      },
-      sortable: true,
-    },
+    if (hostApproval === true) {
+      status = "Approved";
+      colorClass = "text-green-600";
+    } else if (hostApproval === false) {
+      status = "Rejected";
+      colorClass = "text-red-600";
+    }
+
+    return (
+      <span className={`px-2 py-1 rounded text-sm font-medium ${colorClass}`}>
+        {status}
+      </span>
+    );
+  },
+  sortable: true,
+},
     {
       name: "Pass Start",
       selector: (row) => (row.start_pass ? dateFormat(row.start_pass) : ""),
@@ -1333,7 +1335,7 @@ const VisitorPage = () => {
                 { key: "Visitor Out", label: "Visitor Out" },
                 { key: "approval", label: "Approvals" },
                 { key: "History", label: "History" },
-                { key: "logs", label: "Logs" },
+                // { key: "logs", label: "Logs" },
                 { key: "self-registration", label: "Self-Registration" },
               ].map((t) => (
                 <h2

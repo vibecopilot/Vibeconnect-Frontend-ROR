@@ -52,6 +52,15 @@ const TicketSetupPage = () => {
     fetchStatuses();
   }, []);
 
+  const handleReset = () => {
+    setFormData({
+      status: "",
+      fixedState: "",
+      color: "#1677ff",
+      order: "",
+    });
+  };
+
   /* ---------------- HANDLERS ---------------- */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -86,8 +95,11 @@ const TicketSetupPage = () => {
 
       fetchStatuses(); // refresh table
     } catch (err) {
-      toast.error("Failed to add status");
-    }
+  const message =
+    err?.response?.data?.error || "Failed to add status";
+
+  toast.error(message);
+}
   };
 
   const updateDay = (day, field, value) => {
@@ -146,9 +158,8 @@ const TicketSetupPage = () => {
         {["Category Type", "Status", "Operational Days"].map((tab) => (
           <button
             key={tab}
-            className={`px-4 py-2 ${
-              page === tab ? "border-b-2 text-blue-500" : ""
-            }`}
+            className={`px-4 py-2 ${page === tab ? "border-b-2 text-blue-500" : ""
+              }`}
             onClick={() => setPage(tab)}
           >
             {tab}
@@ -194,6 +205,12 @@ const TicketSetupPage = () => {
               style={{ background: themeColor }}
             >
               Add
+            </button>
+            <button
+              onClick={handleReset}
+              className="text-white rounded bg-black"
+            >
+              Reset
             </button>
           </div>
 

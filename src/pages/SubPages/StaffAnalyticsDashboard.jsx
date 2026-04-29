@@ -1,11 +1,13 @@
 /* eslint-disable react/prop-types */
 import { useEffect, useMemo, useRef, useState } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import { getStaffDashboard } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import DetailPopup from "../../components/DetailPopup";
-import { FaSpinner, FaChevronDown } from "react-icons/fa";
+import { FaSpinner, FaChevronDown, FaFileExcel, FaFilePdf, FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { RiPieChartFill } from "react-icons/ri";
 import {
@@ -258,6 +260,8 @@ const STAFF_COLUMNS = [
   { key: "vendor_name", label: "Vendor", accessor: (r) => r.vendor ?? r.vendor?.name ?? "—" },
   { key: "work_type", label: "Work Type", accessor: (r) => r.work_type ?? "—" },
   { key: "status_type", label: "Status", accessor: (r) => r.status_type ?? "—" },
+  { key: "punched_in", label: "Punched In", accessor: (r) => r.last_punched_in ?? "—" },
+  { key: "punched_out", label: "Punched Out", accessor: (r) => r.last_punched_out ?? "—" },
   { key: "created_at", label: "Created", accessor: (r) => r.created_at ?? "—" },
 ];
 
@@ -274,6 +278,47 @@ const StaffAnalyticsDashboard = () => {
   const [monthlyData, setMonthlyData] = useState({});
   const [selectedChart, setSelectedChart] = useState("");
   const [chartType, setChartType] = useState("pie");
+
+  const chartRef = useRef(null);
+
+  const downloadSingleChartPdf = async (fileName) => {
+    const toastId = toast.loading("Generating chart PDF...");
+    try {
+      if (!chartRef?.current) { toast.error("Chart not found"); return; }
+      const canvas = await html2canvas(chartRef.current, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const width = 190;
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(imgData, "PNG", 10, 15, width, height);
+      pdf.save(`${fileName}.pdf`);
+      toast.dismiss(toastId);
+      toast.success("Chart PDF downloaded");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error("Chart PDF download failed");
+    }
+  };
+
+  const exportCurrentChartCsv = () => {
+    let dataMap;
+    if (selectedChart === "hourly") dataMap = hourlyData;
+    else if (selectedChart === "monthly") dataMap = monthlyData;
+    else dataMap = byData[selectedChart] || {};
+    const entries = Object.entries(dataMap);
+    if (!entries.length) { toast.error("No data to export"); return; }
+    const rows = [["Category", "Count"], ...entries.map(([k, v]) => [k, Number(v) || 0])];
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${selectedChart || "staff_chart"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Data exported as CSV");
+  };
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [fromDate, setFromDate] = useState("");
@@ -370,14 +415,14 @@ const StaffAnalyticsDashboard = () => {
       const records = Array.isArray(bucket?.records)
         ? bucket.records
         : Array.isArray(bucket)
-        ? bucket
-        : [];
+          ? bucket
+          : [];
 
       const total = bucket?.total_pages
         ? Number(bucket.total_pages)
         : bucket?.per_page && (bucket?.count ?? bucket?.total)
-        ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
-        : 1;
+          ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
+          : 1;
 
       setDetailTotalPages(total);
       setDetailPopup({ open: true, title, records, loading: false });
@@ -408,8 +453,8 @@ const StaffAnalyticsDashboard = () => {
       const totalPages = bucket?.total_pages
         ? Number(bucket.total_pages)
         : bucket?.per_page && (bucket?.count ?? bucket?.total)
-        ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
-        : 1;
+          ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
+          : 1;
 
       setDetailTotalPages(totalPages);
       setDetailPopup({ open: true, title, records, loading: false });
@@ -621,8 +666,30 @@ const StaffAnalyticsDashboard = () => {
         <Card
           title={formatByLabel(selectedChart)}
           subtitle={`Chart type: ${chartType}`}
+          right={
+            <div className="flex items-center gap-2">
+              {/* <button
+                type="button"
+                title="Export in Excel"
+                onClick={exportCurrentChartCsv}
+                className="h-9 w-10 grid place-items-center rounded-lg bg-green-50 text-green-700 hover:bg-green-100"
+              >
+                <FaFileExcel className="text-sm" />
+              </button> */}
+              <button
+                type="button"
+                title="Export in Chart"
+                onClick={() => downloadSingleChartPdf(selectedChart || "Staff_Chart")}
+                className="h-10 w-auto px-3 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-lg flex items-center gap-2 hover:opacity-90 transition"
+              >
+                <FaDownload className="text-sm" />
+              </button>
+            </div>
+          }
         >
-          <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
+          <div ref={chartRef}>
+            <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
+          </div>
         </Card>
       )}
 

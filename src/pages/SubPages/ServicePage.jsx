@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { getSoftServices, softServiceDownloadQrCode } from "../../api";
+import { downloadSoftServiceSample, exportSoftServices, getSoftServices, importSoftServices, softServiceDownloadQrCode } from "../../api";
 import { BiEdit } from "react-icons/bi";
 import { IoAddCircleOutline } from "react-icons/io5";
 import Table from "../../components/table/Table";
@@ -34,27 +34,38 @@ const ServicePage = () => {
     return date.toLocaleString();
   };
 
-  const filterByDate = () => {
+  const filterByDate = async () => {
     if (!startDate || !endDate) {
-      toast.error("Select both dates");
-      return;
+      return toast.error("Select both dates");
     }
 
-    const start = new Date(startDate).setHours(0, 0, 0, 0);
-    const end = new Date(endDate).setHours(23, 59, 59, 999);
+    const toastId = toast.loading("Exporting...");
 
-    const filtered = servicess.filter((item) => {
-      const time = new Date(item.created_at).getTime();
-      return time >= start && time <= end;
-    });
+    try {
+      const response = await exportSoftServices(startDate, endDate);
 
-    if (!filtered.length) {
-      toast.error("No data found for selected range");
-      return;
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute(
+        "download",
+        `soft_services_${startDate}_to_${endDate}.xlsx`
+      );
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Export successful", { id: toastId });
+      setShowExportModal(false);
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Export failed", { id: toastId });
     }
-
-    exportToExcel(filtered);
-    setShowExportModal(false);
   };
 
   const column = [
@@ -119,6 +130,8 @@ const ServicePage = () => {
     }
   };
 
+
+
   const exportToExcel = (data) => {
     const formatted = data.map((item) => ({
       Name: item.name,
@@ -176,21 +189,35 @@ const ServicePage = () => {
 
 
   /* ===== IMPORT EXCEL ===== */
-  const handleImportExcel = () => {
-    if (!importFile) return toast.error("Please select file");
+ const handleImportExcel = async () => {
+  if (!importFile) {
+    return toast.error("Please select file");
+  }
 
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const workbook = XLSX.read(evt.target.result, { type: "binary" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
-      console.log("Imported Data:", jsonData);
-      toast.success("Excel Imported Successfully");
-      setShowImportModal(false);
-    };
-    reader.readAsBinaryString(importFile);
-  };
+  const toastId = toast.loading("Uploading...");
 
+  try {
+    await importSoftServices(importFile);
+
+    toast.success("File Imported Successfully", { id: toastId });
+    setShowImportModal(false);
+    setImportFile(null);
+
+    // 🔄 Refresh data after import
+    const serviceResponse = await getSoftServices();
+    const sortedServiceData = serviceResponse.data?.soft_services.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    );
+    setFilteredData(sortedServiceData);
+    setServices(sortedServiceData);
+
+  } catch (error) {
+    console.error(error);
+    toast.error("Import failed", { id: toastId });
+  }
+};
+
+  
   const themeColor = useSelector((state) => state.theme.color);
 
   return (
@@ -304,13 +331,33 @@ const ServicePage = () => {
               </button>
 
               <button
-                onClick={() => {
-                  const link = document.createElement("a");
-                  link.href = "/sample.pdf";   // jo bhi file ka naam hai
-                  link.download = "sample.pdf";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
+                onClick={async () => {
+                  const toastId = toast.loading("Downloading sample...");
+
+                  try {
+                    const response = await downloadSoftServiceSample();
+
+                    const blob = new Blob([response.data], {
+                      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    });
+
+                    const url = window.URL.createObjectURL(blob);
+
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.download = "soft_services_sample.xlsx";
+
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    window.URL.revokeObjectURL(url);
+
+                    toast.success("Sample downloaded", { id: toastId });
+                  } catch (error) {
+                    console.error(error);
+                    toast.error("Download failed", { id: toastId });
+                  }
                 }}
                 className="bg-black text-white px-4 py-2 rounded"
               >
@@ -323,58 +370,58 @@ const ServicePage = () => {
       )}
 
       {showExportModal && (
-  <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded w-[350px] relative">
+        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded w-[350px] relative">
 
-      {/* ✅ CLOSE ICON */}
-      <button
-        className="absolute top-3 right-3 text-gray-500 hover:text-black"
-        onClick={() => setShowExportModal(false)}
-      >
-        <FaTimes />
-      </button>
+            {/* ✅ CLOSE ICON */}
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-black"
+              onClick={() => setShowExportModal(false)}
+            >
+              <FaTimes />
+            </button>
 
-      <h2 className="font-bold mb-4">Export By Date Range</h2>
+            <h2 className="font-bold mb-4">Export By Date Range</h2>
 
-      <label className="text-[14px]">
-        <b>Start Date :</b>
-      </label>
-      <input
-        type="date"
-        value={startDate}
-        onChange={(e) => setStartDate(e.target.value)}
-        className="border p-2 w-full mb-2 rounded-md"
-      />
+            <label className="text-[14px]">
+              <b>Start Date :</b>
+            </label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border p-2 w-full mb-2 rounded-md"
+            />
 
-      <label className="text-[14px]">
-        <b>End Date :</b>
-      </label>
-      <input
-        type="date"
-        value={endDate}
-        onChange={(e) => setEndDate(e.target.value)}
-        className="border p-2 w-full mb-4 rounded-md"
-      />
+            <label className="text-[14px]">
+              <b>End Date :</b>
+            </label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border p-2 w-full mb-4 rounded-md"
+            />
 
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={() => setShowExportModal(false)}
-          className="bg-gray-400 text-white px-4 py-2 rounded-lg"
-        >
-          Cancel
-        </button>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="bg-gray-400 text-white px-4 py-2 rounded-lg"
+              >
+                Cancel
+              </button>
 
-        <button
-          onClick={filterByDate}
-          className="text-white px-4 py-2 rounded-lg"
-          style={{ background: themeColor }}
-        >
-          Export
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+              <button
+                onClick={filterByDate}
+                className="text-white px-4 py-2 rounded-lg"
+                style={{ background: themeColor }}
+              >
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

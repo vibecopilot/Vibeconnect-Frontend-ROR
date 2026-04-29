@@ -6,9 +6,11 @@ import { getTicketDashboard, getTicketStatusDownload, getComplaintsDrill } from 
 import DetailPopup from "./DetailPopup";
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
-import { FaDownload, FaChevronDown } from "react-icons/fa";
+import { FaDownload, FaChevronDown, FaFileExcel, FaFilePdf } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { RiPieChartFill } from "react-icons/ri";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   AiOutlineAreaChart,
   AiOutlineBarChart,
@@ -152,6 +154,63 @@ const ChartTypeMenu = ({ value, onChange, allowBar = false }) => {
   );
 };
 
+const DownloadMenu = ({
+  onExcelDownload,
+  onChartDownload,
+  downloading
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const closeMenu = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeMenu);
+    return () => document.removeEventListener("mousedown", closeMenu);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+        title="Download Options"
+      >
+        <FaDownload className="text-sm" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
+          <button
+            onClick={() => {
+              onExcelDownload();
+              setOpen(false);
+            }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium"
+          >
+            <FaFileExcel className="inline-block mr-2" /> Export in Excel
+          </button>
+
+          <button
+            onClick={() => {
+              onChartDownload();
+              setOpen(false);
+            }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium"
+          >
+            <FaFilePdf className="inline-block mr-2" />Export in Chart
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ChartCard = ({
   title,
   subtitle,
@@ -160,7 +219,8 @@ const ChartCard = ({
   legendItems = [],
   footerText = "",
   footerDirection = "down",
-  onDownload,
+  onExcelDownload,
+  onChartDownload,
   chartType,
   setChartType,
   allowBar,
@@ -190,14 +250,11 @@ const ChartCard = ({
             allowBar={allowBar}
           />
 
-          <button
-            type="button"
-            onClick={onDownload}
-            className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-            title={downloading ? "Downloading..." : "Download"}
-          >
-            <FaDownload className="text-sm" />
-          </button>
+          <DownloadMenu
+            onExcelDownload={onExcelDownload}
+            onChartDownload={onChartDownload}
+            downloading={downloading}
+          />
         </div>
       </div>
 
@@ -206,11 +263,11 @@ const ChartCard = ({
       <div className="mt-2">{children}</div>
 
       {footerText ? (
-        <ndiv className="mt-2 text-center text-sm">
+        <div className="mt-2 text-center text-sm">
           <span className={footerColor}>
             {footerArrow} {footerText}
           </span>
-        </ndiv>
+        </div>
       ) : null}
     </div>
   );
@@ -419,6 +476,14 @@ const TicketHighCharts = () => {
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
 
+  const statusChartRef = useRef(null);
+  const categoryChartRef = useRef(null);
+  const typeChartRef = useRef(null);
+  const floorChartRef = useRef(null);
+  const unitChartRef = useRef(null);
+
+  const dashboardRef = useRef(null);
+
   const [detailPopup, setDetailPopup] = useState({
     open: false,
     title: "",
@@ -459,6 +524,162 @@ const TicketHighCharts = () => {
     setFilterEndDate("");
     setDashboardParams({ companyId: Number(companyId) || undefined });
   };
+
+  const getBase64FromUrl = async (url) => {
+    const data = await fetch(url);
+    const blob = await data.blob();
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = () => resolve(reader.result);
+    });
+  };
+
+  const handleDashboardPdfDownload = async () => {
+    const toastId = toast.loading("Generating PDF...");
+    try {
+      if (!dashboardRef.current) {
+        toast.error("Dashboard not found");
+        return;
+      }
+
+      const canvas = await html2canvas(
+        dashboardRef.current,
+        {
+          scale: 2,
+          useCORS: true
+        }
+      );
+
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const width = 210;
+      const height =
+        (canvas.height * width) /
+        canvas.width;
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      /* Uploaded image add in PDF
+         Replace with your actual uploaded image URL */
+      const uploadedImage =
+        statusData?.attachment_url ||
+        categoryData?.attachment_url ||
+        null;
+
+      if (uploadedImage) {
+        const base64Image =
+          await getBase64FromUrl(uploadedImage);
+
+        pdf.addPage();
+
+        pdf.text(
+          "Uploaded Image",
+          15,
+          20
+        );
+
+        pdf.addImage(
+          base64Image,
+          "PNG",
+          15,
+          30,
+          180,
+          120
+        );
+      }
+
+      pdf.save(
+        "TicketDashboard.pdf"
+      );
+
+      toast.dismiss(toastId);
+      toast.success("PDF Downloaded");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error("PDF download failed");
+    }
+  };
+
+  const downloadSingleChartPdf = async (
+    chartRef,
+    fileName
+  ) => {
+
+    const toastId = toast.loading(
+      "Generating chart PDF..."
+    );
+
+    try {
+
+      if (!chartRef?.current) {
+        toast.error("Chart not found");
+        return;
+      }
+
+      const canvas = await html2canvas(
+        chartRef.current,
+        {
+          scale: 2,
+          useCORS: true
+        }
+      );
+
+      const imgData =
+        canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF(
+        "p",
+        "mm",
+        "a4"
+      );
+
+      const width = 190;
+      const height =
+        (canvas.height * width) /
+        canvas.width;
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        10,
+        15,
+        width,
+        height
+      );
+
+      pdf.save(
+        `${fileName}.pdf`
+      );
+
+      toast.dismiss(toastId);
+      toast.success(
+        "Chart PDF downloaded"
+      );
+
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error(
+        "Chart PDF download failed"
+      );
+    }
+
+  };
+
+
 
   const getGroupKeyForType = (countType) => {
     if (!countType) return null;
@@ -789,7 +1010,7 @@ const TicketHighCharts = () => {
       themeColor: chartTheme.floor,
       palette: CHART_PALETTE,
       order: "descending",
-      pointColorFn: floorPointColor, // ✅ multi-color + highlight
+      pointColorFn: floorPointColor,
     });
 
     const handlePointClick = function () {
@@ -888,7 +1109,7 @@ const TicketHighCharts = () => {
   };
 
   return (
-    <div className="w-full px-3">
+    <div className="w-full px-3" ref={dashboardRef} >
       <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
         <button
           type="button"
@@ -904,6 +1125,12 @@ const TicketHighCharts = () => {
         >
           Clear Filter
         </button>
+        {/* <button
+          onClick={handleDashboardPdfDownload}
+          className="h-10 px-4 rounded-xl bg-indigo-600 text-white"
+        >
+          Download PDF
+        </button> */}
       </div>
 
       {filterModalOpen && (
@@ -958,21 +1185,34 @@ const TicketHighCharts = () => {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         <ChartCard
           title="Tickets by Status"
           // subtitle="Overview of ticket lifecycle"
           trendPercent={null}
           trendDirection="down"
           // legendItems={legendTopTwo(statusData, statusPointColor)}
-          onDownload={() => handleTicketStatusDownload("status")}
-          chartType={statusChartType}
+          onExcelDownload={() =>
+            handleTicketStatusDownload("status")
+          }
+
+          onChartDownload={() =>
+            downloadSingleChartPdf(
+              statusChartRef,
+              "Tickets_By_Status"
+            )
+          } chartType={statusChartType}
           setChartType={setStatusChartType}
           allowBar={true}
           downloading={downloading}
         >
           {statusData ? (
-            <HighchartsReact highcharts={Highcharts} options={statusOptions} />
-          ) : (
+            <div ref={statusChartRef}>
+              <HighchartsReact
+                highcharts={Highcharts}
+                options={statusOptions}
+              />
+            </div>) : (
             <Loader />
           )}
         </ChartCard>
@@ -981,14 +1221,24 @@ const TicketHighCharts = () => {
           title="Tickets by Category"
           // subtitle="Where tickets are coming from"
           // legendItems={legendTopTwo(categoryData, categoryPointColor)}
-          onDownload={() => handleTicketStatusDownload("category")}
-          chartType={categoryChartType}
+          onExcelDownload={() =>
+            handleTicketStatusDownload("category")
+          }
+
+          onChartDownload={() =>
+            downloadSingleChartPdf(
+              categoryChartRef,
+              "Tickets_By_Category"
+            )
+          } chartType={categoryChartType}
           setChartType={setCategoryChartType}
           allowBar={true}
           downloading={downloading}
         >
           {categoryData ? (
-            <HighchartsReact highcharts={Highcharts} options={categoryOptions} />
+            <div ref={categoryChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={categoryOptions} />
+            </div>
           ) : (
             <Loader />
           )}
@@ -998,14 +1248,24 @@ const TicketHighCharts = () => {
           title="Tickets by Type"
           // subtitle="Distribution by ticket type"
           // legendItems={legendTopTwo(ticketTypes, typePointColor)}
-          onDownload={() => handleTicketStatusDownload("type")}
-          chartType={ticketTypeChartType}
+          onExcelDownload={() =>
+            handleTicketStatusDownload("type")
+          }
+
+          onChartDownload={() =>
+            downloadSingleChartPdf(
+              typeChartRef,
+              "Tickets_By_Type"
+            )
+          } chartType={ticketTypeChartType}
           setChartType={setTicketTypeChartType}
           allowBar={true}
           downloading={downloading}
         >
           {ticketTypes ? (
-            <HighchartsReact highcharts={Highcharts} options={typeOptions} />
+            <div ref={typeChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={typeOptions} />
+            </div>
           ) : (
             <Loader />
           )}
@@ -1014,9 +1274,18 @@ const TicketHighCharts = () => {
         <ChartCard
           title={Number(companyId) === 55 ? "Tickets by Block" : "Tickets by Floor"}          // subtitle="Floor-wise ticket count"
           // legendItems={legendTopTwo(floorTickets, floorPointColor)}
-          onDownload={() =>
+          onExcelDownload={() =>
             handleTicketStatusDownload(
-              Number(companyId) === 55 ? "block" : "unit"
+              Number(companyId) === 55
+                ? "block"
+                : "unit"
+            )
+          }
+
+          onChartDownload={() =>
+            downloadSingleChartPdf(
+              floorChartRef,
+              "Tickets_By_Floor"
             )
           } chartType={floorChartType}
           setChartType={setFloorChartType}
@@ -1024,7 +1293,9 @@ const TicketHighCharts = () => {
           downloading={downloading}
         >
           {floorTickets ? (
-            <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+            <div ref={floorChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+            </div>
           ) : (
             <Loader />
           )}
@@ -1035,9 +1306,18 @@ const TicketHighCharts = () => {
             title={Number(companyId) === 55 ? "Tickets by Tenant" : "Tickets by Unit"}
             // subtitle="Unit-wise ticket count"
             // legendItems={legendTopTwo(unitTickets, unitPointColor)}
-            onDownload={() =>
+            onExcelDownload={() =>
               handleTicketStatusDownload(
-                Number(companyId) === 55 ? "tenant" : "unit"
+                Number(companyId) === 55
+                  ? "tenant"
+                  : "unit"
+              )
+            }
+
+            onChartDownload={() =>
+              downloadSingleChartPdf(
+                unitChartRef,
+                "Tickets_By_Unit"
               )
             } chartType={unitChartType}
             setChartType={setUnitChartType}
@@ -1045,7 +1325,9 @@ const TicketHighCharts = () => {
             downloading={downloading}
           >
             {unitTickets ? (
-              <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+              <div ref={unitChartRef}>
+                <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+              </div>
             ) : (
               <Loader />
             )}

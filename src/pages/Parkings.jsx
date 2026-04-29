@@ -8,21 +8,34 @@ import Table from "../components/table/Table";
 
 const Parkings = () => {
   const [filteredData, setFilteredData] = useState([]);
+  const [searchText, setSearchText] = useState("");
+
+const handleSearch = (e) => {
+  const value = e.target.value.toLowerCase().trim();
+  setSearchText(value);
+
+  const filtered = data.filter((item) =>
+    item.level.toString().includes(value)
+  );
+
+  setFilteredData(filtered);
+};
+
   const columns = [
     {
       name: "view",
 
       cell: (row) => (
-  <div className="flex items-center gap-4">
-    {row?.id ? (
-      <Link to={`/admin/parking-view-details/${row.id}`}>
-        <BsEye size={15} />
-      </Link>
-    ) : (
-      <span className="text-gray-400">N/A</span>
-    )}
-  </div>
-),
+        <div className="flex items-center gap-4">
+          {row?.id ? (
+            <Link to={`/admin/parking-view-details/${row.id}`}>
+              <BsEye size={15} />
+            </Link>
+          ) : (
+            <span className="text-gray-400">N/A</span>
+          )}
+        </div>
+      ),
 
     },
     {
@@ -61,23 +74,23 @@ const Parkings = () => {
   ];
 
   const data = [
-  {
-    id: 1,
-    booked_by: "person 1",
-    level: 1,
-    from: "09:30 AM",
-    to: "11:30 AM",
-    status: "Upcoming",
-  },
-  {
-    id: 2,
-    booked_by: "person 2",
-    level: 2,
-    from: "09:30 AM",
-    to: "11:30 AM",
-    status: "Expired",
-  },
-];
+    {
+      id: 1,
+      booked_by: "person 1",
+      level: 1,
+      from: "09:30 AM",
+      to: "11:30 AM",
+      status: "Upcoming",
+    },
+    {
+      id: 2,
+      booked_by: "person 2",
+      level: 2,
+      from: "09:30 AM",
+      to: "11:30 AM",
+      status: "Expired",
+    },
+  ];
 
   const customStyle = {
     headRow: {
@@ -122,8 +135,8 @@ const Parkings = () => {
             type="text"
             placeholder="Search by level "
             className="border border-gray-400 w-96 placeholder:text-sm rounded-lg p-2"
-            //   value={searchText}
-            //   onChange={handleSearch}
+            value={searchText}
+            onChange={handleSearch}
           />
           <Link
             to={"/admin/book-parking"}
@@ -133,8 +146,11 @@ const Parkings = () => {
             Book
           </Link>
         </div>
-        <Table columns={columns} data={data} isPagination={true} />
-      </div>
+        <Table
+          columns={columns}
+          data={searchText ? filteredData : data}
+          isPagination={true}
+        />      </div>
     </section>
   );
 };

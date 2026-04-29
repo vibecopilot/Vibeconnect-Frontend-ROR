@@ -248,6 +248,7 @@ const UserSetupDetails = () => {
                 <InfoBox label="Last Name" value={user.lastname} />
                 <InfoBox label="Email" value={user.email} />
                 <InfoBox label="Mobile" value={user.mobile} />
+                <InfoBox label="lives_here" value={user.lives_here ? "Yes" : "No"} />
 
                 <div className="bg-[#F9FAFB] p-4 rounded-lg shadow-sm">
                   <strong>Status:</strong>
