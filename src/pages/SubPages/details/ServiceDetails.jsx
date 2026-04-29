@@ -6,7 +6,7 @@ import {
   getSoftServicesDetails,
   getSoftServiceSchedule,
   getSoftServiceLogs,
-    getGenericSubInfos,
+  getGenericSubInfos,
 } from "../../../api";
 import { FaQrcode, FaRegFileAlt } from "react-icons/fa";
 import Table from "../../../components/table/Table";
@@ -34,93 +34,126 @@ const ServiceDetails = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [genericSubInfos, setGenericSubInfos] = useState([]);
+
   useEffect(() => {
     const fetchServiceDetails = async () => {
-      const ServiceDetailsResponse = await getSoftServicesDetails(id);
-      setDetails(ServiceDetailsResponse.data.soft_service || ServiceDetailsResponse.data);
-      console.log(ServiceDetailsResponse);
-      console.log("Service Details API:", ServiceDetailsResponse.data);
+      const res = await getSoftServicesDetails(id);
 
+      console.log("FULL API RESPONSE:", res.data);
+
+      const service =
+        res.data.soft_service ||
+        res.data.soft_services?.[0] ||
+        res.data;
+
+      setDetails(service);
     };
+
     fetchServiceDetails();
-  }, []);
- const fetchScheduleData = async () => {
-  try {
-    const scheduleRes = await getSoftServiceSchedule(id);
+  }, [id]);
 
-    const activities =
-      scheduleRes?.data?.activities ||
-      scheduleRes?.data?.data?.activities ||
-      scheduleRes?.data?.data ||
-      [];
 
-    setScheduleData(activities);
-    setFilteredScheduleData(activities);
-
-    console.log("Schedule table", activities);
-  } catch (error) {
-    console.log(error);
-  }
-};
- const fetchLogsDetails = async () => {
-  try {
-    const logsDetailsResp = await getSoftServiceLogs(id);
-
-    const activities =
-      logsDetailsResp?.data?.activities ||
-      logsDetailsResp?.data?.data?.activities ||
-      logsDetailsResp?.data?.data ||
-      [];
-
-    const filteredData = activities.filter((activity) => {
-      const activityDate = new Date(activity.start_time);
-
-      const activityLocalDate =
-        activityDate.getFullYear() +
-        "-" +
-        String(activityDate.getMonth() + 1).padStart(2, "0") +
-        "-" +
-        String(activityDate.getDate()).padStart(2, "0");
-
-      return (
-        activityLocalDate === selectedDate &&
-        activity.status !== "pending" &&
-        activity.status !== "overdue"
-      );
-    });
-
-    console.log("Filtered Logs:", filteredData);
-
-    setlogsDetails(filteredData);
-  } catch (error) {
-    console.error("Error fetching logs:", error);
-  }
-};
-useEffect(() => {
-
-  const fetchGenericSubInfos = async () => {
+  const fetchScheduleData = async () => {
     try {
+      const scheduleRes = await getSoftServiceSchedule(id);
 
-      const res = await getGenericSubInfos();
-
-      const data =
-        res?.data?.generic_sub_infos ||
-        res?.data?.data ||
-        res?.data ||
+      const activities =
+        scheduleRes?.data?.activities ||
+        scheduleRes?.data?.data?.activities ||
+        scheduleRes?.data?.data ||
         [];
 
-      setGenericSubInfos(data);
+      setScheduleData(activities);
+      setFilteredScheduleData(activities);
 
-      console.log("Generic Sub Infos:", data);
-
+      console.log("Schedule table", activities);
     } catch (error) {
       console.log(error);
     }
   };
+  const fetchLogsDetails = async () => {
+    try {
+      const logsDetailsResp = await getSoftServiceLogs(id);
 
-  fetchGenericSubInfos();
+      const activities =
+        logsDetailsResp?.data?.activities ||
+        logsDetailsResp?.data?.data?.activities ||
+        logsDetailsResp?.data?.data ||
+        [];
 
-}, []);
+      const filteredData = activities.filter((activity) => {
+        const activityDate = new Date(activity.start_time);
+
+        const activityTime = activityDate.setHours(0, 0, 0, 0);
+
+        const start = startDate
+          ? new Date(startDate).setHours(0, 0, 0, 0)
+          : null;
+
+        const end = endDate
+          ? new Date(endDate).setHours(23, 59, 59, 999)
+          : null;
+
+        // ✅ RANGE FILTER
+        if (start && end) {
+          return (
+            activityTime >= start &&
+            activityTime <= end &&
+            activity.status !== "pending" &&
+            activity.status !== "overdue"
+          );
+        }
+
+        // ✅ SINGLE DATE FILTER (fallback)
+        const activityLocalDate =
+          activityDate.getFullYear() +
+          "-" +
+          String(activityDate.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(activityDate.getDate()).padStart(2, "0");
+
+        return (
+          activityLocalDate === selectedDate &&
+          activity.status !== "pending" &&
+          activity.status !== "overdue"
+        );
+      });
+
+      setlogsDetails(filteredData);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLogsDetails();
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+
+    const fetchGenericSubInfos = async () => {
+      try {
+
+        const res = await getGenericSubInfos();
+
+        const data =
+          res?.data?.generic_sub_infos ||
+          res?.data?.data ||
+          res?.data ||
+          [];
+
+        setGenericSubInfos(data);
+
+        console.log("Generic Sub Infos:", data);
+
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchGenericSubInfos();
+
+  }, []);
 
   useEffect(() => {
     fetchScheduleData();
@@ -158,16 +191,7 @@ useEffect(() => {
 
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
-   if (searchValue.trim() === "") {
-      setFilteredScheduleData(ScheduleData);
-    } else {
-      const filteredResult = ScheduleData.filter((item) =>
-        item.assigned_name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredScheduleData(filteredResult);
-    }
+    setSearchText(e.target.value);
   };
 
   const FormatedDate = (dateString) => {
@@ -198,112 +222,158 @@ useEffect(() => {
       return data.filter((item) => {
         console.log(item.start_time);
         const itemDate = new Date(item.start_time).setHours(0, 0, 0, 0);
-        const start = startDate.setHours(0, 0, 0, 0);
-        const end = endDate.setHours(23, 59, 59, 999);
+        const start = new Date(startDate).setHours(0, 0, 0, 0);
+        const end = new Date(endDate).setHours(23, 59, 59, 999);
         // Check if the itemDate falls within the start and end date range
         return itemDate >= start && itemDate <= end;
       });
     }
     return data;
   };
- const ScheduleColumn = [
-  {
-    name: "View",
-    cell: (row) => (
-      <div className="flex items-center gap-4">
-        <Link to={`/soft-service/schedule-task-details/${id}/${row.id}`}>
-          <BsEye size={15} />
-        </Link>
-      </div>
-    ),
-    maxWidth: "2rem",
-  },
-  {
-    name: "Checklist",
-    selector: (row) => row.checklist?.name,
-    sortable: true,
-  },
-  {
-    name: "Start Date",
-    selector: (row) => dateFormat(row.start_time),
-    sortable: true,
-  },
-  {
-    name: "Status",
-    selector: (row) => row.status,
-    sortable: true,
-  },
-  {
-    name: "Assigned To",
-    selector: (row) => row.assigned_name,
-    sortable: true,
-  },
-];
+  const ScheduleColumn = [
+    {
+      name: "View",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <Link to={`/soft-service/schedule-task-details/${id}/${row.id}`}>
+            <BsEye size={15} />
+          </Link>
+        </div>
+      ),
+      maxWidth: "2rem",
+    },
+    {
+      name: "Checklist",
+      selector: (row) => row.checklist?.name,
+      sortable: true,
+    },
+    {
+      name: "Start Date",
+      selector: (row) => dateFormat(row.start_time),
+      sortable: true,
+    },
+    {
+      name: "Status",
+      selector: (row) => row.status,
+      sortable: true,
+    },
+    {
+      name: "Assigned To",
+      selector: (row) => row.assigned_name,
+      sortable: true,
+    },
+  ];
 
-const attachments =
-  details?.attachments ??
-  details?.documents ??
-  details?.files ??
-  details?.service_attachments ??
-  details?.soft_service_attachments ??
-  [];
+ const attachments =
+  details?.soft_service_attach?.length > 0
+    ? details.soft_service_attach
+    : details?.attachments?.length > 0
+    ? details.attachments
+    : details?.soft_service_attachments?.length > 0
+    ? details.soft_service_attachments
+    : details?.service_attachments?.length > 0
+    ? details.service_attachments
+    : details?.documents?.length > 0
+    ? details.documents
+    : details?.files?.length > 0
+    ? details.files
+    : [];
 
-console.log("Attachments array:", attachments);
-const selectedSubInfo = genericSubInfos.find(
-  (item) => item.id === details.generic_sub_info_id
-);
+  console.log("Attachments array:", attachments);
+  const selectedSubInfo = genericSubInfos.find(
+    (item) => item.id === details.generic_sub_info_id
+  );
 
-const handleDownload = (type = "pdf") => {
-  if (!ScheduleData || ScheduleData.length === 0) {
-    alert("No data available to download");
-    return;
-  }
+  const handleDownload = (type = "pdf") => {
+    if (!ScheduleData || ScheduleData.length === 0) {
+      alert("No data available to download");
+      return;
+    }
 
-  const headers = ["Checklist", "Start Date", "Status", "Assigned To"];
+    const headers = ["Checklist", "Start Date", "Status", "Assigned To"];
 
-  const rows = ScheduleData.map((row) => [
-    row.checklist?.name || "",
-    dateFormat(row.start_time),
-    row.status || "",
-    row.assigned_name || "",
-  ]);
+    const rows = ScheduleData.map((row) => [
+      row.checklist?.name || "",
+      dateFormat(row.start_time),
+      row.status || "",
+      row.assigned_name || "",
+    ]);
 
-  // CSV DOWNLOAD
-  if (type === "csv") {
-    const csvData = [headers, ...rows]
-      .map((row) => row.join(","))
-      .join("\n");
+    // CSV DOWNLOAD
+    if (type === "csv") {
+      const csvData = [headers, ...rows]
+        .map((row) => row.join(","))
+        .join("\n");
 
-    const blob = new Blob([csvData], {
-      type: "text/csv;charset=utf-8;",
-    });
+      const blob = new Blob([csvData], {
+        type: "text/csv;charset=utf-8;",
+      });
 
-    const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "soft_service_schedule.csv";
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "soft_service_schedule.csv";
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
-  // PDF DOWNLOAD
-  if (type === "pdf") {
-    const doc = new jsPDF();
+    // PDF DOWNLOAD
+    if (type === "pdf") {
+      const doc = new jsPDF();
 
-    doc.text("Soft Service Schedule", 14, 15);
+      doc.text("Soft Service Schedule", 14, 15);
 
-    autoTable(doc, {
-      head: [headers],
-      body: rows,
-      startY: 20,
-    });
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: 20,
+      });
 
-    doc.save("soft_service_schedule.pdf");
-  }
-};
+      doc.save("soft_service_schedule.pdf");
+    }
+  };
+
+  useEffect(() => {
+    if (!ScheduleData || ScheduleData.length === 0) return;
+
+    let filtered = [...ScheduleData];
+
+    // ✅ Apply date filter ONLY when both dates exist
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      filtered = filtered.filter((item) => {
+        const itemDate = new Date(item.start_time);
+        itemDate.setHours(0, 0, 0, 0);
+
+        return itemDate >= start && itemDate <= end;
+      });
+    }
+
+    // ✅ Apply search filter
+    if (searchText.trim() !== "") {
+      filtered = filtered.filter((item) =>
+        item.assigned_name
+          ?.toLowerCase()
+          .includes(searchText.toLowerCase())
+      );
+    }
+
+    setFilteredScheduleData(filtered);
+  }, [startDate, endDate, searchText, ScheduleData]);
+
+  useEffect(() => {
+    if (!startDate && !endDate && searchText === "") {
+      setFilteredScheduleData(ScheduleData);
+    }
+  }, [startDate, endDate, searchText, ScheduleData]);
   return (
     <section>
       <div className="m-2">
@@ -325,11 +395,14 @@ const handleDownload = (type = "pdf") => {
             <button
               onClick={() => handleDownload("pdf")}
               className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white transition-all duration-300"
-                >
+            >
               Download PDF
             </button>
-            <button onClick={() => handleDownload("csv")}>
-             Download CSV
+            <button
+              onClick={() => handleDownload("csv")}
+              className="flex gap-2 items-center border-2 border-black px-4 p-1 rounded-full hover:bg-black hover:text-white transition-all duration-300"
+            >
+              Download CSV
 
             </button>
             <Link
@@ -365,9 +438,9 @@ const handleDownload = (type = "pdf") => {
             </div>
 
             <div className="grid grid-cols-2">
-  <p>Sub Info :</p>
-  <p className="text-sm">{selectedSubInfo?.name || "N/A"}</p>
-</div>
+              <p>Sub Info :</p>
+              <p className="text-sm">{selectedSubInfo?.name || "N/A"}</p>
+            </div>
 
             {/* <p>Wing:</p>
             <p>Area:</p> */}
@@ -384,56 +457,54 @@ const handleDownload = (type = "pdf") => {
           <h1 className="border-b border-black font-semibold my-5">
             Attachments
           </h1>
-         <div className="flex gap-4 flex-wrap my-4 items-center text-center">
-  {attachments.length > 0 ? (
-    attachments.map((doc, index) => (
-      <div key={doc.id || index}>
-        {isImage(domainPrefix + doc.document) ? (
-          <img
-            src={domainPrefix + doc.document}
-            alt={`Attachment ${index + 1}`}
-            className="w-40 h-28 object-cover rounded-md"
-            onClick={() =>
-              window.open(domainPrefix + doc.document, "_blank")
-            }
-          />
-        ) : (
-          <a
-            href={domainPrefix + doc.document}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-blue-400 transition-all duration-300 flex flex-col items-center"
-          >
-            <FaRegFileAlt size={50} />
-            {getFileName(doc.document)}
-          </a>
-        )}
-      </div>
-    ))
-  ) : (
-    <p className="text-center w-full">No Attachments</p>
-  )}
-</div>
+          <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+            {attachments.length > 0 ? (
+              attachments.map((doc, index) => (
+                <div key={doc.id || index}>
+                  {isImage(domainPrefix + doc.document) ? (
+                    <img
+                      src={`${domainPrefix}${doc.document || doc.file_url || doc.url}`}
+                      alt={`Attachment ${index + 1}`}
+                      className="w-40 h-28 object-cover rounded-md"
+                      onClick={() =>
+                        window.open(`${domainPrefix}${doc.document || doc.file_url || doc.url}`, "_blank")
+                      }
+                    />
+                  ) : (
+                    <a
+                      href={domainPrefix + doc.document}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-blue-400 transition-all duration-300 flex flex-col items-center"
+                    >
+                      <FaRegFileAlt size={50} />
+                      {getFileName(doc.document)}
+                    </a>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-center w-full">No Attachments</p>
+            )}
+          </div>
 
           <div className="flex justify-center items-center  md:p-0 p-2">
             <div className="w-full my-2">
               <div className="flex items-center gap-4 border-b border-gray-200">
                 <button
-                  className={`font-medium ${
-                    serviceFor === "schedule"
-                      ? "text-black border-b border-black"
-                      : "text-gray-400"
-                  }`}
+                  className={`font-medium ${serviceFor === "schedule"
+                    ? "text-black border-b border-black"
+                    : "text-gray-400"
+                    }`}
                   onClick={() => setserviceFor("schedule")}
                 >
                   Schedule
                 </button>
                 <button
-                  className={`font-medium ${
-                    serviceFor === "logs"
-                      ? "border-b border-black text-black"
-                      : "text-gray-400"
-                  }`}
+                  className={`font-medium ${serviceFor === "logs"
+                    ? "border-b border-black text-black"
+                    : "text-gray-400"
+                    }`}
                   onClick={() => setserviceFor("logs")}
                 >
                   Logs
@@ -454,20 +525,21 @@ const handleDownload = (type = "pdf") => {
                   className="p-2 border-gray-300 rounded-md w-full  my-2 outline-none border"
                 />
                 <DatePicker
-                  selectsRange={true}
+                  selectsRange
                   startDate={startDate}
                   endDate={endDate}
                   onChange={(update) => {
-                    setStartDate(update[0]);
-                    setEndDate(update[1]);
-                    setFilteredScheduleData(filterByDateRange(ScheduleData));
+                    const [start, end] = update;
+
+                    setStartDate(start);
+                    setEndDate(end);
                   }}
-                  isClearable={true}
+                  isClearable
                   placeholderText="Search by Date range"
-                  className="p-2 border-gray-300 rounded-md w-64  my-2 outline-none border"
+                  className="p-2 border-gray-300 rounded-md w-64 my-2 outline-none border"
                 />
               </div>
-             <Table columns={ScheduleColumn} data={filteredScheduleData || []} />
+              <Table columns={ScheduleColumn} data={filteredScheduleData || []} />
             </div>
           )}
           {serviceFor === "logs" && (
@@ -495,89 +567,89 @@ const handleDownload = (type = "pdf") => {
                 </button>
               </div>
 
-             <div>
-       {logsDetails.map((task) => {
-       // Get submissions safely
-        const submissions = task.activity_log?.submissions || [];
-    
+              <div>
+                {logsDetails.map((task) => {
+                  // Get submissions safely
+                  const submissions = task.activity_log?.submissions || [];
 
-    return (
-      <div
-        key={task.id}
-        className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-4 rounded-md gap-2"
-      >
-        {/* Checklist Name */}
-        <div className="grid grid-cols-12">
-          <div className="col-span-11 items-center">
-            <p className="font-medium">Checklist Name :</p>
-            <p className="w-full">
-              {task.checklist?.name || "No Checklist Name"}
-            </p>
-          </div>
-        </div>
 
-        {/* If no submissions */}
-        {submissions.length === 0 && (
-          <p className="text-gray-500">No submissions available</p>
-        )}
+                  return (
+                    <div
+                      key={task.id}
+                      className="my-4 flex flex-col bg-gray-50 shadow-custom-all-sides p-4 rounded-md gap-2"
+                    >
+                      {/* Checklist Name */}
+                      <div className="grid grid-cols-12">
+                        <div className="col-span-11 items-center">
+                          <p className="font-medium">Checklist Name :</p>
+                          <p className="w-full">
+                            {task.checklist?.name || "No Checklist Name"}
+                          </p>
+                        </div>
+                      </div>
 
-        {/* Render submissions */}
-        {submissions.map((submission, subIndex) => (
-          <div key={submission.id} className="my-2">
-            <div className="flex gap-4 items-center bg-green-100 mb-2 p-2 rounded-md">
-              <p className="font-medium">Question {subIndex + 1}:</p>
-              <p>{submission.question?.name || "No Question"}</p>
-            </div>
+                      {/* If no submissions */}
+                      {submissions.length === 0 && (
+                        <p className="text-gray-500">No submissions available</p>
+                      )}
 
-            <div className="flex gap-4 items-center bg-blue-100 mb-2 p-2 rounded-md">
-              <p className="font-medium">Answer :</p>
-              <p>{submission.value || "No Answer"}</p>
-            </div>
+                      {/* Render submissions */}
+                      {submissions.map((submission, subIndex) => (
+                        <div key={submission.id} className="my-2">
+                          <div className="flex gap-4 items-center bg-green-100 mb-2 p-2 rounded-md">
+                            <p className="font-medium">Question {subIndex + 1}:</p>
+                            <p>{submission.question?.name || "No Question"}</p>
+                          </div>
 
-            {/* Attachments */}
-            <span className="font-medium text-gray-500">Attachments :</span>
-            <div className="flex gap-4 flex-wrap my-4 items-center text-center">
-              {submission.question_attachments?.length > 0 ? (
-                submission.question_attachments.map((attachment, i) => (
-                  <img
-                    key={i}
-                    src={domainPrefix + attachment.document}
-                    alt={`Attachment ${i + 1}`}
-                    className="w-40 h-28 object-cover rounded-md"
-                    onClick={() =>
-                      window.open(domainPrefix + attachment.document, "_blank")
-                    }
-                  />
-                ))
-              ) : (
-                <p>No Attachments</p>
-              )}
-            </div>
+                          <div className="flex gap-4 items-center bg-blue-100 mb-2 p-2 rounded-md">
+                            <p className="font-medium">Answer :</p>
+                            <p>{submission.value || "No Answer"}</p>
+                          </div>
 
-            {/* Performed by & timestamp */}
-            <div className="flex justify-between">
-              <p>
-                <span className="font-medium text-gray-500">Performed by: </span>
-                {task.assigned_name || "Unknown"}
-              </p>
-              <p className="text-sm text-gray-500">
-                {dateTimeFormat(submission.updated_at) || "No timestamp available"}
-              </p>
-            </div>
-          </div>
-        ))}
+                          {/* Attachments */}
+                          <span className="font-medium text-gray-500">Attachments :</span>
+                          <div className="flex gap-4 flex-wrap my-4 items-center text-center">
+                            {submission.question_attachments?.length > 0 ? (
+                              submission.question_attachments.map((attachment, i) => (
+                                <img
+                                  key={i}
+                                  src={domainPrefix + attachment.document}
+                                  alt={`Attachment ${i + 1}`}
+                                  className="w-40 h-28 object-cover rounded-md"
+                                  onClick={() =>
+                                    window.open(domainPrefix + attachment.document, "_blank")
+                                  }
+                                />
+                              ))
+                            ) : (
+                              <p>No Attachments</p>
+                            )}
+                          </div>
 
-        {/* Comment */}
-        <p>
-          <span className="font-medium">Comment: </span>
-          <span className="text-violet-500 font-medium">
-            {task.comment || "No Comment"}
-          </span>
-        </p>
-      </div>
-    );
-  })}
-</div>
+                          {/* Performed by & timestamp */}
+                          <div className="flex justify-between">
+                            <p>
+                              <span className="font-medium text-gray-500">Performed by: </span>
+                              {task.assigned_name || "Unknown"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {dateTimeFormat(submission.updated_at) || "No timestamp available"}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Comment */}
+                      <p>
+                        <span className="font-medium">Comment: </span>
+                        <span className="text-violet-500 font-medium">
+                          {task.comment || "No Comment"}
+                        </span>
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
 
             </div>
           )}

@@ -158,7 +158,7 @@ const EditService = () => {
         const file = fileObj?.file || fileObj; // handle both cases
 
         if (file instanceof File) {
-          dataToSend.append("soft_service[attachfiles][]", file);
+          dataToSend.append("attachfiles[]", file);
         }
       });
       const serviceResponse = await EditSoftServices(dataToSend, id);

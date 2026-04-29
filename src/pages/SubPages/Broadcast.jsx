@@ -91,11 +91,11 @@ const handleToggle = async (id) => {
       sortable: true,
     },
     { name: "Title", selector: (row) => row.notice_title, sortable: true },
-    {
-      name: "Type",
-      selector: (row) => row.type,
-      sortable: true,
-    },
+    // {
+    //   name: "Type",
+    //   selector: (row) => row.type,
+    //   sortable: true,
+    // },
     {
       name: "Notice Description",
       selector: (row) => row.notice_discription,
@@ -112,11 +112,32 @@ const handleToggle = async (id) => {
       selector: (row) => dateFormat(row.created_at),
       sortable: true,
     },
-    {
-      name: "Status",
-      selector: (row) => row.status,
-      sortable: true,
-    },
+{
+  name: "Status",
+  selector: (row) => {
+    const now = new Date();
+    const expiryDate = new Date(row.expiry_date);
+
+    // ✅ Remove time (safe way)
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const expiry = new Date(
+      expiryDate.getFullYear(),
+      expiryDate.getMonth(),
+      expiryDate.getDate()
+    );
+
+    if (today > expiry) {
+      return "EXPIRED";   // ✅ Past date
+    } else if (today.getTime() === expiry.getTime()) {
+      return "ONGOING";   // ✅ Today expiry
+    } else if (today < expiry) {
+      return "UPCOMING";  // ✅ Future
+    } else {
+      return "N/A";
+    }
+  },
+  sortable: true,
+},
      {
       name: "Enable / Disable",
       cell: (row) => (

@@ -1,11 +1,15 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import {
   API_URL,
+  downloadInventorySample,
   getInventory,
   getMasters,
   getVibeBackground,
+  importInventory,
   ImportMasters,
 } from "../api";
 import Table from "../components/table/Table";
@@ -222,21 +226,19 @@ const Inventory = () => {
     selectedFiles.forEach((file) => formData.append("file", file));
 
     try {
-      const response = await ImportMasters(formData);
-      if (response?.status === 200) {
-        setImportStatus("Masters successfully imported!");
-        closeModalImport();
+      await importInventory(formData);
 
-        const resp = await getMasters();
-        const list = normalizeList(resp?.data);
-        setMastersState(list);
-        setFilteredMasters(list);
-      } else {
-        setImportStatus("Failed to import masters.");
-      }
+      toast.success("Masters  successfully imported!");
+      setImportStatus("Masters successfully imported!");
+      closeModalImport();
+
+      const resp = await getMasters();
+      const list = normalizeList(resp?.data);
+      setMastersState(list);
+      setFilteredMasters(list);
     } catch (error) {
-      console.error("Error importing masters:", error);
-      setImportStatus("An error occurred during import.");
+      console.error(error);
+      setImportStatus("Import failed.");
     }
   };
 
@@ -369,173 +371,209 @@ const Inventory = () => {
     [stocks]
   );
 
+
+
+  const handleDownloadSample = async () => {
+    try {
+      // toast.info("Downloading sample file...", { autoClose: 2000 });
+
+      const blob = await downloadInventorySample();
+
+      if (!blob || blob.size === 0) {
+        toast.error("No file received from server.");
+        return;
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Inventory_Sample.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Sample file downloaded successfully!");
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Failed to download sample file. Please try again.");
+    }
+  };
+
   return (
-    <section
-      className="flex"
-      style={{
-        background: bgImage ? `url(${bgImage}) no-repeat center center / cover` : undefined,
-      }}
-    >
-      <Navbar />
-      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-        <AssetNav />
+    <>
+      <section
+        className="flex"
+        style={{
+          background: bgImage ? `url(${bgImage}) no-repeat center center / cover` : undefined,
+        }}
+      >
+        <Navbar />
+        <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+          <AssetNav />
 
-        <div className="w-full my-2 flex overflow-hidden flex-col">
-          <div className="flex w-full">
-            <div className="flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
-              <h2
-                className={`p-1 ${
-                  page === "Masters" &&
-                  "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-                } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
-                onClick={() => {
-                  setPage("Masters");
-                  setSearchText("");
-                  setFilteredMasters(masters);
-                }}
-              >
-                Masters
-              </h2>
+          <div className="w-full my-2 flex overflow-hidden flex-col">
+            <div className="flex w-full">
+              <div className="flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
+                <h2
+                  className={`p-1 ${page === "Masters" &&
+                    "bg-white font-medium text-blue-500 shadow-custom-all-sides"
+                    } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
+                  onClick={() => {
+                    setPage("Masters");
+                    setSearchText("");
+                    setFilteredMasters(masters);
+                  }}
+                >
+                  Masters
+                </h2>
 
-              <h2
-                className={`p-1 ${
-                  page === "stocks" &&
-                  "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-                } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
-                onClick={() => {
-                  setPage("stocks");
-                  setSearchText("");
-                  setFilteredStocks(stocks);
-                }}
-              >
-                Stocks
-              </h2>
+                <h2
+                  className={`p-1 ${page === "stocks" &&
+                    "bg-white font-medium text-blue-500 shadow-custom-all-sides"
+                    } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
+                  onClick={() => {
+                    setPage("stocks");
+                    setSearchText("");
+                    setFilteredStocks(stocks);
+                  }}
+                >
+                  Stocks
+                </h2>
 
-              <h2
-                className={`p-1 ${
-                  page === "grn" &&
-                  "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-                } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
-                onClick={() => setPage("grn")}
-              >
-                GRN
-              </h2>
+                <h2
+                  className={`p-1 ${page === "grn" &&
+                    "bg-white font-medium text-blue-500 shadow-custom-all-sides"
+                    } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
+                  onClick={() => setPage("grn")}
+                >
+                  GRN
+                </h2>
 
-              <h2
-                className={`p-1 ${
-                  page === "gdn" &&
-                  "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-                } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
-                onClick={() => setPage("gdn")}
-              >
-                GDN
-              </h2>
+                <h2
+                  className={`p-1 ${page === "gdn" &&
+                    "bg-white font-medium text-blue-500 shadow-custom-all-sides"
+                    } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
+                  onClick={() => setPage("gdn")}
+                >
+                  GDN
+                </h2>
+              </div>
             </div>
           </div>
-        </div>
 
-        {page === "Masters" && (
-          <>
-            <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2">
-              <input
-                type="text"
-                placeholder="Search (name/code/group/subgroup)"
-                className="border-2 p-2 md:w-96 border-gray-300 rounded-lg placeholder:text-sm"
-                value={searchText}
-                onChange={handleSearch}
-              />
+          {page === "Masters" && (
+            <>
+              <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Search (name/code/group/subgroup)"
+                  className="border-2 p-2 md:w-96 border-gray-300 rounded-lg placeholder:text-sm"
+                  value={searchText}
+                  onChange={handleSearch}
+                />
 
-              <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
-                <Link
-                  style={{ background: themeColor }}
-                  to={"/admin/add-masters"}
-                  className="text-sm rounded-lg flex justify-center font-semibold items-center gap-2 text-white py-2 px-4 transition-all duration-300"
-                >
-                  <IoAddCircleOutline size={20} />
-                  Add
-                </Link>
+                <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
+                  <Link
+                    style={{ background: themeColor }}
+                    to={"/admin/add-masters"}
+                    className="text-sm rounded-lg flex justify-center font-semibold items-center gap-2 text-white py-2 px-4 transition-all duration-300"
+                  >
+                    <IoAddCircleOutline size={20} />
+                    Add
+                  </Link>
 
-                <button
-                  className="text-white font-bold py-2 px-4 rounded"
-                  style={{ background: themeColor }}
-                  onClick={openModalImport}
-                >
-                  Import
-                </button>
+                  <button
+                    className="text-white font-bold py-2 px-4 rounded"
+                    style={{ background: themeColor }}
+                    onClick={openModalImport}
+                  >
+                    Import
+                  </button>
 
-                {showImport && (
-                  <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
-                    <div className="bg-white p-6 rounded shadow-lg w-1/2">
-                      <h2 className="text-xl mb-4">Bulk Upload</h2>
+                  {showImport && (
+                    <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
+                      <div className="bg-white p-6 rounded shadow-lg w-1/2">
+                        <h2 className="text-xl mb-4">Bulk Upload</h2>
 
-                      <FileInputBox
-                        handleChange={handleFileChange}
-                        fieldName="masters"
-                        isMulti={true}
-                      />
+                        <FileInputBox
+                          handleChange={handleFileChange}
+                          fieldName="masters"
+                          isMulti={true}
+                        />
 
-                      <div className="mt-4 flex justify-end space-x-4">
-                        <button
-                          onClick={closeModalImport}
-                          className="text-white px-4 py-2 rounded"
-                          style={{ background: themeColor }}
-                        >
-                          Cancel
-                        </button>
+                        <div className="mt-4 flex justify-end space-x-4">
+                          <button
+                            onClick={closeModalImport}
+                            className="text-white px-4 py-2 rounded"
+                            style={{ background: themeColor }}
+                          >
+                            Cancel
+                          </button>
 
-                        <button
-                          className="text-white px-4 py-2 rounded"
-                          style={{ background: themeColor }}
-                          onClick={handleImportMasters}
-                        >
-                          Import
-                        </button>
+                          <button
+                            onClick={handleDownloadSample}
+                            className="text-white px-4 py-2 rounded"
+                            style={{ background: themeColor }}
+                          >
+                            Download Sample
+                          </button>
+
+                          <button
+                            className="text-white px-4 py-2 rounded"
+                            style={{ background: themeColor }}
+                            onClick={handleImportMasters}
+                          >
+                            Import
+                          </button>
+                        </div>
+
+                        {importStatus && (
+                          <p className="mt-4 text-center">{importStatus}</p>
+                        )}
                       </div>
-
-                      {importStatus && (
-                        <p className="mt-4 text-center">{importStatus}</p>
-                      )}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
 
-            <Table columns={columnsmaster} data={filteredMasters} />
-          </>
-        )}
+              <Table columns={columnsmaster} data={filteredMasters} />
+            </>
+          )}
 
-        {page === "stocks" && (
-          <>
-            <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2">
-              <input
-                type="text"
-                placeholder="Search (name/group/subgroup)"
-                className="border-2 p-2 md:w-96 border-gray-300 rounded-lg placeholder:text-sm"
-                value={searchText}
-                onChange={handleSearch}
-              />
+          {page === "stocks" && (
+            <>
+              <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Search (name/group/subgroup)"
+                  className="border-2 p-2 md:w-96 border-gray-300 rounded-lg placeholder:text-sm"
+                  value={searchText}
+                  onChange={handleSearch}
+                />
 
-              <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
-                <Link
-                  style={{ background: themeColor }}
-                  to={"/admin/add-stock"}
-                  className="text-sm rounded-lg flex justify-center font-semibold items-center gap-2 text-white py-2 px-4 transition-all duration-300"
-                >
-                  <IoAddCircleOutline size={20} />
-                  Add
-                </Link>
+                <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
+                  <Link
+                    style={{ background: themeColor }}
+                    to={"/admin/add-stock"}
+                    className="text-sm rounded-lg flex justify-center font-semibold items-center gap-2 text-white py-2 px-4 transition-all duration-300"
+                  >
+                    <IoAddCircleOutline size={20} />
+                    Add
+                  </Link>
+                </div>
               </div>
-            </div>
 
-            <Table columns={columns} data={filteredStocks} />
-          </>
-        )}
+              <Table columns={columns} data={filteredStocks} />
+            </>
+          )}
 
-        {page === "grn" && <GRN />}
-        {page === "gdn" && <GDN />}
-      </div>
-    </section>
+          {page === "grn" && <GRN />}
+          {page === "gdn" && <GDN />}
+        </div>
+      </section>
+      <ToastContainer position="top-right" autoClose={3000} />
+    </>
   );
 };
 

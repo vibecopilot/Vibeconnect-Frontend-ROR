@@ -3,23 +3,12 @@ import { BiEdit, BiPlus } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { CloseCircle, CloseOutline } from "react-ionicons";
 import { getItemInLocalStorage } from "../../utils/localStorage";
-import {
-  deleteQuestionChecklist,
-  editChecklist,
-  getAssignedTo,
-  getChecklistDetails,
-  getChecklistGroupReading,
-  getHostList,
-  getMasterChecklist,
-  getSiteAsset,
-  getVendors,
-  postChecklist,
-} from "../../api";
-import { useNavigate } from "react-router-dom";
+import { deleteQuestionChecklist, editChecklist, getAssignedTo, getChecklistDetails, getChecklistGroupReading, getChecklistGroups, getHostList, getMasterChecklist, getSiteAsset, getVendors, postChecklist } from "../../api";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
-import Select from "react-select";
+import Select from 'react-select';
 import Cron from "react-js-cron";
 import "react-js-cron/dist/styles.css";
 import { FaTrash } from "react-icons/fa";
@@ -27,7 +16,14 @@ import { useParams } from "react-router-dom";
 
 const EditChecklist = () => {
   const { id } = useParams();
-  const [isEditing, setIsEditing] = useState(false);
+  const location = useLocation();
+
+  const getMode = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get("mode"); // 'edit' or 'view'
+  };
+
+  const [isEditing, setIsEditing] = useState(getMode() === "edit");
   const [update, setUpdate] = useState(false);
   const categories = getItemInLocalStorage("categories");
   const [assignedUser, setAssignedUser] = useState([]);
@@ -36,11 +32,11 @@ const EditChecklist = () => {
   const today = new Date().toISOString().split("T")[0];
   const toDay = new Date();
   const year = toDay.getFullYear();
+  const [checklistGroups, setChecklistGroups] = useState([]);
+  const [checklistGroup, setChecklistGroup] = useState("");
   const [hosts, setHosts] = useState([]);
   const [masters, setMasters] = useState([]);
-  const [selectedOptionssupervisior, setSelectedOptionssupervisior] = useState(
-    []
-  );
+  const [selectedOptionssupervisior, setSelectedOptionssupervisior] = useState([]);
   const [optionssupervisior, setOptionssupervisior] = useState([]);
   const month = String(toDay.getMonth() + 1).padStart(2, "0");
   const day = String(toDay.getDate()).padStart(2, "0");
@@ -54,13 +50,15 @@ const EditChecklist = () => {
   const [endDate, setEndDate] = useState(formattedDate);
   const [lockOverdueTask, setLockOverdueTask] = useState("");
   const [suppliers, setSuppliers] = useState([]);
-  const [ticketType, setTicketType] = useState("Question");
+  const [ticketType, setTicketType] = useState('Question');
   const [submitDays, setSubmitDays] = useState(0);
   const [submitHours, setSubmitHours] = useState(0);
   const [submitMinutes, setSubmitMinutes] = useState(0);
   const [extensionDays, setExtensionDays] = useState(0);
   const [extensionHours, setExtensionHours] = useState(0);
   const [extensionMinutes, setExtensionMinutes] = useState(0);
+  const [prioritylevel, setPrioritylevel] = useState("");
+  
 
   const toggleEdit = () => {
     setIsEditing(!isEditing);
@@ -79,6 +77,8 @@ const EditChecklist = () => {
   };
 
   useEffect(() => {
+
+
     const fetchAssignedTo = async () => {
       try {
         const response = await getAssignedTo();
@@ -88,14 +88,22 @@ const EditChecklist = () => {
         }));
         setAssignedUser(response.data);
         setOptionssupervisior(supervisors);
-        console.log("users", response.data);
+        console.log("users", response.data)
       } catch (error) {
         console.error("Error fetching assigned users:", error);
       }
     };
 
+
     fetchAssignedTo();
+
   }, []);
+
+  useEffect(() => {
+    const mode = getMode();
+    setIsEditing(mode === "edit");
+  }, [location.search]);
+
   useEffect(() => {
     const fetchSiteOwners = async () => {
       try {
@@ -134,54 +142,26 @@ const EditChecklist = () => {
   //   };
   //   fetchServicesChecklistDetails();
   // }, [masterid]);
-  const [sections, setSections] = useState([
-    {
-      group: "",
+  const [sections, setSections] = useState([{
+    group: '',
 
-      questions: [
-        {
-          id: "",
-          name: "",
-          type: "",
-          options: ["", "", "", ""],
-          value_types: ["", "", "", ""],
-          question_mandatory: false,
-          reading: false,
-          help_text: "",
-          showHelpText: false,
-          image_for_question: [],
-          weightage: "",
-          rating: false,
-          _destroy: "0",
-        },
-      ],
-    },
-  ]);
+    questions: [
+      {
+        id: "", name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+        question_mandatory: false, reading: false, help_text: "", showHelpText: false, image_for_question: [],
+        weightage: "", rating: false, _destroy: "0"
+      }
+    ],
+  },]);
 
   const addSection = () => {
-    setSections([
-      ...sections,
-      {
-        group: "",
-        questions: [
-          {
-            id: "",
-            name: "",
-            type: "",
-            options: ["", "", "", ""],
-            value_types: ["", "", "", ""],
-            question_mandatory: false,
-            reading: false,
-            help_text: "",
-            showHelpText: false,
-            image_for_question: [],
-            weightage: "",
-            rating: false,
-            _destroy: "0",
-          },
-        ],
-      },
-    ]);
+    setSections([...sections, {
+      group: '', questions: [{
+        id: "", name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+        question_mandatory: false, reading: false, help_text: "", showHelpText: false, image_for_question: [],
+        weightage: "", rating: false, _destroy: "0"
+      }]
+    }]);
   };
 
   const removeSection = (index) => {
@@ -193,18 +173,9 @@ const EditChecklist = () => {
   const addQuestion = (sectionIndex) => {
     const updatedSections = [...sections];
     updatedSections[sectionIndex].questions.push({
-      name: "",
-      type: "",
-      options: ["", "", "", ""],
-      value_types: ["", "", "", ""],
-      question_mandatory: false,
-      reading: false,
-      help_text: "",
-      showHelpText: false,
-      image_for_question: [],
-      weightage: "",
-      rating: false,
-      _destroy: "0",
+      name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
+      question_mandatory: false, reading: false, help_text: "", showHelpText: false,
+      image_for_question: [], weightage: "", rating: false, _destroy: "0"
     });
     setSections(updatedSections);
   };
@@ -240,13 +211,7 @@ const EditChecklist = () => {
     setSections(updatedSections);
   };
 
-  const handleQuestionChange = (
-    sectionIndex,
-    questionIndex,
-    field,
-    value,
-    optionIndex = null
-  ) => {
+  const handleQuestionChange = (sectionIndex, questionIndex, field, value, optionIndex = null) => {
     const updatedSections = [...sections]; // Shallow copy of sections
     const updatedQuestions = [...updatedSections[sectionIndex].questions]; // Shallow copy of questions in that section
 
@@ -263,12 +228,7 @@ const EditChecklist = () => {
       const updatedValueTypes = [...updatedQuestion.value_types];
       updatedValueTypes[optionIndex] = value;
       updatedQuestion.value_types = updatedValueTypes;
-    } else if (
-      field === "question_mandatory" ||
-      field === "reading" ||
-      field === "showHelpText" ||
-      field === "rating"
-    ) {
+    } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText" || field === "rating") {
       updatedQuestion[field] = value;
     } else if (field === "help_text") {
       updatedQuestion.help_text = value;
@@ -286,6 +246,9 @@ const EditChecklist = () => {
     setSections(updatedSections);
   };
 
+
+
+
   useEffect(() => {
     const fetchServicesChecklistDetails = async () => {
       const checklistDetailsResponse = await getChecklistDetails(id);
@@ -298,6 +261,7 @@ const EditChecklist = () => {
       setsupplierid(data.supplier_id);
       setLockOverdueTask(data.lock_overdue);
       setTicketType(data.ticket_level_type);
+      setPrioritylevel(data.priority_level);
       setassignid(data.assigned_to);
       setCreateTicket(data.ticket_enabled);
       setCronExpression(data?.checklist_cron?.expression || "0 0 * * *");
@@ -316,12 +280,7 @@ const EditChecklist = () => {
             name: q.name,
             type: q.qtype,
             options: [q.option1, q.option2, q.option3, q.option4],
-            value_types: [
-              q.value_type1,
-              q.value_type2,
-              q.value_type3,
-              q.value_type4,
-            ],
+            value_types: [q.value_type1, q.value_type2, q.value_type3, q.value_type4],
             question_mandatory: q.question_mandatory,
             reading: q.reading,
             showHelpText: q.help_text_enbled,
@@ -351,12 +310,13 @@ const EditChecklist = () => {
       setExtensionMinutes(extMinutes);
     };
 
+
     fetchServicesChecklistDetails();
   }, [id, update]);
 
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -389,7 +349,9 @@ const EditChecklist = () => {
     formData.append("checklist[ticket_enabled]", createTicket);
     formData.append("checklist[ticket_level_type]", ticketType);
     formData.append("checklist[category_id]", catid);
+    formData.append("checklist[priority_level]", prioritylevel);
     formData.append("assigned_to", assignid);
+
 
     // Add supervisor IDs
     selectedOptionssupervisior.forEach((option) => {
@@ -398,6 +360,7 @@ const EditChecklist = () => {
 
     // Add frequency
     formData.append("frequency", frequency);
+    formData.append("checklist[checklist_group_id]", checklistGroup);
 
     // Add sections and questions
     sections.forEach((section, sectionIndex) => {
@@ -410,56 +373,54 @@ const EditChecklist = () => {
         formData.append(`groups[][questions][][name]`, q.name);
         formData.append(`groups[][questions][][type]`, q.type);
         formData.append(`groups[][questions][][reading]`, q.reading);
-        formData.append(
-          `groups[][questions][][question_mandatory]`,
-          q.mandatory
-        );
-        formData.append(
-          `groups[][questions][][help_text_enbled]`,
-          q.showHelpText
-        );
+        formData.append(`groups[][questions][][question_mandatory]`, q.mandatory);
+        formData.append(`groups[][questions][][help_text_enbled]`, q.showHelpText);
         formData.append(`groups[][questions][][help_text]`, q.help_text || "");
         formData.append(`groups[][questions][][weightage]`, q.weightage);
         formData.append(`groups[][questions][][rating]`, q.rating);
 
         // Add options and value types
         q.options.forEach((option, optionIndex) => {
-          formData.append(`groups[][questions][][options][]`, option || "");
+          formData.append(
+            `groups[][questions][][options][]`,
+            option || ""
+          );
           formData.append(
             `groups[][questions][][value_types][]`,
             q.value_types[optionIndex] || ""
           );
         });
         if (q._destroy) {
-          formData.append(`groups[][questions][][_destroy]`, q._destroy);
+          formData.append(
+            `groups[][questions][][_destroy]`,
+            q._destroy
+          );
         }
 
         // Handle file uploads for each question
         if (q.image_for_question && q.image_for_question.length > 0) {
           q.image_for_question.forEach((file) => {
-            formData.append(
-              `groups[][questions][][image_for_question_${
-                questionIndex + 1
-              }][]`,
-              file
-            );
+            formData.append(`groups[][questions][][image_for_question_${questionIndex + 1}][]`, file);
           });
         }
       });
     });
 
-    try {
-      const response = await editChecklist(formData, id);
-      console.log(response);
-      toast.success("Routine Checklist Updated");
-      setUpdate(true);
-      setIsEditing(!isEditing);
-      toast.dismiss();
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Failed to update checklist");
-    }
+   try {
+  const response = await editChecklist(formData, id);
+  console.log(response);
+
+  toast.success("Checklist updated successfully");
+navigate("/assets/checklist"); 
+  setUpdate(true);
+  setIsEditing(false);
+
+} catch (error) {
+  console.error("Error:", error);
+  toast.error("Failed to update checklist");
+}
   };
+
 
   const handleChangesupervisior = (selected) => {
     setSelectedOptionssupervisior(selected);
@@ -473,9 +434,9 @@ const EditChecklist = () => {
           value: host.id,
           label: host.name,
         }));
-        console.log(usersResp);
+        console.log(usersResp)
         setHosts(usersResp.data.hosts);
-        // setOptionssupervisior(supervisors);
+        // setOptionssupervisior(supervisors); 
         console.log(usersResp);
       } catch (error) {
         console.log(error);
@@ -483,7 +444,8 @@ const EditChecklist = () => {
     };
     fetchUsers();
   }, [siteId]);
-  const themeColor = useSelector((state) => state.theme.color);
+  const themeColor = useSelector((state) => state.theme.color)
+
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -508,16 +470,18 @@ const EditChecklist = () => {
           label: check.name,
         }));
         console.log("Masters checklist", masterResp);
-        console.log("mastershow", mastershow);
+        console.log("mastershow", mastershow)
         setMasters(mastershow);
       } catch (error) {
-        console.error("Error fetching suppliers:", error);
-        toast.error("Failed to load suppliers");
+        console.error("Error fetching masters:", error);
+        toast.error("Failed to load masters checklist");
       }
     };
 
     fetchMasters(); // Execute the function to fetch suppliers
   }, []);
+
+
 
   const [createNew, setCreateNew] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
@@ -525,13 +489,13 @@ const EditChecklist = () => {
 
   const handleToggle = (type) => {
     switch (type) {
-      case "createNew":
+      case 'createNew':
         setCreateNew(!createNew);
         break;
-      case "createTicket":
+      case 'createTicket':
         setCreateTicket(!createTicket);
         break;
-      case "weightage":
+      case 'weightage':
         setWeightage(!weightage);
         break;
       default:
@@ -539,26 +503,49 @@ const EditChecklist = () => {
     }
   };
 
+useEffect(() => {
+  const fetchChecklistGroups = async () => {
+    try {
+      const resp = await getChecklistGroups();
+
+      console.log("Checklist Groups API:", resp);
+
+      // ✅ Set dropdown data properly
+      if (Array.isArray(resp.data)) {
+        setChecklistGroups(resp.data);
+      } else if (Array.isArray(resp.data?.data)) {
+        setChecklistGroups(resp.data.data);
+      } else {
+        setChecklistGroups([]);
+      }
+
+    } catch (error) {
+      console.log("Error fetching checklist groups:", error);
+      setChecklistGroups([]);
+    }
+  };
+
+  fetchChecklistGroups();
+}, []);
+
+
   const convertedSubmitMinutes =
-    parseInt(submitDays) * 1440 +
-    parseInt(submitHours) * 60 +
-    parseInt(submitMinutes);
+    parseInt(submitDays) * 1440 + parseInt(submitHours) * 60 + parseInt(submitMinutes);
   // setTotalSubmitMinutes(convertedSubmitMinutes);
 
+
+
   const convertedExtensionMinutes =
-    parseInt(extensionDays) * 1440 +
-    parseInt(extensionHours) * 60 +
-    parseInt(extensionMinutes);
+    parseInt(extensionDays) * 1440 + parseInt(extensionHours) * 60 + parseInt(extensionMinutes);
   // setTotalExtensionMinutes(convertedExtensionMinutes);
+
 
   return (
     <section>
       <div className="m-2">
-        <h2
-          style={{ background: themeColor }}
-          className="text-center text-xl font-bold p-2  rounded-full text-white"
-        >
-          {isEditing ? " Edit  Checklist" : "Routine Checklist Details"}
+        <h2 style={{ background: themeColor }} className="text-center text-xl font-bold p-2 rounded-full text-white">
+
+          {isEditing ? "Edit Checklist" : "Checklist Details"}
         </h2>
         <div className="md:mx-20 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
           <div className="flex justify-end">
@@ -598,36 +585,36 @@ const EditChecklist = () => {
           </div>
         </div> */}
 
+
+
               {/* Create Ticket Toggle */}
               <div className="flex items-center">
                 <span className="mr-2">Create Ticket</span>
                 <div
-                  onClick={() => handleToggle("createTicket")}
-                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
-                    createTicket ? "bg-green-500" : ""
-                  }`}
+                  onClick={() => handleToggle('createTicket')}
+                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${createTicket ? 'bg-green-500' : ''
+                    }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
-                      createTicket ? "translate-x-6" : ""
-                    }`}
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${createTicket ? 'translate-x-6' : ''
+                      }`}
                   />
                 </div>
               </div>
+
+
 
               {/* Weightage Toggle */}
               <div className="flex items-center">
                 <span className="mr-2">Weightage</span>
                 <div
-                  onClick={() => handleToggle("weightage")}
-                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
-                    weightage ? "bg-green-500" : ""
-                  }`}
+                  onClick={() => handleToggle('weightage')}
+                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${weightage ? 'bg-green-500' : ''
+                    }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
-                      weightage ? "translate-x-6" : ""
-                    }`}
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${weightage ? 'translate-x-6' : ''
+                      }`}
                   />
                 </div>
               </div>
@@ -640,8 +627,7 @@ const EditChecklist = () => {
                   <select
                     value={masterid}
                     onChange={(e) => setmasterid(e.target.value)}
-                    className="border p-1 px-4 border-gray-500 rounded-md"
-                  >
+                    className="border p-1 px-4 border-gray-500 rounded-md">
                     <option value="">Select from the existing Template</option>
                     {masters.map((m) => (
                       <option value={m.value} key={m.value}>
@@ -656,13 +642,14 @@ const EditChecklist = () => {
                 <div className="flex flex-col justify-center gap-1 mb-2">
                   {/* Radio Buttons */}
                   <div className="flex  gap-4 ">
+
                     <div className="flex items-center mt-2">
                       <input
                         type="radio"
                         id="checklist"
                         name="ticketType"
                         value="Checklist"
-                        checked={ticketType === "Checklist"}
+                        checked={ticketType === 'Checklist'}
                         onChange={handleTicketTypeChange}
                         className="mr-2"
                       />
@@ -674,7 +661,7 @@ const EditChecklist = () => {
                         id="question"
                         name="ticketType"
                         value="Question"
-                        checked={ticketType === "Question"}
+                        checked={ticketType === 'Question'}
                         onChange={handleTicketTypeChange}
                         className="mr-2"
                       />
@@ -688,8 +675,7 @@ const EditChecklist = () => {
                     <select
                       value={assignid}
                       onChange={(e) => setassignid(e.target.value)}
-                      className="border p-1 px-4 border-gray-500 rounded-md"
-                    >
+                      className="border p-1 px-4 border-gray-500 rounded-md">
                       <option value="">Select Assigned To</option>
                       {assignedUser?.map((assign) => (
                         <option key={assign.id} value={assign.id}>
@@ -704,8 +690,7 @@ const EditChecklist = () => {
                     <select
                       value={catid}
                       onChange={(e) => setcatid(e.target.value)}
-                      className="border p-1 px-4 border-gray-500 rounded-md"
-                    >
+                      className="border p-1 px-4 border-gray-500 rounded-md">
                       <option value="">Select Category</option>
                       {categories?.map((category) => (
                         <option
@@ -732,9 +717,8 @@ const EditChecklist = () => {
                   type="text"
                   name="name"
                   id="name"
-                  className={`border p-1 px-4 border-gray-500 rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
+                  className={`border p-1 px-4 border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                    }`}
                   placeholder="Enter Checklist Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -748,9 +732,8 @@ const EditChecklist = () => {
                 <select
                   name="frequency"
                   id="frequency"
-                  className={`border p-1 px-4 border-gray-500 rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
+                  className={`border p-1 px-4 border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                    }`}
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value)}
                   disabled={!isEditing}
@@ -768,15 +751,32 @@ const EditChecklist = () => {
               </div>
               <div className="flex flex-col">
                 <label htmlFor="" className="font-semibold">
+                  Checklist Category :
+                </label>
+                <select
+                  value={checklistGroup}
+                  onChange={(e) => setChecklistGroup(e.target.value)}
+                  className={`p-1 px-4 border w-full border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''}`}
+                  disabled={!isEditing}
+                >
+                  <option value="">Select Group</option>
+                  {checklistGroups.map((group) => (
+                    <option value={group.id} key={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
                   Start Date :
                 </label>
                 <input
                   type="date"
                   name="start_date"
                   id="start_date"
-                  className={`border p-1 px-4 border-gray-500 rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
+                  className={`border p-1 px-4 border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                    }`}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   min={today}
@@ -791,45 +791,48 @@ const EditChecklist = () => {
                   type="date"
                   name="end_date"
                   id="end_date"
-                  className={`border p-1 px-4 border-gray-500 rounded-md ${
-                    !isEditing ? "bg-gray-200" : ""
-                  }`}
+                  className={`border p-1 px-4 border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                    }`}
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={today}
                   disabled={!isEditing}
                 />
               </div>
+              {/* <div className="flex flex-col">
+                <label htmlFor="prioritylevel" className="font-semibold">Priority Level</label>
+                <select
+                  name="prioritylevel"
+                  id="prioritylevel"
+                  value={prioritylevel}
+                  onChange={(e) => setPrioritylevel(e.target.value)}
+                  disabled={!isEditing}
+                  className={`border p-1 px-4 border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                    }`}
+                >
+                  <option value="">Select Priority level</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select></div> */}
             </div>
             <div>
               <div className=" my-4  bg-white ">
-                <h2 className="font-semibold mb-2 border-b-2 border-black pb-1">
-                  Edit Groups
-                </h2>
+                <h2 className="font-semibold mb-2 border-b-2 border-black pb-1">Edit Groups</h2>
+
+
 
                 {sections.map((section, sectionIndex) => (
-                  <div
-                    key={sectionIndex}
-                    className="mb-8 p-5 border rounded-lg bg-gray-50 shadow-sm"
-                  >
+                  <div key={sectionIndex} className="mb-8 p-5 border rounded-lg bg-gray-50 shadow-sm">
                     {/* Section Header */}
-                    <div className="flex border border-gray-400 p-3 mb-3 rounded-md justify-between">
+                    <div className="flex justify-between">
                       <div className="flex flex-col gap-1 mb-4 w-full">
-                        <label className="font-semibold">
-                          Group {sectionIndex + 1}
-                        </label>
+                        <label className="font-semibold">Group {sectionIndex + 1}</label>
                         <select
                           value={section.group}
-                          className={`border p-1 px-4 border-gray-500 rounded-md ${
-                            !isEditing ? "bg-gray-200" : ""
-                          }`}
-                          onChange={(e) =>
-                            handleSectionChange(
-                              sectionIndex,
-                              "group",
-                              e.target.value
-                            )
-                          }
+                          className={`border p-1 px-4 border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                            }`}
+                          onChange={(e) => handleSectionChange(sectionIndex, 'group', e.target.value)}
                           disabled={!isEditing}
                         >
                           <option value="">Select Group</option>
@@ -838,8 +841,7 @@ const EditChecklist = () => {
                               {supplier.name}
                             </option>
                           ))}
-                        </select>
-                      </div>
+                        </select></div>
                       <div>
                         <button
                           className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
@@ -848,49 +850,33 @@ const EditChecklist = () => {
                           <IoClose />
                         </button>
                       </div>
+
                     </div>
 
                     {/* Questions */}
                     {section.questions
                       .filter((que) => que._destroy !== "1")
                       .map((question, questionIndex) => (
-                        <div
-                          key={questionIndex}
-                          className="border border-gray-400 rounded-md p-3 mb-3"
-                        >
+                        <div key={questionIndex} className="">
                           <div className="grid gap-4">
                             <input
                               type="text"
                               placeholder="Enter Question Name"
                               value={question.name}
-                              className={`border p-1 px-4 w-64 border-gray-500 rounded-md ${
-                                !isEditing ? "bg-gray-200" : ""
-                              }`}
+                              className={`border p-1 px-4 w-64 border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                                }`}
                               onChange={(e) =>
-                                handleQuestionChange(
-                                  sectionIndex,
-                                  questionIndex,
-                                  "name",
-                                  e.target.value
-                                )
+                                handleQuestionChange(sectionIndex, questionIndex, 'name', e.target.value)
                               }
                               disabled={!isEditing}
                             />
 
                             <select
-                              value={
-                                question.reading ? "Numeric" : question.type
-                              }
-                              className={`border p-1 px-4 w-64 border-gray-500 rounded-md ${
-                                !isEditing ? "bg-gray-200" : ""
-                              }`}
+                              value={question.reading ? "Numeric" : question.type}
+                              className={`border p-1 px-4 w-64 border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                                }`}
                               onChange={(e) =>
-                                handleQuestionChange(
-                                  sectionIndex,
-                                  questionIndex,
-                                  "type",
-                                  e.target.value
-                                )
+                                handleQuestionChange(sectionIndex, questionIndex, 'type', e.target.value)
                               }
                               disabled={question.reading}
                             >
@@ -899,209 +885,114 @@ const EditChecklist = () => {
                                 Multiple Choice Question
                               </option>
                               <option value="inbox">Input box</option>
-                              <option value="description">
-                                Description box
-                              </option>
+                              <option value="description">Description box</option>
                               <option value="Numeric">Numeric</option>
                             </select>
-                            {question.type === "multiple" &&
-                              !question.reading && (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-2">
-                                  <div className="flex flex-col sm:flex-row gap-2">
-                                    <input
-                                      type="text"
-                                      name={`option1_${questionIndex}`}
-                                      id={`option1_${questionIndex}`}
-                                      className={`border p-1 px-4  border-gray-500 rounded-md ${
-                                        !isEditing ? "bg-gray-200" : ""
+                            {question.type === "multiple" && !question.reading && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <input
+                                    type="text"
+                                    name={`option1_${questionIndex}`}
+                                    id={`option1_${questionIndex}`}
+                                    className={`border p-1 px-4  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
                                       }`}
-                                      placeholder="option 1"
-                                      value={question.options[0]}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          sectionIndex,
-                                          questionIndex,
-                                          "option",
-                                          e.target.value,
-                                          0
-                                        )
-                                      }
-                                      disabled={!isEditing}
-                                    />
-                                    <select
-                                      name={`value_type1_${questionIndex}`}
-                                      id={`value_type1_${questionIndex}`}
-                                      className={`border p-1 border-gray-500 rounded-md ${
-                                        question.value_types[0] === "P"
-                                          ? "bg-green-400"
-                                          : question.value_types[0] === "N"
-                                          ? "bg-red-400"
-                                          : ""
-                                      }`}
-                                      value={question.value_types[0]}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          sectionIndex,
-                                          questionIndex,
-                                          "value_type",
-                                          e.target.value,
-                                          0
-                                        )
-                                      }
-                                      disabled={!isEditing}
-                                    >
-                                      <option value="">Select</option>
-                                      <option value="P">P</option>
-                                      <option value="N">N</option>
-                                    </select>
-                                  </div>
-                                  <div className="flex flex-col sm:flex-row gap-2">
-                                    <input
-                                      type="text"
-                                      name={`option2_${questionIndex}`}
-                                      id={`option2_${questionIndex}`}
-                                      className={`border p-1 px-4  border-gray-500 rounded-md ${
-                                        !isEditing ? "bg-gray-200" : ""
-                                      }`}
-                                      placeholder="option 2"
-                                      value={question.options[1]}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          sectionIndex,
-                                          questionIndex,
-                                          "option",
-                                          e.target.value,
-                                          1
-                                        )
-                                      }
-                                      disabled={!isEditing}
-                                    />
-                                    <select
-                                      name={`value_type2_${questionIndex}`}
-                                      id={`value_type2_${questionIndex}`}
-                                      className={`border p-1 border-gray-500 rounded-md ${
-                                        question.value_types[1] === "P"
-                                          ? "bg-green-400"
-                                          : question.value_types[1] === "N"
-                                          ? "bg-red-400"
-                                          : ""
-                                      }`}
-                                      value={question.value_types[1]}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          sectionIndex,
-                                          questionIndex,
-                                          "value_type",
-                                          e.target.value,
-                                          1
-                                        )
-                                      }
-                                      disabled={!isEditing}
-                                    >
-                                      <option value="">Select</option>
-                                      <option value="P">P</option>
-                                      <option value="N">N</option>
-                                    </select>
-                                  </div>
-
-                                  <div className="flex flex-col sm:flex-row gap-2">
-                                    <input
-                                      type="text"
-                                      name={`option3_${questionIndex}`}
-                                      id={`option3_${questionIndex}`}
-                                      className={`border p-1 px-4  border-gray-500 rounded-md ${
-                                        !isEditing ? "bg-gray-200" : ""
-                                      }`}
-                                      placeholder="option 3"
-                                      value={question.options[2]}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          sectionIndex,
-                                          questionIndex,
-                                          "option",
-                                          e.target.value,
-                                          2
-                                        )
-                                      }
-                                      disabled={!isEditing}
-                                    />
-                                    <select
-                                      name={`value_type3_${questionIndex}`}
-                                      id={`value_type3_${questionIndex}`}
-                                      className={`border p-1 border-gray-500 rounded-md ${
-                                        question.value_types[2] === "P"
-                                          ? "bg-green-400"
-                                          : question.value_types[2] === "N"
-                                          ? "bg-red-400"
-                                          : ""
-                                      }`}
-                                      value={question.value_types[2]}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          sectionIndex,
-                                          questionIndex,
-                                          "value_type",
-                                          e.target.value,
-                                          2
-                                        )
-                                      }
-                                      disabled={!isEditing}
-                                    >
-                                      <option value="">Select</option>
-                                      <option value="P">P</option>
-                                      <option value="N">N</option>
-                                    </select>
-                                  </div>
-                                  <div className="flex flex-col sm:flex-row gap-2">
-                                    <input
-                                      type="text"
-                                      name={`option4_${questionIndex}`}
-                                      id={`option4_${questionIndex}`}
-                                      className={`border p-1 px-4  border-gray-500 rounded-md ${
-                                        !isEditing ? "bg-gray-200" : ""
-                                      }`}
-                                      placeholder="option 4"
-                                      value={question.options[3]}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          sectionIndex,
-                                          questionIndex,
-                                          "option",
-                                          e.target.value,
-                                          3
-                                        )
-                                      }
-                                      disabled={!isEditing}
-                                    />
-                                    <select
-                                      name={`value_type4_${questionIndex}`}
-                                      id={`value_type4_${questionIndex}`}
-                                      className={`border p-1 border-gray-500 rounded-md ${
-                                        question.value_types[3] === "P"
-                                          ? "bg-green-400"
-                                          : question.value_types[3] === "N"
-                                          ? "bg-red-400"
-                                          : ""
-                                      }`}
-                                      value={question.value_types[3]}
-                                      onChange={(e) =>
-                                        handleQuestionChange(
-                                          sectionIndex,
-                                          questionIndex,
-                                          "value_type",
-                                          e.target.value,
-                                          3
-                                        )
-                                      }
-                                      disabled={!isEditing}
-                                    >
-                                      <option value="">Select</option>
-                                      <option value="P">P</option>
-                                      <option value="N">N</option>
-                                    </select>
-                                  </div>
+                                    placeholder="option 1"
+                                    value={question.options[0]}
+                                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "option", e.target.value, 0)}
+                                    disabled={!isEditing}
+                                  />
+                                  <select
+                                    name={`value_type1_${questionIndex}`}
+                                    id={`value_type1_${questionIndex}`}
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[0] === 'P' ? 'bg-green-400' : question.value_types[0] === 'N' ? 'bg-red-400' : ''}`}
+                                    value={question.value_types[0]}
+                                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "value_type", e.target.value, 0)}
+                                    disabled={!isEditing}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="P">P</option>
+                                    <option value="N">N</option>
+                                  </select>
                                 </div>
-                              )}
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <input
+                                    type="text"
+                                    name={`option2_${questionIndex}`}
+                                    id={`option2_${questionIndex}`}
+                                    className={`border p-1 px-4  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                                      }`}
+                                    placeholder="option 2"
+                                    value={question.options[1]}
+                                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "option", e.target.value, 1)}
+                                    disabled={!isEditing}
+                                  />
+                                  <select
+                                    name={`value_type2_${questionIndex}`}
+                                    id={`value_type2_${questionIndex}`}
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[1] === 'P' ? 'bg-green-400' : question.value_types[1] === 'N' ? 'bg-red-400' : ''}`}
+                                    value={question.value_types[1]}
+                                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "value_type", e.target.value, 1)}
+                                    disabled={!isEditing}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="P" >P</option>
+                                    <option value="N" >N</option>
+                                  </select>
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <input
+                                    type="text"
+                                    name={`option3_${questionIndex}`}
+                                    id={`option3_${questionIndex}`}
+                                    className={`border p-1 px-4  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                                      }`}
+                                    placeholder="option 3"
+                                    value={question.options[2]}
+                                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "option", e.target.value, 2)}
+                                    disabled={!isEditing}
+                                  />
+                                  <select
+                                    name={`value_type3_${questionIndex}`}
+                                    id={`value_type3_${questionIndex}`}
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[2] === 'P' ? 'bg-green-400' : question.value_types[2] === 'N' ? 'bg-red-400' : ''}`}
+                                    value={question.value_types[2]}
+                                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "value_type", e.target.value, 2)}
+                                    disabled={!isEditing}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="P">P</option>
+                                    <option value="N">N</option>
+                                  </select>
+                                </div>
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <input
+                                    type="text"
+                                    name={`option4_${questionIndex}`}
+                                    id={`option4_${questionIndex}`}
+                                    className={`border p-1 px-4  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                                      }`}
+                                    placeholder="option 4"
+                                    value={question.options[3]}
+                                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "option", e.target.value, 3)}
+                                    disabled={!isEditing}
+                                  />
+                                  <select
+                                    name={`value_type4_${questionIndex}`}
+                                    id={`value_type4_${questionIndex}`}
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[3] === 'P' ? 'bg-green-400' : question.value_types[3] === 'N' ? 'bg-red-400' : ''}`}
+                                    value={question.value_types[3]}
+                                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "value_type", e.target.value, 3)}
+                                    disabled={!isEditing}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="P">P</option>
+                                    <option value="N">N</option>
+                                  </select>
+                                </div>
+                              </div>
+                            )}
                             <div className="flex gap-8">
                               <div>
                                 <label className="flex items-center gap-1">
@@ -1109,18 +1000,11 @@ const EditChecklist = () => {
                                     type="checkbox"
                                     checked={question.question_mandatory}
                                     onChange={(e) =>
-                                      handleQuestionChange(
-                                        sectionIndex,
-                                        questionIndex,
-                                        "question_mandatory",
-                                        e.target.checked
-                                      )
+                                      handleQuestionChange(sectionIndex, questionIndex, 'question_mandatory', e.target.checked)
                                     }
                                     disabled={!isEditing}
                                   />
-                                  <span className="font-semibold text-medium">
-                                    Mandatory
-                                  </span>
+                                  <span className="font-semibold text-medium">Mandatory</span>
                                 </label>
                               </div>
                               <div>
@@ -1129,39 +1013,25 @@ const EditChecklist = () => {
                                     type="checkbox"
                                     checked={question.reading}
                                     onChange={(e) =>
-                                      handleQuestionChange(
-                                        sectionIndex,
-                                        questionIndex,
-                                        "reading",
-                                        e.target.checked
-                                      )
+                                      handleQuestionChange(sectionIndex, questionIndex, 'reading', e.target.checked)
                                     }
                                     disabled={!isEditing}
                                   />
-                                  <span className="font-semibold text-medium">
-                                    Reading
-                                  </span>
-                                </label>
-                              </div>
+                                  <span className="font-semibold text-medium">Reading</span>
+
+                                </label></div>
                               <div>
                                 <label className="flex items-center gap-1">
                                   <input
                                     type="checkbox"
                                     checked={question.showHelpText}
                                     onChange={(e) =>
-                                      handleQuestionChange(
-                                        sectionIndex,
-                                        questionIndex,
-                                        "showHelpText",
-                                        e.target.checked
-                                      )
+                                      handleQuestionChange(sectionIndex, questionIndex, 'showHelpText', e.target.checked)
                                     }
                                     disabled={!isEditing}
                                   />
 
-                                  <span className="font-semibold text-medium">
-                                    Help Text
-                                  </span>
+                                  <span className="font-semibold text-medium">Help Text</span>
                                 </label>
                               </div>
                             </div>
@@ -1172,32 +1042,15 @@ const EditChecklist = () => {
                                 type="text"
                                 placeholder="Enter Help text"
                                 value={question.help_text}
-                                className={`border p-1 px-4  border-gray-500 rounded-md ${
-                                  !isEditing ? "bg-gray-200" : ""
-                                }`}
-                                onChange={(e) =>
-                                  handleQuestionChange(
-                                    sectionIndex,
-                                    questionIndex,
-                                    "help_text",
-                                    e.target.value
-                                  )
-                                }
+                                className={`border p-1 px-4  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                                  }`}
+                                onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "help_text", e.target.value)}
                                 disabled={!isEditing}
                               />
 
                               <FileInputBox
-                                handleChange={(files) =>
-                                  handleQuestionChange(
-                                    sectionIndex,
-                                    questionIndex,
-                                    "image_for_question",
-                                    files
-                                  )
-                                }
-                                fieldName={`image_for_question_${
-                                  questionIndex + 1
-                                }`}
+                                handleChange={(files) => handleQuestionChange(sectionIndex, questionIndex, "image_for_question", files)}
+                                fieldName={`image_for_question_${questionIndex + 1}`}
                                 isMulti={true}
                               />
                             </div>
@@ -1205,27 +1058,18 @@ const EditChecklist = () => {
                           {weightage && (
                             <div className=" grid grid-cols-4 gap-4">
                               <div className="flex flex-col gap-1">
-                                <label className="font-semibold">
-                                  Weightage
-                                </label>
+                                <label className="font-semibold">Weightage</label>
                                 <input
                                   type="number"
-                                  className={`border p-1 px-4  border-gray-500 rounded-md ${
-                                    !isEditing ? "bg-gray-200" : ""
-                                  }`}
+                                  className={`border p-1 px-4  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                                    }`}
                                   value={question.weightage}
-                                  onChange={(e) =>
-                                    handleQuestionChange(
-                                      sectionIndex,
-                                      questionIndex,
-                                      "weightage",
-                                      e.target.value
-                                    )
-                                  }
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "weightage", e.target.value)}
                                   placeholder="Enter weightage value"
                                   disabled={!isEditing}
                                 />
                               </div>
+
 
                               {/* <label className="block text-gray-700">Rating</label> */}
                               <div className="flex items-center">
@@ -1233,24 +1077,19 @@ const EditChecklist = () => {
                                   type="checkbox"
                                   id="rating"
                                   checked={question.rating}
-                                  onChange={(e) =>
-                                    handleQuestionChange(
-                                      sectionIndex,
-                                      questionIndex,
-                                      "rating",
-                                      e.target.checked
-                                    )
-                                  }
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "rating", e.target.checked)}
                                   className="mr-2"
                                   disabled={!isEditing}
                                 />
                                 <label htmlFor="rating"> Rating</label>
                               </div>
+
                             </div>
                           )}
                           <div className="flex justify-end ">
                             <button
                               className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
+
                               onClick={async () => {
                                 await handleDeleteQuestion(id, question.id); // Delete the question via API
                                 removeQuestion(sectionIndex, questionIndex); // Update the UI after deletion
@@ -1286,15 +1125,12 @@ const EditChecklist = () => {
               <div className="flex flex-col gap-4">
                 {/* Allowed Time to Submit */}
                 <div>
-                  <label className="font-semibold">
-                    Allowed time to submit
-                  </label>
+                  <label className="font-semibold">Allowed time to submit</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
-                      className={`border p-1 px-2  border-gray-500 rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
-                      }`}
+                      className={`border p-1 px-2  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                        }`}
                       placeholder="Enter Days"
                       value={submitDays}
                       onChange={(e) => setSubmitDays(Number(e.target.value))}
@@ -1302,9 +1138,8 @@ const EditChecklist = () => {
                     />
                     <input
                       type="number"
-                      className={`border p-1 px-2  border-gray-500 rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
-                      }`}
+                      className={`border p-1 px-2  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                        }`}
                       placeholder="Enter Hours"
                       value={submitHours}
                       onChange={(e) => setSubmitHours(Number(e.target.value))}
@@ -1312,15 +1147,15 @@ const EditChecklist = () => {
                     />
                     <input
                       type="number"
-                      className={`border p-1 px-2  border-gray-500 rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
-                      }`}
+                      className={`border p-1 px-2  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                        }`}
                       placeholder="Enter Minutes"
                       value={submitMinutes}
                       onChange={(e) => setSubmitMinutes(Number(e.target.value))}
                       disabled={!isEditing}
                     />
                   </div>
+
                 </div>
 
                 {/* Extension Time */}
@@ -1329,9 +1164,8 @@ const EditChecklist = () => {
                   <div className="flex gap-2">
                     <input
                       type="number"
-                      className={`border p-1 px-2  border-gray-500 rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
-                      }`}
+                      className={`border p-1 px-2  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                        }`}
                       placeholder="Enter Days"
                       value={extensionDays}
                       onChange={(e) => setExtensionDays(e.target.value)}
@@ -1339,9 +1173,8 @@ const EditChecklist = () => {
                     />
                     <input
                       type="number"
-                      className={`border p-1 px-2  border-gray-500 rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
-                      }`}
+                      className={`border p-1 px-2  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                        }`}
                       placeholder="Enter Hours"
                       value={extensionHours}
                       onChange={(e) => setExtensionHours(e.target.value)}
@@ -1349,24 +1182,23 @@ const EditChecklist = () => {
                     />
                     <input
                       type="number"
-                      className={`border p-1 px-2  border-gray-500 rounded-md ${
-                        !isEditing ? "bg-gray-200" : ""
-                      }`}
+                      className={`border p-1 px-2  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                        }`}
                       placeholder="Enter Minutes"
                       value={extensionMinutes}
                       onChange={(e) => setExtensionMinutes(e.target.value)}
                       disabled={!isEditing}
                     />
                   </div>
+
                 </div>
                 <div className="flex flex-col">
                   <label htmlFor="">Lock Overdue Task</label>
                   <select
                     name="lockOverdueTask"
                     id="lockOverdueTask"
-                    className={`border p-1 px-4  border-gray-500 rounded-md ${
-                      !isEditing ? "bg-gray-200" : ""
-                    }`}
+                    className={`border p-1 px-4  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                      }`}
                     value={lockOverdueTask}
                     onChange={handleLockOverdueTaskChange}
                     disabled={!isEditing}
@@ -1378,8 +1210,10 @@ const EditChecklist = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 ml-20">
-                <div className="flex flex-col ml-20">
+
+
+              <div className="flex flex-col gap-4 ">
+                <div>
                   <label className="font-semibold">Supervisors</label>
                   <Select
                     value={selectedOptionssupervisior}
@@ -1391,13 +1225,11 @@ const EditChecklist = () => {
                     isDisabled={!isEditing}
                   />
                 </div>
-
-                <div className="flex flex-col ml-20">
+                <div className="flex flex-col ">
                   <label className="font-semibold">Supplier</label>
                   <select
-                    className={`border p-1 px-4  border-gray-500 rounded-md ${
-                      !isEditing ? "bg-gray-200" : ""
-                    }`}
+                    className={`border p-1 px-4  border-gray-500 rounded-md ${!isEditing ? 'bg-gray-200' : ''
+                      }`}
                     value={supplierid}
                     onChange={(e) => setsupplierid(e.target.value)}
                     disabled={!isEditing}
@@ -1405,33 +1237,30 @@ const EditChecklist = () => {
                     <option value="">Select Supplier</option>
                     {suppliers.map((supplier) => (
                       <option value={supplier.id} key={supplier.id}>
-                        {supplier.company_name}
+                        {supplier.company_name || supplier.vendor_name}
                       </option>
                     ))}
+
                   </select>
-                </div>
-              </div>
+                </div></div>
+
             </div>
             <h2 className="border-b-2 border-black text font-medium">
               Cron Setting
             </h2>
             <div className="my-2 border-2 border-dashed flex items-center p-2 rounded-md border-gray-300">
-              <Cron
-                value={cronExpression}
-                setValue={handleCronChange}
+
+              <Cron value={cronExpression} setValue={handleCronChange}
                 disabled={!isEditing}
-                className={`${
-                  !isEditing ? "bg-gray-100 cursor-not-allowed" : ""
-                }`}
+                className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               />
+
             </div>
             {isEditing ? (
-              <div className="flex justify-center">
-                <button
-                  onClick={handleSubmit}
-                  className="bg-black text-white p-2 px-4 rounded-md font-medium"
-                >
-                  Save
+
+              <div className="flex justify-end gap-3">
+                <button onClick={handleSubmit} className="bg-black text-white p-2 px-4 rounded-md font-medium">
+                  Submit
                 </button>
               </div>
             ) : (

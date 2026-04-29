@@ -109,50 +109,50 @@ const AddNewVisitor = () => {
       .filter(Boolean);
   };
 
-useEffect(() => {
-  const fetchInitialData = async () => {
-    try {
-      const [usersResp, visitorCat, parkingRes] = await Promise.all([
-        getHostList(siteId),
-        getVisitorStaffCategory(),
-        getParkingConfig(),
-      ]);
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const [usersResp, visitorCat, parkingRes] = await Promise.all([
+          getHostList(siteId),
+          getVisitorStaffCategory(),
+          getParkingConfig(),
+        ]);
 
-      // ✅ host list normalization
-      setHosts(safeArray(usersResp?.data));
+        // ✅ host list normalization
+        setHosts(safeArray(usersResp?.data));
 
-      // ✅ FIXED: Correct key + filter null names
-      const categoriesData =
-        visitorCat?.data?.staff_categories || [];
+        // ✅ FIXED: Correct key + filter null names
+        const categoriesData =
+          visitorCat?.data?.staff_categories || [];
 
-      const filteredCategories = categoriesData.filter(
-        (cat) => cat?.name && cat.name.trim() !== ""
-      );
+        const filteredCategories = categoriesData.filter(
+          (cat) => cat?.name && cat.name.trim() !== ""
+        );
 
-      setStaffCategories(filteredCategories);
+        setStaffCategories(filteredCategories);
 
-      // ✅ parking normalization
-      let parkingSlots = [];
-      if (Array.isArray(parkingRes?.data)) parkingSlots = parkingRes.data;
-      else if (Array.isArray(parkingRes?.data?.slots)) parkingSlots = parkingRes.data.slots;
-      else if (Array.isArray(parkingRes?.data?.parking_slots))
-        parkingSlots = parkingRes.data.parking_slots;
-      else if (Array.isArray(parkingRes?.data?.data))
-        parkingSlots = parkingRes.data.data;
+        // ✅ parking normalization
+        let parkingSlots = [];
+        if (Array.isArray(parkingRes?.data)) parkingSlots = parkingRes.data;
+        else if (Array.isArray(parkingRes?.data?.slots)) parkingSlots = parkingRes.data.slots;
+        else if (Array.isArray(parkingRes?.data?.parking_slots))
+          parkingSlots = parkingRes.data.parking_slots;
+        else if (Array.isArray(parkingRes?.data?.data))
+          parkingSlots = parkingRes.data.data;
 
-      setSlots(safeArray(parkingSlots));
+        setSlots(safeArray(parkingSlots));
 
-    } catch (error) {
-      console.error("Error fetching initial data:", error?.response?.data || error);
-      toast.error("Failed to load hosts, categories, or parking slots.");
-      setSlots([]);
-      setHosts([]);
-      setStaffCategories([]);
-    }
-  };
+      } catch (error) {
+        console.error("Error fetching initial data:", error?.response?.data || error);
+        toast.error("Failed to load hosts, categories, or parking slots.");
+        setSlots([]);
+        setHosts([]);
+        setStaffCategories([]);
+      }
+    };
 
-  fetchInitialData();
-}, [siteId]);
+    fetchInitialData();
+  }, [siteId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -297,11 +297,11 @@ useEffect(() => {
     // license
     if (safeLicenseFiles.length > 0) {
       const fd = new FormData();
-     fd.append("visitor[visitor_id]", String(visitorId));
+      fd.append("visitor[visitor_id]", String(visitorId));
 
-safeLicenseFiles.forEach((file) =>
-  fd.append("visitor[visitor_license][]", file, file.name)
-);
+      safeLicenseFiles.forEach((file) =>
+        fd.append("visitor[visitor_license][]", file, file.name)
+      );
 
       try {
         // ⚠️ If your axios instance forces JSON headers, fix it in ../api (multipart/form-data).
@@ -315,11 +315,11 @@ safeLicenseFiles.forEach((file) =>
     // consignment
     if (safeConsignmentFiles.length > 0) {
       const fd = new FormData();
-    fd.append("visitor[visitor_id]", String(visitorId));
+      fd.append("visitor[visitor_id]", String(visitorId));
 
-safeConsignmentFiles.forEach((file) =>
-  fd.append("visitor[visitor_consignment][]", file, file.name)
-);
+      safeConsignmentFiles.forEach((file) =>
+        fd.append("visitor[visitor_consignment][]", file, file.name)
+      );
       try {
         // ⚠️ If your axios instance forces JSON headers, fix it in ../api (multipart/form-data).
         await uploadVisitorConsignment(fd);
@@ -401,102 +401,38 @@ safeConsignmentFiles.forEach((file) =>
       }
     });
 
+    // Goods fields in main visitor POST body (as per API curl)
+    if (formData.goodsInward) {
+      postData.append("visitor[no_of_goods]", formData.noOfGoods || "");
+      postData.append("visitor[goods_description]", formData.goodsDescription || "");
+    }
+
+    // ✅ LICENSE files → visitor_license[] in main POST (as per API curl)
+    if (formData.license && formData.licenseAttachments?.length > 0) {
+      normalizeFileArray(formData.licenseAttachments).forEach((file) => {
+        postData.append("visitor_license[]", file, file.name);
+      });
+    }
+
+    // ✅ CONSIGNMENT files → visitor_consignment[] in main POST (as per API curl)
+    if (formData.consignment && formData.consignmentAttachments?.length > 0) {
+      normalizeFileArray(formData.consignmentAttachments).forEach((file) => {
+        postData.append("visitor_consignment[]", file, file.name);
+      });
+    }
+
+    // ✅ GOODS ATTACHMENT files → goods_files[] in main POST
+    if (formData.goodsInward && formData.goodsAttachments?.length > 0) {
+      normalizeFileArray(formData.goodsAttachments).forEach((file) => {
+        postData.append("goods_files[]", file, file.name);
+      });
+    }
+
     try {
       toast.loading("Creating new visitor, please wait...", { id: "createVisitor" });
 
-      const visitResp = await postNewVisitor(postData);
-      const visitorId = visitResp?.data?.id || visitResp?.data?.visitor?.id;
-
-      if (!visitorId) {
-        toast.dismiss("createVisitor");
-        console.error("No visitorId in response:", visitResp?.data);
-        return toast.error("Visitor created but visitor ID not received.");
-      }
-
-      // ✅ upload license/consignment AFTER create
-      // await uploadVisitorDocs({
-      //   visitorId,
-      //   licenseFiles: formData.licenseAttachments || [],
-      //   consignmentFiles: formData.consignmentAttachments || [],
-      // });
-
-    // LICENSE UPLOAD
-    console.log("licenseAttachments:", formData.licenseAttachments);
-if (formData.license && formData.licenseAttachments?.length > 0) {
-
-  const fd = new FormData();
-
-  fd.append("visitor_id", visitorId);
-
-  formData.licenseAttachments.forEach((file) => {
-    fd.append("file", file);
-  });
-
-  try {
-    const res = await uploadVisitorLicense(fd);
-    console.log("License uploaded:", res.data);
-  } catch (err) {
-    console.log("License upload error:", err?.response?.data || err);
-  }
-
-}
-
-// CONSIGNMENT UPLOAD
-if (formData.consignment && formData.consignmentAttachments.length > 0) {
-
-  const fd = new FormData();
-
-  // fd.append("visitor_consignment[visitor_id]", visitorId);
-     fd.append("visitor_consignment[visitor_id]", String(visitorId));
- formData.consignmentAttachments.forEach((file) => {
-  fd.append("visitor_consignment[file]", file);
-});
-  try {
-    await uploadVisitorConsignment(fd);
-  } catch (err) {
-    console.log("Consignment upload error:", err?.response?.data || err);
-    toast.error("Visitor created but consignment upload failed");
-  }
-}
-
-// if (formData.consignment && formData.consignmentAttachments?.length > 0) {
-//   await uploadVisitorDocs({
-//     visitorId,
-//     consignmentFiles: formData.consignmentAttachments,
-//   });
-// }
-      // goods inward after create
-      const hasGoodsPayload =
-        formData.goodsInward &&
-        (String(formData.noOfGoods || "").trim() ||
-          String(formData.goodsDescription || "").trim() ||
-          (formData.goodsAttachments?.length || 0) > 0);
-
-      if (hasGoodsPayload) {
-        const postGoods = new FormData();
-
-        const safeGoodsFiles = normalizeFileArray(formData.goodsAttachments);
-        if (safeGoodsFiles.length > 0) {
-          safeGoodsFiles.forEach((file) => {
-            postGoods.append("goods_in_out[goods_files][]", file, file.name);
-          });
-        }
-
-        postGoods.append("goods_in_out[visitor_id]", visitorId);
-        postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods || "");
-        postGoods.append("goods_in_out[description]", formData.goodsDescription || "");
-        postGoods.append("goods_in_out[ward_type]", "in");
-        postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber || "");
-        postGoods.append("goods_in_out[person_name]", formData.visitorName || "");
-        postGoods.append("goods_in_out[created_by_id]", userId);
-
-        try {
-          await postNewGoods(postGoods);
-        } catch (error) {
-          console.error("Error posting goods:", error?.response?.data || error);
-          toast.error("Visitor created but goods inward failed");
-        }
-      }
+      // ✅ Single API call — all files already appended to postData above
+      await postNewVisitor(postData);
 
       toast.dismiss("createVisitor");
       toast.success("Visitor Added Successfully");
@@ -938,11 +874,11 @@ if (formData.consignment && formData.consignmentAttachments.length > 0) {
                     <label className="font-semibold text-gray-700 mb-1 block text-sm">
                       License Attachments
                     </label>
-                   <FileInputBox
-      handleChange={(input) => handleFileChange(input, "licenseAttachments")}
-      fieldName={"licenseAttachments"}
-      isMulti={true}
-    />
+                    <FileInputBox
+                      handleChange={(input) => handleFileChange(input, "licenseAttachments")}
+                      fieldName={"licenseAttachments"}
+                      isMulti={true}
+                    />
                     {/* <FileInputBox
   handleChange={(files) =>
     setFormData((prev) => ({
@@ -1072,11 +1008,10 @@ if (formData.consignment && formData.consignmentAttachments.length > 0) {
                       key={dayObj.day}
                       type="button"
                       onClick={() => handleWeekdaySelection(dayObj.day)}
-                      className={`py-1 px-3 border rounded-lg text-xs font-medium transition-colors ${
-                        dayObj.isActive
-                          ? "bg-blue-600 text-white border-blue-600 shadow-md"
-                          : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
-                      }`}
+                      className={`py-1 px-3 border rounded-lg text-xs font-medium transition-colors ${dayObj.isActive
+                        ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                        : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+                        }`}
                     >
                       {dayObj.day}
                     </button>
@@ -1087,10 +1022,16 @@ if (formData.consignment && formData.consignmentAttachments.length > 0) {
           </div>
 
           {/* SUBMIT */}
-          <div className="flex justify-center pt-8">
+          <div className="flex gap-4 justify-end pt-8">
+            <button
+              onClick={() => navigate("/admin/passes/visitors")}
+              className="text-white bg-black font-semibold py-2 px-4 rounded-lg"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
-              style={{ backgroundColor: themeColor }}
+              style={{ background: themeColor }}
               className="px-10 py-3 text-lg font-bold text-white rounded-lg shadow-xl hover:opacity-90 transition-opacity"
             >
               Submit

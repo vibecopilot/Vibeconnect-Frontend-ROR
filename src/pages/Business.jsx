@@ -65,7 +65,7 @@ const Business = () => {
     const tid = toast.loading("Updating...");
     try {
       await handleStatus(id, newStatus);
-      toast.success("Updated", { id: tid });
+      toast.success("Status Updated", { id: tid });
       await fetchContactBook();
     } catch (error) {
       console.log("Error updating status:", error);

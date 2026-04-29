@@ -158,63 +158,109 @@ const AddUser = () => {
       return toast.error("Please select Tower, Floor & Unit");
     }
 
-const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
-  formData.userType?.toLowerCase()
-);
+    const isAdmin = [
+      "pms_admin",
+      "security_guard",
+      "employee",
+      "pms_technician",
+    ].includes(formData.userType?.toLowerCase());
 
-    const payload = {
-      user: {
-        firstname: formData.firstname,
-        lastname: formData.lastname,
-        email: formData.email,
-        password: formData.password,
-        mobile: formData.mobile,
-        user_type: formData.userType || "user",
-        active: true,
-        user_status: isAdmin ? true : false,
-        is_admin_approved: isAdmin ? true : null,
-        birth_date: formData.birth_date,
-        anniversary: formData.anniversary,
+    const livesHereValue =
+      formData.lives_here === "true" ||
+      formData.lives_here === "Yes" ||
+      formData.lives_here === true;
 
-        email_1: formData.alternateEmail,
-        landline_number: formData.landlineNumber,
-        intercom_number: formData.intercomNumber,
+    const sendData = new FormData();
 
-        pan_number: formData.panCard,
-        gst_number: formData.gstin,
-
-        ev_connection: formData.evConnection,
-        user_address: formData.alternateAddress,
-
-        membership_type: formData.membershipType,
-        lives_here: formData.lives_here,
-
-        user_sites: [
-          {
-            site_id: Number(siteId),
-            build_id: Number(selectedTower),
-            floor_id: Number(selectedFloorId),
-            unit_id: Number(selectedUnit),
-
-            ownership: formData.occupancy_type,
-            ownership_type: formData.membershipType.toLowerCase(),
-
-            is_approved: true,
-            lives_here: formData.lives_here,
-          },
-        ],
-
-        user_members: members,
-        user_vendors: vendorList,
-      },
-
-      site_ids: [Number(siteId)],
+    const userFields = {
+      firstname: formData.firstname,
+      lastname: formData.lastname,
+      email: formData.email,
+      password: formData.password,
+      mobile: formData.mobile,
+      user_type: formData.userType || "user",
+      active: true,
+      user_status: isAdmin,
+      is_admin_approved: isAdmin ? true : null,
+      birth_date: formData.birth_date,
+      anniversary: formData.anniversary,
+      email_1: formData.alternateEmail,
+      landline_number: formData.landlineNumber,
+      intercom_number: formData.intercomNumber,
+      pan_number: formData.panCard,
+      gst_number: formData.gstin,
+      ev_connection: formData.evConnection,
+      user_address: formData.alternateAddress,
+      membership_type: formData.membershipType,
+      lives_here: livesHereValue,
+      occupancy_type: formData.occupancy_type,
+      is_occupied: formData.is_occupied,
+      status: formData.status,
     };
 
-    console.log("FINAL PAYLOAD:", payload);
+    Object.entries(userFields).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        sendData.append(`user[${key}]`, String(value));
+      }
+    });
+
+    if (formData.profile_picture) {
+      sendData.append("user[profile_picture]", formData.profile_picture);
+    }
+
+    sendData.append("user[user_sites][][site_id]", String(siteId));
+    sendData.append("user[user_sites][][build_id]", String(selectedTower));
+    sendData.append("user[user_sites][][floor_id]", String(selectedFloorId));
+    sendData.append("user[user_sites][][unit_id]", String(selectedUnit));
+    sendData.append("user[user_sites][][ownership]", formData.occupancy_type);
+    sendData.append(
+      "user[user_sites][][ownership_type]",
+      formData.membershipType.toLowerCase()
+    );
+    sendData.append("user[user_sites][][is_approved]", "true");
+    sendData.append(
+      "user[user_sites][][lives_here]",
+      String(livesHereValue)
+    );
+
+    members.forEach((member, index) => {
+      sendData.append(
+        `user[user_members][${index}][member_type]`,
+        member.member_type || ""
+      );
+      sendData.append(
+        `user[user_members][${index}][member_name]`,
+        member.member_name || ""
+      );
+      sendData.append(
+        `user[user_members][${index}][contact]`,
+        member.contact || ""
+      );
+      sendData.append(
+        `user[user_members][${index}][relation]`,
+        member.relation || ""
+      );
+    });
+
+    vendorList.forEach((vendor, index) => {
+      sendData.append(
+        `user[user_vendors][${index}][service_type]`,
+        vendor.service_type || ""
+      );
+      sendData.append(
+        `user[user_vendors][${index}][name]`,
+        vendor.name || ""
+      );
+      sendData.append(
+        `user[user_vendors][${index}][contact]`,
+        vendor.contact || ""
+      );
+    });
+
+    sendData.append("site_ids[]", String(siteId));
 
     try {
-      await postSetupUsers(payload);
+      await postSetupUsers(sendData);
       toast.success("User added successfully!");
       navigate("/setup/users-setup");
     } catch (error) {
@@ -277,9 +323,11 @@ const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
                 <input
                   type="file"
                   id="profileUpload"
+                  name="profile_picture"
                   accept="image/*"
                   className="hidden"
                   onChange={(e) => {
+                    handleChange(e);
                     if (e.target.files && e.target.files[0]) {
                       setProfileImage(URL.createObjectURL(e.target.files[0]));
                     }
@@ -340,6 +388,27 @@ const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
                 </div>
                 <div>
                   <label className="text-sm font-medium block mb-1">
+                    Mobile *
+                  </label>
+                  <div className="flex gap-2">
+                    {/* <select
+                      className="border border-gray-300 rounded-md py-2 w-20"
+                      defaultValue="+91"
+                    >
+                      <option>+91</option>
+                    </select> */}
+                    <input
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleChange}
+                      required
+                      maxLength="10"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium block mb-1">
                     Password *
                   </label>
                   <input
@@ -353,27 +422,7 @@ const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
                   />
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium block mb-1">
-                    Mobile *
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      className="border border-gray-300 rounded-md py-2 w-20"
-                      defaultValue="+91"
-                    >
-                      <option>+91</option>
-                    </select>
-                    <input
-                      name="mobile"
-                      value={formData.mobile}
-                      onChange={handleChange}
-                      required
-                      maxLength="10"
-                      className="w-full border border-gray-300 rounded-md px-3 py-2"
-                    />
-                  </div>
-                </div>
+                
               </div>
             </div>
 
@@ -605,33 +654,32 @@ const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="">Select</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Technician">Technician</option>
-                  <option value="Security Guard">Security Guard</option>
-                  <option value="Employee">Employee</option>
+                  <option value="pms_admin">Admin</option>
+                  <option value="pms_technician">Technician</option>
+                  <option value="security_guard">Security Guard</option>
+                  <option value="employee">Employee</option>
                 </select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-              {[
-                { label: "PAN Card (Optional)", name: "panCard" },
-                { label: "GSTIN (Optional)", name: "gstin" },
-              ].map((f) => (
-                <div key={f.name}>
+                <div>
                   <label className="text-sm font-medium block mb-1">
-                    {f.label}
+                    Lives Here
                   </label>
-                  <input
-                    name={f.name}
-                    value={formData[f.name]}
+                  <select
+                    name="lives_here"
+                    value={formData.lives_here || ""}
                     onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md py-2 px-3"
-                  />
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Select</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
                 </div>
-              ))}
+                </div>
+              {/* ))} */}
             </div>
-
+{/* </div> */}
             <div className="mt-4">
               <label className="text-sm font-medium block mb-1">
                 Alternate Address <span className="text-gray-500">(Optional)</span>
@@ -643,7 +691,8 @@ const isAdmin = ["admin", "security guard", "employee", "technician"].includes(
                 className="border border-gray-300 rounded-md w-full h-20 p-3"
               ></textarea>
             </div>
-          </div>
+          {/* </div> */}
+  
 
           <div className="border-t border-gray-300 p-6">
             <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">

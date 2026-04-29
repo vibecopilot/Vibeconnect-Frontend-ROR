@@ -3,6 +3,7 @@ import { getUserOtp } from "../api";
 import { useParams, useSearchParams } from "react-router-dom";
 // import { ChevronLeft } from "lucide-react"
 import { domainPrefix } from "../api/index";
+import QRCode from "qrcode.react";
 // import Image from "next/image"
 
 const OtpAndQr = () => {
@@ -35,8 +36,11 @@ const OtpAndQr = () => {
   }, [id]);
 
   const ProfilePic = userData.profile_picture ? domainPrefix + userData.profile_picture : "/visitor.png";
-  const QrCodePic = userData.qr_code ? domainPrefix + userData.qr_code : null;
+  const QrCodePic = userData.qr_code
+    ? domainPrefix + userData.qr_code
+    : null;
   const isApproved = userData?.hosts?.some((host) => host.is_approved === true);
+  const qrValue = userData?.card_id ? String(userData.card_id) : "";
   // ? "approved" : "blurr";
   // console.log("Is Approved:", isApproved);
 
@@ -155,15 +159,24 @@ const OtpAndQr = () => {
             <div className="flex justify-center mb-2">
               <div className="h-40 w-40 bg-white border border-gray-300 flex items-center justify-center">
                 {/* {(is_Approved === "approved") && ( */}
-                <img
-                  // src={domainPrifix+qrCodeImageUrl[0].}
-                  //  src={qrCodeImageUrl}
-                  src={QrCodePic}
-                  alt="QR Code"
-                  width={140}
-                  height={140}
-                  className={!isApproved ? "blur-sm opacity-50" : ""} //Approach 1: Blur and reduce opacity if not approved
-                />
+                {qrValue ? (
+                  <QRCode
+                    value={qrValue}
+                    size={140}
+                    level="H"
+                    includeMargin={true}
+                  />
+                ) : QrCodePic ? (
+                  <img
+                    src={QrCodePic}
+                    alt="QR Code"
+                    width={140}
+                    height={140}
+                    className={!isApproved ? "blur-sm opacity-50" : ""}
+                  />
+                ) : (
+                  <p className="text-xs text-gray-400">QR not available</p>
+                )}
                 {/* )} */}
 
                 {/* Approach 2: 
