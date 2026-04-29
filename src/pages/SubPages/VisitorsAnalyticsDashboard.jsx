@@ -68,6 +68,57 @@ const toSortedEntries = (obj = {}, order = "desc") =>
       : (Number(b[1]) || 0) - (Number(a[1]) || 0),
   );
 
+const normalizeBreakdownPoints = (dataMap = {}) =>
+  Object.entries(dataMap).map(([label, rawValue]) => ({
+    label,
+    value:
+      Number(
+        rawValue && typeof rawValue === "object"
+          ? rawValue.count ?? rawValue.value ?? rawValue.registrations ?? 0
+          : rawValue
+      ) || 0,
+    drillValue: label,
+  }));
+
+const normalizeTrendPoints = (data = []) => {
+  const rows = Array.isArray(data)
+    ? data
+    : Object.entries(data || {}).map(([key, value]) => ({
+      ...(value && typeof value === "object" ? value : {}),
+      key,
+    }));
+
+  return rows
+    .map((row) => {
+      const rawKey = row?.hour ?? row?.month ?? row?.key ?? row?.label ?? "";
+      const label = row?.label ?? String(rawKey);
+      const value =
+        Number(
+          row?.registrations ??
+          row?.check_ins ??
+          row?.check_outs ??
+          row?.count ??
+          row?.value ??
+          0
+        ) || 0;
+
+      return {
+        label,
+        value,
+        drillValue: rawKey,
+      };
+    })
+    .filter((point) => point.label !== "");
+};
+
+const sortTrendPoints = (points = []) =>
+  [...points].sort((a, b) => {
+    const aNum = Number(a.drillValue);
+    const bNum = Number(b.drillValue);
+    if (Number.isFinite(aNum) && Number.isFinite(bNum)) return aNum - bNum;
+    return String(a.drillValue).localeCompare(String(b.drillValue));
+  });
+
 const IconBtn = ({ onClick, children, title }) => (
   <button
     type="button"
@@ -201,8 +252,7 @@ const StatCard = ({ title, value, icon, accent = CHART_PALETTE[0], note, onClick
   </div>
 );
 
-const buildPieOptions = ({ title, dataMap, colorsMap, palette = CHART_PALETTE }) => {
-  const keys = Object.keys(dataMap || {});
+const buildPieOptions = ({ title, points, palette = CHART_PALETTE }) => {
   return {
     chart: { type: "pie", backgroundColor: "transparent", height: 320 },
     title: { text: null },
@@ -234,10 +284,11 @@ const buildPieOptions = ({ title, dataMap, colorsMap, palette = CHART_PALETTE })
       {
         name: title,
         colorByPoint: true,
-        data: keys.map((k, i) => ({
-          name: k,
-          y: Number(dataMap?.[k]) || 0,
-          color: colorsMap?.[k] || palette[i % palette.length],
+        data: (points || []).map((point, i) => ({
+          name: point.label,
+          y: Number(point.value) || 0,
+          color: palette[i % palette.length],
+          custom: { drillValue: point.drillValue ?? point.label },
         })),
       },
     ],
@@ -250,8 +301,7 @@ const buildPieOptions = ({ title, dataMap, colorsMap, palette = CHART_PALETTE })
 const buildXYOptions = ({
   title,
   type,
-  categories,
-  values,
+  points,
   colorByPoint = false,
   palette = CHART_PALETTE,
 }) => {
@@ -269,10 +319,15 @@ const buildXYOptions = ({
       }
       : undefined;
 
-  const dataPoints = (values || []).map((v, i) => {
-    const y = Number(v) || 0;
-    if (!colorByPoint) return y;
-    return { y, color: palette[i % palette.length] };
+  const dataPoints = (points || []).map((point, i) => {
+    const y = Number(point.value) || 0;
+    const basePoint = {
+      y,
+      custom: { drillValue: point.drillValue ?? point.label },
+    };
+
+    if (!colorByPoint) return basePoint;
+    return { ...basePoint, color: palette[i % palette.length] };
   });
 
   return {
@@ -287,7 +342,7 @@ const buildXYOptions = ({
     exporting: { enabled: false },
     legend: { enabled: false },
     xAxis: {
-      categories,
+      categories: (points || []).map((point) => point.label),
       lineColor: "#E5E7EB",
       tickColor: "#E5E7EB",
       labels: { style: { color: "#6B7280", fontSize: "12px" } },
@@ -368,13 +423,16 @@ const VisitorsAnalyticsDashboard = () => {
   };
 
   const exportCurrentChartCsv = () => {
-    let dataMap;
-    if (selectedChart === "hourly") dataMap = hourlyData;
-    else if (selectedChart === "monthly") dataMap = monthlyData;
-    else dataMap = byData[selectedChart] || {};
-    const entries = Object.entries(dataMap);
+    const entries =
+      selectedChart === "hourly"
+        ? sortTrendPoints(normalizeTrendPoints(hourlyData))
+        : selectedChart === "monthly"
+          ? sortTrendPoints(normalizeTrendPoints(monthlyData))
+          : normalizeBreakdownPoints(byData[selectedChart] || {});
+
     if (!entries.length) { toast.error("No data to export"); return; }
-    const rows = [["Category", "Count"], ...entries.map(([k, v]) => [k, Number(v) || 0])];
+
+    const rows = [["Category", "Count"], ...entries.map((point) => [point.label, Number(point.value) || 0])];
     const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -580,7 +638,7 @@ const VisitorsAnalyticsDashboard = () => {
   };
 
   const handleChartPointClick = async (byKey, countValue, page = 1) => {
-    if (!byKey || !countValue) return;
+    if (!byKey || countValue === undefined || countValue === null || countValue === "") return;
 
     const countType = byKeyToCountType(byKey);
     const title = `${formatByLabel(byKey)}: ${countValue}`;
@@ -593,8 +651,9 @@ const VisitorsAnalyticsDashboard = () => {
 
     try {
       const res = await getVisitorsDashboardDrill(countType, countValue, siteId, page, rangeFrom, rangeTo);
-      const bucket = res?.data?.[byKey]?.[countValue];
-      const records = Array.isArray(bucket?.records) ? bucket.records : [];
+      const responseData = res?.data ?? {};
+      const bucket = responseData?.[byKey]?.[countValue] ?? responseData?.[byKey] ?? responseData?.[countValue] ?? responseData;
+      const records = Array.isArray(bucket?.records) ? bucket.records : Array.isArray(bucket) ? bucket : [];
       const total = bucket?.count ?? bucket?.total ?? records.length;
       const perPage = bucket?.per_page ?? 10;
       const pages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
@@ -883,21 +942,33 @@ const VisitorsAnalyticsDashboard = () => {
   };
 
   /* ── Generic chart options (by_* tabs + hourly/monthly) ──────────────────── */
+  const selectedChartPoints = useMemo(() => {
+    if (selectedChart === "hourly") return sortTrendPoints(normalizeTrendPoints(hourlyData));
+    if (selectedChart === "monthly") return sortTrendPoints(normalizeTrendPoints(monthlyData));
+
+    return toSortedEntries(byData[selectedChart] || {}, "desc").map(([label, rawValue]) => ({
+      label,
+      value:
+        Number(
+          rawValue && typeof rawValue === "object"
+            ? rawValue.count ?? rawValue.value ?? rawValue.registrations ?? 0
+            : rawValue
+        ) || 0,
+      drillValue: label,
+    }));
+  }, [selectedChart, byData, hourlyData, monthlyData]);
+
   const selectedChartOptions = useMemo(() => {
-    let dataMap;
-    if (selectedChart === "hourly") {
-      dataMap = hourlyData;
-    } else if (selectedChart === "monthly") {
-      dataMap = monthlyData;
-    } else {
-      dataMap = byData[selectedChart] || {};
-    }
     const chartTitle = selectedChart ? formatByLabel(selectedChart) : "";
 
     const addClickEvents = (options) => {
       if (!options?.plotOptions) return options;
       const clickHandler = function () {
-        const itemName = this.name ?? this.category ?? String(this.x ?? "");
+        const itemName =
+          this.options?.custom?.drillValue ??
+          this.name ??
+          this.category ??
+          String(this.x ?? "");
         handleChartPointClick(selectedChart, itemName);
       };
       const evt = { events: { click: clickHandler } };
@@ -911,25 +982,25 @@ const VisitorsAnalyticsDashboard = () => {
       };
     };
 
-    /* Hourly/monthly use ascending order for time-series feel */
-    const order = (selectedChart === "hourly" || selectedChart === "monthly") ? "asc" : "desc";
-
     let options;
     if (chartType === "pie") {
-      options = buildPieOptions({ title: chartTitle, dataMap });
+      options = buildPieOptions({
+        title: chartTitle,
+        points: selectedChart === "hourly" || selectedChart === "monthly"
+          ? selectedChartPoints.filter((point) => point.value > 0)
+          : selectedChartPoints,
+      });
     } else {
-      const entries = toSortedEntries(dataMap, order);
       options = buildXYOptions({
         title: chartTitle,
         type: chartType,
-        categories: entries.map(([k]) => k),
-        values: entries.map(([, v]) => v),
+        points: selectedChartPoints,
         colorByPoint: shouldColorByPoint(chartType),
       });
     }
     return addClickEvents(options);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChart, chartType, byData, hourlyData, monthlyData]);
+  }, [selectedChart, chartType, selectedChartPoints]);
 
   /* ── Chart buttons: dynamic by_* from API + always-on hourly/monthly ─────── */
   const chartButtons = useMemo(
