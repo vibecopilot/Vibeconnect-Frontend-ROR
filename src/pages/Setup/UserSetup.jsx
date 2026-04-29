@@ -5,7 +5,7 @@ import Table from "../../components/table/Table";
 import { getSetupUsers, getUserCount, putSetupUser, updateUserAdminApproval } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
-import { FaCheck, FaCheckCircle, FaClock, FaTimes, FaTimesCircle } from "react-icons/fa";
+import { FaCheck, FaCheckCircle, FaClock, FaFilter, FaTimes, FaTimesCircle } from "react-icons/fa";
 // import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 // import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -13,13 +13,18 @@ import { BiEdit, BiUser, BiUserCheck } from "react-icons/bi";
 import { DNA } from "react-loader-spinner";
 import { FaDownload, FaUsers } from "react-icons/fa";
 import { MdApartment, MdDevices } from "react-icons/md";
+import { useSelector } from "react-redux";
 
 const UserSetup = () => {
+    const themeColor = useSelector((state) => state.theme.color);
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [count, setCount] = useState("");
   const [activeTab, setActiveTab] = useState("approved"); // NEW
+  const [filterOpen, setFilterOpen] = useState(false);
+const [fromDate, setFromDate] = useState("");
+const [toDate, setToDate] = useState("");
   const [loading, setLoading] = useState(true); // Add loading state
   // const themeColor = useSelector((state) => state.theme.color);
 
@@ -46,6 +51,8 @@ const UserSetup = () => {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+ 
 
   const tabFilteredUsers = useMemo(() => {
     if (activeTab === "approved") {
@@ -122,6 +129,37 @@ const UserSetup = () => {
       return searchWords.every((word) => searchable.includes(word));
     });
   }, [searchText, tabFilteredUsers]);
+
+   const dateFilteredUsers = useMemo(() => {
+  let data = [...finalFilteredUsers];
+
+  if (!fromDate && !toDate) return data;
+
+  return data.filter((user) => {
+    if (!user.created_at) return false;
+
+    const created = new Date(user.created_at);
+
+    if (fromDate) {
+      const from = new Date(fromDate);
+      from.setHours(0,0,0,0);
+      if (created < from) return false;
+    }
+
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23,59,59,999);
+      if (created > to) return false;
+    }
+
+    return true;
+  });
+}, [finalFilteredUsers, fromDate, toDate]);
+
+const clearDateFilter = () => {
+  setFromDate("");
+  setToDate("");
+};
 
   const handleUserApproval = async (id, isApproved) => {
     const token = localStorage.getItem("TOKEN");
@@ -363,7 +401,13 @@ const UserSetup = () => {
           <span className="text-yellow-600 font-semibold">Pending</span>
         ),
       sortable: true,
-    }
+    },
+{
+  name: "Created At",
+  selector: (row) =>
+    new Date(row.created_at).toLocaleDateString("en-GB"),
+  sortable: true
+}
   ];
 
   const totalDownloads = users?.filter(user => user.is_downloaded).length || 0;
@@ -460,21 +504,35 @@ const dashboardCards = [
         </div>
 
         <div className="mt-2 flex md:flex-row flex-col justify-between md:items-center gap-4">
-          <input
-            type="text"
-            placeholder="Search Anything (Name, Email, Mobile and Flat) along with Spaces"
-            className="p-2 w-full border border-gray-300 rounded-md placeholder:text-sm outline-none"
-            value={searchText}
-            onChange={handleSearch}
-          />
-          <Link
-            to="/setup/users-setup/add-new-user"
-            style={{ background: "rgb(19 27 32)" }}
-            className="font-semibold p-2 px-4 rounded-md text-white flex items-center gap-2"
-          >
-            <PiPlusCircle size={20} /> Add
-          </Link>
-        </div>
+  <input
+    type="text"
+    placeholder="Search Anything (Name, Email, Mobile and Flat) along with Spaces"
+    className="p-2 w-full border border-gray-300 rounded-md placeholder:text-sm outline-none"
+    value={searchText}
+    onChange={handleSearch}
+  />
+
+  <div className="flex gap-3">
+    {/* Filter Button */}
+    <button
+      onClick={() => setFilterOpen(true)}
+      style={{background:themeColor}}
+      className=" text-white px-4 py-2 rounded-md flex items-center gap-2"
+    >
+      <FaFilter />
+      Filter
+    </button>
+
+    <Link
+      to="/setup/users-setup/add-new-user"
+      style={{ background: themeColor }}
+      className="font-semibold p-2 px-4 rounded-md text-white flex items-center gap-2"
+    >
+      <PiPlusCircle size={20}/>
+      Add
+    </Link>
+  </div>
+</div>
 
         {loading ? (
           <div className="flex justify-center items-center h-80 mt-10">
@@ -511,10 +569,75 @@ const dashboardCards = [
 
             {/* Table */}
             <div className="bg-white rounded-xl shadow-md p-4">
-              <Table columns={userColumn} data={finalFilteredUsers} />
+              <Table columns={userColumn} data={dateFilteredUsers} />
             </div>
           </>
         )}
+        {filterOpen && (
+<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+  <div className="bg-white rounded-2xl shadow-xl w-[420px] p-6">
+    
+    <div className="flex justify-between items-center mb-5">
+      <h2 className="text-lg font-semibold">
+        Filter Users By Date
+      </h2>
+
+      <button
+        onClick={() => setFilterOpen(false)}
+        className="text-gray-500 text-xl"
+      >
+        ×
+      </button>
+    </div>
+
+    <div className="space-y-4">
+
+      <div>
+        <label className="text-sm font-medium">
+          From Date
+        </label>
+
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e)=>setFromDate(e.target.value)}
+          className="w-full border rounded-lg p-2 mt-1"
+        />
+      </div>
+
+      <div>
+        <label className="text-sm font-medium">
+          To Date
+        </label>
+
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e)=>setToDate(e.target.value)}
+          className="w-full border rounded-lg p-2 mt-1"
+        />
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4">
+        <button
+          onClick={clearDateFilter}
+          className="px-4 py-2 rounded-lg border"
+        >
+          Clear
+        </button>
+
+        <button
+          onClick={() => setFilterOpen(false)}
+          className="px-5 py-2 bg-blue-600 text-white rounded-lg"
+        >
+          Apply
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+)}
       </div>
     </section>
   );
