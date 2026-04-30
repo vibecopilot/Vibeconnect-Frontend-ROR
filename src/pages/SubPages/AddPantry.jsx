@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const AddPantry = () => {
+  const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
   const userId = getItemInLocalStorage("UserId");
 
@@ -16,7 +17,7 @@ const AddPantry = () => {
     stock: "",
     description: "",
     created_by_id: "",
-    status: "",    
+    status: "",
     attachfiles: [],
   });
   const handleChange = (e) => {
@@ -31,7 +32,7 @@ const AddPantry = () => {
     console.log(fieldName);
   };
   const handleSubmit = async () => {
-   
+
 
     const sendData = new FormData();
     sendData.append("pantry[item_name]", formData.item_name);
@@ -39,16 +40,17 @@ const AddPantry = () => {
     sendData.append("pantry[stock]", formData.stock);
     sendData.append("pantry[description]", formData.description);
 
-   
-    formData.attachfiles.forEach((file)=>{
+
+    formData.attachfiles.forEach((file) => {
       sendData.append("attachfiles[]", file)
     })
-   
-    
+
+
     try {
       const resp = await postPantry(sendData);
-      navigate("/admin/add-pantry");
+
       toast.success("Pantry Created Successfully");
+      navigate("/admin/fb");
       console.log(resp);
     } catch (error) {
       console.log(error);
@@ -56,15 +58,15 @@ const AddPantry = () => {
   };
   return (
     <section className="min-h-screen p-4 sm:p-0 flex  md:flex-row">
-        <Navbar />
-     
+      <Navbar />
+
       <div className="border border-gray-300 rounded-lg w-full md:mx-20 px-8 flex flex-col my-2 gap-5">
-       
+
         <h2
           style={{ background: themeColor }}
           className="text-center md:text-xl font-bold p-2 my-2 bg-black rounded-md text-white"
         >
-           Add New Item
+          Add New Item
         </h2>
         <div className="grid md:grid-cols-3 gap-5">
           <div className="grid gap-2 items-center w-full">
@@ -75,7 +77,7 @@ const AddPantry = () => {
               type="text"
               name="item_name"
               value={formData.item_name}
-                onChange={handleChange}
+              onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Item Name"
             />
@@ -88,12 +90,12 @@ const AddPantry = () => {
               type="text"
               name="stock"
               value={formData.stock}
-                onChange={handleChange}
+              onChange={handleChange}
               className="border border-gray-400 p-2 rounded-md"
               placeholder="Enter Stock"
             />
           </div>
-        
+
         </div>
         <div className="grid gap-2 items-center w-full">
           <label htmlFor="stock" className="font-semibold">
@@ -105,26 +107,33 @@ const AddPantry = () => {
             cols="30"
             rows="4"
             value={formData.description}
-                onChange={handleChange}
+            onChange={handleChange}
             className="border border-gray-400 p-2 rounded-md"
           ></textarea>
         </div>
         <div className="grid gap-2 items-center w-full">
-            <label htmlFor="stock" className="font-semibold">
-              Upload Image :
-            </label>
-            <FileInputBox
-              handleChange={(files) =>
-                handleFileChange(files, "attachfiles")
-              }
-              fieldName={"attachfiles"}
-              isMulti={true}
-            />
-          </div>
-        <div className="flex justify-center">
+          <label htmlFor="stock" className="font-semibold">
+            Upload Image :
+          </label>
+          <FileInputBox
+            handleChange={(files) =>
+              handleFileChange(files, "attachfiles")
+            }
+            fieldName={"attachfiles"}
+            isMulti={true}
+          />
+        </div>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => navigate("/admin/fb")}
+            className="bg-gray-500 text-white hover:bg-gray-700 font-semibold text-md py-1 px-4 rounded"
+          >
+            Cancel
+          </button>
           <button
             onClick={handleSubmit}
-            className="bg-black text-white hover:bg-gray-700 font-semibold text-xl py-1 px-4 rounded"
+            style={{ background: themeColor }}
+            className="text-white hover:bg-gray-700 font-semibold text-md py-1 px-4 rounded"
           >
             Submit
           </button>
