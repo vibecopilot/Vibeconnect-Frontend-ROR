@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
-import { getCuisinesFBSetup, postFB } from "../../api";
+import { domainPrefix, getCuisinesFBSetup, postFB } from "../../api";
 import toast from "react-hot-toast";
 import { restaurantSchedule } from "../../utils/initialFormData";
 import { getItemInLocalStorage } from "../../utils/localStorage";
@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { FaTrash } from "react-icons/fa";
 import Select from "react-select";
 import { editFB, getFBDetails } from "../../api";
-import {  useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 const FBRestaurtantEdit = () => {
   const { id } = useParams();
@@ -24,7 +24,11 @@ const FBRestaurtantEdit = () => {
     friday: false,
     saturday: false,
   });
-
+  const [existingImages, setExistingImages] = useState({
+    cover: [],
+    menu: [],
+    gallery: []
+  });
   const handleAllChange = () => {
     const newState = !selectedDays.all;
     setSelectedDays({
@@ -62,10 +66,10 @@ const FBRestaurtantEdit = () => {
   const [selectedOptions, setSelectedOptions] = useState([]);
 
 
-  const [rows, setRows] = useState([{ id:"",order: false, booking: false, startDate: "", endDate: "" }]);
+  const [rows, setRows] = useState([{ id: "", order: false, booking: false, startDate: "", endDate: "" }]);
 
   const addRow = () => {
-    setRows([...rows, { id:"",order: false, booking: false, startDate: "", endDate: "" }]);
+    setRows([...rows, { id: "", order: false, booking: false, startDate: "", endDate: "" }]);
   };
 
   const deleteRow = (index) => {
@@ -76,7 +80,7 @@ const FBRestaurtantEdit = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const [formData, setFormData] = useState({
-    status:false,
+    status: false,
     restaurantName: "",
     costForTwo: "",
     mobileNumber: "",
@@ -92,19 +96,19 @@ const FBRestaurtantEdit = () => {
     termsAndConditions: "",
     disclaimer: "",
     closingMessage: "",
-    start_time:"",
-    end_time:"",
-    booking_allowed:false,
-    order_allowed:false,
-    last_booking_time:"",
-    table_number:"",
+    start_time: "",
+    end_time: "",
+    booking_allowed: false,
+    order_allowed: false,
+    last_booking_time: "",
+    table_number: "",
     minimumPerson: "",
     maximumPerson: "",
     canCancelBefore: "",
     bookingNotAllowedText: "",
     gst: "",
     deliveryCharge: "",
-    ServiceCharges:"",
+    ServiceCharges: "",
     minimumOrder: "",
     orderNotAllowedText: "",
     cover_image: [],
@@ -120,10 +124,16 @@ const FBRestaurtantEdit = () => {
         // Fetch the restaurant details
         const details = await getFBDetails(id);
         console.log(details);
-  
-        const data = details.data || {};
+
+         const data = details.data || {};
+
+      setExistingImages({
+        cover: data.cover_images || [],
+        menu: data.menu_images || [],
+        gallery: data.gallery_images || []
+      });
         const blockedDays = (data.blocked_days || []).map((day) => ({
-          id:day.id || "",
+          id: day.id || "",
           order: day.order_allowed || false,
           booking: day.booking_allowed || false,
           startDate: day.start_date || "",
@@ -138,81 +148,81 @@ const FBRestaurtantEdit = () => {
           friday: !!data.fri,     // Map 'fri' to 'friday'
           saturday: !!data.sat,   // Map 'sat' to 'saturday'
         };
-  
+
         setSelectedDays((prevState) => ({
           ...prevState,
           ...apiBlockedDays, // Update the days with values from API
         }));
-        
-      setFormData({
-        status:data.status || false,
-        restaurantName: data.restaurant_name || "",
-        costForTwo: data.cost_for_two || "",
-        mobileNumber: data.mobile_number || "",
-        anotherMobileNumber: data.alternate_mobile_number || "",
-        landlineNumber: data.landline_number || "",
-        deliveryTime: data.delivery_time || "",
-        // cuisines: data.cuisines || "",
-        servesAlcohol: data.serves_alcohols || "",
-        wheelchairAccessible: data.wheelchair_accessible || "",
-        cashOnDelivery: data.cash_on_delivery || "",
-        pureVeg: data.pure_veg || "",
-        address: data.address || "",
-        termsAndConditions: data.terms_and_conditions || "",
-        disclaimer: data.disclaimer || "",
-        booking_allowed:data.booking_allowed || false ,
-        order_allowed:data.order_allowed || false,
-        closingMessage: data.closing_message || "",
-        minimumPerson: data.minimum_person || "",
-        maximumPerson: data.maximum_person || "",
-        canCancelBefore: data.cancel_before || "",
-        bookingNotAllowedText: data.booking_not_available_text || "",
-        gst: data.gst || "",
-        deliveryCharge: data.delivery_charges || "",
-        minimumOrder: data.minimum_order || "",
-        orderNotAllowedText: data.order_not_allowed_text || "",
-        ServiceCharges: data.serviceCharges || "",
-        cover_image: data.cover_images || [],
-        menu: data.menu_images || [],
-        gallery: data.gallery_images || [],
-        table_number:data.table_number || "",
-        option:data.restauranttype || "",
-        start_time: data.start_time
-    ? new Date(data.start_time).toTimeString().substring(0, 5) // Extract HH:mm
-    : "",
-  end_time: data.end_time
-    ? new Date(data.end_time).toTimeString().substring(0, 5) // Extract HH:mm
-    : "",
-    break_start_time: data.break_start_time
-    ? new Date(data.break_start_time).toTimeString().substring(0, 5) // Extract HH:mm
-    : "",
-  break_end_time: data.break_end_time
-    ? new Date(data.break_end_time).toTimeString().substring(0, 5) // Extract HH:mm
-    : "",
-    last_booking_time: data.last_booking_time
-    ? new Date(data.last_booking_time).toTimeString().substring(0, 5) // Extract HH:mm
-    : ""
-      });
-      setSelectedOptions(
-        (data.cuisines?.split(",") || []).map((cuisine) => ({
-          value: cuisine.trim(), 
-          label: cuisine.trim(), // Ensure consistent labels
-        }))
-      );
-      
+
+        setFormData({
+          status: data.status || false,
+          restaurantName: data.restaurant_name || "",
+          costForTwo: data.cost_for_two || "",
+          mobileNumber: data.mobile_number || "",
+          anotherMobileNumber: data.alternate_mobile_number || "",
+          landlineNumber: data.landline_number || "",
+          deliveryTime: data.delivery_time || "",
+          // cuisines: data.cuisines || "",
+          servesAlcohol: data.serves_alcohols || "",
+          wheelchairAccessible: data.wheelchair_accessible || "",
+          cashOnDelivery: data.cash_on_delivery || "",
+          pureVeg: data.pure_veg || "",
+          address: data.address || "",
+          termsAndConditions: data.terms_and_conditions || "",
+          disclaimer: data.disclaimer || "",
+          booking_allowed: data.booking_allowed || false,
+          order_allowed: data.order_allowed || false,
+          closingMessage: data.closing_message || "",
+          minimumPerson: data.minimum_person || "",
+          maximumPerson: data.maximum_person || "",
+          canCancelBefore: data.cancel_before || "",
+          bookingNotAllowedText: data.booking_not_available_text || "",
+          gst: data.gst || "",
+          deliveryCharge: data.delivery_charges || "",
+          minimumOrder: data.minimum_order || "",
+          orderNotAllowedText: data.order_not_allowed_text || "",
+          ServiceCharges: data.serviceCharges || "",
+          cover_image: [],
+          menu: [],
+          gallery: [],
+          table_number: data.table_number || "",
+          option: data.restauranttype || "",
+          start_time: data.start_time
+            ? new Date(data.start_time).toTimeString().substring(0, 5) // Extract HH:mm
+            : "",
+          end_time: data.end_time
+            ? new Date(data.end_time).toTimeString().substring(0, 5) // Extract HH:mm
+            : "",
+          break_start_time: data.break_start_time
+            ? new Date(data.break_start_time).toTimeString().substring(0, 5) // Extract HH:mm
+            : "",
+          break_end_time: data.break_end_time
+            ? new Date(data.break_end_time).toTimeString().substring(0, 5) // Extract HH:mm
+            : "",
+          last_booking_time: data.last_booking_time
+            ? new Date(data.last_booking_time).toTimeString().substring(0, 5) // Extract HH:mm
+            : ""
+        });
+        setSelectedOptions(
+          (data.cuisines?.split(",") || []).map((cuisine) => ({
+            value: cuisine.trim(),
+            label: cuisine.trim(), // Ensure consistent labels
+          }))
+        );
+
         setRows(blockedDays);
-        
+
       } catch (error) {
         console.error("Error fetching site FB details:", error);
       }
     };
-  
+
     fetchFBDetails();
   }, [id]); // Add 'id' as a dependency to refetch when it changes
 
   const handleSelectAll = (event) => {
     const isChecked = event.target.checked;
-  
+
     // Update all `selected` values in the formData
     const updatedBook = Object.keys(formData.restaurantBook).reduce(
       (acc, day) => ({
@@ -224,13 +234,13 @@ const FBRestaurtantEdit = () => {
       }),
       {}
     );
-  
+
     setFormData((prev) => ({
       ...prev,
       restaurantBook: updatedBook,
     }));
   };
-  
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -239,7 +249,7 @@ const FBRestaurtantEdit = () => {
       [name]: value, // This handles both strings and booleans if passed correctly
     }));
   };
-  
+
 
   const handleCheckboxChange = (day) => {
     setFormData((prevState) => ({
@@ -279,13 +289,13 @@ const FBRestaurtantEdit = () => {
       }),
       {}
     );
-  
+
     setFormData((prev) => ({
       ...prev,
       restaurantBook: updatedBook,
     }));
   };
-  
+
   const handleFileChange = (files, fieldName) => {
     setFormData({
       ...formData,
@@ -298,13 +308,13 @@ const FBRestaurtantEdit = () => {
     const fetchCuisines = async () => {
       try {
         const siteDetailsResp = await getCuisinesFBSetup();
-        
+
         // Transform data to react-select format
         const formattedOptions = siteDetailsResp.data.map((item) => ({
           value: item.id, // id as the value
           label: item.name, // name as the label
         }));
-        
+
         setOptions(formattedOptions);
       } catch (error) {
         console.error("Error fetching cuisines:", error);
@@ -359,7 +369,7 @@ const FBRestaurtantEdit = () => {
     if (!/^\d+$/.test(formData.landlineNumber)) {
       return toast.error("Landline Number must contain only digits");
     }
-    
+
     if (!formData.servesAlcohol) {
       return toast.error("Please select Serves Alcohol Yes or No");
     }
@@ -434,8 +444,8 @@ const FBRestaurtantEdit = () => {
       formData.closingMessage
     );
     rows.forEach((row, index) => {
-      if(row.id){
-      postData.append(`blocked_days[][id]`, row.id);
+      if (row.id) {
+        postData.append(`blocked_days[][id]`, row.id);
       }
       postData.append(`blocked_days[][order_allowed]`, row.order);
       postData.append(`blocked_days[][booking_allowed]`, row.booking);
@@ -482,7 +492,7 @@ const FBRestaurtantEdit = () => {
     postData.append("food_and_beverage[order_allowed]", formData.order_allowed);
     postData.append("food_and_beverage[last_booking_time]", formData.last_booking_time);
     postData.append("food_and_beverage[table_number]", formData.table_number);
-   
+
 
     formData.cover_image?.forEach((file, index) => {
       postData.append(`cover_images[]`, file);
@@ -494,7 +504,7 @@ const FBRestaurtantEdit = () => {
       postData.append(`gallery_images[]`, file);
     });
     try {
-      const postRes = await editFB(id,postData);
+      const postRes = await editFB(id, postData);
       console.log(postRes);
       toast.success("F&B Updated successfully");
       navigate(`/admin/fb-details/${id}`);
@@ -517,56 +527,56 @@ const FBRestaurtantEdit = () => {
             BASIC DETAILS
           </h3>
           <div className="mb-2">
-      {/* <h1 className="text-lg font-semibold mb-4">Choose Booking Option</h1> */}
-      <form>
-        {/* Radio Buttons in Flex */}
-        <div className="flex  space-x-6">
-          {/* Bookable Option */}
-          <div className="flex items-center">
-            <input
-              id="bookable"
-              type="radio"
-              value="bookable"
-              checked={option === "bookable"}
-              onChange={(e) => setOption(e.target.value)}
-              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-            />
-            <label
-              htmlFor="bookable"
-              className="ml-2  font-medium font-semibold "
-            >
-              Bookable
-            </label>
-          </div>
+            {/* <h1 className="text-lg font-semibold mb-4">Choose Booking Option</h1> */}
+            <form>
+              {/* Radio Buttons in Flex */}
+              <div className="flex  space-x-6">
+                {/* Bookable Option */}
+                <div className="flex items-center">
+                  <input
+                    id="bookable"
+                    type="radio"
+                    value="bookable"
+                    checked={option === "bookable"}
+                    onChange={(e) => setOption(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="bookable"
+                    className="ml-2  font-medium font-semibold "
+                  >
+                    Bookable
+                  </label>
+                </div>
 
-          {/* Request Option */}
-          <div className="flex items-center">
-            <input
-              id="request"
-              type="radio"
-              value="request"
-              checked={option === "request"}
-              onChange={(e) => setOption(e.target.value)}
-              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-            />
-            <label
-              htmlFor="request"
-              className="ml-2  font-medium font-semibold "
-            >
-              Request
-            </label>
-          </div>
-        </div>
+                {/* Request Option */}
+                <div className="flex items-center">
+                  <input
+                    id="request"
+                    type="radio"
+                    value="request"
+                    checked={option === "request"}
+                    onChange={(e) => setOption(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="request"
+                    className="ml-2  font-medium font-semibold "
+                  >
+                    Request
+                  </label>
+                </div>
+              </div>
 
-        {/* Display Selected Option */}
-        {/* <div className="mt-4">
+              {/* Display Selected Option */}
+              {/* <div className="mt-4">
           <p className="text-sm text-gray-500">
             Selected Option:{" "}
             <span className="font-semibold text-gray-800">{option}</span>
           </p>
         </div> */}
-      </form>
-    </div>
+            </form>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="col-span-1">
               <label
@@ -641,7 +651,7 @@ const FBRestaurtantEdit = () => {
                 className="block  mb-2"
                 htmlFor="landline-number"
               >
-                Landline Number 
+                Landline Number
               </label>
               <input
                 className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full"
@@ -677,17 +687,17 @@ const FBRestaurtantEdit = () => {
               >
                 Cuisines
               </label>
-             
-             <Select
-        id="cuisines"
-        isMulti
-        options={options}
-        value={selectedOptions}
-        onChange={handleChange1}
-        className="react-select-container"
-        classNamePrefix="react-select"
-        placeholder="Select cuisines"
-      />
+
+              <Select
+                id="cuisines"
+                isMulti
+                options={options}
+                value={selectedOptions}
+                onChange={handleChange1}
+                className="react-select-container"
+                classNamePrefix="react-select"
+                placeholder="Select cuisines"
+              />
             </div>
             <div className="col-span-1">
               <label
@@ -774,7 +784,7 @@ const FBRestaurtantEdit = () => {
                 className="block  mb-2"
                 htmlFor="pure-veg"
               >
-                Status 
+                Status
               </label>
               <select
                 className="border border-gray-400  p-2 rounded-md placeholder:text-sm w-full"
@@ -864,18 +874,18 @@ const FBRestaurtantEdit = () => {
             RESTAURTANT DETAILS
           </h3>
 
-         
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="col-span-1">
-      <label
-        className="block  mb-2"
-        htmlFor="select-operational-days"
-      >
-        Select Operational Days
-      </label>
-      <div className="flex flex-wrap gap-4">
-        <div className="flex items-center gap-2">
-          {/* <input
+            <div className="col-span-1">
+              <label
+                className="block  mb-2"
+                htmlFor="select-operational-days"
+              >
+                Select Operational Days
+              </label>
+              <div className="flex flex-wrap gap-4">
+                <div className="flex items-center gap-2">
+                  {/* <input
             id="all"
             type="checkbox"
             checked={selectedDays.all}
@@ -885,216 +895,216 @@ const FBRestaurtantEdit = () => {
           <label htmlFor="all" className="text-gray-700">
             All
           </label> */}
-        </div>
-        {[
-          { id: "sunday", label: "S" },
-          { id: "monday", label: "M" },
-          { id: "tuesday", label: "T" },
-          { id: "wednesday", label: "W" },
-          { id: "thursday", label: "T" },
-          { id: "friday", label: "F" },
-          { id: "saturday", label: "S" },
-        ].map((day) => (
-          <div key={day.id} className="flex items-center gap-2 ">
-            <input
-              id={day.id}
-              type="checkbox"
-              checked={selectedDays[day.id]}
-              onChange={() => handleIndividualChange(day.id)}
-              className="h-4 w-4"
-            />
-            <label htmlFor={day.id} className="text-lg text-gray-700">
-              {day.label}
-            </label>
-          </div>
-        ))}
-      </div>
-    </div>
+                </div>
+                {[
+                  { id: "sunday", label: "S" },
+                  { id: "monday", label: "M" },
+                  { id: "tuesday", label: "T" },
+                  { id: "wednesday", label: "W" },
+                  { id: "thursday", label: "T" },
+                  { id: "friday", label: "F" },
+                  { id: "saturday", label: "S" },
+                ].map((day) => (
+                  <div key={day.id} className="flex items-center gap-2 ">
+                    <input
+                      id={day.id}
+                      type="checkbox"
+                      checked={selectedDays[day.id]}
+                      onChange={() => handleIndividualChange(day.id)}
+                      className="h-4 w-4"
+                    />
+                    <label htmlFor={day.id} className="text-lg text-gray-700">
+                      {day.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">Start Time</label>
-              <input type="time" 
-              value={formData.start_time}
-              name="start_time"
-              onChange={handleChange}
-              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+              <input type="time"
+                value={formData.start_time}
+                name="start_time"
+                onChange={handleChange}
+                className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time" />
             </div>
             <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">End Time</label>
-              <input type="time" 
-              value={formData.end_time}
-              name="end_time"
-              onChange={handleChange}
-              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+              <input type="time"
+                value={formData.end_time}
+                name="end_time"
+                onChange={handleChange}
+                className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time" />
             </div>
             <div className="flex  gap-10 col-span-1">
-    <div className="flex items-center gap-2 ">
-    <input
-  id="booking-allowed"
-  type="checkbox"
-  name="booking_allowed"
-  checked={formData.booking_allowed}
-  onChange={(e) =>
-    handleChange({
-      target: {
-        name: "booking_allowed",
-        value: e.target.checked, // Pass the boolean value
-      },
-    })
-  }
-  className="h-4 w-4 border-gray-400 rounded"
-/>
+              <div className="flex items-center gap-2 ">
+                <input
+                  id="booking-allowed"
+                  type="checkbox"
+                  name="booking_allowed"
+                  checked={formData.booking_allowed}
+                  onChange={(e) =>
+                    handleChange({
+                      target: {
+                        name: "booking_allowed",
+                        value: e.target.checked, // Pass the boolean value
+                      },
+                    })
+                  }
+                  className="h-4 w-4 border-gray-400 rounded"
+                />
 
-      <label
-        htmlFor="booking-allowed"
-        
-      >
-        Booking Allowed
-      </label>
-    </div>
- 
-    
-  </div>
+                <label
+                  htmlFor="booking-allowed"
+
+                >
+                  Booking Allowed
+                </label>
+              </div>
+
+
+            </div>
             <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">Break Start Time</label>
-              <input type="time" 
-               value={formData.break_start_time}
-               name="break_start_time"
-               onChange={handleChange}
-              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time"/>
+              <input type="time"
+                value={formData.break_start_time}
+                name="break_start_time"
+                onChange={handleChange}
+                className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Start time" />
             </div>
             <div className="col-span-1">
-              <label htmlFor="" 
-              
-              className="block  mb-2">Break End Time</label>
-              <input type="time" 
-               value={formData.break_end_time}
-               name="break_end_time"
-               onChange={handleChange}
-              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+              <label htmlFor=""
+
+                className="block  mb-2">Break End Time</label>
+              <input type="time"
+                value={formData.break_end_time}
+                name="break_end_time"
+                onChange={handleChange}
+                className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time" />
             </div>
 
-           
+
             <div className="flex items-center gap-2 ">
-            <input
-    id="order-allowed"
-    type="checkbox"
-    name="order_allowed"
-    checked={formData.order_allowed}
-    onChange={(e) =>
-      handleChange({
-        target: {
-          name: "order_allowed",
-          value: e.target.checked, // Pass the boolean value
-        },
-      })
-    }
-    className="h-4 w-4 border-gray-400 rounded"
-  />
-      <label
-        htmlFor="order-allowed"
-        
-      >
-        Order Allowed
-      </label>
-    </div>
+              <input
+                id="order-allowed"
+                type="checkbox"
+                name="order_allowed"
+                checked={formData.order_allowed}
+                onChange={(e) =>
+                  handleChange({
+                    target: {
+                      name: "order_allowed",
+                      value: e.target.checked, // Pass the boolean value
+                    },
+                  })
+                }
+                className="h-4 w-4 border-gray-400 rounded"
+              />
+              <label
+                htmlFor="order-allowed"
+
+              >
+                Order Allowed
+              </label>
+            </div>
             <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">Last Booking & Order Time</label>
-              <input type="time" 
-              value={formData.last_booking_time}
-              name="last_booking_time"
-              onChange={handleChange}
-              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time"/>
+              <input type="time"
+                value={formData.last_booking_time}
+                name="last_booking_time"
+                onChange={handleChange}
+                className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="End time" />
             </div>
-            </div>
+          </div>
         </div>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             BLOCKED DAYS
           </h3>
           <div>
-          <button
-        onClick={addRow}
-        className="px-4 py-2 border border-blue-500 rounded bg-blue-500 text-white hover:bg-blue-600"
-        style={{ background: themeColor }}
-      >
-        Add
-      </button>
-          {rows.map((row, index) => (
-        <div key={index} className="mb-2 flex gap-4 items-center">
-          <div>
-            <input
-              type="checkbox"
-              checked={row.order}
-              onChange={(e) => {
-                const newRows = [...rows];
-                newRows[index].order = e.target.checked;
-                setRows(newRows);
-              }}
-            />
-            &nbsp;&nbsp;
-            <label >Order</label>
+            <button
+              onClick={addRow}
+              className="px-4 py-2 border border-blue-500 rounded bg-blue-500 text-white hover:bg-blue-600"
+              style={{ background: themeColor }}
+            >
+              Add
+            </button>
+            {rows.map((row, index) => (
+              <div key={index} className="mb-2 flex gap-4 items-center">
+                <div>
+                  <input
+                    type="checkbox"
+                    checked={row.order}
+                    onChange={(e) => {
+                      const newRows = [...rows];
+                      newRows[index].order = e.target.checked;
+                      setRows(newRows);
+                    }}
+                  />
+                  &nbsp;&nbsp;
+                  <label >Order</label>
+                </div>
+                &nbsp;&nbsp;
+                <div>
+                  <input
+                    type="checkbox"
+                    checked={row.booking}
+                    onChange={(e) => {
+                      const newRows = [...rows];
+                      newRows[index].booking = e.target.checked;
+                      setRows(newRows);
+                    }}
+                  />
+                  &nbsp;&nbsp;
+                  <label >Booking</label>
+                </div>
+                &nbsp;&nbsp;
+                <label htmlFor="" >Start Date:</label>
+                <input
+                  type="date"
+                  className="border border-gray-400 p-1 rounded-md"
+                  value={row.startDate}
+                  onChange={(e) => {
+                    const newRows = [...rows];
+                    newRows[index].startDate = e.target.value;
+                    setRows(newRows);
+                  }}
+                />
+                &nbsp;&nbsp;
+                <label htmlFor="" >End Date:</label>
+                <input
+                  type="date"
+                  className="border border-gray-400 p-1 rounded-md"
+                  value={row.endDate}
+                  onChange={(e) => {
+                    const newRows = [...rows];
+                    newRows[index].endDate = e.target.value;
+                    setRows(newRows);
+                  }}
+                />
+                &nbsp;
+                <button
+                  onClick={() => deleteRow(index)}
+                  className=""
+                >
+                  <FaTrash size={15} />
+                </button>
+              </div>
+            ))}
           </div>
-          &nbsp;&nbsp;
-          <div>
-            <input
-              type="checkbox"
-              checked={row.booking}
-              onChange={(e) => {
-                const newRows = [...rows];
-                newRows[index].booking = e.target.checked;
-                setRows(newRows);
-              }}
-            />
-            &nbsp;&nbsp;
-            <label >Booking</label>
-          </div>
-          &nbsp;&nbsp;
-          <label htmlFor="" >Start Date:</label>
-          <input
-            type="date"
-            className="border border-gray-400 p-1 rounded-md"
-            value={row.startDate}
-            onChange={(e) => {
-              const newRows = [...rows];
-              newRows[index].startDate = e.target.value;
-              setRows(newRows);
-            }}
-          />
-          &nbsp;&nbsp;
-          <label htmlFor="" >End Date:</label>
-          <input
-            type="date"
-            className="border border-gray-400 p-1 rounded-md"
-            value={row.endDate}
-            onChange={(e) => {
-              const newRows = [...rows];
-              newRows[index].endDate = e.target.value;
-              setRows(newRows);
-            }}
-          />
-          &nbsp;
-          <button
-            onClick={() => deleteRow(index)}
-            className=""
-          >
-            <FaTrash size={15} />
-          </button>
-        </div>
-      ))}
-</div>
         </div>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             TABLE BOOKING
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="col-span-1">
+            <div className="col-span-1">
               <label htmlFor="" className="block  mb-2">Number of Tables</label>
-              <input type="text" 
-               value={formData.table_number}
-               name="table_number"
-               onChange={handleChange}
-              className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Tables"/>
+              <input type="text"
+                value={formData.table_number}
+                name="table_number"
+                onChange={handleChange}
+                className="border border-gray-400 p-2 rounded-md placeholder:text-sm w-full" placeholder="Enter Tables" />
             </div>
             {/* <div className="col-span-1">
               <label htmlFor="" className="block text-gray-700 font-bold mb-2">Start Date</label>
@@ -1188,8 +1198,8 @@ const FBRestaurtantEdit = () => {
                 placeholder="Booking Not Allowed Text"
               />
             </div>
-          
-           
+
+
           </div>
         </div>
         <div className="w-full mx-3 my-5 p-5 shadow-lg rounded-lg border border-gray-300">
@@ -1288,34 +1298,75 @@ const FBRestaurtantEdit = () => {
           <h3 className="border-b text-center text-xl border-black mb-6 font-bold">
             ATTACHMENTS
           </h3>
-          <label htmlFor="" className="font-medium my-1 ">
+          <label className="font-medium my-1">
             Cover Image
           </label>
 
+          <div className="flex gap-4 flex-wrap mb-3">
+            {existingImages.cover?.map((img) => (
+              <div key={img.id} className="relative">
+                <img
+                  src={`${domainPrefix}${img.image_url}`}
+                  alt="cover"
+                  className="w-24 h-24 object-cover rounded border"
+                />
+              </div>
+            ))}
+          </div>
+
           <FileInputBox
             handleChange={(files) => handleFileChange(files, "cover_image")}
-            fieldName={"cover_image"}
-            // isMulti={true}
+            fieldName="cover_image"
           />
-          <label htmlFor="" className="font-medium ">
+          <label className="font-medium">
             Menu
           </label>
+
+          <div className="flex gap-4 flex-wrap mb-3">
+            {existingImages.menu?.map((img) => (
+              <img
+                key={img.id}
+                src={`${domainPrefix}${img.image_url}`}
+                alt="menu"
+                className="w-24 h-24 object-cover rounded border"
+              />
+            ))}
+          </div>
+
           <FileInputBox
             handleChange={(files) => handleFileChange(files, "menu")}
-            fieldName={"Menu"}
+            fieldName="Menu"
             isMulti={true}
           />
-          <label htmlFor="" className="font-medium my-1 ">
+          <label className="font-medium my-1">
             Gallery
           </label>
+
+          <div className="flex gap-4 flex-wrap mb-3">
+            {existingImages.gallery?.map((img) => (
+              <img
+                key={img.id}
+                src={`${domainPrefix}${img.image_url}`}
+                alt="gallery"
+                className="w-24 h-24 object-cover rounded border"
+              />
+            ))}
+          </div>
+
           <FileInputBox
             handleChange={(files) => handleFileChange(files, "gallery")}
-            fieldName={"gallery"}
+            fieldName="gallery"
             isMulti={true}
           />
         </div>
 
-        <div className="sm:flex justify-center grid gap-2 my-5 ">
+        <div className="sm:flex justify-end grid gap-2 my-5 ">
+          <button
+            className="bg-black text-white p-2 px-4 rounded-md font-medium"
+            onClick={() => navigate("/admin/fb")}
+          >
+            Cancel
+          </button>
           <button
             className="bg-black text-white p-2 px-4 rounded-md font-medium"
             onClick={handleSubmit}

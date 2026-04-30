@@ -842,6 +842,7 @@ import PetsView from "./pages/Setup/Pets/PetsView";
 import PetsEdit from "./pages/Setup/Pets/PetsEdit";
 import BookingCalendar from "./pages/BookingCalendar";
 import RVehiclesView from "./pages/SubPages/RVehiclesView";
+import PantryDetails from "./pages/PantryDetails.jsx";
 
 
 
@@ -3522,6 +3523,22 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <FBRestaurtantEdit />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/add-pantry"
+          element={
+            <ProtectedAdminRoutes>
+              <AddPantry />
+            </ProtectedAdminRoutes>
+          }
+        />
+         <Route
+          path="/admin/pantry-details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <PantryDetails />
             </ProtectedAdminRoutes>
           }
         />
