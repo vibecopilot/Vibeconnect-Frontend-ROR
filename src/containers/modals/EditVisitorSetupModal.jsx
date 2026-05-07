@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import ModalWrapper from "./ModalWrapper";
 
-const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,type }) => {
+const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType, editData, type }) => {
   const themeColor = useSelector((state) => state.theme.color);
   const token = "e6fbf77f4fbb5a72c4150e495c961972f0f14059d8a6670f";
   const BASE_URL = "https://admin.vibecopilot.ai";
@@ -13,9 +13,11 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
   const [code, setCode] = useState("");
   const [active, setActive] = useState(true);
   const [iconFile, setIconFile] = useState(null);
-  const [currentIcon, setCurrentIcon] = useState(""); 
-  const [iconPreview, setIconPreview] = useState(""); 
+  const [currentIcon, setCurrentIcon] = useState("");
+  const [iconPreview, setIconPreview] = useState("");
   const iconInputRef = useRef(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [visitorCategories, setVisitorCategories] = useState([]);
 
   useEffect(() => {
     if (!catId) return;
@@ -29,13 +31,41 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
           setName(category?.name || "");
           setCode(category?.code || "");
           setCurrentIcon(category?.icon ? (category.icon.startsWith("http") ? category.icon : `${BASE_URL}${category.icon}`) : "");
-        } 
+        }
         else if (editType === "visitorSubCategory") {
-          const res = await axios.get(`${BASE_URL}/visitor_sub_categories.json?token=${token}`);
-          category = res.data.find(item => item.id === catId);
+          const res = await axios.get(
+            `${BASE_URL}/visitor_sub_categories.json?token=${token}`
+          );
+
+          const subCategories =
+            res.data?.visitor_sub_categories ||
+            (Array.isArray(res.data) ? res.data : []);
+
+          category = subCategories.find(
+            (item) => Number(item.id) === Number(catId)
+          );
+
+          console.log("SubCategory Data:", category);
+
           setName(category?.name || "");
-          setCurrentIcon(category?.iconv2 ? (category.iconv2.startsWith("http") ? category.iconv2 : `${BASE_URL}${category.iconv2}`) : "");
-        } 
+
+          // ✅ THIS IS THE MAIN FIX
+          setSelectedCategoryId(
+            category?.visitor_category_id
+              ? String(category.visitor_category_id)
+              : ""
+          );
+
+          setActive(category?.active ?? true);
+
+          setCurrentIcon(
+            category?.iconv2
+              ? category.iconv2.startsWith("http")
+                ? category.iconv2
+                : `${BASE_URL}${category.iconv2}`
+              : ""
+          );
+        }
         else {
           const res = await axios.get(`${BASE_URL}/visitor_staff_categories.json?token=${token}`);
           category = res.data.staff_categories?.find(item => item.id === catId);
@@ -49,6 +79,27 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
 
     fetchDetails();
   }, [catId, editType]);
+
+  useEffect(() => {
+    const fetchVisitorCategories = async () => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/visitor_categories.json?token=${token}`
+        );
+
+        const categories =
+          res.data?.visitor_categories ||
+          (Array.isArray(res.data) ? res.data : []);
+
+        setVisitorCategories(categories);
+      } catch (error) {
+        console.error("Failed to fetch visitor categories", error);
+      }
+    };
+
+    fetchVisitorCategories();
+  }, []);
+
 
   const handleIconChange = (e) => {
     const file = e.target.files[0];
@@ -71,13 +122,36 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
         formData.append("visitor_category[active]", active ? "1" : "0");
         if (iconFile) formData.append("visitor_category[icon_attributes][image]", iconFile);
         await axios.patch(`${BASE_URL}/visitor_categories/${catId}.json?token=${token}`, formData);
-      } 
+      }
       else if (editType === "visitorSubCategory") {
-        formData.append("visitor_sub_category[name]", name.trim());
-        formData.append("visitor_sub_category[active]", active ? "1" : "0");
-        if (iconFile) formData.append("visitor_sub_category[iconv2_attributes][image]", iconFile);
-        await axios.put(`${BASE_URL}/visitor_sub_categories/${catId}.json?token=${token}`, formData);
-      } 
+        formData.append(
+          "visitor_sub_category[name]",
+          name.trim()
+        );
+
+        formData.append(
+          "visitor_sub_category[visitor_category_id]",
+          selectedCategoryId
+        );
+
+        formData.append(
+          "visitor_sub_category[active]",
+          active ? "1" : "0"
+        );
+
+        if (iconFile) {
+          formData.append(
+            "visitor_sub_category[iconv2_attributes][image]",
+            iconFile
+          );
+        }
+
+        await axios.put(
+          `${BASE_URL}/visitor_sub_categories/${catId}.json?token=${token}`,
+          formData
+        );
+      }
+
       else {
         formData.append("name", name.trim());
         await axios.patch(`${BASE_URL}/visitor_staff_categories/${catId}.json?token=${token}`, formData);
@@ -91,22 +165,22 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
     }
   };
 
-   useEffect(() => {
-  if (editData && type === "visitorCategory") {
-    setName(editData.name || "");
-    setCode(editData.code || "");  // 🔥 THIS IS THE MAIN FIX
-    setActive(editData.active ?? true);
+  useEffect(() => {
+    if (editData && type === "visitorCategory") {
+      setName(editData.name || "");
+      setCode(editData.code || "");  // 🔥 THIS IS THE MAIN FIX
+      setActive(editData.active ?? true);
 
-    if (editData.icon) {
-      setIconPreview(`https://admin.vibecopilot.ai${editData.icon}`);
+      if (editData.icon) {
+        setIconPreview(`https://admin.vibecopilot.ai${editData.icon}`);
+      }
     }
-  }
-}, [editData, type]);
+  }, [editData, type]);
   return (
     <ModalWrapper onclose={onclose}>
       <div className="flex flex-col p-6 max-w-md mx-auto">
         <h2 className="border-b pb-4 text-center font-bold text-xl mb-4">Edit Category</h2>
-        
+
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-1">Name</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
@@ -115,7 +189,7 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
         {editType === "visitorCategory" && (
           <div className="mb-4">
             <label className="block text-sm font-semibold mb-1">Code</label>
-  <select
+            <select
               value={code}
               onChange={(e) => setCode(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg outline-none"
@@ -126,7 +200,27 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType,editData,typ
               <option value="OTHER">Other</option>
             </select>          </div>
         )}
+        {editType === "visitorSubCategory" && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">
+              Parent Category
+            </label>
 
+            <select
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            >
+              <option value="">Select Category</option>
+
+              {visitorCategories.map((cat) => (
+                <option key={cat.id} value={String(cat.id)}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         {(editType === "visitorCategory" || editType === "visitorSubCategory") && (
           <div className="mb-4">
             <label className="block text-sm font-semibold mb-1">Icon</label>

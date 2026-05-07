@@ -148,10 +148,7 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
         if (!selectedCategoryId)
           return toast.error("Please select parent category");
 
-        formData.append(
-          "visitor_sub_category[site_id]",
-          siteId
-        );
+        formData.append("visitor_sub_category[site_id]", siteId);
         formData.append("visitor_sub_category[name]", name.trim());
         formData.append(
           "visitor_sub_category[visitor_category_id]",
