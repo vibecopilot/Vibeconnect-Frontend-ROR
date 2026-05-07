@@ -12,7 +12,7 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] }) => {
   const themeColor = useSelector((state) => state.theme.color);
   const token = getItemInLocalStorage("TOKEN");
-  // const siteId = getItemInLocalStorage("SITE_ID"); 
+  // const siteId = getItemInLocalStorage("SITEID"); 
   // const siteId = useSelector((state) => state.auth.site_id);
 
 
@@ -148,6 +148,10 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
         if (!selectedCategoryId)
           return toast.error("Please select parent category");
 
+        formData.append(
+          "visitor_sub_category[site_id]",
+          siteId
+        );
         formData.append("visitor_sub_category[name]", name.trim());
         formData.append(
           "visitor_sub_category[visitor_category_id]",
@@ -175,25 +179,25 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
         );
       }
 
-     else if (type === "staffCategory") {
-  const formData = new FormData();
+      else if (type === "staffCategory") {
+        const formData = new FormData();
 
-  formData.append(
-    "name",
-    name.trim()
-  );
+        formData.append(
+          "name",
+          name.trim()
+        );
 
-  await axios.post(
-    `https://admin.vibecopilot.ai/visitor_staff_categories.json`,
-    formData,
-    {
-      params: { token: token },
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-}
+        await axios.post(
+          `https://admin.vibecopilot.ai/visitor_staff_categories.json`,
+          formData,
+          {
+            params: { token: token },
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      }
       toast.success("Added successfully", { id: "add-category" });
 
       setAdded();   // 🔁 THIS TRIGGERS RELOAD
