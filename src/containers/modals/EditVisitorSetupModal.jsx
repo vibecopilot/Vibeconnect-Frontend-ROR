@@ -46,6 +46,7 @@ const EditVisitorSetupModal = ({ onclose, catId, setAdded, editType, editData, t
           );
 
           console.log("SubCategory Data:", category);
+          
 
           setName(category?.name || "");
 
