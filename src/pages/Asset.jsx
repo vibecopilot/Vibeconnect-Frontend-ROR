@@ -74,6 +74,9 @@ const Asset = () => {
   const [selectedVendor, setSelectedVendor] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedSubGroup, setSelectedSubGroup] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+
 
   const [vendors, setVendors] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -161,14 +164,58 @@ const Asset = () => {
   document.title = `Assets - Vibe Connect`;
   const column = [
     {
-      name: "Action",
-      cell: (row) => (
+      name: (
         <div className="flex items-center gap-4">
+          {/* Header Checkbox */}
+          <input
+            type="checkbox"
+            checked={
+              filteredData.length > 0 &&
+              selectedRows.length === filteredData.length
+            }
+            onChange={(e) => {
+              if (e.target.checked) {
+                setSelectedRows(filteredData.map((row) => row.id));
+              } else {
+                setSelectedRows([]);
+              }
+            }}
+            className="w-3 h-3 cursor-pointer"
+          />
+          <span>ACTION</span>
+        </div>
+      ),
+      width: "140px",
+      cell: (row) => (
+        <div className="flex items-center gap-4 pl-1">
+          {/* Row Checkbox */}
+          <input
+            type="checkbox"
+            checked={selectedRows.includes(row.id)}
+            onChange={() => {
+              setSelectedRows((prev) =>
+                prev.includes(row.id)
+                  ? prev.filter((id) => id !== row.id)
+                  : [...prev, row.id]
+              );
+            }}
+            className="w-3 h-3 cursor-pointer"
+          />
+
+          {/* View */}
           <Link to={`/assets/asset-details/${row.id}`}>
-            <BsEye size={15} />
+            <BsEye
+              size={14}
+              className="text-gray-600 hover:text-black cursor-pointer"
+            />
           </Link>
+
+          {/* Edit */}
           <Link to={`/assets/edit-asset/${row.id}`}>
-            <BiEdit size={15} />
+            <BiEdit
+              size={14}
+              className="text-gray-600 hover:text-black cursor-pointer"
+            />
           </Link>
         </div>
       ),
@@ -248,7 +295,7 @@ const Asset = () => {
         <label className="inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
-            checked={!row.breakdown} 
+            checked={!row.breakdown}
             onChange={() => handleStatusToggle(row)}
             className="sr-only peer"
           />
@@ -309,7 +356,7 @@ const Asset = () => {
     },
   ];
 
-  const [filteredData, setFilteredData] = useState([]);
+
 
   // const handleSearch = (e) => {
   //   const searchValue = e.target.value;
@@ -333,7 +380,7 @@ const Asset = () => {
   //   }
   // };
 
-  
+
 
   const handleSearch = async (e) => {
     const searchValue = e.target.value;
@@ -385,27 +432,27 @@ const Asset = () => {
   };
 
   const handleStatusToggle = async (row) => {
-  try {
-    const newBreakdownStatus = !row.breakdown;
+    try {
+      const newBreakdownStatus = !row.breakdown;
 
-    // ✅ Call correct API
-    await updateBreakdown(row.id, newBreakdownStatus, token);
+      // ✅ Call correct API
+      await updateBreakdown(row.id, newBreakdownStatus, token);
 
-    // ✅ Update UI instantly
-    const updatedData = filteredData.map((item) =>
-      item.id === row.id
-        ? { ...item, breakdown: newBreakdownStatus }
-        : item
-    );
+      // ✅ Update UI instantly
+      const updatedData = filteredData.map((item) =>
+        item.id === row.id
+          ? { ...item, breakdown: newBreakdownStatus }
+          : item
+      );
 
-    setFilteredData(updatedData);
+      setFilteredData(updatedData);
 
-    toast.success("Status updated successfully");
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to update status");
-  }
-};
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update status");
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -612,7 +659,6 @@ const Asset = () => {
 
   console.log(uploadModal);
 
-  const [selectedRows, setSelectedRows] = useState([]);
 
   const handleSelectedRows = (rows) => {
     const selectedId = rows.map((row) => row.id);
