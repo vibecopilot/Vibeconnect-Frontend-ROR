@@ -15,6 +15,7 @@ import {
   deleteChecklistGroup,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 function CheckListGroupSetup() {
   const [addGroup, showAddGroup] = useState(false);
@@ -74,6 +75,7 @@ function CheckListGroupSetup() {
             item.id === editData.id ? updatedGroup : item
           )
         );
+         toast.success("Group updated successfully");
         setEditData(null);
       } else {
         const payload = {
@@ -89,6 +91,7 @@ function CheckListGroupSetup() {
         };
         setGroups((prev) => [...prev, newGroup]);
       }
+       toast.success("Group Added successfully");
       showAddGroup(false);
     } catch (error) {
       console.error("Error saving group:", error);
