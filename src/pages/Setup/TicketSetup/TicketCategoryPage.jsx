@@ -136,11 +136,13 @@ const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
     });
     try {
       const resp = await postHelpDeskCategoriesSetup(sendData);
+      toast.success("Category added successfully");
       setCatAdded(true);
       handleToggleCategoryPage();
       setFormData({ ...formData, category: "", minTat: "", engineer: [] });
     } catch (error) {
       console.log(error);
+      toast.error("Failed to add category");
     } finally {
       setTimeout(() => {
         setCatAdded(false);

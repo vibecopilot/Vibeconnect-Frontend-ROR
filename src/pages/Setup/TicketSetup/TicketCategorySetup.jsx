@@ -160,9 +160,11 @@ const TicketCategorySetup = () => {
     formData.append("id", id);
     try {
       const res = deleteHelpDeskCategorySetup(id, formData);
+      toast.success("Category deleted successfully");
       setCatAdded(true);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to delete category");
     } finally {
       setTimeout(() => {
         setCatAdded(false);
