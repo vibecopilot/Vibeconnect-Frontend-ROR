@@ -30,8 +30,11 @@ const EditStatusModal = ({ onClose, id, onUpdated }) => {
   };
 
   // Color picker handler
-  const handleColorChange = (_, hex) => {
-    setFormData((prev) => ({ ...prev, color: hex }));
+  const handleColorChange = (color) => {
+    setFormData((prev) => ({
+      ...prev,
+      color: color.toHexString(),
+    }));
   };
 
   useEffect(() => {
@@ -65,17 +68,36 @@ const EditStatusModal = ({ onClose, id, onUpdated }) => {
 
     setLoading(true);
 
-    const payload = new FormData();
-
-    payload.append("complaint_status[name]", formData.status);
-    payload.append("complaint_status[fixed_state]", formData.fixedState);
-    payload.append("complaint_status[color_code]", formData.color);
-    payload.append("complaint_status[position]", formData.order);
-    payload.append("complaint_status[of_phase]", "pms");
-    payload.append("complaint_status[society_id]", siteID);
-
     try {
-      await updateHelpDeskStatus(id, payload);
+      const payload = new FormData();
+
+      payload.append("complaint_status[name]", formData.status);
+      payload.append(
+        "complaint_status[fixed_state]",
+        formData.fixedState
+      );
+
+      // remove extra quotes if any
+      payload.append(
+        "complaint_status[color_code]",
+        formData.color.replace(/"/g, "")
+      );
+
+      payload.append(
+        "complaint_status[position]",
+        String(formData.order)
+      );
+
+      payload.append("complaint_status[of_phase]", "pms");
+
+      payload.append(
+        "complaint_status[society_id]",
+        String(siteID)
+      );
+
+      const response = await updateHelpDeskStatus(id, payload);
+
+      console.log("Update Success:", response.data);
 
       toast.success("Status updated successfully");
 
@@ -85,8 +107,11 @@ const EditStatusModal = ({ onClose, id, onUpdated }) => {
 
       onClose();
     } catch (error) {
-      console.error(error);
-      toast.error("Update failed");
+      console.error("UPDATE ERROR:", error?.response || error);
+
+      toast.error(
+        error?.response?.data?.message || "Update failed"
+      );
     } finally {
       setLoading(false);
     }

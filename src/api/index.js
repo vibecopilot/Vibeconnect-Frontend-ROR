@@ -833,12 +833,17 @@ export const postHelpDeskStatus = async (formData) =>
 // };
 // HelpDesk Status API
 
-export const updateHelpDeskStatus = async (id, formData) =>
-  axiosInstance.put(`/pms/admin/helpdesk_categories/complaint_statuses/${id}.json?token=${token}`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+export const updateHelpDeskStatus = async (id, formData) => {
+  return axiosInstance.patch(
+    `pms/admin/helpdesk_categories/update_complaint_statuses/${id}.json?token=${token}`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+};
 export const postHelpDeskStatusSetup = async (data) =>
   axiosInstance.post(`/pms/admin/create_complaint_statuses.json`, data, {
     params: {
