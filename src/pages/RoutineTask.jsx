@@ -17,7 +17,7 @@ const RoutineTask = () => {
   const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
-  
+
 
   const formatInputDate = (date) => {
     return date.toISOString().split("T")[0];
@@ -75,35 +75,35 @@ const RoutineTask = () => {
 
 
 
-const fetchTasks = async (
-  status = null,
-  start = null,
-  end = null,
-  page = 1,
-  per_page = 10
-) => {
-  try {
-    setIsLoading(true);
+  const fetchTasks = async (
+    status = null,
+    start = null,
+    end = null,
+    page = 1,
+    per_page = 10
+  ) => {
+    try {
+      setIsLoading(true);
 
-    const data = await getRoutineTaskStatus(status, start, end, page, per_page);
+      const data = await getRoutineTaskStatus(status, start, end, page, per_page);
 
-    const activities = data?.activities || [];
+      const activities = data?.activities || [];
 
-    // store full list
-    setTasks(activities);
+      // store full list
+      setTasks(activities);
 
-    // show same list initially
-    setFilteredData(activities);
+      // show same list initially
+      setFilteredData(activities);
 
-    // counts should come from full list
-    setStatusCounts(calculateStatusCounts(activities));
+      // counts should come from full list
+      setStatusCounts(calculateStatusCounts(activities));
 
-  } catch (error) {
-    toast.error("Failed to load activities");
-  } finally {
-    setIsLoading(false);
-  }
-};
+    } catch (error) {
+      toast.error("Failed to load activities");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   /* ---------------------- INITIAL LOAD ---------------------- */
 
@@ -114,35 +114,35 @@ const fetchTasks = async (
   /* ---------------------- SEARCH ---------------------- */
 
   const handleSearch = (e) => {
-  const value = e.target.value.toLowerCase();
-  setSearchText(value);
+    const value = e.target.value.toLowerCase();
+    setSearchText(value);
 
-  const filtered = tasks.filter(
-    (item) =>
-      item.asset_name?.toLowerCase().includes(value) ||
-      item.checklist_name?.toLowerCase().includes(value) ||
-      item.assigned_to_name?.toLowerCase().includes(value)
-  );
+    const filtered = tasks.filter(
+      (item) =>
+        item.asset_name?.toLowerCase().includes(value) ||
+        item.checklist_name?.toLowerCase().includes(value) ||
+        item.assigned_to_name?.toLowerCase().includes(value)
+    );
 
-  setFilteredData(filtered);
-  // setStatusCounts(calculateStatusCounts(filtered));
-};
+    setFilteredData(filtered);
+    // setStatusCounts(calculateStatusCounts(filtered));
+  };
 
   /* ---------------------- STATUS FILTER ---------------------- */
 
   const handleStatusChange = (statusKey) => {
-  setSelectedStatus(statusKey);
+    setSelectedStatus(statusKey);
 
-  if (statusKey === "all") {
-    setFilteredData(tasks);
-  } else {
-    const filtered = tasks.filter(
-      (item) => item.status?.toLowerCase() === statusKey
-    );
+    if (statusKey === "all") {
+      setFilteredData(tasks);
+    } else {
+      const filtered = tasks.filter(
+        (item) => item.status?.toLowerCase() === statusKey
+      );
 
-    setFilteredData(filtered);
-  }
-};
+      setFilteredData(filtered);
+    }
+  };
   /* ---------------------- DATE FILTER ---------------------- */
 
   const handleDateFilter = () => {
@@ -155,62 +155,62 @@ const fetchTasks = async (
 
   /* ---------------------- CLEAR FILTER ---------------------- */
 
- const handleClearFilters = () => {
-  setStartDate(formatInputDate(today));
-  setEndDate(formatInputDate(tomorrow));
-  setSelectedStatus("all");
-  setSearchText("");
+  const handleClearFilters = () => {
+    setStartDate(formatInputDate(today));
+    setEndDate(formatInputDate(tomorrow));
+    setSelectedStatus("all");
+    setSearchText("");
 
-  fetchTasks(null, formatInputDate(today), formatInputDate(tomorrow));
-};
-
-  const calculateStatusCounts = (data) => {
-  const counts = {
-    all: data.length,
-    pending: 0,
-    overdue: 0,
-    complete: 0,
+    fetchTasks(null, formatInputDate(today), formatInputDate(tomorrow));
   };
 
-  data.forEach((item) => {
-    const status = item.status?.toLowerCase();
+  const calculateStatusCounts = (data) => {
+    const counts = {
+      all: data.length,
+      pending: 0,
+      overdue: 0,
+      complete: 0,
+    };
 
-    if (status === "pending") counts.pending += 1;
-    if (status === "overdue") counts.overdue += 1;
-    if (status === "complete") counts.complete += 1;
-  });
+    data.forEach((item) => {
+      const status = item.status?.toLowerCase();
 
-  return counts;
-};
-  /* ---------------------- EXPORT ---------------------- */
-
-const exportToExcel = async () => {
-  try {
-    const response = await exportRoutineTasks(
-      startDate,
-      endDate
-    );
-
-    const blob = new Blob([response.data], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      if (status === "pending") counts.pending += 1;
+      if (status === "overdue") counts.overdue += 1;
+      if (status === "complete") counts.complete += 1;
     });
 
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
+    return counts;
+  };
+  /* ---------------------- EXPORT ---------------------- */
 
-    link.href = url;
-    link.download = "routine_tasks_export.xlsx";
+  const exportToExcel = async () => {
+    try {
+      const response = await exportRoutineTasks(
+        startDate,
+        endDate
+      );
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
 
-    toast.success("Export downloaded successfully");
-  } catch (error) {
-    console.error("Export error:", error);
-    toast.error("Failed to export data");
-  }
-};
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+
+      link.href = url;
+      link.download = "routine_tasks_export.xlsx";
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Export downloaded successfully");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export data");
+    }
+  };
   /* ---------------------- TABLE COLUMNS ---------------------- */
 
   const RoutineColumns = [
@@ -230,7 +230,7 @@ const exportToExcel = async () => {
       selector: (row) => row.checklist_name,
       width: "150px",
     },
-    { name: "Checklist Group", selector: (row) => row.checklist_group || "-", sortable: true  },
+    { name: "Checklist Group", selector: (row) => row.checklist_group || "-", sortable: true },
 
     {
       name: "Start Date",
@@ -260,12 +260,22 @@ const exportToExcel = async () => {
         );
       },
     },
-
+    {
+      name: "Schedule Time",
+      selector: (row) =>
+        row.created_at
+          ? new Date(row.created_at).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          })
+          : "-",
+    },
     {
       name: "Assigned To",
       selector: (row) => row.assigned_to_name,
     },
-     {
+    {
       name: "Approvals Status",
       // selector: (row) => row.is_approved === null ? (
       //   <span className="text-yellow-500">Pending</span>
@@ -276,7 +286,8 @@ const exportToExcel = async () => {
       // ),
       sortable: true,
     },
-     {
+
+    {
       name: "Approvals",
       cell: (row) => (
         <div className="flex items-center gap-3">
@@ -427,15 +438,15 @@ const exportToExcel = async () => {
         )}
 
         {/* -------- TABLE -------- */}
- {filteredData.length === 0 ? (
-  <div className="bg-white shadow rounded-lg p-10 text-center mt-4">
-    <h2 className="text-xl font-semibold text-gray-600">
-      No Submission Yet
-    </h2>
-  </div>
-) : (
-        <Table columns={RoutineColumns} data={filteredData} isPagination />
-)}
+        {filteredData.length === 0 ? (
+          <div className="bg-white shadow rounded-lg p-10 text-center mt-4">
+            <h2 className="text-xl font-semibold text-gray-600">
+              No Submission Yet
+            </h2>
+          </div>
+        ) : (
+          <Table columns={RoutineColumns} data={filteredData} isPagination />
+        )}
       </div>
     </section>
   );
