@@ -46,8 +46,15 @@ const OtherProject = () => {
     title: "",
     description: "",
     address: "",
+    contact_us: "",
     attachments: null,
     pdf: null,
+    amenities: [
+      {
+        name: "",
+        icon: null,
+      },
+    ],
   });
 
   const resetForm = useCallback(() => {
@@ -55,8 +62,15 @@ const OtherProject = () => {
       title: "",
       description: "",
       address: "",
+      contact_us: "",
       attachments: null,
       pdf: null,
+      amenities: [
+        {
+          name: "",
+          icon: null,
+        },
+      ],
     });
     if (fileImageRef.current) fileImageRef.current.value = "";
     if (filePdfRef.current) filePdfRef.current.value = "";
@@ -252,11 +266,22 @@ const OtherProject = () => {
           (Array.isArray(project?.likes) ? project.likes.length : 0) ??
           0;
 
+        const amenities = Array.isArray(project?.other_p_amenities)
+          ? project.other_p_amenities.map((item) => ({
+            id: item?.id,
+            name: item?.name || "",
+            icon: item?.icon_url
+              ? buildFileUrl(item.icon_url)
+              : null,
+          }))
+          : [];
+
         return {
           ...project,
           likeCount,
           likedByMe,
           likeUsers,
+          amenities,
           images: images.length > 0 ? images : [PLACEHOLDER],
         };
       });
@@ -374,6 +399,22 @@ const OtherProject = () => {
     fd.append("other_project[title]", formData.title?.trim() || "");
     fd.append("other_project[description]", formData.description?.trim() || "");
     fd.append("other_project[address]", formData.address?.trim() || "");
+    fd.append(
+      "other_project[contact_us]",
+      formData.contact_us?.trim() || ""
+    );
+    if (Array.isArray(formData.amenities)) {
+      formData.amenities.forEach((amenity, index) => {
+        fd.append(
+          `other_project[other_p_amenities_attributes][${index}][name]`,
+          amenity.name || ""
+        );
+
+        if (amenity.icon) {
+          fd.append(`amenity_icons[${index}]`, amenity.icon);
+        }
+      });
+    }
     if (companyId) {
       fd.append("other_project[company_id]", companyId);
     }
@@ -574,7 +615,19 @@ const OtherProject = () => {
                         <FiHeart fill={isLiked ? "currentColor" : "none"} />
                         <span className="text-sm">{project.likeCount ?? 0}</span>
                       </button>
+
                     </div>
+                    {project.contact_us && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-medium text-blue-600 whitespace-nowrap">
+                          Contact Number :
+                        </span>
+
+                        <span className="text-sm text-gray-700 break-all">
+                          {project.contact_us}
+                        </span>
+                      </div>
+                    )}
 
                     {/* ✅ Clickable "You and others" */}
                     {renderLikedByLine(project)}
@@ -582,6 +635,40 @@ const OtherProject = () => {
                     <p className="text-sm text-gray-600 line-clamp-3">
                       {project.description || "—"}
                     </p>
+                    {/* Amenities */}
+                    {Array.isArray(project?.amenities) &&
+                      project.amenities.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                            Amenities
+                          </h3>
+
+                          <div className="flex flex-wrap gap-3">
+                            {project.amenities.map((amenity) => (
+                              <div
+                                key={amenity.id}
+                                className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg"
+                              >
+                                {amenity.icon ? (
+                                  <img
+                                    src={amenity.icon}
+                                    alt={amenity.name}
+                                    className="h-8 w-8 rounded object-cover cursor-pointer"
+                                    onClick={() => window.open(amenity.icon, "_blank")}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                ) : null}
+
+                                <span className="text-sm text-gray-700">
+                                  {amenity.name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 </div>
               );
@@ -624,6 +711,102 @@ const OtherProject = () => {
                 onChange={(e) => setFormData((p) => ({ ...p, address: e.target.value }))}
                 className="border rounded-lg p-2 w-full"
               />
+
+              <input
+                placeholder="Contact Number"
+                value={formData.contact_us}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    contact_us: e.target.value,
+                  }))
+                }
+                className="border rounded-lg p-2 w-full"
+              />
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold text-gray-700">
+                    Amenities
+                  </h3>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        amenities: [
+                          ...prev.amenities,
+                          {
+                            name: "",
+                            icon: null,
+                          },
+                        ],
+                      }))
+                    }
+                    className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                  >
+                    + Add Amenity
+                  </button>
+                </div>
+
+                {formData.amenities.map((amenity, index) => (
+                  <div
+                    key={index}
+                    className="border rounded-lg p-3 space-y-3"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Amenity Name"
+                      value={amenity.name}
+                      onChange={(e) => {
+                        const updated = [...formData.amenities];
+                        updated[index].name = e.target.value;
+
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenities: updated,
+                        }));
+                      }}
+                      className="border rounded-lg p-2 w-full"
+                    />
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const updated = [...formData.amenities];
+                        updated[index].icon = e.target.files[0];
+
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenities: updated,
+                        }));
+                      }}
+                      className="w-full"
+                    />
+
+                    {formData.amenities.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = formData.amenities.filter(
+                            (_, i) => i !== index
+                          );
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenities: updated,
+                          }));
+                        }}
+                        className="text-red-500 text-sm"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
