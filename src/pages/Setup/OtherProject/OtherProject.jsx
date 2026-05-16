@@ -715,6 +715,8 @@ const OtherProject = () => {
               <input
                 placeholder="Contact Number"
                 value={formData.contact_us}
+                maxlength={10}
+                minlength={10}
                 onChange={(e) =>
                   setFormData((p) => ({
                     ...p,
