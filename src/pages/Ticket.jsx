@@ -6,61 +6,151 @@ import { Link } from "react-router-dom";
 import {
   getAdminComplaints,
   getAdminExport,
-  getAdminPerPageComplaints,
-  getComplaints,
   getComplaintsDrill,
   getTicketDashboard,
+  getSiteData,
+  siteChange,
 } from "../api";
+
 import { BsEye } from "react-icons/bs";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import moment from "moment";
-import { getItemInLocalStorage } from "../utils/localStorage";
-import * as XLSX from "xlsx";
+import {
+  getItemInLocalStorage,
+  setItemInLocalStorage,
+} from "../utils/localStorage";
+
 import { useSelector } from "react-redux";
-import Table from "../components/table/Table";
-import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import { DNA } from "react-loader-spinner";
 import TicketFilterModal from "../containers/modals/TicketFilterModal";
+
 import { IoIosArrowDown } from "react-icons/io";
-import { color } from "highcharts";
-import { FaInbox } from "react-icons/fa";
+import {
+  MdKeyboardArrowRight,
+  MdExpandLess,
+  MdExpandMore,
+} from "react-icons/md";
+
+import { FaInbox, FaBuilding } from "react-icons/fa";
+
 const Ticket = () => {
+  const themeColor = useSelector((state) => state.theme.color);
 
   const siteId = getItemInLocalStorage("SITEID");
-//   const [siteId, setSiteId] = useState(getItemInLocalStorage("SITEID"));
-// const [siteName, setSiteName] = useState(getItemInLocalStorage("SITENAME") || "");
-// const [siteData, setSiteData] = useState([]);
-// const [siteOpen, setSiteOpen] = useState(false);
-// // const dropdownRef = useRef(null);
+
+  /* =========================================================
+      SITE DROPDOWN UI (LIKE DASHBOARD PAGE)
+  ========================================================= */
+
+  const [siteOpen, setSiteOpen] = useState(false);
+  const [siteData, setSiteData] = useState([]);
+  const [siteName, setSiteName] = useState("");
+
+  const siteDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const storedName = getItemInLocalStorage("SITENAME");
+
+    if (storedName) {
+      setSiteName(storedName);
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchSiteData = async () => {
+      try {
+        const response = await getSiteData();
+        setSiteData(response?.data?.sites || []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchSiteData();
+  }, []);
+
+  const toggleSite = () => {
+    setSiteOpen((prev) => !prev);
+  };
+
+  const handleSiteChange = async (id, name) => {
+    try {
+      await siteChange(id);
+
+      setItemInLocalStorage("SITEID", id);
+      setItemInLocalStorage("SITENAME", name);
+
+      setSiteName(name);
+      setSiteOpen(false);
+
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        siteDropdownRef.current &&
+        !siteDropdownRef.current.contains(event.target)
+      ) {
+        setSiteOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  /* =========================================================
+      STATES
+  ========================================================= */
+
   const [filteredData, setFilteredData] = useState([]);
   const [filterSearch, setFilterSearch] = useState([]);
 
   const [searchText, setSearchText] = useState("");
+
   const isTypeFilterActive = useRef(false);
-  const [edit, setEdit] = useState(null);
+
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
+
   const [ticketTypeCounts, setTicketTypeCounts] = useState({});
   const [ticketStatusCounts, setTicketStatusCounts] = useState({});
+
   const [isLoading, setIsLoading] = useState(false);
-  const [exportAllTickets, setExportAllTickets] = useState([]);
-  const allTicketTypes = ["Complaint", "Request", "Suggestion"];
-  // const [filterSearch, setFilter] = useState([]);
 
   const [complaints, setComplaints] = useState([]);
+
   const [perPage, setPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+
   const [filterModal, setFilterModal] = useState(false);
+
   const [hideColumn, setHideColumn] = useState(false);
+
   const dropdownRef = useRef(null);
+
   const [showDashboardFilter, setShowDashboardFilter] = useState(false);
+
   const dashboardRef = useRef(null);
+
+  /* =========================================================
+      HELPERS
+  ========================================================= */
 
   const getTimeAgo = (timestamp) => {
     const createdTime = moment(timestamp);
     const now = moment();
+
     const diff = now.diff(createdTime, "minutes");
+
     if (diff < 60) {
       return `${diff} minutes ago`;
     } else if (diff < 1440) {
@@ -77,8 +167,12 @@ const Ticket = () => {
 
   const handlePerRowsChange = async (newPerPage) => {
     setPerPage(newPerPage);
-    setCurrentPage(1); // reset to first page
+    setCurrentPage(1);
   };
+
+  /* =========================================================
+      TABLE COLUMNS
+  ========================================================= */
 
   const columns = [
     {
@@ -88,73 +182,105 @@ const Ticket = () => {
           <Link to={`/tickets/details/${row.id}`}>
             <BsEye size={15} />
           </Link>
+
           <Link to={`/edit/${row.id}`}>
             <BiEdit size={15} />
           </Link>
         </div>
       ),
     },
+
     {
       name: "Ticket Number",
       selector: (row) => row.ticket_number,
       sortable: true,
     },
+
     {
       name: "Building Name",
       selector: (row) => row.building_name,
       sortable: true,
     },
-    { name: "Floor Name", selector: (row) => row.floor_name, sortable: true },
-    { name: "Unit Name", selector: (row) => row.unit || row.unit_name, sortable: true },
+
+    {
+      name: "Floor Name",
+      selector: (row) => row.floor_name,
+      sortable: true,
+    },
+
+    {
+      name: "Unit Name",
+      selector: (row) => row.unit || row.unit_name,
+      sortable: true,
+    },
+
     {
       name: "Customer Name",
       selector: (row) => row.created_by,
       sortable: true,
     },
-    { name: "Category", selector: (row) => row.category_type || row.category, sortable: true },
+
+    {
+      name: "Category",
+      selector: (row) => row.category_type || row.category,
+      sortable: true,
+    },
+
     {
       name: "Sub Category",
       selector: (row) => row.sub_category,
       sortable: true,
     },
-    { name: "Title", selector: (row) => row.heading, sortable: true },
-    // {
-    //   name: "Description",
-    //   selector: (row) => row.text,
-    //   sortable: true,
-    //   // maxWidth: "500px",
-    // },
+
+    {
+      name: "Title",
+      selector: (row) => row.heading,
+      sortable: true,
+    },
+
     {
       name: "Status",
       selector: (row) => {
         const status = row.issue_status || row.status;
 
-        // ✅ Fix mapping for UI
         if (status === "Oh Hold") return "On Hold";
+
         if (status === "Development Done") return "Completed";
 
         return status;
       },
       sortable: true,
-    }, { name: "Created By", selector: (row) => row.created_by, sortable: true },
+    },
+
+    {
+      name: "Created By",
+      selector: (row) => row.created_by,
+      sortable: true,
+    },
+
     {
       name: "Created On",
       selector: (row) => dateFormat(row.created_at),
       sortable: true,
     },
-    { name: "Priority", selector: (row) => row.priority, sortable: true },
-    { name: "Assigned To", selector: (row) => row.assigned_to || row.assigned_to, sortable: true },
-    { name: "Ticket Type", selector: (row) => row.issue_type || row.complaint_type, sortable: true },
-    // {
-    //   name: "Response TAT",
-    //   selector: (row) => row.response_TAT,
-    //   sortable: true,
-    // },
-    // {
-    //   name: "Response Time",
-    //   selector: (row) => row.response_time,
-    //   sortable: true,
-    // },
+
+    {
+      name: "Priority",
+      selector: (row) => row.priority,
+      sortable: true,
+    },
+
+    {
+      name: "Assigned To",
+      selector: (row) => row.assigned_to,
+      sortable: true,
+    },
+
+    {
+      name: "Ticket Type",
+      selector: (row) => row.issue_type || row.complaint_type,
+      sortable: true,
+    },
 
     {
       name: "Total Time",
@@ -163,32 +289,10 @@ const Ticket = () => {
     },
   ];
 
-  //   useEffect(() => {
-  //   // Calculate status counts from currently filtered data
-  //   const statusCounts = filteredData.reduce((acc, curr) => {
-  //     let status = curr.issue_status || curr.status;
+  /* =========================================================
+      FILTER PARAMS
+  ========================================================= */
 
-  //     if (status === "Oh Hold") status = "On Hold";
-  //     if (status === "Development Done") status = "Completed";
-
-  //     acc[status] = (acc[status] || 0) + 1;
-  //     return acc;
-  //   }, {});
-
-  //   // Calculate type counts from currently filtered data
-  //   const typeCounts = filteredData.reduce((acc, curr) => {
-  //     const type = curr.issue_type || curr.complaint_type;
-  //     acc[type] = (acc[type] || 0) + 1;
-  //     return acc;
-  //   }, {});
-
-  //   setStatusData({
-  //     ...statusCounts,
-  //     total: filteredData.length,
-  //   });
-
-  //   setTicketsTypes(typeCounts);
-  // }, [filteredData]);
   const [filterParams, setFilterParams] = useState({
     category_id: "",
     issueStatusId: "",
@@ -203,7 +307,9 @@ const Ticket = () => {
     globalSearch: "",
   });
 
-
+  /* =========================================================
+      DASHBOARD VISIBILITY
+  ========================================================= */
 
   const [dashboardVisibility, setDashboardVisibility] = useState({
     "Total Tickets": true,
@@ -236,13 +342,8 @@ const Ticket = () => {
     Priority: true,
     "Assigned To": true,
     "Ticket Type": true,
-    "Response TAT": true,
-    "Response Time": true,
-    "Resolution TAT": true,
-    "Resolution Time": true,
     "Total Time": true,
   });
-
 
   const handleCheckboxChange = (column) => {
     setColumnVisibility((prev) => ({
@@ -258,6 +359,10 @@ const Ticket = () => {
     }));
   };
 
+  /* =========================================================
+      CLOSE DROPDOWNS
+  ========================================================= */
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -266,17 +371,26 @@ const Ticket = () => {
       ) {
         setShowDashboardFilter(false);
       }
+
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setHideColumn(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
+  /* =========================================================
+      TABLE STYLE
+  ========================================================= */
 
-  //custom style
-  const themeColor = useSelector((state) => state.theme.color);
   const customStyle = {
     headRow: {
       style: {
@@ -285,55 +399,77 @@ const Ticket = () => {
         fontSize: "10px",
       },
     },
+
     headCells: {
       style: {
         textTransform: "uppercase",
       },
     },
+
     cells: {
       style: {
-        // fontWeight: "bold",
         fontSize: "14px",
       },
     },
   };
 
-  const fetchData = async (page, perPage, search = "", status = "all", filters = {}) => {
+  /* =========================================================
+      FETCH DATA
+  ========================================================= */
+
+  const fetchData = async (
+    page,
+    perPage,
+    search = "",
+    status = "all",
+    filters = {}
+  ) => {
     setIsLoading(true);
+
     try {
-      const response = await getAdminComplaints(page, perPage, search, status, filters);
+      const response = await getAdminComplaints(
+        page,
+        perPage,
+        search,
+        status,
+        filters
+      );
 
       const complaints = response?.data?.complaints || [];
+
       const totalCount = response?.data?.count || 0;
 
       setCurrentPage(page);
-      setFilteredData(complaints);
-      setComplaints(complaints);
-      setTotalRows(totalCount);
 
-      // const statusCounts = complaints.reduce((acc, curr) => {
-      //   acc[curr.issue_status] = (acc[curr.issue_status] || 0) + 1;
-      //   return acc;
-      // }, {});
-      // setTicketStatusCounts(statusCounts);
+      setFilteredData(complaints);
+
+      setComplaints(complaints);
+
+      setTotalRows(totalCount);
 
       const typeCounts = complaints.reduce((acc, curr) => {
         const type = curr.issue_type || curr.complaint_type;
+
         acc[type] = (acc[type] || 0) + 1;
+
         return acc;
       }, {});
+
       setTicketTypeCounts(typeCounts);
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  /* =========================================================
+      FETCH LIST
+  ========================================================= */
 
   useEffect(() => {
-    // ❌ Skip normal API if type filter is active
     if (isTypeFilterActive.current) return;
+
     if (selectedType !== "all") return;
 
     const apiStatus = getApiStatus(selectedStatus);
@@ -341,10 +477,21 @@ const Ticket = () => {
     fetchData(currentPage, perPage, searchText, apiStatus, {
       ...filterParams,
     });
-  }, [currentPage, perPage, searchText, selectedStatus, filterParams, selectedType]);
+  }, [
+    currentPage,
+    perPage,
+    searchText,
+    selectedStatus,
+    filterParams,
+    selectedType,
+  ]);
+
+  /* =========================================================
+      STATUS CARD CLICK
+  ========================================================= */
 
   const handleStatusCardClick = (statusKey) => {
-    isTypeFilterActive.current = false;   // ✅ allow normal API again
+    isTypeFilterActive.current = false;
 
     if (statusKey === "Total Tickets") {
       setSelectedStatus("all");
@@ -352,16 +499,24 @@ const Ticket = () => {
       setSelectedStatus(statusKey);
     }
 
-    setSelectedType("all"); // reset type filter
+    setSelectedType("all");
+
     setCurrentPage(1);
   };
+
+  /* =========================================================
+      TYPE CARD CLICK
+  ========================================================= */
 
   const handleTypeCardClick = async (typeKey) => {
     isTypeFilterActive.current = true;
 
     setSelectedType(typeKey);
+
     setSelectedStatus("all");
+
     setCurrentPage(1);
+
     setIsLoading(true);
 
     try {
@@ -374,135 +529,188 @@ const Ticket = () => {
 
       const data = response?.data;
 
-      // ✅ FIX HERE
-      const complaints =
-        data?.by_type?.[typeKey]?.records || [];
+      const complaints = data?.by_type?.[typeKey]?.records || [];
 
-      const totalCount =
-        data?.by_type?.[typeKey]?.count || 0;
+      const totalCount = data?.by_type?.[typeKey]?.count || 0;
 
       setFilteredData(complaints);
+
       setComplaints(complaints);
+
       setTotalRows(totalCount);
     } catch (error) {
-      console.error("Error fetching type-wise data:", error);
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  /* =========================================================
+      DASHBOARD DATA
+  ========================================================= */
+
   const [ticketTypes, setTicketsTypes] = useState({});
   const [statusData, setStatusData] = useState({});
 
   const allDashboardCards = [
-    { key: "Total Tickets", value: statusData.total || 0, color: "border border-blue-300 border-3 bg-blue-100" },
-    { key: "Pending", value: statusData.Pending || 0, color: "border border-3 border-red-300 bg-red-100" },
-    { key: "On Hold", value: statusData["On Hold"] || statusData["Oh Hold"] || 0, color: "border-cyan-300 border border-3 bg-cyan-100" },
-    { key: "Open", value: statusData.Open || 0, color: "border-red-300 border border-3 bg-red-100" },
-    { key: "Closed", value: statusData.Closed || 0, color: "border-blue-300 border border-3 bg-blue-100" },
-    { key: "Received", value: siteId === 74 ? statusData.Received : statusData.received || 0, color: "border-green-300 border border-3 bg-green-100" },
-    { key: "Reopen", value: statusData.Reopen || 0, color: "border-yellow-300 border border-3 bg-yellow-100" },
-    { key: "Completed", value: siteId === 74 ? statusData.Completed : statusData["Development Done"] || 0, color: "border-pink-300 border border-3 bg-pink-100" },
-    { key: "Work in Progress", value: statusData["Work In Progress"] || statusData["Work in Progress"] || 0, color: "border-purple-300 border border-3 bg-purple-100" },
+    {
+      key: "Total Tickets",
+      value: statusData.total || 0,
+      color: "border-blue-300 bg-blue-100",
+    },
+
+    {
+      key: "Pending",
+      value: statusData.Pending || 0,
+      color: "border-red-300 bg-red-100",
+    },
+
+    {
+      key: "On Hold",
+      value: statusData["On Hold"] || statusData["Oh Hold"] || 0,
+      color: "border-cyan-300 bg-cyan-100",
+    },
+
+    {
+      key: "Open",
+      value: statusData.Open || 0,
+      color: "border-red-300 bg-red-100",
+    },
+
+    {
+      key: "Closed",
+      value: statusData.Closed || 0,
+      color: "border-blue-300 bg-blue-100",
+    },
+
+    {
+      key: "Received",
+      value:
+        siteId === 74
+          ? statusData.Received
+          : statusData.received || 0,
+
+      color: "border-green-300 bg-green-100",
+    },
+
+    {
+      key: "Reopen",
+      value: statusData.Reopen || 0,
+      color: "border-yellow-300 bg-yellow-100",
+    },
+
+    {
+      key: "Completed",
+      value:
+        siteId === 74
+          ? statusData.Completed
+          : statusData["Development Done"] || 0,
+
+      color: "border-pink-300 bg-pink-100",
+    },
+
+    {
+      key: "Work in Progress",
+      value:
+        statusData["Work In Progress"] ||
+        statusData["Work in Progress"] ||
+        0,
+
+      color: "border-purple-300 bg-purple-100",
+    },
   ];
 
   const dashboardCards =
     siteId === 74
-      ? allDashboardCards.filter(card =>
-        ["Total Tickets", "Pending", "Completed", "Work in Progress", "Received"].includes(card.key)
-      )
+      ? allDashboardCards.filter((card) =>
+          [
+            "Total Tickets",
+            "Pending",
+            "Completed",
+            "Work in Progress",
+            "Received",
+          ].includes(card.key)
+        )
       : allDashboardCards;
-
 
   const filteredDashboardKeys =
     siteId === 74
       ? [
-        "Total Tickets",
-        "Pending",
-        "Completed",
-        "Work in Progress",
-        "Received",
-        "Complaint",
-        "Suggestion",
-        "Request",
-      ]
+          "Total Tickets",
+          "Pending",
+          "Completed",
+          "Work in Progress",
+          "Received",
+          "Complaint",
+          "Suggestion",
+          "Request",
+        ]
       : Object.keys(dashboardVisibility);
 
   const ticketTypeCards = [
-    { key: "Complaint", value: ticketTypes.Complaint || 0, color: "border-red-300 border border-3 bg-red-100" },
-    { key: "Suggestion", value: ticketTypes.Suggestion || 0, color: "border-green-300 border border-3 bg-green-100" },
-    { key: "Request", value: ticketTypes.Request || 0, color: "border-blue-300 border border-3 bg-blue-100" },
+    {
+      key: "Complaint",
+      value: ticketTypes.Complaint || 0,
+      color: "border-red-300 bg-red-100",
+    },
+
+    {
+      key: "Suggestion",
+      value: ticketTypes.Suggestion || 0,
+      color: "border-green-300 bg-green-100",
+    },
+
+    {
+      key: "Request",
+      value: ticketTypes.Request || 0,
+      color: "border-blue-300 bg-blue-100",
+    },
   ];
 
+  /* =========================================================
+      DASHBOARD COUNT
+  ========================================================= */
 
-  const normalizeKeys = (obj = {}) => {
-    return Object.entries(obj).reduce((acc, [key, value]) => {
-      const cleanKey = key?.trim()?.toLowerCase();
-      acc[cleanKey] = (acc[cleanKey] || 0) + value;
-      return acc;
-    }, {});
-  };
-
-
-
-  // Re-fetches dashboard counts (status cards + ticket-type cards) with the given filters.
-  // Called on mount with empty filters (= initial totals) and on every filter apply/reset.
   const fetchDashboardCounts = async (filters = {}) => {
     try {
       const ticketInfoResp = await getTicketDashboard({ filters });
+
       setStatusData({
         ...ticketInfoResp.data.by_status,
         total: ticketInfoResp.data.total,
       });
+
       setTicketsTypes(ticketInfoResp.data.by_type);
     } catch (error) {
-      console.log("Dashboard count error:", error);
+      console.log(error);
     }
   };
 
-  // Initial load — fetch search data once
-  useEffect(() => {
-    const filterSearchStatus = async () => {
-      try {
-        const searchAllTickets = await getAdminComplaints();
-        const searchResp = searchAllTickets?.data?.complaints;
-        setFilterSearch(searchResp);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    filterSearchStatus();
-  }, []);
-
-  // Re-fetch dashboard counts whenever filterParams changes (filter applied OR reset)
-  // On mount filterParams is the initial empty object → shows unfiltered totals
   useEffect(() => {
     fetchDashboardCounts(filterParams);
   }, [filterParams]);
 
-
-
-  const handleNext = () => {
-    setCurrentPage((prevPage) => prevPage + 1);
-    console.log(currentPage);
-  };
-
-  const handlePrevious = () => {
-    setCurrentPage((prevPage) => Math.max(prevPage - 1, 1)); // Ensure currentPage does not go below 1
-  };
-
+  /* =========================================================
+      SEARCH
+  ========================================================= */
 
   const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearchText(value);
+    setSearchText(e.target.value);
+
     setCurrentPage(1);
   };
+
+  /* =========================================================
+      API STATUS
+  ========================================================= */
 
   const getApiStatus = (status) => {
     if (status === "all") return "all";
 
-    // 🔥 Handle Completed mapping
     if (status === "Completed") {
-      return siteId === 74 ? "Completed" : "Development Done";
+      return siteId === 74
+        ? "Completed"
+        : "Development Done";
     }
 
     if (status === "On Hold") {
@@ -512,11 +720,16 @@ const Ticket = () => {
     return status;
   };
 
+  /* =========================================================
+      PAGE CHANGE
+  ========================================================= */
+
   const handlePageChange = async (page) => {
     setCurrentPage(page);
 
     if (selectedType !== "all") {
       setIsLoading(true);
+
       try {
         const response = await getComplaintsDrill(
           "type",
@@ -533,7 +746,6 @@ const Ticket = () => {
         const totalCount =
           data?.by_type?.[selectedType]?.count || 0;
 
-        // ✅ map data (VERY IMPORTANT)
         const formattedData = complaints.map((item) => ({
           ...item,
           issue_type: item.complaint_type,
@@ -543,9 +755,10 @@ const Ticket = () => {
         }));
 
         setFilteredData(formattedData);
+
         setTotalRows(totalCount);
       } catch (error) {
-        console.error(error);
+        console.log(error);
       } finally {
         setIsLoading(false);
       }
@@ -558,67 +771,9 @@ const Ticket = () => {
     }
   };
 
-  const statusOptions =
-    siteId === 74
-      ? [
-        { label: "All", value: "all" },
-        { label: "Pending", value: "pending" },
-        { label: "Received", value: "Received" },
-        { label: "Completed", value: "Completed" }, // API value
-        { label: "Work in Progress", value: "Work in Progress" },
-      ]
-      : [
-        { label: "All", value: "all" },
-        { label: "Open", value: "open" },
-        { label: "Closed", value: "closed" },
-        { label: "Pending", value: "pending" },
-        { label: "Completed", value: "Development Done" }, // API value
-      ];
-
-
-  const handleStatusChange = (status) => {
-    setSelectedStatus(status);
-    setCurrentPage(1);
-    setIsLoading(true);
-    setFilteredData([]);
-    // API fetch will run via useEffect; the result updates filteredData and isLoading.
-  };
-
-  // const exportAllToExcel = async () => {
-  //   try {
-  //     const [firstName = "", lastName = ""] = (filterParams.createBy || "").split(" ");
-
-  //     const response = await getAdminExport(
-  //       filterParams.category_id,
-  //       filterParams.issueStatusId,
-  //       filterParams.priorityLevel,
-  //       filterParams.assign,
-  //       firstName,
-  //       lastName,
-  //       filterParams.building_id,
-  //       filterParams.floor_id,
-  //       filterParams.unit_id,
-  //       filterParams.startDate,
-  //       filterParams.endDate
-  //     );
-
-  //     // Create a blob URL and trigger download
-  //     const blob = new Blob([response.data], {
-  //       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  //     });
-  //     const url = window.URL.createObjectURL(blob);
-  //     const link = document.createElement("a");
-  //     link.href = url;
-  //     link.setAttribute("download", `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`);
-  //     document.body.appendChild(link);
-  //     link.click();
-  //     link.remove();
-  //     window.URL.revokeObjectURL(url);
-
-  //   } catch (error) {
-  //     console.error('Error exporting data:', error);
-  //   }
-  // };
+  /* =========================================================
+      EXPORT
+  ========================================================= */
 
   const exportAllToExcel = async () => {
     try {
@@ -631,234 +786,365 @@ const Ticket = () => {
       );
 
       const blob = new Blob([response.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       const url = window.URL.createObjectURL(blob);
+
       const link = document.createElement("a");
 
       link.href = url;
+
       link.setAttribute(
         "download",
-        `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`
+        `tickets_export_${
+          new Date().toISOString().split("T")[0]
+        }.xlsx`
       );
 
       document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
 
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error exporting data:", error);
+      console.log(error);
     }
   };
 
+  /* =========================================================
+      UI
+  ========================================================= */
+
   return (
-    <section className="flex">
+    <section className="flex bg-gray-50 min-h-screen">
       <Navbar />
-      <div className="w-full flex mx-3 mb-10 flex-col overflow-hidden">
-        {/* DASHBOARD CARDS */}
-        <div className="flex flex-col gap-6">
-          {/* STATUS CARDS */}
-          <div className="flex flex-wrap gap-3 px-4 py-3">
-            {/* STATUS CARDS */}
+
+      <div className="w-full flex flex-col overflow-hidden pb-10">
+
+        {/* =========================================================
+            TOP HEADER LIKE DASHBOARD PAGE
+        ========================================================= */}
+
+        <header className="px-3 sm:px-5 pt-3">
+          <div
+            style={{ background: themeColor }}
+            className="w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+          >
+            <h1 className="text-white font-semibold text-base sm:text-lg">
+              Vibe Connect
+            </h1>
+
+            <div className="relative" ref={siteDropdownRef}>
+              <button
+                type="button"
+                onClick={toggleSite}
+                className="cursor-pointer flex items-center gap-2 font-medium px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition text-white"
+              >
+                <FaBuilding />
+
+                <span className="max-w-[160px] sm:max-w-[260px] truncate">
+                  {siteName || "Select Site"}
+                </span>
+
+                {siteOpen ? (
+                  <MdExpandLess size={22} />
+                ) : (
+                  <MdExpandMore size={22} />
+                )}
+              </button>
+
+              {siteOpen && (
+                <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-80 w-80 overflow-y-auto z-20 p-2">
+                  {siteData.length ? (
+                    siteData.map((s) => (
+                      <button
+                        type="button"
+                        key={s.id}
+                        onClick={() =>
+                          handleSiteChange(s.id, s.name)
+                        }
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800"
+                      >
+                        <span className="block truncate">
+                          {s.name}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-3 py-2 text-sm text-gray-500">
+                      No sites found
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* =========================================================
+            CONTENT
+        ========================================================= */}
+
+        <div className="px-3 sm:px-5 mt-4">
+
+          {/* DASHBOARD CARDS */}
+
+          <div className="flex flex-wrap gap-3 mb-6">
             {dashboardCards
               .filter((item) => dashboardVisibility[item.key])
               .map((item) => (
                 <div
                   key={item.key}
-                  onClick={() => handleStatusCardClick(item.key)}
-                  className={`rounded-xl px-6 py-3 shadow-md text-center min-w-[150px] cursor-pointer hover:scale-105 transition ${item.color}`}
+                  onClick={() =>
+                    handleStatusCardClick(item.key)
+                  }
+                  className={`rounded-2xl border-2 px-6 py-4 shadow-sm text-center min-w-[150px] cursor-pointer hover:scale-105 transition ${item.color}`}
                 >
-                  <p className="text-sm font-semibold">{item.key}</p>
-                  <p className="text-lg font-bold">{item.value}</p>
+                  <p className="text-sm font-semibold text-gray-700">
+                    {item.key}
+                  </p>
+
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {item.value}
+                  </p>
                 </div>
               ))}
+
             {ticketTypeCards
               .filter((item) => dashboardVisibility[item.key])
               .map((item) => (
                 <div
                   key={item.key}
                   onClick={() => handleTypeCardClick(item.key)}
-                  className={`rounded-xl px-6 py-3 shadow-md text-center min-w-[150px] cursor-pointer hover:scale-105 transition ${item.color}`}
+                  className={`rounded-2xl border-2 px-6 py-4 shadow-sm text-center min-w-[150px] cursor-pointer hover:scale-105 transition ${item.color}`}
                 >
-                  <p className="text-sm font-semibold">{item.key}</p>
-                  <p className="text-lg font-bold">{item.value}</p>
+                  <p className="text-sm font-semibold text-gray-700">
+                    {item.key}
+                  </p>
+
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {item.value}
+                  </p>
                 </div>
               ))}
           </div>
 
-        </div>
+          {/* SEARCH + BUTTONS */}
 
-        <div className="flex justify-between items-center w-full gap-4 flex-wrap mt-6">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
+            <div className="flex justify-between items-center w-full gap-4 flex-wrap">
 
-          {/* 🔹 LEFT SIDE (Search) */}
-          <div className="flex w-full md:w-[40%]">
-            <input
-              type="text"
-              placeholder="Search by Title, Ticket number, Category, Ticket type, Priority or Unit"
-              className="border border-gray-400 w-full placeholder:text-xs rounded-lg p-2"
-              value={searchText}
-              onChange={handleSearch}
-            />
-          </div>
+              {/* SEARCH */}
 
-          {/* 🔹 RIGHT SIDE (Buttons) */}
-          <div className="flex gap-2 flex-wrap justify-end w-full md:w-auto">
+              <div className="flex w-full md:w-[40%]">
+                <input
+                  type="text"
+                  placeholder="Search by Title, Ticket Number, Category, Priority..."
+                  className="border border-gray-300 w-full rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  value={searchText}
+                  onChange={handleSearch}
+                />
+              </div>
 
-            <Link
-              to={"/tickets/create-ticket"}
-              style={{ background: themeColor }}
-              className="text-white p-2 rounded-md flex items-center gap-2"
-            >
-              <PiPlusCircle size={20} />
-              Add
-            </Link>
+              {/* BUTTONS */}
 
-            <button
-              className="text-white px-4 p-2 flex gap-2 items-center rounded-md"
-              style={{ background: themeColor }}
-              onClick={() => setFilterModal(!filterModal)}
-            >
-              <BiFilterAlt />
-              Filter
-            </button>
+              <div className="flex gap-2 flex-wrap justify-end w-full md:w-auto">
 
-            {/* Hide Columns */}
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setHideColumn(!hideColumn)}
-                style={{ background: themeColor }}
-                className="text-white px-4 p-2 flex gap-2 items-center rounded-md"
-              >
-                Hide Columns
-                {hideColumn ? <IoIosArrowDown /> : <MdKeyboardArrowRight />}
-              </button>
+                <Link
+                  to={"/tickets/create-ticket"}
+                  style={{ background: themeColor }}
+                  className="text-white px-4 py-3 rounded-xl flex items-center gap-2 shadow-sm"
+                >
+                  <PiPlusCircle size={20} />
+                  Add
+                </Link>
 
-              {hideColumn && (
-                <div className="absolute right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
-                  {Object.keys(columnVisibility).map((column) => (
-                    <label key={column}>
-                      <div className="flex gap-5 px-3 py-1">
-                        <input
-                          type="checkbox"
-                          checked={columnVisibility[column]}
-                          onChange={() => handleCheckboxChange(column)}
-                        />
-                        <div>{column}</div>
-                      </div>
-                    </label>
-                  ))}
+                <button
+                  className="text-white px-4 py-3 flex gap-2 items-center rounded-xl shadow-sm"
+                  style={{ background: themeColor }}
+                  onClick={() =>
+                    setFilterModal(!filterModal)
+                  }
+                >
+                  <BiFilterAlt />
+                  Filter
+                </button>
+
+                {/* HIDE COLUMNS */}
+
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() =>
+                      setHideColumn(!hideColumn)
+                    }
+                    style={{ background: themeColor }}
+                    className="text-white px-4 py-3 flex gap-2 items-center rounded-xl shadow-sm"
+                  >
+                    Hide Columns
+
+                    {hideColumn ? (
+                      <IoIosArrowDown />
+                    ) : (
+                      <MdKeyboardArrowRight />
+                    )}
+                  </button>
+
+                  {hideColumn && (
+                    <div className="absolute right-0 top-14 bg-white border rounded-2xl shadow-lg w-64 max-h-64 overflow-y-auto z-10 p-2">
+                      {Object.keys(columnVisibility).map(
+                        (column) => (
+                          <label key={column}>
+                            <div className="flex gap-4 px-3 py-2 hover:bg-gray-50 rounded-lg">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  columnVisibility[column]
+                                }
+                                onChange={() =>
+                                  handleCheckboxChange(
+                                    column
+                                  )
+                                }
+                              />
+
+                              <div className="text-sm">
+                                {column}
+                              </div>
+                            </div>
+                          </label>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Export */}
-            <button
-              className="text-white px-4 py-2 rounded"
-              onClick={exportAllToExcel}
-              style={{ background: themeColor }}
-            >
-              Export
-            </button>
+                {/* EXPORT */}
 
-            {/* Dashboard Filter */}
-            <div className="relative" ref={dashboardRef}>
-              <button
-                onClick={() => setShowDashboardFilter(!showDashboardFilter)}
-                style={{ background: themeColor }}
-                className="text-white px-4 py-2 flex gap-2 items-center rounded-md"
-              >
-                Dashboard Filter
-                {showDashboardFilter ? <IoIosArrowDown /> : <MdKeyboardArrowRight />}
-              </button>
+                <button
+                  className="text-white px-4 py-3 rounded-xl shadow-sm"
+                  onClick={exportAllToExcel}
+                  style={{ background: themeColor }}
+                >
+                  Export
+                </button>
 
-              {showDashboardFilter && (
-                <div className="absolute right-0 top-12 bg-white border rounded shadow-md w-64 max-h-64 overflow-y-auto z-10">
-                  {filteredDashboardKeys.map((item) => (
-                    <label key={item}>
-                      <div className="flex gap-5 px-3 py-1">
-                        <input
-                          type="checkbox"
-                          checked={dashboardVisibility[item]}
-                          onChange={() => handleDashboardCheckboxChange(item)}
-                        />
-                        <div>{item}</div>
-                      </div>
-                    </label>
-                  ))}
+                {/* DASHBOARD FILTER */}
+
+                <div className="relative" ref={dashboardRef}>
+                  <button
+                    onClick={() =>
+                      setShowDashboardFilter(
+                        !showDashboardFilter
+                      )
+                    }
+                    style={{ background: themeColor }}
+                    className="text-white px-4 py-3 flex gap-2 items-center rounded-xl shadow-sm"
+                  >
+                    Dashboard Filter
+
+                    {showDashboardFilter ? (
+                      <IoIosArrowDown />
+                    ) : (
+                      <MdKeyboardArrowRight />
+                    )}
+                  </button>
+
+                  {showDashboardFilter && (
+                    <div className="absolute right-0 top-14 bg-white border rounded-2xl shadow-lg w-64 max-h-64 overflow-y-auto z-10 p-2">
+                      {filteredDashboardKeys.map((item) => (
+                        <label key={item}>
+                          <div className="flex gap-4 px-3 py-2 hover:bg-gray-50 rounded-lg">
+                            <input
+                              type="checkbox"
+                              checked={
+                                dashboardVisibility[item]
+                              }
+                              onChange={() =>
+                                handleDashboardCheckboxChange(
+                                  item
+                                )
+                              }
+                            />
+
+                            <div className="text-sm">
+                              {item}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-        <div className="mt-3">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-full">
-              <DNA
-                visible={true}
-                height="120"
-                width="120"
-                ariaLabel="dna-loading"
-                wrapperStyle={{}}
-                wrapperClass="dna-wrapper"
-              />
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="flex items-center justify-center h-full py-10">
-              <div className="flex flex-col items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-8 py-6 shadow-sm">
-
-                <FaInbox className="text-4xl text-gray-400" />
-
-                <p className="text-gray-600 text-sm font-medium">
-                  No submissions here
-                </p>
-
-                <p className="text-gray-400 text-xs">
-                  Once submissions are available, they will appear here.
-                </p>
 
               </div>
             </div>
-          ) : (
-            <DataTable
-              responsive
-              columns={columns.filter((column) => columnVisibility[column.name])}
-              data={filteredData}
-              customStyles={customStyle}
-              fixedHeader
-              fixedHeaderScrollHeight="500px"
-              pagination
-              paginationServer
-              paginationTotalRows={totalRows}
-              paginationPerPage={perPage}
-              paginationDefaultPage={currentPage}
-              paginationRowsPerPageOptions={[10, 20, 30, 50]}
-              onChangePage={handlePageChange}
-              onChangeRowsPerPage={handlePerRowsChange}
-            />
-          )}
-          {/* </div> */}
+          </div>
 
-          {/* <div className="flex justify-end m-2 gap-2 items-center">
-          <button
-            onClick={handlePrevious}
-            className=" px-2   disabled:opacity-50 disabled:shadow-none shadow-custom-all-sides rounded-full"
-            disabled={currentPage <= 1}
-          >
-            <MdKeyboardArrowLeft size={30} />
-          </button>
+          {/* TABLE */}
 
-          <button
-            onClick={handleNext}
-            className="px-2 rounded-full shadow-custom-all-sides  disabled:opacity-50 disabled:shadow-none"
-            disabled={perPage > totalRows}
-          >
-            <MdKeyboardArrowRight size={30} />
-          </button>
-        </div> */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {isLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <DNA
+                  visible={true}
+                  height="120"
+                  width="120"
+                  ariaLabel="dna-loading"
+                />
+              </div>
+            ) : filteredData.length === 0 ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="flex flex-col items-center gap-3 bg-gray-50 border border-gray-200 rounded-2xl px-10 py-8 shadow-sm">
+                  <FaInbox className="text-5xl text-gray-400" />
+
+                  <p className="text-gray-600 text-sm font-medium">
+                    No submissions here
+                  </p>
+
+                  <p className="text-gray-400 text-xs">
+                    Once submissions are available,
+                    they will appear here.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <DataTable
+                responsive
+                columns={columns.filter(
+                  (column) =>
+                    columnVisibility[column.name]
+                )}
+                data={filteredData}
+                customStyles={customStyle}
+                fixedHeader
+                fixedHeaderScrollHeight="500px"
+                pagination
+                paginationServer
+                paginationTotalRows={totalRows}
+                paginationPerPage={perPage}
+                paginationDefaultPage={currentPage}
+                paginationRowsPerPageOptions={[
+                  10,
+                  20,
+                  30,
+                  50,
+                ]}
+                onChangePage={handlePageChange}
+                onChangeRowsPerPage={
+                  handlePerRowsChange
+                }
+              />
+            )}
+          </div>
+
         </div>
+
+        {/* FILTER MODAL */}
+
         {filterModal && (
           <TicketFilterModal
             onclose={() => setFilterModal(false)}
@@ -877,9 +1163,4 @@ const Ticket = () => {
   );
 };
 
-//
 export default Ticket;
-
-
-
-
