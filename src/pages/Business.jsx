@@ -8,6 +8,7 @@ import Table from "../components/table/Table";
 import { useSelector } from "react-redux";
 import { domainPrefix, editContactBook, getContactBook } from "../api";
 import toast from "react-hot-toast";
+import SiteHeader from "../components/SiteHeader";
 
 const Business = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -187,6 +188,7 @@ const Business = () => {
       <Navbar />
 
       <div className="w-full flex mx-3 flex-col overflow-hidden mb-5">
+        <SiteHeader onSiteChange={fetchContactBook} />
         <div className="flex justify-between items-center gap-3">
           <input
             type="text"

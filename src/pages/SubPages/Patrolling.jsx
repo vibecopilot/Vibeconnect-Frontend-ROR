@@ -11,6 +11,7 @@ import { IoClose } from "react-icons/io5";
 import Table from "../../components/table/Table";
 import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
+import SiteHeader from "../../components/SiteHeader";
 import qr from "/QR.png";
 import {
   getFloors,
@@ -362,6 +363,13 @@ const Patrolling = () => {
     <section className="flex">
       <Navbar />
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
+        <SiteHeader
+          onSiteChange={() => {
+            setHistoryPage(1);
+            fetchPatrolling();
+            fetchPatrollingHistory(1);
+          }}
+        />
         <Passes />
         <div className="flex gap-4 border-b border-gray-200 ml-1 items-center">
           <h2
