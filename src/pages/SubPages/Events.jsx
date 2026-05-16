@@ -12,7 +12,8 @@ import { BiEdit } from "react-icons/bi";
 import { DNA } from "react-loader-spinner";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
- 
+import SiteHeader from "../../components/SiteHeader";
+
 const Events = () => {
   const [searchText, setSearchText] = useState("");
   const [events, setEvents] = useState([]);
@@ -114,30 +115,30 @@ const Events = () => {
       selector: (row) => dateFormat(row.end_date_time),
       sortable: true,
     },
-  {
-  name: "Status",
-  selector: (row) => {
-    const now = new Date();
-    const startDate = new Date(row.start_date_time);
-    const endDate = new Date(row.end_date_time);
+    {
+      name: "Status",
+      selector: (row) => {
+        const now = new Date();
+        const startDate = new Date(row.start_date_time);
+        const endDate = new Date(row.end_date_time);
 
-    // Remove time part for accurate comparison
-    const today = new Date(now.setHours(0, 0, 0, 0));
-    const start = new Date(startDate.setHours(0, 0, 0, 0));
-    const end = new Date(endDate.setHours(0, 0, 0, 0));
+        // Remove time part for accurate comparison
+        const today = new Date(now.setHours(0, 0, 0, 0));
+        const start = new Date(startDate.setHours(0, 0, 0, 0));
+        const end = new Date(endDate.setHours(0, 0, 0, 0));
 
-    if (today >= start && today <= end) {
-      return "ONGOING";
-    } else if (today < start) {
-      return "UPCOMING";
-    } else if (today > end) {
-      return "COMPLETED";
-    } else {
-      return "N/A";
-    }
-  },
-  sortable: true,
-},
+        if (today >= start && today <= end) {
+          return "ONGOING";
+        } else if (today < start) {
+          return "UPCOMING";
+        } else if (today > end) {
+          return "COMPLETED";
+        } else {
+          return "N/A";
+        }
+      },
+      sortable: true,
+    },
     {
       name: "Expired",
       selector: (row) => {
@@ -185,6 +186,7 @@ const Events = () => {
     <div className="flex">
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <SiteHeader onSiteChange={getEvents} />
         <Communication />
 
         <div className="grid grid-cols-12 my-2 gap-2">

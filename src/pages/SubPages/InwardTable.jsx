@@ -80,21 +80,21 @@ const InwardsTable = () => {
   console.log(goodsIn);
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
-  const searchValue = e.target.value.toLowerCase();
-  setSearchText(searchValue);
+    const searchValue = e.target.value.toLowerCase();
+    setSearchText(searchValue);
 
-  if (searchValue.trim() === "") {
-    setFilteredData(goodsIn);
-  } else {
-    const filteredResult = goodsIn.filter((item) => {
-      const personName = item.person_name ? item.person_name.toLowerCase() : "";
-      const vehicleNo = item.vehicle_no ? item.vehicle_no.toLowerCase() : "";
+    if (searchValue.trim() === "") {
+      setFilteredData(goodsIn);
+    } else {
+      const filteredResult = goodsIn.filter((item) => {
+        const personName = item.person_name ? item.person_name.toLowerCase() : "";
+        const vehicleNo = item.vehicle_no ? item.vehicle_no.toLowerCase() : "";
 
-      return personName.includes(searchValue) || vehicleNo.includes(searchValue);
-    });
-    setFilteredData(filteredResult);
-  }
-};
+        return personName.includes(searchValue) || vehicleNo.includes(searchValue);
+      });
+      setFilteredData(filteredResult);
+    }
+  };
   return (
     <section className="flex">
       <div className=" w-full flex mx-3 flex-col overflow-hidden mb-10">

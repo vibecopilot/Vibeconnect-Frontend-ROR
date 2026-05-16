@@ -3,14 +3,14 @@ import InwardsTable from "./InwardTable";
 import OutwardsTable from "./OurwardTable";
 import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
+import SiteHeader from "../../components/SiteHeader";
 import { getGoods } from "../../api";
 
 const GoodsInOut = () => {
   const [page, setPage] = useState("Inwards");
   const [goodsIn, setGoodsIn] = useState([]);
   const [goodsOut, setGoodsOut] = useState([]);
-  useEffect(() => {
-    const fetchGoods = async () => {
+  const fetchGoods = async () => {
       try {
         const goodsRes = await getGoods();
         const filterGoodsIn = goodsRes.data.filter(
@@ -27,13 +27,20 @@ const GoodsInOut = () => {
         console.log(error);
       }
     };
-    fetchGoods()
+
+  useEffect(() => {
+    fetchGoods();
   }, []);
   return (
     <div className="visitors-page">
       <section className="flex">
         <Navbar />
         <div className=" w-full flex mx-3 flex-col overflow-hidden">
+          <SiteHeader
+            onSiteChange={() => {
+              fetchGoods();
+            }}
+          />
           <Passes />
           <div className="flex w-full  m-2">
             <div className="md:flex md:flex-row flex-col gap-5 text-lg font-semibold  w-full border-b">

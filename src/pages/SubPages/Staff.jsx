@@ -8,6 +8,7 @@ import { FaCheck } from "react-icons/fa6";
 import Table from "../../components/table/Table";
 import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
+import SiteHeader from "../../components/SiteHeader";
 import Switch from "../../Buttons/Switch";
 import { toast } from "react-toastify";
 import {
@@ -886,6 +887,17 @@ const handleSearch = (e) => {
         <Navbar />
         <ToastContainer position="top-right" autoClose={3000} />
         <div className="w-full flex mx-3 flex-col overflow-hidden">
+          <SiteHeader
+            onSiteChange={() => {
+              setCurrentPage(1);
+              setApprovalCurrentPage(1);
+              if (page === "all") fetchStaff(1, rowsPerPage);
+              else if (page === "staffin") fetchStaffIn(1, rowsPerPage);
+              else if (page === "staffout") fetchStaffOut(1, rowsPerPage);
+              else if (page === "approval") fetchPending();
+              else if (page === "history") fetchHistory();
+            }}
+          />
           <Passes />
 
           <div className="flex w-full m-2">
