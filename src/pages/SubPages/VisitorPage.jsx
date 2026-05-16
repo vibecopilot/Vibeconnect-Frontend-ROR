@@ -14,14 +14,18 @@ import {
   postVisitorLogFromDevice,
   postVisitorLogToBackend,
   visitorApproval,
-  getSecurityGuardVisitors
+  getSecurityGuardVisitors,
+  getSiteData,
+  siteChange,
 } from "../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import { formatTime } from "../../utils/dateUtils";
-import { getItemInLocalStorage } from "../../utils/localStorage";
+import { getItemInLocalStorage, setItemInLocalStorage } from "../../utils/localStorage";
 import { IoClose } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
+import { FaBuilding } from "react-icons/fa";
+import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import toast from "react-hot-toast";
 import image from "/profile.png";
 import SelfRegistration from "./SelfRegistration";
@@ -84,6 +88,53 @@ const VisitorPage = () => {
   const [historyStatus, setHistoryStatus] = useState("");
   const [buildings, setBuildings] = useState([]);
 
+  // ── Site switcher ──────────────────────────────────────────────────────────
+  const [activeSiteId, setActiveSiteId] = useState(() => getItemInLocalStorage("SITEID"));
+  const [siteName, setSiteName] = useState("");
+  const [siteData, setSiteData] = useState([]);
+  const [siteOpen, setSiteOpen] = useState(false);
+  const siteDropdownRef = useRef(null);
+
+  // Initialise site name from localStorage
+  useEffect(() => {
+    const stored = getItemInLocalStorage("SITENAME");
+    if (stored) setSiteName(stored);
+  }, []);
+
+  // Fetch available sites
+  useEffect(() => {
+    getSiteData()
+      .then((res) => setSiteData(res?.data?.sites || []))
+      .catch(console.error);
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (siteDropdownRef.current && !siteDropdownRef.current.contains(e.target))
+        setSiteOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSiteChange = async (id, name) => {
+    try {
+      await siteChange(id);
+      setItemInLocalStorage("SITEID", id);
+      setItemInLocalStorage("SITENAME", name);
+      setSiteName(name);
+      setActiveSiteId(id);   // ← triggers the data-fetch useEffect
+      setSiteOpen(false);
+      // Reset pagination so fresh data starts from page 1
+      setCurrentPage(1);
+      setApprovalPage(1);
+      setHistoryPage(1);
+    } catch (err) {
+      console.error("Site change error:", err);
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   const webcamRef = useRef(null);
 
@@ -771,12 +822,11 @@ const VisitorPage = () => {
     filterHost,
     filterBuilding,
     filterApproval,
-
-    // ✅ ADD THESE
     historyDateFrom,
     historyDateTo,
     historyMobile,
-    historyStatus
+    historyStatus,
+    activeSiteId, // ✅ re-fetch whenever the active site changes
   ]);
 
 
@@ -842,27 +892,27 @@ const VisitorPage = () => {
     {
       name: "Host Approval",
       cell: (row) => {
-         const hostApproval = row.hosts?.[0]?.is_approved;
+        const hostApproval = row.hosts?.[0]?.is_approved;
 
-    let status = "Pending";
-    let colorClass = "text-yellow-600";
+        let status = "Pending";
+        let colorClass = "text-yellow-600";
 
-    if (hostApproval === true) {
-      status = "Approved";
-      colorClass = "text-green-600";
-    } else if (hostApproval === false) {
-      status = "Rejected";
-      colorClass = "text-red-600";
-    }
+        if (hostApproval === true) {
+          status = "Approved";
+          colorClass = "text-green-600";
+        } else if (hostApproval === false) {
+          status = "Rejected";
+          colorClass = "text-red-600";
+        }
 
-    return (
-      <span className={`px-2 py-1 rounded text-sm font-medium ${colorClass}`}>
-        {status}
-      </span>
-    );
-  },
-  sortable: true,
-},
+        return (
+          <span className={`px-2 py-1 rounded text-sm font-medium ${colorClass}`}>
+            {status}
+          </span>
+        );
+      },
+      sortable: true,
+    },
     {
       name: "Pass Start",
       selector: (row) => (row.start_pass ? dateFormat(row.start_pass) : ""),
@@ -1324,8 +1374,57 @@ const VisitorPage = () => {
     <div className="visitors-page">
       <section className="flex">
         <Navbar />
+
         <div className="w-full flex mx-3 flex-col overflow-hidden">
+          <header className="px-3 pt-3 mb-3">
+            <div
+              style={{ background: themeColor }}
+              className="w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+            >
+              <h1 className="text-white font-semibold text-base sm:text-lg">
+                Vibe Connect
+              </h1>
+
+              <div className="relative" ref={siteDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setSiteOpen((v) => !v)}
+                  className="cursor-pointer flex items-center gap-2 font-medium px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition text-white"
+                >
+                  <FaBuilding />
+                  <span className="max-w-[160px] sm:max-w-[260px] truncate">
+                    {siteName || "Select Site"}
+                  </span>
+                  {siteOpen ? <MdExpandLess size={22} /> : <MdExpandMore size={22} />}
+                </button>
+
+                {siteOpen && (
+                  <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-80 w-80 overflow-y-auto z-20 p-2">
+                    {siteData.length ? (
+                      siteData.map((s) => (
+                        <button
+                          type="button"
+                          key={s.id}
+                          onClick={() => handleSiteChange(s.id, s.name)}
+                          className={`w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800 ${String(s.id) === String(activeSiteId)
+                            ? "font-semibold bg-gray-50"
+                            : ""
+                            }`}
+                        >
+                          <span className="block truncate">{s.name}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-gray-500">No sites found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
           <Passes />
+
 
           <div className="flex w-full m-2">
             <div className="flex w-full md:flex-row flex-col space-x-4 border-b border-gray-400">
