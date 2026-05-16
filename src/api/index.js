@@ -10898,6 +10898,19 @@ export const postIncidentTags = async (data) =>
       token: token,
     },
   });
+ export const updateIncidentTag = async (id, data) =>
+  axiosInstance.put(`/incidence_tags/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const deleteIncidentTag = async (id) =>
+  axiosInstance.delete(`/incidence_tags/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const gettIncidentTags = async () =>
   axiosInstance.get(`/incidence_tags.json`, {
     params: {
