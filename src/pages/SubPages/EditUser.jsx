@@ -1,42 +1,95 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { getSetupUsers, putSetupUser } from "../../api";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
+import { getSetupUsers, putSetupUser } from "../../api";
 
-const THEME_BG ="radial-gradient(897px at 9% 80.3%, rgb(55, 60, 245) 0%, rgba(234, 161, 15, 0.9) 100.2%)";
+const THEME_BG =
+  "radial-gradient(897px at 9% 80.3%, rgb(55, 60, 245) 0%, rgba(234, 161, 15, 0.9) 100.2%)";
 
 const UserEdit = () => {
-  const { siteId, id } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const [profilePreview, setProfilePreview] = useState(null);
+  // Profile image preview
+  const [profileImage, setProfileImage] = useState(null);
 
-  const handleProfileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setProfilePreview(URL.createObjectURL(file));
-      setFormData((prev) => ({ ...prev, profile_picture: file }));
-    }
-  };
+  const [formData, setFormData] = useState({
+    title: "",
+    firstname: "",
+    lastname: "",
+    email: "",
+    mobile: "",
+    status: "",
+    userType: "",
+    occupancy_type: "",
+    birth_date: "",
+    lives_here: "",
+    membershipType: "Primary",
+    panCard: "",
+    gstin: "",
+    alternateAddress: "",
+    anniversary: "",
+    alternateEmail: "",
+    intercomNumber: "",
+    landlineNumber: "",
+    evConnection: "",
+    is_occupied: "",
+    user_status: true,
+    profile_picture: null,
+  });
 
+  // ── Load user data ──────────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUser = async () => {
       try {
         const res = await getSetupUsers();
         const users = Array.isArray(res?.data) ? res.data : [];
-        const foundUser = users.find((u) => String(u.id) === String(id));
+        const u = users.find((u) => String(u.id) === String(id));
 
-        if (!foundUser) {
+        if (!u) {
           toast.error("User not found");
           return navigate("/setup/users-setup");
         }
 
-        setFormData(foundUser);
+        // Map API fields → our formData shape
+        setFormData({
+          title: u.title || "",
+          firstname: u.firstname || "",
+          lastname: u.lastname || "",
+          email: u.email || "",
+          mobile: u.mobile || "",
+          status: u.status || "",
+          userType: u.user_type || "",
+          occupancy_type: u.user_sites?.[0]?.ownership || "",
+          birth_date: u.birth_date ? u.birth_date.slice(0, 10) : "",
+          lives_here:
+            u.lives_here === true
+              ? "true"
+              : u.lives_here === false
+              ? "false"
+              : "",
+          membershipType: u.user_sites?.[0]?.ownership_type || "Primary",
+          panCard: u.pan_number || "",
+          gstin: u.gst_number || "",
+          alternateAddress: u.user_address || "",
+          anniversary: u.anniversary ? u.anniversary.slice(0, 10) : "",
+          alternateEmail: u.email_1 || "",
+          intercomNumber: u.intercom_number || "",
+          landlineNumber: u.landline_number || "",
+          evConnection: u.ev_connection || "",
+          is_occupied: u.is_occupied || "",
+          user_status: u.user_status ?? true,
+          profile_picture: u.profile_picture || null,
+        });
+
+        // If there's an existing profile picture URL, show it
+        if (u.profile_picture && typeof u.profile_picture === "string") {
+          setProfileImage(u.profile_picture);
+        }
       } catch (err) {
         toast.error("Failed to fetch user details");
       } finally {
@@ -44,80 +97,92 @@ const UserEdit = () => {
       }
     };
 
-    fetchUserData();
+    fetchUser();
   }, [id, navigate]);
 
+  // ── Handlers ────────────────────────────────────────────────────────────────
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
 
-    if (name === "mobile") {
-      const digits = String(value || "").replace(/\D/g, "");
-      return setFormData((prev) => ({ ...prev, mobile: digits.slice(0, 10) }));
+    if (files) {
+      setFormData((prev) => ({ ...prev, [name]: files[0] }));
+      return;
     }
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === "mobile") {
+      const digits = value.replace(/\D/g, "");
+      return setFormData((prev) => ({
+        ...prev,
+        mobile: digits.slice(0, 10),
+      }));
+    }
+
+    if (name === "email") {
+      return setFormData((prev) => ({ ...prev, email: value.trim() }));
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (e) => {
-    const { name, value } = e.target;
-    const boolValue = value === "Yes" ? true : value === "No" ? false : value;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: boolValue,
-    }));
-  };
-
-  const updateStatus = (status) => {
-    setFormData((prev) => ({
-      ...prev,
-      user_status: status,
-    }));
-  };
-
+  // ── Submit ───────────────────────────────────────────────────────────────────
   const handleUpdate = async (e) => {
     e.preventDefault();
     setSaving(true);
 
     try {
-      const payload = {
-        firstname,
-        lastname,
-        email,
-        mobile,
-        user_status,
-        email_1,
-        landline_number,
-        intercom_number,
-        user_address,
-        gst_number,
-        pan_number,
-        user_type,
-        is_downloaded,
-        lives_here: formData.lives_here,
+      const livesHereValue =
+        formData.lives_here === "true" || formData.lives_here === true;
+
+      const isAdmin = [
+        "pms_admin",
+        "security_guard",
+        "employee",
+        "pms_technician",
+      ].includes(formData.userType?.toLowerCase());
+
+      const sendData = new FormData();
+
+      const userFields = {
+        title: formData.title,
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        email: formData.email,
+        mobile: formData.mobile,
+        user_type: formData.userType || "user",
+        user_status: formData.user_status,
+        is_admin_approved: isAdmin ? true : null,
+        birth_date: formData.birth_date,
+        anniversary: formData.anniversary,
+        email_1: formData.alternateEmail,
+        landline_number: formData.landlineNumber,
+        intercom_number: formData.intercomNumber,
+        pan_number: formData.panCard,
+        gst_number: formData.gstin,
+        ev_connection: formData.evConnection,
+        user_address: formData.alternateAddress,
+        membership_type: formData.membershipType,
+        lives_here: livesHereValue,
+        occupancy_type: formData.occupancy_type,
+        is_occupied: formData.is_occupied,
+        status: formData.status,
       };
 
+      Object.entries(userFields).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          sendData.append(`user[${key}]`, String(value));
+        }
+      });
+
       if (formData.profile_picture instanceof File) {
-        const uploadData = new FormData();
-        Object.entries(payload).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            uploadData.append(key, String(value));
-          }
-        });
-        uploadData.append("profile_picture", formData.profile_picture);
-        await putSetupUser(id, uploadData);
-      } else {
-        await putSetupUser(id, payload);
+        sendData.append("user[profile_picture]", formData.profile_picture);
       }
 
-      toast.success("User updated successfully");
+      await putSetupUser(id, sendData);
+      toast.success("User updated successfully!");
       navigate(`/setup/users-details/${id}`);
     } catch (err) {
       console.error("Update failed:", err);
-      toast.error("Failed to update user");
+      toast.error(err?.response?.data?.error || "Failed to update user");
     } finally {
       setSaving(false);
     }
@@ -125,78 +190,64 @@ const UserEdit = () => {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-screen text-white">
+      <div className="flex justify-center items-center h-screen text-gray-600 text-lg">
         Loading user details...
       </div>
     );
 
-  const {
-    firstname,
-    lastname,
-    email,
-    mobile,
-    user_status,
-    email_1,
-    landline_number,
-    intercom_number,
-    user_address,
-    user_sites,
-    user_phase,
-    gst_number,
-    pan_number,
-    building,
-    floor,
-    unit,
-    full_unit_name,
-    is_downloaded,
-    user_type,
-    lives_here,
-    created_at,
-    updated_at,
-  } = formData;
-
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <section className="flex min-h-screen">
+    <section className="w-full p-6 flex bg-gray-50 min-h-screen">
       <SetupNavbar />
 
-      <div className="flex-1 p-10">
-        <div className="bg-white/95 backdrop-blur shadow-xl rounded-2xl border border-white/40 overflow-hidden">
-          <div className="px-8 py-5 text-white" style={{ background: THEME_BG }}>
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white hover:bg-white/30 transition"
-              >
-                Back
-              </button>
-              <h1 className="absolute left-1/2 -translate-x-1/2 text-xl font-bold">
-                Edit User
-              </h1>
-            </div>
+      <div className="w-full p-6">
+        <form
+          autoComplete="off"
+          onSubmit={handleUpdate}
+          className="w-full bg-white shadow-md rounded-2xl border p-6 sm:p-8"
+        >
+          {/* Header */}
+          <div
+            className="text-white text-xl font-bold py-4 text-center rounded-t-xl flex items-center justify-between px-6"
+            style={{ background: THEME_BG }}
+          >
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 rounded-lg bg-white/20 border border-white/30 text-white hover:bg-white/30 transition text-sm font-medium"
+            >
+              ← Back
+            </button>
+            <span>Edit User Details</span>
+            <span className="w-24" />
           </div>
 
-          <div className="p-8">
-            <div className="flex justify-center mb-10">
-              <div className="flex flex-col items-center">
-                <div className="w-[140px] h-[140px] rounded-full bg-white border-4 border-indigo-300 shadow-lg overflow-hidden">
+          <div className="p-6">
+            <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+              Primary &amp; Contact Info
+            </h3>
+
+            {/* Profile + basic fields */}
+            <div className="flex flex-wrap items-start">
+              {/* Profile picture */}
+              <div className="w-full sm:w-[150px] text-center mb-6 sm:mb-0">
+                <div className="w-[120px] h-[120px] bg-indigo-100 rounded-full mx-auto overflow-hidden border-4 border-indigo-400/50 shadow-md">
                   <img
                     src={
-                      profilePreview ||
-                      formData.profile_picture ||
+                      profileImage ||
                       "https://www.pngitem.com/pimgs/m/137-1370051_avatar-generic-avatar-hd-png-download.png"
                     }
-                    alt=""
-                    className="w-full h-full object-cover"
+                    alt="Profile"
+                    className="w-full h-full object-cover mx-auto block"
                   />
                 </div>
 
                 <button
                   type="button"
+                  className="text-2xl mt-2 text-indigo-600 hover:text-indigo-800 transition"
                   onClick={() =>
-                    document.getElementById("profileUpload")?.click()
+                    document.getElementById("profileUpload").click()
                   }
-                  className="text-3xl mt-3 text-indigo-600 hover:text-indigo-800 transition"
                 >
                   📷
                 </button>
@@ -204,284 +255,338 @@ const UserEdit = () => {
                 <input
                   type="file"
                   id="profileUpload"
+                  name="profile_picture"
                   accept="image/*"
                   className="hidden"
-                  onChange={handleProfileUpload}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (e.target.files?.[0]) {
+                      setProfileImage(
+                        URL.createObjectURL(e.target.files[0])
+                      );
+                    }
+                  }}
                 />
+              </div>
+
+              {/* Name / email / mobile / password row */}
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ml-0 sm:ml-8">
+                {/* Title */}
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    Title
+                  </label>
+                  <select
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Select Title</option>
+                    <option value="Mr.">Mr.</option>
+                    <option value="Ms.">Ms.</option>
+                  </select>
+                </div>
+
+                {/* First / Last name */}
+                {[
+                  { label: "First Name *", name: "firstname" },
+                  { label: "Last Name *", name: "lastname" },
+                ].map((f) => (
+                  <div key={f.name}>
+                    <label className="text-sm font-medium block mb-1">
+                      {f.label}
+                    </label>
+                    <input
+                      type="text"
+                      name={f.name}
+                      value={formData[f.name]}
+                      onChange={handleChange}
+                      required
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </div>
+                ))}
+
+                {/* Email */}
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    autoComplete="new-email"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  />
+                </div>
+
+                {/* Mobile */}
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    Mobile *
+                  </label>
+                  <input
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    required
+                    maxLength="10"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  />
+                </div>
+
+                {/* User Status */}
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    Status
+                  </label>
+                  <div className="flex items-center gap-3 border border-gray-300 rounded-md px-3 py-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((p) => ({ ...p, user_status: true }))
+                      }
+                      className={`px-4 py-1 rounded-md border text-sm font-medium transition ${
+                        formData.user_status
+                          ? "bg-green-600 text-white border-green-600"
+                          : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      Active
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((p) => ({ ...p, user_status: false }))
+                      }
+                      className={`px-4 py-1 rounded-md border text-sm font-medium transition ${
+                        formData.user_status === false
+                          ? "bg-red-600 text-white border-red-600"
+                          : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      Inactive
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <form onSubmit={handleUpdate} className="space-y-10">
-              <Section title="Basic Information">
-                <div className="bg-gray-50 p-6 rounded-lg border">
-                  <Grid3>
-                    <InputBox
-                      label="First Name"
-                      name="firstname"
-                      value={firstname}
-                      onChange={handleChange}
-                    />
-                    <InputBox
-                      label="Last Name"
-                      name="lastname"
-                      value={lastname}
-                      onChange={handleChange}
-                    />
-                    <InputBox
-                      label="Email"
-                      name="email"
-                      value={email}
-                      onChange={handleChange}
-                      type="email"
-                    />
-                    <InputBox
-                      label="Mobile"
-                      name="mobile"
-                      value={mobile}
-                      onChange={handleChange}
-                    />
-
-                    <div className="md:col-span-1">
-                      <span className="text-base text-gray-900">Status</span>
-                      <div className="border p-3 w-full rounded-lg mt-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200">
-                        <div className="flex items-center gap-4">
-
-                          <button
-                            type="button"
-                            onClick={() => updateStatus(true)}
-                            className={`px-5 py-0 rounded-lg border text-sm font-medium transition
-                              ${
-                                user_status
-                                  ? "bg-green-600 text-white border-green-600"
-                                  : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
-                              }`}
-                          >
-                            Active
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => updateStatus(false)}
-                            className={`px-5 py-0 rounded-lg border text-sm font-medium transition
-                              ${
-                                user_status === false
-                                  ? "bg-red-600 text-white border-red-600"
-                                  : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                              }`}
-                          >
-                            Inactive
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                  </Grid3>
-                </div>
-              </Section>
-
-              <Section title="Contact Details">
-                <div className="bg-gray-50 p-6 rounded-lg border">
-                  <Grid2>
-                    <InputBox
-                      label="Alternate Email"
-                      name="email_1"
-                      value={email_1}
-                      onChange={handleChange}
-                    />
-                    <InputBox
-                      label="Landline"
-                      name="landline_number"
-                      value={landline_number}
-                      onChange={handleChange}
-                    />
-                    <InputBox
-                      label="Intercom"
-                      name="intercom_number"
-                      value={intercom_number}
-                      onChange={handleChange}
-                    />
-                    <InputBox
-                      label="Address"
-                      name="user_address"
-                      value={user_address}
-                      onChange={handleChange}
-                    />
-                  </Grid2>
-                </div>
-              </Section>
-
-              <Section title="Other Details">
-                <div className="bg-gray-50 p-6 rounded-lg border">
-                  <Grid2>
-                    <Read
-                      label="Ownership Type"
-                      value={user_sites?.[0]?.ownership_type}
-                    />
-                    <Read label="Phase" value={user_phase} />
-
-                    <InputBox
-                      label="GST Number"
-                      name="gst_number"
-                      value={gst_number}
-                      onChange={handleChange}
-                    />
-                    <InputBox
-                      label="PAN Number"
-                      name="pan_number"
-                      value={pan_number}
-                      onChange={handleChange}
-                    />
-
-                    <Read label="Building" value={building?.name} />
-                    <Read label="Floor" value={floor?.name} />
-                    <Read label="Unit" value={unit?.name} />
-                    <Read label="Full Unit Name" value={full_unit_name} />
-                  </Grid2>
-                </div>
-              </Section>
-
-              <Section title="App Information">
-                <div className="bg-gray-50 p-6 rounded-lg border">
-                  <Grid2>
-                    <SelectBox
-                      label="App Downloaded"
-                      name="is_downloaded"
-                      value={is_downloaded ? "Yes" : "No"}
-                      onChange={handleSelectChange}
-                      options={["Yes", "No"]}
-                    />
-                    <InputBox
-                      label="User Type"
-                      name="user_type"
-                      value={user_type}
-                      onChange={handleChange}
-                    />
-                    <div>
-                      <label className="text-sm font-semibold text-gray-700">
-                        Lives Here
-                      </label>
-                      <select
-                        name="lives_here"
-                        value={
-                          lives_here === true
-                            ? "Yes"
-                            : lives_here === false
-                            ? "No"
-                            : ""
-                        }
-                        onChange={handleSelectChange}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2"
-                      >
-                        <option value="">Select</option>
-                        <option value="Yes">Yes</option>
-                        <option value="No">No</option>
-                      </select>
-                    </div>
-                  </Grid2>
-                </div>
-              </Section>
-
-              <Section title="Record Information">
-                <div className="bg-gray-50 p-6 rounded-lg border">
-                  <Grid2>
-                    <Read label="Created On" value={created_at} />
-                    <Read label="Updated On" value={updated_at} />
-                  </Grid2>
-                </div>
-              </Section>
-
-              <div className="flex justify-end gap-4 mt-6">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="px-5 py-2 border rounded-lg bg-white text-gray-700 hover:bg-gray-200 transition"
+            {/* Tower / Floor / Unit / Ownership row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 border-t pt-4">
+              {/* Ownership Type */}
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Ownership Type *
+                </label>
+                <select
+                  name="occupancy_type"
+                  value={formData.occupancy_type}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-6 py-2 text-white rounded-lg bg-indigo-600 hover:bg-indigo-700 transition disabled:opacity-60"
-                >
-                  {saving ? "Saving..." : "Save Changes"}
-                </button>
+                  <option value="" disabled>
+                    Select Ownership Type
+                  </option>
+                  <option value="owner">Owner</option>
+                  <option value="tenant">Tenant</option>
+                </select>
               </div>
-            </form>
+
+              {/* Approval Status */}
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Approval Status
+                </label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="" disabled>
+                    Select Status
+                  </option>
+                  <option value="pending">Pending</option>
+                  <option value="complete">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              {/* Occupied */}
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Occupied
+                </label>
+                <select
+                  name="is_occupied"
+                  value={formData.is_occupied}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+
+              {/* Membership Type */}
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Membership Type
+                </label>
+                <select
+                  name="membershipType"
+                  value={formData.membershipType}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select</option>
+                  <option value="Primary">Primary</option>
+                  <option value="Secondary">Secondary</option>
+                </select>
+              </div>
+
+              {/* User Type */}
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  User Type
+                </label>
+                <select
+                  name="userType"
+                  value={formData.userType}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select</option>
+                  <option value="pms_admin">Admin</option>
+                  <option value="pms_technician">Technician</option>
+                  <option value="security_guard">Security Guard</option>
+                  <option value="employee">Employee</option>
+                </select>
+              </div>
+
+              {/* Lives Here */}
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Lives Here
+                </label>
+                <select
+                  name="lives_here"
+                  value={formData.lives_here}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Alternate Address */}
+            <div className="mt-4">
+              <label className="text-sm font-medium block mb-1">
+                Alternate Address{" "}
+                <span className="text-gray-500">(Optional)</span>
+              </label>
+              <textarea
+                name="alternateAddress"
+                value={formData.alternateAddress}
+                onChange={handleChange}
+                className="border border-gray-300 rounded-md w-full h-20 p-3"
+              />
+            </div>
           </div>
-        </div>
+
+          {/* Additional Info */}
+          <div className="border-t border-gray-300 p-6">
+            <h3 className="text-xl font-bold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+              Additional Info &amp; Utilities
+              <span className="text-gray-400 text-sm ml-2">(Optional)</span>
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { label: "Birth Date", name: "birth_date", type: "date" },
+                { label: "Anniversary", name: "anniversary", type: "date" },
+                {
+                  label: "Alternate Email",
+                  name: "alternateEmail",
+                  type: "email",
+                },
+                { label: "Intercom Number", name: "intercomNumber" },
+                { label: "Landline Number", name: "landlineNumber" },
+                { label: "PAN Card", name: "panCard" },
+                { label: "GSTIN", name: "gstin" },
+                {
+                  label: "EV Connection",
+                  name: "evConnection",
+                  type: "select",
+                  options: [
+                    { value: "", label: "Select EV Connection" },
+                    { value: "yes", label: "Yes" },
+                    { value: "no", label: "No" },
+                  ],
+                },
+              ].map((f) => (
+                <div key={f.name}>
+                  <label className="text-sm font-medium block mb-1">
+                    {f.label}
+                  </label>
+
+                  {f.type === "select" ? (
+                    <select
+                      name={f.name}
+                      value={formData[f.name]}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      {f.options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={f.type || "text"}
+                      name={f.name}
+                      value={formData[f.name]}
+                      onChange={handleChange}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end px-6 py-4 rounded-b-xl border-t border-gray-200 gap-3">
+            <button
+              type="button"
+              className="bg-gray-800 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-gray-900"
+              onClick={() => navigate(-1)}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:bg-indigo-700 disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
       </div>
     </section>
   );
 };
 
-const InputBox = ({ label, name, value, onChange, type = "text" }) => (
-  <div>
-    <label className="text-sm font-semibold text-gray-700">{label}</label>
-    <input
-      type={type}
-      name={name}
-      value={value || ""}
-      onChange={onChange}
-      className="border p-3 w-full rounded-lg mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
-    />
-  </div>
-);
-
-const SelectBox = ({ label, name, value, onChange, options }) => (
-  <div>
-    <label className="text-sm font-semibold text-gray-700">{label}</label>
-    <select
-      name={name}
-      value={value}
-      onChange={onChange}
-      className="border p-3 w-full rounded-lg mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
-    >
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
-    </select>
-  </div>
-);
-
-const Read = ({ label, value }) => (
-  <div className="bg-white p-3 rounded-lg border">
-    <label className="text-xs text-gray-500">{label}</label>
-    <p className="font-medium text-gray-800">{value || "N/A"}</p>
-  </div>
-);
-
-const Section = ({ title, children }) => (
-  <div>
-    <h2 className="text-xl font-semibold text-gray-800 mb-3">{title}</h2>
-    {children}
-  </div>
-);
-
-const Grid2 = ({ children }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">{children}</div>
-);
-
-const Grid3 = ({ children }) => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{children}</div>
-);
-
 export default UserEdit;
-
-
-
-
-//   </div>  );
-// };                  </h2> */}           
-
-
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </section>
-//   );
-// };
-// export default UserEdit;

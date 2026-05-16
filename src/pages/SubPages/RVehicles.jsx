@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import RVehiclesTable from "./RVehiclesTable";
 import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
+import SiteHeader from "../../components/SiteHeader";
 import { getRegisteredVehicle, getVehicleHistory } from "../../api";
 import axiosInstance from "../../api/axiosInstance";
 import { FaSearch } from "react-icons/fa";
@@ -690,6 +691,13 @@ const RVehicles = () => {
         <Navbar />
 
         <div className="w-full flex mx-3 flex-col overflow-hidden">
+          <SiteHeader
+            onSiteChange={() => {
+              setCurrentPageNum(1);
+              setVehicles([]);
+              setRefreshTick((x) => x + 1);
+            }}
+          />
           <Passes />
 
           <div className="flex justify-between items-end border-b border-gray-300 m-2">

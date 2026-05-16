@@ -88,8 +88,8 @@ const RVehiclesTable = ({
                 onClick={() => vehicleId && onApprove?.(row)}
                 disabled={!vehicleId}
                 className={`w-8 h-8 rounded-full text-white flex items-center justify-center ${vehicleId
-                    ? "bg-green-500 hover:bg-green-600"
-                    : "bg-green-300 cursor-not-allowed"
+                  ? "bg-green-500 hover:bg-green-600"
+                  : "bg-green-300 cursor-not-allowed"
                   }`}
                 title={vehicleId ? "Approve" : "Vehicle ID missing"}
               >
@@ -101,8 +101,8 @@ const RVehiclesTable = ({
                 onClick={() => vehicleId && onReject?.(row)}
                 disabled={!vehicleId}
                 className={`w-8 h-8 rounded-full text-white flex items-center justify-center ${vehicleId
-                    ? "bg-red-500 hover:bg-red-600"
-                    : "bg-red-300 cursor-not-allowed"
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-red-300 cursor-not-allowed"
                   }`}
                 title={vehicleId ? "Reject" : "Vehicle ID missing"}
               >

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import DataTable from "react-data-table-component";
 import Navbar from "../components/Navbar";
+import SiteHeader from "../components/SiteHeader";
 import { PiPlusCircle } from "react-icons/pi";
 import { Link } from "react-router-dom";
 import {
@@ -8,103 +9,32 @@ import {
   getAdminExport,
   getComplaintsDrill,
   getTicketDashboard,
-  getSiteData,
-  siteChange,
 } from "../api";
 
 import { BsEye } from "react-icons/bs";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import moment from "moment";
-import {
-  getItemInLocalStorage,
-  setItemInLocalStorage,
-} from "../utils/localStorage";
+import { getItemInLocalStorage } from "../utils/localStorage";
 
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
 import TicketFilterModal from "../containers/modals/TicketFilterModal";
 
 import { IoIosArrowDown } from "react-icons/io";
-import {
-  MdKeyboardArrowRight,
-  MdExpandLess,
-  MdExpandMore,
-} from "react-icons/md";
+import { MdKeyboardArrowRight } from "react-icons/md";
 
-import { FaInbox, FaBuilding } from "react-icons/fa";
+import { FaInbox } from "react-icons/fa";
 
 const Ticket = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
-  const siteId = getItemInLocalStorage("SITEID");
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
-  /* =========================================================
-      SITE DROPDOWN UI (LIKE DASHBOARD PAGE)
-  ========================================================= */
-
-  const [siteOpen, setSiteOpen] = useState(false);
-  const [siteData, setSiteData] = useState([]);
-  const [siteName, setSiteName] = useState("");
-
-  const siteDropdownRef = useRef(null);
-
-  useEffect(() => {
-    const storedName = getItemInLocalStorage("SITENAME");
-
-    if (storedName) {
-      setSiteName(storedName);
-    }
-  }, []);
-
-  useEffect(() => {
-    const fetchSiteData = async () => {
-      try {
-        const response = await getSiteData();
-        setSiteData(response?.data?.sites || []);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    fetchSiteData();
-  }, []);
-
-  const toggleSite = () => {
-    setSiteOpen((prev) => !prev);
-  };
-
-  const handleSiteChange = async (id, name) => {
-    try {
-      await siteChange(id);
-
-      setItemInLocalStorage("SITEID", id);
-      setItemInLocalStorage("SITENAME", name);
-
-      setSiteName(name);
-      setSiteOpen(false);
-
-      window.location.reload();
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        siteDropdownRef.current &&
-        !siteDropdownRef.current.contains(event.target)
-      ) {
-        setSiteOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  // keep the plain siteId alias used in the dashboard-card logic below
+  const siteId = activeSiteId;
 
   /* =========================================================
       STATES
@@ -484,6 +414,7 @@ const Ticket = () => {
     selectedStatus,
     filterParams,
     selectedType,
+    activeSiteId, // ✅ re-fetch when site changes
   ]);
 
   /* =========================================================
@@ -688,7 +619,7 @@ const Ticket = () => {
 
   useEffect(() => {
     fetchDashboardCounts(filterParams);
-  }, [filterParams]);
+  }, [filterParams, activeSiteId]); // ✅ re-fetch dashboard counts on site change
 
   /* =========================================================
       SEARCH
@@ -825,65 +756,16 @@ const Ticket = () => {
 
       <div className="w-full flex flex-col overflow-hidden pb-10">
 
-        {/* =========================================================
-            TOP HEADER LIKE DASHBOARD PAGE
-        ========================================================= */}
-
-        <header className="px-3 sm:px-5 pt-3">
-          <div
-            style={{ background: themeColor }}
-            className="w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
-          >
-            <h1 className="text-white font-semibold text-base sm:text-lg">
-              Vibe Connect
-            </h1>
-
-            <div className="relative" ref={siteDropdownRef}>
-              <button
-                type="button"
-                onClick={toggleSite}
-                className="cursor-pointer flex items-center gap-2 font-medium px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition text-white"
-              >
-                <FaBuilding />
-
-                <span className="max-w-[160px] sm:max-w-[260px] truncate">
-                  {siteName || "Select Site"}
-                </span>
-
-                {siteOpen ? (
-                  <MdExpandLess size={22} />
-                ) : (
-                  <MdExpandMore size={22} />
-                )}
-              </button>
-
-              {siteOpen && (
-                <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-80 w-80 overflow-y-auto z-20 p-2">
-                  {siteData.length ? (
-                    siteData.map((s) => (
-                      <button
-                        type="button"
-                        key={s.id}
-                        onClick={() =>
-                          handleSiteChange(s.id, s.name)
-                        }
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800"
-                      >
-                        <span className="block truncate">
-                          {s.name}
-                        </span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-sm text-gray-500">
-                      No sites found
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+        {/* Shared branded header with reactive site-switcher */}
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id);       // triggers both data useEffects
+            setCurrentPage(1);         // reset to first page
+            setSelectedStatus("all");
+            setSelectedType("all");
+            isTypeFilterActive.current = false;
+          }}
+        />
 
         {/* =========================================================
             CONTENT
