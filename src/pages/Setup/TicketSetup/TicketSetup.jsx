@@ -72,15 +72,29 @@ import TicketSetupPage from "./TicketSetupPage";
 import TicketEscalationSetup from "./TicketEsclationSetup";
 import TicketCostApprovalSetup from "./TicketCostApprovalSetup";
 import SetupNavbar from "../../../components/navbars/SetupNavbar";
+import SiteHeader from "../../../components/SiteHeader";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
 
 const TicketSetup = () => {
   const [page, setPage] = useState("Setup");
+
+  // ── reactive site ID — passed as prop to sub-components ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   return (
     <div className="flex gap-4">
       <SetupNavbar />
 
       <div className="w-full my-2 flex overflow-hidden flex-col">
+        {/* ── Site Switcher — re-fetches data in all sub-tabs on site change ── */}
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id);
+            setPage("Setup"); // reset to first tab on site change
+          }}
+        />
 
         <div className="flex w-full justify-center">
           <div className="flex justify-center gap-2 p-2 bg-gray-100 rounded-full">
@@ -122,9 +136,9 @@ const TicketSetup = () => {
         </div>
 
         <div>
-          {page === "Setup" && <TicketSetupPage />}
-          {page === "Escalation Setup" && <TicketEscalationSetup />}
-          {page === "Cost Approval" && <TicketCostApprovalSetup />}
+          {page === "Setup" && <TicketSetupPage activeSiteId={activeSiteId} />}
+          {page === "Escalation Setup" && <TicketEscalationSetup activeSiteId={activeSiteId} />}
+          {page === "Cost Approval" && <TicketCostApprovalSetup activeSiteId={activeSiteId} />}
         </div>
 
       </div>
