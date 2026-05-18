@@ -13,7 +13,7 @@ import {
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 
-const TicketSetupPage = () => {
+const TicketSetupPage = ({ activeSiteId }) => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const [page, setPage] = useState("Category Type");
@@ -50,7 +50,7 @@ const TicketSetupPage = () => {
 
   useEffect(() => {
     fetchStatuses();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   const handleReset = () => {
     setFormData({
@@ -71,7 +71,7 @@ const TicketSetupPage = () => {
       return toast.error("Please fill all fields");
     }
 
-    const siteID = getItemInLocalStorage("SITEID");
+    const siteID = activeSiteId; // ✅ use reactive prop from parent
 
     const payload = new FormData();
     payload.append("complaint_status[of_phase]", "pms");
