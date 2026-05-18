@@ -20,6 +20,7 @@ import {
   postGenericSubCategory,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import SiteHeader from "../../components/SiteHeader";
 
 const BusinessSetup = () => {
   const [selectedFiled, setSelectedField] = useState("category");
@@ -37,7 +38,11 @@ const BusinessSetup = () => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const companyID = getItemInLocalStorage("COMPANYID");
-  const siteId = getItemInLocalStorage("SITEID");
+
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   // ✅ Load categories + subcategories
   useEffect(() => {
@@ -61,7 +66,7 @@ const BusinessSetup = () => {
     };
 
     fetchAll();
-  }, [catModal]); // when modal closes/opens, refresh is fine
+  }, [catModal, activeSiteId]); // ✅ re-fetch when site changes
 
   // ✅ Map: categoryId -> categoryName
   const categoryNameById = useMemo(() => {
@@ -120,7 +125,7 @@ const BusinessSetup = () => {
     const formData = new FormData();
     formData.append("generic_info[name]", category.trim());
     formData.append("generic_info[company_id]", companyID);
-    formData.append("generic_info[site_id]", siteId);
+    formData.append("generic_info[site_id]", activeSiteId); // ✅ reactive
     formData.append("generic_info[info_type]", "contact");
 
     try {
@@ -203,6 +208,17 @@ const BusinessSetup = () => {
       <SetupNavbar />
 
       <div className="w-full flex mx-3 flex-col overflow-hidden">
+        {/* ── Site Switcher — re-fetches categories on site change ── */}
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id);
+            setCategories([]);
+            setSubCategories([]);
+            setCategory("");
+            setSubCategory("");
+            setSelectedCatId("");
+          }}
+        />
         <div className="flex justify-center gap-5 flex-col w-full">
           <h2
             style={{ background: themeColor }}
