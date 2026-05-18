@@ -12,12 +12,18 @@ import { DNA } from "react-loader-spinner";
 import { useSelector } from "react-redux";
 import { FaDownload, FaUpload, FaTimes, FaPlus } from "react-icons/fa";
 import toast from "react-hot-toast";
+import SiteHeader from "../../components/SiteHeader";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ServicePage = () => {
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [servicess, setServices] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   const [showExportModal, setShowExportModal] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -114,7 +120,7 @@ const ServicePage = () => {
       }
     };
     fetchService();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   const handleSearch = (event) => {
     const searchValue = event.target.value;
@@ -189,42 +195,49 @@ const ServicePage = () => {
 
 
   /* ===== IMPORT EXCEL ===== */
- const handleImportExcel = async () => {
-  if (!importFile) {
-    return toast.error("Please select file");
-  }
+  const handleImportExcel = async () => {
+    if (!importFile) {
+      return toast.error("Please select file");
+    }
 
-  const toastId = toast.loading("Uploading...");
+    const toastId = toast.loading("Uploading...");
 
-  try {
-    await importSoftServices(importFile);
+    try {
+      await importSoftServices(importFile);
 
-    toast.success("File Imported Successfully", { id: toastId });
-    setShowImportModal(false);
-    setImportFile(null);
+      toast.success("File Imported Successfully", { id: toastId });
+      setShowImportModal(false);
+      setImportFile(null);
 
-    // 🔄 Refresh data after import
-    const serviceResponse = await getSoftServices();
-    const sortedServiceData = serviceResponse.data?.soft_services.sort(
-      (a, b) => new Date(b.created_at) - new Date(a.created_at)
-    );
-    setFilteredData(sortedServiceData);
-    setServices(sortedServiceData);
+      // 🔄 Refresh data after import
+      const serviceResponse = await getSoftServices();
+      const sortedServiceData = serviceResponse.data?.soft_services.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+      setFilteredData(sortedServiceData);
+      setServices(sortedServiceData);
 
-  } catch (error) {
-    console.error(error);
-    toast.error("Import failed", { id: toastId });
-  }
-};
+    } catch (error) {
+      console.error(error);
+      toast.error("Import failed", { id: toastId });
+    }
+  };
 
-  
+
   const themeColor = useSelector((state) => state.theme.color);
 
   return (
     <section className="flex">
       <Navbar />
 
-      <div className="p-4 w-full mx-3 flex flex-col">
+      <div className=" w-full mx-3 flex flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setServices([]);
+            setFilteredData([]);
+          }}
+        />
         <Services />
 
         <div className="flex justify-between my-2">

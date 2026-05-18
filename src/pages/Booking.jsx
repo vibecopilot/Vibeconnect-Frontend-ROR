@@ -263,7 +263,7 @@
 //             </div>
 //             {modal && <ExportBookingModal onclose={() => showModal(false)} />}
 //           </div>
-        
+
 
 //         {/* {page === "seatBooking" && ( */}
 //           {/* <div>
@@ -561,7 +561,7 @@
 //             </div>
 //             {modal && <ExportBookingModal onclose={() => showModal(false)} />}
 //           </div>
-        
+
 
 //         {/* {page === "seatBooking" && ( */}
 //           {/* <div>
@@ -588,6 +588,8 @@ import Table from "../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { getAmenitiesBooking, getFacitilitySetup } from "../api";
 import { FaCalendarAlt } from "react-icons/fa";
+import SiteHeader from "../components/SiteHeader";
+import { getItemInLocalStorage } from "../utils/localStorage";
 
 const Booking = () => {
   const location = useLocation();
@@ -601,6 +603,10 @@ const Booking = () => {
   const [perPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
   const themeColor = "rgb(3, 19 37)";
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   // Fetch bookings and facility setup from API
   const loadBookings = async (pageNumber = page, search = searchText) => {
@@ -609,10 +615,10 @@ const Booking = () => {
       setError(null);
 
       const response = await getAmenitiesBooking(pageNumber, perPage, 47, search);
-       console.log("Page:", pageNumber);
+      console.log("Page:", pageNumber);
       console.log("Fetching page:", pageNumber);
       console.log("Response:", response.data);
-      
+
       setBookings(response.data.amenity_bookings || []);
       setTotalRows(response.data.total_count || 0);
 
@@ -627,10 +633,10 @@ const Booking = () => {
     }
   };
 
-  // Fetch bookings whenever page or search changes
+  // Fetch bookings whenever page, search or site changes
   useEffect(() => {
     loadBookings(page, searchText);
-  }, [page, searchText]);
+  }, [page, searchText, activeSiteId]); // ✅ re-fetch when site changes
 
   // Combine booking data with facility info
   const combinedData = bookings.map((booking) => {
@@ -704,13 +710,19 @@ const Booking = () => {
     <section className="flex">
       <Navbar />
       <div className="w-full flex m-3 flex-col overflow-hidden">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setPage(1);
+            setBookings([]);
+          }}
+        />
         <div className="flex justify-center">
           <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-2 sm:rounded-full rounded-md opacity-90 bg-gray-200">
             <Link
               to="/bookings"
-              className={`p-1 rounded-full px-4 transition-all duration-300 ${
-                location.pathname === "/bookings" ? "bg-white text-blue-500 shadow-custom-all-sides" : "text-gray-600"
-              }`}
+              className={`p-1 rounded-full px-4 transition-all duration-300 ${location.pathname === "/bookings" ? "bg-white text-blue-500 shadow-custom-all-sides" : "text-gray-600"
+                }`}
             >
               Workspace Bookings
             </Link>

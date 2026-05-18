@@ -12,6 +12,8 @@ import * as XLSX from "xlsx";
 import { DNA } from "react-loader-spinner";
 import { useSelector } from "react-redux";
 import { Pagination } from "antd";
+import SiteHeader from "../../components/SiteHeader";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ServicesTask = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -34,6 +36,10 @@ const ServicesTask = () => {
   const [endDate, setEndDate] = useState(formatDate(tomorrow));
 
   const themeColor = useSelector((state) => state.theme.color);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   /* ================= DATE FORMAT ================= */
   const dateFormat = (dateString) => {
@@ -190,7 +196,7 @@ const ServicesTask = () => {
   useEffect(() => {
     fetchData();
     fetchStatusCounts();
-  }, [pageNo, perPage, selectedStatus, startDate, endDate]);
+  }, [pageNo, perPage, selectedStatus, startDate, endDate, activeSiteId]); // ✅ re-fetch when site changes
 
   /* ================= STATUS FILTER ================= */
   const handleStatusChange = (status) => {
@@ -244,68 +250,68 @@ const ServicesTask = () => {
 
   /* ================= EXPORT ================= */
   const exportToExcel = async () => {
-  try {
-    const start = startDate ? `${startDate}T00:00:00` : "";
-    const end = endDate ? `${endDate}T23:59:59` : "";
+    try {
+      const start = startDate ? `${startDate}T00:00:00` : "";
+      const end = endDate ? `${endDate}T23:59:59` : "";
 
-    let data = [];
+      let data = [];
 
-    if (selectedStatus === "all") {
-      // ✅ fetch ALL records (no pagination limit)
-      const res = await getServicesRoutineList(1, 10000, start, end);
-      data = res.data.activities || [];
-    } else {
-      // ✅ already returns full data
-      const res = await getSoftServiceStatus(
-        selectedStatus,
-        start,
-        end
-      );
-      data = res.data.activities || [];
+      if (selectedStatus === "all") {
+        // ✅ fetch ALL records (no pagination limit)
+        const res = await getServicesRoutineList(1, 10000, start, end);
+        data = res.data.activities || [];
+      } else {
+        // ✅ already returns full data
+        const res = await getSoftServiceStatus(
+          selectedStatus,
+          start,
+          end
+        );
+        data = res.data.activities || [];
+      }
+
+      // ✅ Apply same filter (remove null names)
+      data = data.filter((item) => item.soft_service_name);
+
+      // ✅ Apply SEARCH filter also
+      if (searchRoutineText) {
+        const value = searchRoutineText.toLowerCase();
+        data = data.filter((item) =>
+          [
+            item.soft_service_name,
+            item.checklist_name,
+            item.status,
+            item.assigned_to_name,
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(value)
+        );
+      }
+
+      // ✅ Prepare export data
+      const exportData = data.map((row) => ({
+        "Service Name": row.soft_service_name,
+        "Checklist Name": row.checklist_name,
+        "Start Date": dateFormat(row.start_time),
+        Status: row.status,
+        "Assigned To": row.assigned_to_name,
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+      const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+      const blob = new Blob([buffer]);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Service_Task.xlsx";
+      link.click();
+
+    } catch (error) {
+      console.error(error);
     }
-
-    // ✅ Apply same filter (remove null names)
-    data = data.filter((item) => item.soft_service_name);
-
-    // ✅ Apply SEARCH filter also
-    if (searchRoutineText) {
-      const value = searchRoutineText.toLowerCase();
-      data = data.filter((item) =>
-        [
-          item.soft_service_name,
-          item.checklist_name,
-          item.status,
-          item.assigned_to_name,
-        ]
-          .join(" ")
-          .toLowerCase()
-          .includes(value)
-      );
-    }
-
-    // ✅ Prepare export data
-    const exportData = data.map((row) => ({
-      "Service Name": row.soft_service_name,
-      "Checklist Name": row.checklist_name,
-      "Start Date": dateFormat(row.start_time),
-      Status: row.status,
-      "Assigned To": row.assigned_to_name,
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
-    const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-
-    const blob = new Blob([buffer]);
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "Service_Task.xlsx";
-    link.click();
-
-  } catch (error) {
-    console.error(error);
-  }
-};
+  };
   /* ================= PAGINATION ================= */
   const handlePageChange = (page, pageSize) => {
     setPageNo(page);
@@ -316,7 +322,16 @@ const ServicesTask = () => {
     <section className="flex">
       <Navbar />
 
-      <div className="p-4 w-full mx-3 flex flex-col">
+      <div className="w-full mx-3 flex flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setPageNo(1);
+            setSelectedStatus("all");
+            setFilteredRoutineData([]);
+            setRoutines([]);
+          }}
+        />
         <Services />
 
         {/* ================= STATUS CARDS ================= */}
@@ -383,7 +398,7 @@ const ServicesTask = () => {
               onClick={exportToExcel}
               className="bg-green-500 text-white p-2 rounded"
             >
-             Export ({total})
+              Export ({total})
             </button>
           </div>
         </div>

@@ -14,6 +14,7 @@ import Table from "../components/table/Table";
 import AssetNav from "../components/navbars/AssetNav";
 import { DNA } from "react-loader-spinner";
 import { useSelector } from "react-redux";
+import SiteHeader from "../components/SiteHeader";
 
 // import jsPDF from "jspdf";
 // import QRCode from "qrcode.react";
@@ -31,7 +32,11 @@ const Meter = () => {
   const [selectedUnit, setSelectedUnit] = useState("");
   const [page, setPage] = useState("assets");
   const [assets, setAssets] = useState([]);
-  const themeColor = useSelector((state) => state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString(); // Adjust the format as needed
@@ -220,7 +225,6 @@ const Meter = () => {
           return new Date(b.created_at) - new Date(a.created_at);
         });
         setFilteredData(sortedData)
-        // setFilteredData(response.data.site_assets);
         setAssets(sortedData);
         console.log(response);
       } catch (error) {
@@ -228,7 +232,7 @@ const Meter = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   const exportToExcel = () => {
     const mappedData = filteredData.map((asset) => ({
@@ -431,6 +435,13 @@ const Meter = () => {
     >
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setFilteredData([]);
+            setAssets([]);
+          }}
+        />
         <AssetNav />
 
         {filter && (
