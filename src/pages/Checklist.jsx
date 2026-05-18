@@ -29,11 +29,16 @@ import DatePicker from "react-datepicker";
 import { BsEye } from "react-icons/bs";
 import toast from "react-hot-toast";
 import { Filter } from "lucide-react";
+import SiteHeader from "../components/SiteHeader";
 
 const Checklist = () => {
   const [checklists, setChecklists] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
   const [showImport, setShowImportModal] = useState(false); // FIXED: Proper state name
   const [showDownload, setShowDownloadModal] = useState(false); // FIXED: Proper state name
   const openModalImport = () => setShowImportModal(true);
@@ -166,7 +171,7 @@ const Checklist = () => {
     };
 
     fetchChecklistCategories();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   const columns = [
     {
@@ -417,6 +422,13 @@ const Checklist = () => {
     >
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setChecklists([]);
+            setFilteredData([]);
+          }}
+        />
         <AssetNav />
         <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2  ">
           <input

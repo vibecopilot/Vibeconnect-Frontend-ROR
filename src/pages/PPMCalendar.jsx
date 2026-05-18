@@ -11,6 +11,7 @@ import Navbar from "../components/Navbar";
 import AssetNav from "../components/navbars/AssetNav";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import { useSelector } from "react-redux";
+import SiteHeader from "../components/SiteHeader";
 
 const PPMCalendar = () => {
   const [events, setEvents] = useState([]);
@@ -21,6 +22,10 @@ const PPMCalendar = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -101,7 +106,7 @@ const PPMCalendar = () => {
   useEffect(() => {
     Get_Background();
     fetchPPMTask();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   /* -------- DATE FILTER -------- */
   const handleFilter = () => {
@@ -161,6 +166,15 @@ const PPMCalendar = () => {
       <Navbar />
 
       <div className="p-4 w-full flex flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setEvents([]);
+            setAllEvents([]);
+            setStartDate("");
+            setEndDate("");
+          }}
+        />
         <AssetNav />
 
         <div className="rounded-xl shadow-custom-all-sides p-4 mt-4 bg-white bg-opacity-95">

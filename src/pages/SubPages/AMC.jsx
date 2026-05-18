@@ -12,6 +12,7 @@ import { DNA } from "react-loader-spinner";
 import * as XLSX from "xlsx";
 import { useSelector } from "react-redux";
 import { MdClose, MdFileDownload } from "react-icons/md";
+import SiteHeader from "../../components/SiteHeader";
 
 const AMC = () => {
   const [searchText, setSearchText] = useState("");
@@ -23,6 +24,10 @@ const AMC = () => {
   const [endDate, setEndDate] = useState("");
 
   const themeColor = useSelector((state) => state.theme.color);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   useEffect(() => {
     const fetchAmc = async () => {
@@ -53,7 +58,7 @@ const AMC = () => {
     };
 
     fetchAmc();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
   const handleSearch = (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
@@ -149,6 +154,13 @@ const AMC = () => {
       <Navbar />
 
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setAmc([]);
+            setFilteredData([]);
+          }}
+        />
         <AssetNav />
 
         <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2">
