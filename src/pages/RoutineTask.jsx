@@ -8,12 +8,17 @@ import { getItemInLocalStorage } from "../utils/localStorage";
 import Navbar from "../components/Navbar";
 import AssetNav from "../components/navbars/AssetNav";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import SiteHeader from "../components/SiteHeader";
 
 const RoutineTask = () => {
   const [tasks, setTasks] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
   const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(today.getDate() + 1);
@@ -109,7 +114,7 @@ const RoutineTask = () => {
 
   useEffect(() => {
     fetchTasks(null, startDate, endDate);
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   /* ---------------------- SEARCH ---------------------- */
 
@@ -338,6 +343,14 @@ const RoutineTask = () => {
       <Navbar />
 
       <div className="p-4 w-full flex flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setTasks([]);
+            setFilteredData([]);
+            setSelectedStatus("all");
+          }}
+        />
         <AssetNav />
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full mt-4 p-6">

@@ -9,6 +9,7 @@ import { API_URL, getVibeBackground } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import TablePagination from "@mui/material/TablePagination";
 import { Filter } from "lucide-react";
+import SiteHeader from "../../components/SiteHeader";
 
 const PPMTask = () => {
   const getCurrentMonth = () => {
@@ -28,6 +29,10 @@ const PPMTask = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const [statusCounts, setStatusCounts] = useState({ all: 0, pending: 0, overdue: 0, complete: 0 });
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   const token = getItemInLocalStorage("TOKEN");
   const searchDebounceRef = useRef(null);
@@ -114,11 +119,11 @@ const PPMTask = () => {
   /* ---------------- EFFECTS ---------------- */
   useEffect(() => {
     fetchPPMTask(page, rowsPerPage, selectedStatus, selectedMonth, searchText);
-  }, [page, rowsPerPage, selectedStatus, selectedMonth, fetchPPMTask]);
+  }, [page, rowsPerPage, selectedStatus, selectedMonth, fetchPPMTask, activeSiteId]); // ✅ re-fetch when site changes
 
   useEffect(() => {
     fetchStatusCounts(selectedMonth);
-  }, [selectedMonth]);
+  }, [selectedMonth, activeSiteId]); // ✅ re-fetch when site changes
 
   useEffect(() => {
     Get_Background();
@@ -186,6 +191,14 @@ const PPMTask = () => {
       <Navbar />
 
       <div className="p-4 w-full flex flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffects
+            setPage(0);
+            setSelectedStatus("all");
+            setTasks([]);
+          }}
+        />
         <AssetNav />
 
         {/* STATUS CARDS */}
