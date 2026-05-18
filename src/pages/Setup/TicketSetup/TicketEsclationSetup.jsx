@@ -61,7 +61,7 @@ const initialResolutionEscalationData = {
   },
 };
 
-const TicketEscalationSetup = () => {
+const TicketEscalationSetup = ({ activeSiteId }) => {
   const [showModal, setShowModal] = useState(false);
   const [showModal1, setShowModal1] = useState(false);
   const [showModal3, setShowModal3] = useState(false);
@@ -111,7 +111,7 @@ const TicketEscalationSetup = () => {
   const [responseEscalation, setResponseEscalation] = useState([]);
   const [resolutionEscalation, setResolutionEscalation] = useState([]);
   const [users, setUsers] = useState([]);
-  const siteId = getItemInLocalStorage("SITEID");
+  // activeSiteId is received as prop from parent TicketSetup
 
   /**
    * @param {object} time - {days, hrs, min}
@@ -193,7 +193,7 @@ const TicketEscalationSetup = () => {
     fetchAllCategories();
     fetchEscalation();
     fetchSetupUsers();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
 
 
@@ -448,7 +448,7 @@ const handleEditResponseUserChange = (selected, level) => {
   // ✅ ADD THIS LINE (IMPORTANT)
   // formData.append("id", cloningRule.id);
 
-  formData.append("complaint_worker[society_id]", siteId);
+  formData.append("complaint_worker[society_id]", activeSiteId);
 formData.append(
   "complaint_worker[esc_type]",
   (cloneData.esc_type || "").toLowerCase().trim()
@@ -498,7 +498,7 @@ formData.append(
     }
     toast.loading("Creating Response Escalation. Please wait!");
     const formData = new FormData();
-    formData.append("complaint_worker[society_id]", siteId);
+    formData.append("complaint_worker[society_id]", activeSiteId);
     formData.append("complaint_worker[esc_type]", "response");
     formData.append("complaint_worker[of_phase]", "pms");
     formData.append("complaint_worker[of_atype]", "Pms::Site");
@@ -547,7 +547,7 @@ formData.append(
 
     const formData = new FormData();
     formData.append("id", editResponseData.id); // Crucial for update
-    formData.append("complaint_worker[society_id]", siteId);
+    formData.append("complaint_worker[society_id]", activeSiteId);
     formData.append("complaint_worker[esc_type]", "response");
     formData.append("complaint_worker[of_phase]", "pms");
     formData.append("complaint_worker[of_atype]", "Pms::Site");
@@ -590,7 +590,7 @@ formData.append(
     }
     toast.loading("Creating Resolution Escalation. Please wait!");
     const formData = new FormData();
-    formData.append("complaint_worker[society_id]", siteId);
+    formData.append("complaint_worker[society_id]", activeSiteId);
     formData.append("complaint_worker[esc_type]", "resolution");
     formData.append("complaint_worker[of_phase]", "pms");
     formData.append("complaint_worker[of_atype]", "Pms::Site");
@@ -658,7 +658,7 @@ formData.append(
 
     const formData = new FormData();
     formData.append("id", editResolutionData.id); // Crucial for update
-    formData.append("complaint_worker[society_id]", siteId);
+    formData.append("complaint_worker[society_id]", activeSiteId);
     formData.append("complaint_worker[esc_type]", "resolution");
     formData.append("complaint_worker[of_phase]", "pms");
     formData.append("complaint_worker[of_atype]", "Pms::Site");

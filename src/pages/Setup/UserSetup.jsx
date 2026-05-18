@@ -2,90 +2,101 @@ import { useEffect, useMemo, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
 import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
-import { getSetupUsers, getUserCount, putSetupUser, updateUserAdminApproval } from "../../api";
+import {
+  getSetupUsers,
+  getUserCount,
+  putSetupUser,
+  updateUserAdminApproval,
+} from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
-import { FaCheck, FaCheckCircle, FaClock, FaFilter, FaTimes, FaTimesCircle } from "react-icons/fa";
-// import { useSelector } from "react-redux";
+import {
+  FaCheck,
+  FaCheckCircle,
+  FaClock,
+  FaFilter,
+  FaTimes,
+  FaTimesCircle,
+  FaDownload,
+  FaUsers,
+} from "react-icons/fa";
 import toast from "react-hot-toast";
-// import { getItemInLocalStorage } from "../../utils/localStorage";
-import { BiEdit, BiUser, BiUserCheck } from "react-icons/bi";
+import { BiEdit, BiUserCheck } from "react-icons/bi";
 import { DNA } from "react-loader-spinner";
-import { FaDownload, FaUsers } from "react-icons/fa";
 import { MdApartment, MdDevices } from "react-icons/md";
 import { useSelector } from "react-redux";
+import SiteHeader from "../../components/SiteHeader";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const UserSetup = () => {
-    const themeColor = useSelector((state) => state.theme.color);
+  const themeColor = useSelector((state) => state.theme.color);
+
+  // ✅ SITE CHANGE STATE
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
+
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [count, setCount] = useState("");
-  const [activeTab, setActiveTab] = useState("approved"); // NEW
+  const [activeTab, setActiveTab] = useState("approved");
   const [filterOpen, setFilterOpen] = useState(false);
-const [fromDate, setFromDate] = useState("");
-const [toDate, setToDate] = useState("");
-  const [loading, setLoading] = useState(true); // Add loading state
-  // const themeColor = useSelector((state) => state.theme.color);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  // console.log("akshay", akshay);
-  // const users = akshay.users || [];
-  // console.log("Users:", users);
+  /* ---------------- FETCH USERS ---------------- */
   const fetchUsers = async () => {
     try {
-      setLoading(true); // Start loading
+      setLoading(true);
+
       const setupUsers = await getSetupUsers();
       const userCount = await getUserCount();
-      setCount(userCount.data);
-      const data = setupUsers.data || [];
-      setUsers(data);
 
-      setFilteredData(setupUsers.data);
+      setCount(userCount.data);
+
+      const data = setupUsers.data || [];
+
+      // ✅ SITE WISE FILTER
+      const filteredSiteUsers = data.filter((user) => {
+        if (!activeSiteId) return true;
+
+        // direct site_id
+        if (String(user.site_id) === String(activeSiteId)) {
+          return true;
+        }
+
+        // user_sites array
+        if (Array.isArray(user.user_sites)) {
+          return user.user_sites.some(
+            (site) => String(site.site_id) === String(activeSiteId)
+          );
+        }
+
+        return false;
+      });
+
+      setUsers(filteredSiteUsers);
+      setFilteredData(filteredSiteUsers);
     } catch (error) {
       console.log(error);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
+  /* ---------------- USE EFFECT ---------------- */
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [activeSiteId]);
 
- 
-
-  const tabFilteredUsers = useMemo(() => {
-    if (activeTab === "approved") {
-      return users.filter(
-        (user) =>
-          user.is_admin_approved === true ||
-          user.user_type === "pms_admin" // always approved
-      );
-    }
-
-    if (activeTab === "pending") {
-      return users.filter(
-        (user) =>
-          user.is_admin_approved === null &&
-          user.user_type !== "pms_admin" // exclude admin
-      );
-    }
-
-    if (activeTab === "rejected") {
-      return users.filter(
-        (user) =>
-          user.is_admin_approved === false &&
-          user.user_type !== "pms_admin"
-      );
-    }
-
-    return users;
-  }, [users, activeTab]);
-
-
+  /* ---------------- SEARCHABLE TEXT ---------------- */
   const buildSearchableText = (item) => {
     const userSitesHierarchy = Array.isArray(item.user_sites)
-      ? item.user_sites.map((site) => site.hierarchy || site.full_unit_name || "").join(" ")
+      ? item.user_sites
+        .map((site) => site.hierarchy || site.full_unit_name || "")
+        .join(" ")
       : "";
 
     return [
@@ -103,64 +114,97 @@ const [toDate, setToDate] = useState("");
       .toLowerCase();
   };
 
+  /* ---------------- SEARCH ---------------- */
   const handleSearch = (e) => {
     const searchValue = e.target.value;
+
     setSearchText(searchValue);
 
     if (searchValue.trim() === "") {
       setFilteredData(users);
     } else {
-      const searchWords = searchValue.toLowerCase().split(" ").filter(Boolean);
+      const searchWords = searchValue
+        .toLowerCase()
+        .split(" ")
+        .filter(Boolean);
+
       const filteredResults = users.filter((item) => {
         const searchable = buildSearchableText(item);
-        return searchWords.every((word) => searchable.includes(word));
+
+        return searchWords.every((word) =>
+          searchable.includes(word)
+        );
       });
+
       setFilteredData(filteredResults);
     }
   };
 
-  const finalFilteredUsers = useMemo(() => {
-    if (!searchText.trim()) return tabFilteredUsers;
+  /* ---------------- TAB FILTER ---------------- */
+  const tabFilteredUsers = useMemo(() => {
+    if (activeTab === "approved") {
+      return filteredData.filter(
+        (user) =>
+          user.is_admin_approved === true ||
+          user.user_type === "pms_admin"
+      );
+    }
 
-    const searchWords = searchText.toLowerCase().split(" ").filter(Boolean);
+    if (activeTab === "pending") {
+      return filteredData.filter(
+        (user) =>
+          user.is_admin_approved === null &&
+          user.user_type !== "pms_admin"
+      );
+    }
 
-    return tabFilteredUsers.filter((item) => {
-      const searchable = buildSearchableText(item);
-      return searchWords.every((word) => searchable.includes(word));
+    if (activeTab === "rejected") {
+      return filteredData.filter(
+        (user) =>
+          user.is_admin_approved === false &&
+          user.user_type !== "pms_admin"
+      );
+    }
+
+    return filteredData;
+  }, [filteredData, activeTab]);
+
+  /* ---------------- DATE FILTER ---------------- */
+  const dateFilteredUsers = useMemo(() => {
+    let data = [...tabFilteredUsers];
+
+    if (!fromDate && !toDate) return data;
+
+    return data.filter((user) => {
+      if (!user.created_at) return false;
+
+      const created = new Date(user.created_at);
+
+      if (fromDate) {
+        const from = new Date(fromDate);
+        from.setHours(0, 0, 0, 0);
+
+        if (created < from) return false;
+      }
+
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+
+        if (created > to) return false;
+      }
+
+      return true;
     });
-  }, [searchText, tabFilteredUsers]);
+  }, [tabFilteredUsers, fromDate, toDate]);
 
-   const dateFilteredUsers = useMemo(() => {
-  let data = [...finalFilteredUsers];
+  /* ---------------- CLEAR FILTER ---------------- */
+  const clearDateFilter = () => {
+    setFromDate("");
+    setToDate("");
+  };
 
-  if (!fromDate && !toDate) return data;
-
-  return data.filter((user) => {
-    if (!user.created_at) return false;
-
-    const created = new Date(user.created_at);
-
-    if (fromDate) {
-      const from = new Date(fromDate);
-      from.setHours(0,0,0,0);
-      if (created < from) return false;
-    }
-
-    if (toDate) {
-      const to = new Date(toDate);
-      to.setHours(23,59,59,999);
-      if (created > to) return false;
-    }
-
-    return true;
-  });
-}, [finalFilteredUsers, fromDate, toDate]);
-
-const clearDateFilter = () => {
-  setFromDate("");
-  setToDate("");
-};
-
+  /* ---------------- USER APPROVAL ---------------- */
   const handleUserApproval = async (id, isApproved) => {
     const token = localStorage.getItem("TOKEN");
 
@@ -186,23 +230,21 @@ const clearDateFilter = () => {
         token
       );
 
-      // ✅ FIXED TOAST
       if (isApproved === true) {
         toast.success("User approved successfully ✅");
       } else {
         toast.error("User rejected successfully ❌");
       }
-
     } catch (err) {
       console.error(err);
 
       toast.error("Failed to update approval ❌");
 
-      // rollback if failed
       fetchUsers();
     }
   };
 
+  /* ---------------- STATUS TOGGLE ---------------- */
   const handleStatusToggle = async (row) => {
     const newStatus = !row.user_status;
 
@@ -228,15 +270,18 @@ const clearDateFilter = () => {
           ? "User Activated Successfully ✅"
           : "User Deactivated Successfully ❌"
       );
-
     } catch (error) {
       console.error(error);
+
       toast.error("Failed to update status ❌");
     }
   };
 
+  /* ---------------- COUNTS ---------------- */
   const approvedCount = users.filter(
-    (u) => u.is_admin_approved === true || u.user_type === "pms_admin"
+    (u) =>
+      u.is_admin_approved === true ||
+      u.user_type === "pms_admin"
   ).length;
 
   const pendingCount = users.filter(
@@ -251,55 +296,76 @@ const clearDateFilter = () => {
       u.user_type !== "pms_admin"
   ).length;
 
-  // ✅ FINAL TOTAL
-  const totalUsersCount = approvedCount + pendingCount + rejectedCount;
-  // const totalUsers = users.length;
-  // const appDownloadedCount = users.filter((user) => user.is_downloaded).length;
-  // const appDownloadTenant = users.filter(
-  //   (user) =>
-  //     user.is_downloaded &&
-  //     user.user_sites.some((site) => site.ownership === "tenant")
-  // ).length;
-  // const appDownloadOwner = users.filter(
-  //   (user) =>
-  //     user.is_downloaded &&
-  //     user.user_sites.some((site) => site.ownership === "owner")
-  // ).length;
-  // const approvedUsers = users.filter(
-  //   (user) => user.status === "approved"
-  // ).length;
-  // const pendingUsers = users.filter((user) => user.status === "pending").length;
+  const totalUsersCount =
+    approvedCount + pendingCount + rejectedCount;
 
+  /* ---------------- TABLE COLUMNS ---------------- */
   const userColumn = [
     {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-3">
-          <Link to={`/setup/users-details/${row.id}`} title="View"><BsEye size={18} /></Link>
-          <Link to={`/setup/edit-user/${row.id}`} state={{ user: row }} title="Edit"><BiEdit size={18} /></Link>
+          <Link
+            to={`/setup/users-details/${row.id}`}
+            title="View"
+          >
+            <BsEye size={18} />
+          </Link>
+
+          <Link
+            to={`/setup/edit-user/${row.id}`}
+            state={{ user: row }}
+            title="Edit"
+          >
+            <BiEdit size={18} />
+          </Link>
         </div>
       ),
       width: "200px",
     },
-    { name: "First Name", selector: (row) => row.firstname, sortable: true },
-    { name: "Last Name", selector: (row) => row.lastname, sortable: true },
-    { name: "Email", selector: (row) => row.email, sortable: true },
-    { name: "Mobile", selector: (row) => row.mobile || "NA", sortable: true },
+
     {
-      name: "App Downloaded",
-      selector: (row) => (row.is_downloaded ? "Yes" : "No"),
+      name: "First Name",
+      selector: (row) => row.firstname,
       sortable: true,
     },
+
+    {
+      name: "Last Name",
+      selector: (row) => row.lastname,
+      sortable: true,
+    },
+
+    {
+      name: "Email",
+      selector: (row) => row.email,
+      sortable: true,
+    },
+
+    {
+      name: "Mobile",
+      selector: (row) => row.mobile || "NA",
+      sortable: true,
+    },
+
+    {
+      name: "App Downloaded",
+      selector: (row) =>
+        row.is_downloaded ? "Yes" : "No",
+      sortable: true,
+    },
+
     {
       name: "Building-Floor-Unit",
       selector: (row) => row.full_unit_name,
       sortable: true,
     },
+
     {
       name: "User Type",
       selector: (row) => {
-        // Determine base user type
-        let userType = "USERTYPE";
+        let userType = "User";
+
         if (row.user_type === "pms_admin") {
           userType = "Admin";
         } else if (row.user_type === "pms_occupant_admin") {
@@ -314,27 +380,30 @@ const clearDateFilter = () => {
           userType = "Employee";
         } else if (
           row.user_type === "unit_resident" ||
-          row.user_type === "user"
+          row.user_type === "user" ||
+          row.user_type === "unit_owner"
         ) {
           userType = "Resident";
-        } else if (row.user_type === "unit_owner") {
-          userType = "Resident";
-        } else {
-          userType = "User";
         }
 
-        // Get ownership info from user_sites if available
-        const ownership = row.user_sites?.[0]?.ownership;
-        const ownershipType = row.user_sites?.[0]?.ownership_type;
+        const ownership =
+          row.user_sites?.[0]?.ownership;
 
-        // Add ownership suffix for residents
+        const ownershipType =
+          row.user_sites?.[0]?.ownership_type;
+
         if (
           userType === "Resident" ||
           userType === "Occupant" ||
           userType === "Occupant Admin"
         ) {
           if (ownership === "owner") {
-            userType += ` - Owner${ownershipType === "primary" ? " (Primary)" : ownershipType === "secondary" ? " (Secondary)" : ""}`;
+            userType += ` - Owner${ownershipType === "primary"
+              ? " (Primary)"
+              : ownershipType === "secondary"
+                ? " (Secondary)"
+                : ""
+              }`;
           } else if (ownership === "tenant") {
             userType += " - Tenant";
           }
@@ -357,23 +426,26 @@ const clearDateFilter = () => {
             className="sr-only peer"
           />
 
-          {/* Track */}
           <div
             className={`w-11 h-6 rounded-full relative transition-all duration-300
-          ${row.user_status ? "bg-green-500" : "bg-red-500"}
-        `}
+            ${row.user_status
+                ? "bg-green-500"
+                : "bg-red-500"
+              }`}
           >
-            {/* Thumb */}
             <div
               className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300
-            ${row.user_status ? "left-6" : "left-1"}
-          `}
+              ${row.user_status
+                  ? "left-6"
+                  : "left-1"
+                }`}
             ></div>
           </div>
         </label>
       ),
       sortable: true,
     },
+
     {
       name: "Approval",
       cell: (row) =>
@@ -381,96 +453,124 @@ const clearDateFilter = () => {
           <div className="flex gap-2">
             <button
               className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 text-white hover:bg-green-600"
-              onClick={() => handleUserApproval(row.id, true)}
+              onClick={() =>
+                handleUserApproval(row.id, true)
+              }
             >
               <FaCheck size={14} />
             </button>
 
             <button
               className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
-              onClick={() => handleUserApproval(row.id, false)}
+              onClick={() =>
+                handleUserApproval(row.id, false)
+              }
             >
               <FaTimes size={14} />
             </button>
           </div>
         ) : row.is_admin_approved === true ? (
-          <span className="text-green-600 font-semibold">Approved</span>
+          <span className="text-green-600 font-semibold">
+            Approved
+          </span>
         ) : row.is_admin_approved === false ? (
-          <span className="text-red-600 font-semibold">Rejected</span>
+          <span className="text-red-600 font-semibold">
+            Rejected
+          </span>
         ) : (
-          <span className="text-yellow-600 font-semibold">Pending</span>
+          <span className="text-yellow-600 font-semibold">
+            Pending
+          </span>
         ),
       sortable: true,
     },
-{
-  name: "Created At",
-  selector: (row) =>
-    new Date(row.created_at).toLocaleDateString("en-GB"),
-  sortable: true
-}
+
+    {
+      name: "Created At",
+      selector: (row) =>
+        new Date(row.created_at).toLocaleDateString(
+          "en-GB"
+        ),
+      sortable: true,
+    },
   ];
 
-  const totalDownloads = users?.filter(user => user.is_downloaded).length || 0;
+  /* ---------------- DASHBOARD CARDS ---------------- */
+  const totalDownloads =
+    users?.filter((user) => user.is_downloaded)
+      .length || 0;
 
-const dashboardCards = [
-  {
-    title: "Total Users",
-    value: totalUsersCount || 0,
-    icon: <FaUsers size={22} />, // 👥 all users
-    bg: "bg-blue-400 text-white",
-  },
-  {
-    title: "Total App Downloads",
-    value: totalDownloads || 0,
-    icon: <FaDownload size={22} />, // ⬇️ download
-    bg: "bg-green-400 text-white",
-  },
-  {
-    title: "Device Registered",
-    value: count?.total_user_downloads || 0,
-    icon: <MdDevices size={22} />, // 📱 device
-    bg: "bg-purple-400 ttext-white",
-  },
-  {
-    title: "Tenant Register",
-    value: count?.total_tenant_downloads || 0,
-    icon: <MdApartment size={22} />, // 🏢 tenant
-    bg: "bg-orange-400 text-white",
-  },
-  {
-    title: "Owner Register",
-    value: count?.total_owner_downloads || 0,
-    icon: <BiUserCheck size={22} />, // 👤✔ owner verified
-    bg: "bg-pink-400 text-white",
-  },
-  {
-    title: "Approved Users",
-    value: approvedCount || 0,
-    icon: <FaCheckCircle size={22} />, // ✅ approved
-    bg: "bg-emerald-400 text-white",
-  },
-  {
-    title: "Pending Users",
-    value: pendingCount || 0,
-    icon: <FaClock size={22} />, // ⏳ pending
-    bg: "bg-yellow-400 text-white",
-  },
-  {
-    title: "Rejected Users",
-    value: rejectedCount || 0,
-    icon: <FaTimesCircle size={22} />, // ❌ rejected
-    bg: "bg-red-400 text-white",
-  },
-];
-  console.log("Filtered Data:", users);
+  const dashboardCards = [
+    {
+      title: "Total Users",
+      value: totalUsersCount || 0,
+      icon: <FaUsers size={22} />,
+      bg: "bg-blue-400 text-white",
+    },
+    {
+      title: "Total App Downloads",
+      value: totalDownloads || 0,
+      icon: <FaDownload size={22} />,
+      bg: "bg-green-400 text-white",
+    },
+    {
+      title: "Device Registered",
+      value: count?.total_user_downloads || 0,
+      icon: <MdDevices size={22} />,
+      bg: "bg-purple-400 text-white",
+    },
+    {
+      title: "Tenant Register",
+      value: count?.total_tenant_downloads || 0,
+      icon: <MdApartment size={22} />,
+      bg: "bg-orange-400 text-white",
+    },
+    {
+      title: "Owner Register",
+      value: count?.total_owner_downloads || 0,
+      icon: <BiUserCheck size={22} />,
+      bg: "bg-pink-400 text-white",
+    },
+    {
+      title: "Approved Users",
+      value: approvedCount || 0,
+      icon: <FaCheckCircle size={22} />,
+      bg: "bg-emerald-400 text-white",
+    },
+    {
+      title: "Pending Users",
+      value: pendingCount || 0,
+      icon: <FaClock size={22} />,
+      bg: "bg-yellow-400 text-white",
+    },
+    {
+      title: "Rejected Users",
+      value: rejectedCount || 0,
+      icon: <FaTimesCircle size={22} />,
+      bg: "bg-red-400 text-white",
+    },
+  ];
 
   return (
     <section className="flex">
       <Navbar />
-      <div className="w-full flex mx-3 flex-col gap-4 overflow-hidden mb-5">
-        {/* ---------- TABS ---------- */}
-        <div className="flex bg-gray-100 py-2 rounded-full shadow-inner justify-center mt-4 ">
 
+      <div className="w-full flex mx-3 flex-col gap-4 overflow-hidden ">
+
+        {/* ✅ SITE HEADER */}
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id);
+
+            setSearchText("");
+            setFromDate("");
+            setToDate("");
+            setUsers([]);
+          }}
+        />
+
+        {/* ---------- TABS ---------- */}
+        <div className="flex bg-gray-100 py-2 rounded-full shadow-inner justify-center ">
           <button
             onClick={() => setActiveTab("approved")}
             className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "approved"
@@ -500,40 +600,40 @@ const dashboardCards = [
           >
             Rejected Users
           </button>
-
         </div>
 
+        {/* SEARCH + BUTTONS */}
         <div className="mt-2 flex md:flex-row flex-col justify-between md:items-center gap-4">
-  <input
-    type="text"
-    placeholder="Search Anything (Name, Email, Mobile and Flat) along with Spaces"
-    className="p-2 w-full border border-gray-300 rounded-md placeholder:text-sm outline-none"
-    value={searchText}
-    onChange={handleSearch}
-  />
+          <input
+            type="text"
+            placeholder="Search Anything (Name, Email, Mobile and Flat)"
+            className="p-2 w-full border border-gray-300 rounded-md placeholder:text-sm outline-none"
+            value={searchText}
+            onChange={handleSearch}
+          />
 
-  <div className="flex gap-3">
-    {/* Filter Button */}
-    <button
-      onClick={() => setFilterOpen(true)}
-      style={{background:themeColor}}
-      className=" text-white px-4 py-2 rounded-md flex items-center gap-2"
-    >
-      <FaFilter />
-      Filter
-    </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setFilterOpen(true)}
+              style={{ background: themeColor }}
+              className="text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              <FaFilter />
+              Filter
+            </button>
 
-    <Link
-      to="/setup/users-setup/add-new-user"
-      style={{ background: themeColor }}
-      className="font-semibold p-2 px-4 rounded-md text-white flex items-center gap-2"
-    >
-      <PiPlusCircle size={20}/>
-      Add
-    </Link>
-  </div>
-</div>
+            <Link
+              to="/setup/users-setup/add-new-user"
+              style={{ background: themeColor }}
+              className="font-semibold p-2 px-4 rounded-md text-white flex items-center gap-2"
+            >
+              <PiPlusCircle size={20} />
+              Add
+            </Link>
+          </div>
+        </div>
 
+        {/* LOADING */}
         {loading ? (
           <div className="flex justify-center items-center h-80 mt-10">
             <DNA
@@ -541,103 +641,113 @@ const dashboardCards = [
               height={110}
               width={120}
               ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
             />
           </div>
         ) : (
           <>
-            {/* Attractive Dashboard Cards */}
+            {/* DASHBOARD */}
             <div className="grid lg:grid-cols-8 md:grid-cols-5 grid-cols-1 gap-8">
               {dashboardCards.map((card, index) => (
                 <div
                   key={index}
-                  className={`bg-gradient-to-r ${card.bg} text-white rounded-xl p-3 shadow-lg hover:scale-90 transform transition duration-300`}
+                  className={`bg-gradient-to-r ${card.bg} rounded-xl p-3 shadow-lg hover:scale-90 transform transition duration-300`}
                 >
                   <div className="flex justify-between items-center">
                     <div>
                       <h3 className="text-sm font-medium opacity-90">
                         {card.title}
                       </h3>
-                      <p className="text-3xl font-bold mt-2">{card.value}</p>
+
+                      <p className="text-3xl font-bold mt-2">
+                        {card.value}
+                      </p>
                     </div>
-                    <div className="opacity-90">{card.icon}</div>
+
+                    <div className="opacity-90">
+                      {card.icon}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Table */}
+            {/* TABLE */}
             <div className="bg-white rounded-xl shadow-md p-4">
-              <Table columns={userColumn} data={dateFilteredUsers} />
+              <Table
+                columns={userColumn}
+                data={dateFilteredUsers}
+              />
             </div>
           </>
         )}
+
+        {/* FILTER MODAL */}
         {filterOpen && (
-<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-  <div className="bg-white rounded-2xl shadow-xl w-[420px] p-6">
-    
-    <div className="flex justify-between items-center mb-5">
-      <h2 className="text-lg font-semibold">
-        Filter Users By Date
-      </h2>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl shadow-xl w-[420px] p-6">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-lg font-semibold">
+                  Filter Users By Date
+                </h2>
 
-      <button
-        onClick={() => setFilterOpen(false)}
-        className="text-gray-500 text-xl"
-      >
-        ×
-      </button>
-    </div>
+                <button
+                  onClick={() => setFilterOpen(false)}
+                  className="text-gray-500 text-xl"
+                >
+                  ×
+                </button>
+              </div>
 
-    <div className="space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">
+                    From Date
+                  </label>
 
-      <div>
-        <label className="text-sm font-medium">
-          From Date
-        </label>
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) =>
+                      setFromDate(e.target.value)
+                    }
+                    className="w-full border rounded-lg p-2 mt-1"
+                  />
+                </div>
 
-        <input
-          type="date"
-          value={fromDate}
-          onChange={(e)=>setFromDate(e.target.value)}
-          className="w-full border rounded-lg p-2 mt-1"
-        />
-      </div>
+                <div>
+                  <label className="text-sm font-medium">
+                    To Date
+                  </label>
 
-      <div>
-        <label className="text-sm font-medium">
-          To Date
-        </label>
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) =>
+                      setToDate(e.target.value)
+                    }
+                    className="w-full border rounded-lg p-2 mt-1"
+                  />
+                </div>
 
-        <input
-          type="date"
-          value={toDate}
-          onChange={(e)=>setToDate(e.target.value)}
-          className="w-full border rounded-lg p-2 mt-1"
-        />
-      </div>
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    onClick={clearDateFilter}
+                    className="px-4 py-2 rounded-lg border"
+                  >
+                    Clear
+                  </button>
 
-      <div className="flex justify-end gap-3 pt-4">
-        <button
-          onClick={clearDateFilter}
-          className="px-4 py-2 rounded-lg border"
-        >
-          Clear
-        </button>
-
-        <button
-          onClick={() => setFilterOpen(false)}
-          className="px-5 py-2 bg-blue-600 text-white rounded-lg"
-        >
-          Apply
-        </button>
-      </div>
-
-    </div>
-  </div>
-</div>
-)}
+                  <button
+                    onClick={() => setFilterOpen(false)}
+                    className="px-5 py-2 bg-blue-600 text-white rounded-lg"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
