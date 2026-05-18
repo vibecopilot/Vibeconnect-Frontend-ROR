@@ -23,6 +23,7 @@ import { BsEye } from "react-icons/bs";
 import * as XLSX from "xlsx";
 import { useSelector } from "react-redux";
 import FileInputBox from "../containers/Inputs/FileInputBox";
+import SiteHeader from "../components/SiteHeader";
 
 const Inventory = () => {
   const [stocks, setStocks] = useState([]);
@@ -35,6 +36,10 @@ const Inventory = () => {
 
   const [page, setPage] = useState("Masters");
   const themeColor = useSelector((state) => state.theme.color);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   // ✅ modal state name fix
   const [showImport, setShowImport] = useState(false);
@@ -129,7 +134,7 @@ const Inventory = () => {
     };
 
     fetchInventory();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   // ✅ Fetch Masters
   useEffect(() => {
@@ -152,7 +157,7 @@ const Inventory = () => {
     };
 
     fetchMasters();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   // ✅ Background
   const Get_Background = async () => {
@@ -410,6 +415,15 @@ const Inventory = () => {
       >
         <Navbar />
         <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+          <SiteHeader
+            onSiteChange={(id) => {
+              setActiveSiteId(id); // triggers both data useEffects
+              setStocks([]);
+              setFilteredStocks([]);
+              setMastersState([]);
+              setFilteredMasters([]);
+            }}
+          />
           <AssetNav />
 
           <div className="w-full my-2 flex overflow-hidden flex-col">

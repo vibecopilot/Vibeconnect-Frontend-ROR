@@ -44,6 +44,7 @@ import ImportAssetModal from "../containers/modals/ImportAssetModal";
 import { Pagination } from "antd";
 import { FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
+import SiteHeader from "../components/SiteHeader";
 
 // import jsPDF from "jspdf";
 // import QRCode from "qrcode.react";
@@ -76,6 +77,10 @@ const Asset = () => {
   const [selectedSubGroup, setSelectedSubGroup] = useState("");
   const [filteredData, setFilteredData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
 
   const [vendors, setVendors] = useState([]);
@@ -487,7 +492,7 @@ const Asset = () => {
     };
 
     fetchData();
-  }, [pageNo, perPage, searchText, isFilterApplied, selectedBuilding, selectedFloor, selectedUnit, selectedGroup, selectedSubGroup, selectedVendor]);
+  }, [pageNo, perPage, searchText, isFilterApplied, selectedBuilding, selectedFloor, selectedUnit, selectedGroup, selectedSubGroup, selectedVendor, activeSiteId]); // ✅ re-fetch when site changes
 
   const handlePageChange = async (page, pageSize) => {
     setPageNo(page);
@@ -703,7 +708,20 @@ const Asset = () => {
       }}
     >
       <Navbar />
-      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+      <div className=" w-full flex md:mx-2 overflow-hidden flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setPageNo(1);        // reset pagination
+            setIsFilterApplied(false);
+            setSelectedBuilding("");
+            setSelectedFloor("");
+            setSelectedUnit("");
+            setSelectedGroup("");
+            setSelectedSubGroup("");
+            setSelectedVendor("");
+          }}
+        />
         <AssetNav />
 
         {filter && page === "assets" && (

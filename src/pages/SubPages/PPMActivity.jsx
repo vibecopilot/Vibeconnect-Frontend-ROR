@@ -11,6 +11,7 @@ import AssetNav from "../../components/navbars/AssetNav";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import SiteHeader from "../../components/SiteHeader";
 
 const PPMActivity = () => {
   const [ppms, setPPms] = useState([]);
@@ -22,6 +23,10 @@ const PPMActivity = () => {
     currentPage: 1,
   });
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -82,7 +87,7 @@ const PPMActivity = () => {
 
   useEffect(() => {
     fetchServicePPM();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   const PPMColumn = [
     {
@@ -179,6 +184,13 @@ const PPMActivity = () => {
     >
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setPPms([]);
+            setFilteredPPMData([]);
+          }}
+        />
         <AssetNav />
         <div className="flex flex-wrap justify-between items-center my-2 ">
           <input
