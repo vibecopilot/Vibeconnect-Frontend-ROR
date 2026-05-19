@@ -14,6 +14,8 @@ import { PiPlusCircle } from "react-icons/pi";
 import { FiEdit, FiTrash2, FiHeart } from "react-icons/fi";
 import toast from "react-hot-toast";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import SetupNavbar from "../../../components/navbars/SetupNavbar";
+import SiteHeader from "../../../components/SiteHeader";
 
 const API_BASE = "https://admin.vibecopilot.ai";
 const PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
@@ -38,6 +40,9 @@ const OtherProject = () => {
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [likeLoadingIds, setLikeLoadingIds] = useState([]);
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   const fileImageRef = useRef(null);
   const filePdfRef = useRef(null);
@@ -244,26 +249,35 @@ const OtherProject = () => {
     try {
       setLoading(true);
 
-      const response = await getOtherProject();
-      const list = Array.isArray(response?.data) ? response.data : [];
+      // ✅ Pass site_id in API
+      const response = await getOtherProject(activeSiteId);
+
+      const list = Array.isArray(response?.data)
+        ? response.data
+        : [];
+
       const transformed = list.map((project) => {
         const attachments = Array.isArray(project?.attachments)
           ? project.attachments
           : [];
+
         const images = attachments
           .map((a) => buildFileUrl(a?.document))
           .filter(Boolean);
 
-        const likesArr = Array.isArray(project?.likes) ? project.likes : [];
+        const likesArr = Array.isArray(project?.likes)
+          ? project.likes
+          : [];
 
-        // ✅ keep full like users for modal
         const likeUsers = likesArr.map(normalizeLikeUser);
 
         const likedByMe = didILikeProject(project);
 
         const likeCount =
           project?.likes_count ??
-          (Array.isArray(project?.likes) ? project.likes.length : 0) ??
+          (Array.isArray(project?.likes)
+            ? project.likes.length
+            : 0) ??
           0;
 
         const amenities = Array.isArray(project?.other_p_amenities)
@@ -282,14 +296,19 @@ const OtherProject = () => {
           likedByMe,
           likeUsers,
           amenities,
-          images: images.length > 0 ? images : [PLACEHOLDER],
+          images: images.length > 0
+            ? images
+            : [PLACEHOLDER],
         };
       });
 
       setProjects(transformed);
 
       if (userID) {
-        const likedIds = transformed.filter((p) => p.likedByMe).map((p) => p.id);
+        const likedIds = transformed
+          .filter((p) => p.likedByMe)
+          .map((p) => p.id);
+
         setLikedProjects(likedIds);
       } else {
         setLikedProjects([]);
@@ -300,8 +319,9 @@ const OtherProject = () => {
     } finally {
       setLoading(false);
     }
-  }, [userID]);
+  }, [userID, activeSiteId]);
 
+  // ✅ Re-fetch when site changes
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
@@ -403,6 +423,12 @@ const OtherProject = () => {
       "other_project[contact_us]",
       formData.contact_us?.trim() || ""
     );
+    if (activeSiteId) {
+      fd.append(
+        "other_project[site_id]",
+        activeSiteId
+      );
+    }
     if (Array.isArray(formData.amenities)) {
       formData.amenities.forEach((amenity, index) => {
         fd.append(
@@ -461,9 +487,12 @@ const OtherProject = () => {
 
   return (
     <section className="flex">
-      <Navbar />
+      <SetupNavbar />
 
-      <div className="min-h-screen bg-gray-100 w-full p-6">
+      <div className="min-h-screen bg-gray-100 w-full p-6 mx-3">
+        <SiteHeader
+          onSiteChange={(id) => setActiveSiteId(id)}
+        />
         <div className="flex justify-between mb-8 gap-4 flex-wrap">
           <h1 className="text-2xl font-bold">Other Projects</h1>
 
