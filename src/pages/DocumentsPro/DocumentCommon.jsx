@@ -7,9 +7,9 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
-const DocumentCommon = () => {
+// ── activeSiteId is passed from DocumentMain (which owns SiteHeader) ──
+const DocumentCommon = ({ activeSiteId }) => {
   const userID = getItemInLocalStorage("UserId");
-  const siteID = getItemInLocalStorage("SITEID");
   const themeColor = useSelector((state) => state.theme.color);
   const [assignedUser, setAssignedUser] = useState([]);
 
@@ -213,12 +213,17 @@ const handleDeleteFile = async (id) => {
   };
   
  
+  // ── re-fetch + reset navigation whenever the active site changes ──
   useEffect(() => {
+    setBreadcrumbs([{ id: null, name: "Root" }]);
+    setParentID(null);
+    setFolders([]);
+    setFiles([]);
     fetchFolderDocumentCommon().then((data) => {
       setFolders(data.folders);
       setFiles(data.files);
     });
-  }, []);
+  }, [activeSiteId]); // ✅ re-runs every time site changes
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -347,7 +352,7 @@ const openFolder = async (folder) => {
     }
   
     sendData.append("folder[uploaded_by]", userID);
-    sendData.append("folder[site_id]", siteID);
+    sendData.append("folder[site_id]", activeSiteId);
   
     try {
       const resp = await postFolderDocumentCommon(sendData);
@@ -415,7 +420,7 @@ const openFolder = async (folder) => {
     // formData.unitIds.forEach((id) => sendData.append("unit_ids[]", id)); 
   
     sendData.append("folder_document[uploaded_by]", userID);
-    sendData.append("folder_document[site_id]", siteID);
+    sendData.append("folder_document[site_id]", activeSiteId);
   
   
     try {
