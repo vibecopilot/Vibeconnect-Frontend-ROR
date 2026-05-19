@@ -27,6 +27,7 @@ import { MdApartment, MdDevices } from "react-icons/md";
 import { useSelector } from "react-redux";
 import SiteHeader from "../../components/SiteHeader";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const UserSetup = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -553,7 +554,7 @@ const UserSetup = () => {
 
   return (
     <section className="flex">
-      <Navbar />
+      <SetupNavbar />
 
       <div className="w-full flex mx-3 flex-col gap-4 overflow-hidden ">
 
