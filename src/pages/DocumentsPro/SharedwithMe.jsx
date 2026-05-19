@@ -7,9 +7,9 @@ import { useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import Select from "react-select";
 
-const SharedwithMe = () => {
+// ── activeSiteId is passed from DocumentMain (which owns SiteHeader) ──
+const SharedwithMe = ({ activeSiteId }) => {
   const userID = getItemInLocalStorage("UserId");
-  const siteID = getItemInLocalStorage("SITEID");
   const themeColor = useSelector((state) => state.theme.color);
   const [assignedUser, setAssignedUser] = useState([]);
 
@@ -131,12 +131,17 @@ const fetchFolderDocumentCommon = async () => {
 
 
 
+// ── re-fetch + reset navigation whenever the active site changes ──
 useEffect(() => {
+  setBreadcrumbs([{ id: null, name: "Root" }]);
+  setParentID(null);
+  setFolders([]);
+  setFiles([]);
   fetchFolderDocumentCommon().then((data) => {
     setFolders(data.folders);
     setFiles(data.files);
   });
-}, []);
+}, [activeSiteId]); // ✅ re-runs every time site changes
 
 // Delete folder or file
 const handleDelete = async (id) => {
