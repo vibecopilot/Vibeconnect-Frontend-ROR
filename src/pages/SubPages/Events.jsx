@@ -185,7 +185,7 @@ const Events = () => {
   return (
     <div className="flex">
       <Navbar />
-      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+      <div className="p-2 w-full flex md:mx-2 overflow-hidden flex-col">
         <SiteHeader onSiteChange={getEvents} />
         <Communication />
 
