@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
-import { getSetupUsers, putSetupUser } from "../../api";
+import { getSetupUsers, putSetupUser, getBuildings, getFloors, getUnits } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const THEME_BG =
   "radial-gradient(897px at 9% 80.3%, rgb(55, 60, 245) 0%, rgba(234, 161, 15, 0.9) 100.2%)";
@@ -10,6 +11,15 @@ const THEME_BG =
 const UserEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const siteId = getItemInLocalStorage("SITEID");
+
+  const [buildings, setBuildings] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [units, setUnits] = useState([]);
+
+  const [selectedTower, setSelectedTower] = useState("");
+  const [selectedFloorId, setSelectedFloorId] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -23,6 +33,7 @@ const UserEdit = () => {
     lastname: "",
     email: "",
     mobile: "",
+    password: "",
     status: "",
     userType: "",
     occupancy_type: "",
@@ -62,6 +73,7 @@ const UserEdit = () => {
           lastname: u.lastname || "",
           email: u.email || "",
           mobile: u.mobile || "",
+          password: u.password || "",
           status: u.status || "",
           userType: u.user_type || "",
           occupancy_type: u.user_sites?.[0]?.ownership || "",
@@ -70,8 +82,8 @@ const UserEdit = () => {
             u.lives_here === true
               ? "true"
               : u.lives_here === false
-              ? "false"
-              : "",
+                ? "false"
+                : "",
           membershipType: u.user_sites?.[0]?.ownership_type || "Primary",
           panCard: u.pan_number || "",
           gstin: u.gst_number || "",
@@ -85,7 +97,32 @@ const UserEdit = () => {
           user_status: u.user_status ?? true,
           profile_picture: u.profile_picture || null,
         });
+        // Set existing building / floor / unit
+        const userSite = u.user_sites?.[0] || {};
 
+        const buildId = userSite.build_id || "";
+        const floorId = userSite.floor_id || "";
+        const unitId = userSite.unit_id || "";
+
+        setSelectedTower(buildId);
+        setSelectedFloorId(floorId);
+        setSelectedUnit(unitId);
+
+        // Load buildings
+        const buildingRes = await getBuildings();
+        setBuildings(buildingRes?.data || []);
+
+        // Load floors
+        if (buildId) {
+          const floorRes = await getFloors(buildId);
+          setFloors(floorRes?.data || []);
+        }
+
+        // Load units
+        if (floorId) {
+          const unitRes = await getUnits(floorId);
+          setUnits(unitRes?.data || []);
+        }
         // If there's an existing profile picture URL, show it
         if (u.profile_picture && typeof u.profile_picture === "string") {
           setProfileImage(u.profile_picture);
@@ -99,6 +136,8 @@ const UserEdit = () => {
 
     fetchUser();
   }, [id, navigate]);
+
+
 
   // ── Handlers ────────────────────────────────────────────────────────────────
   const handleChange = (e) => {
@@ -148,6 +187,7 @@ const UserEdit = () => {
         lastname: formData.lastname,
         email: formData.email,
         mobile: formData.mobile,
+        password: formData.password,
         user_type: formData.userType || "user",
         user_status: formData.user_status,
         is_admin_approved: isAdmin ? true : null,
@@ -167,22 +207,71 @@ const UserEdit = () => {
         status: formData.status,
       };
 
+      // Add password only if entered
+      if (formData.password) {
+        userFields.password = formData.password;
+      }
+
       Object.entries(userFields).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== "") {
           sendData.append(`user[${key}]`, String(value));
         }
       });
 
+      // Profile image
       if (formData.profile_picture instanceof File) {
-        sendData.append("user[profile_picture]", formData.profile_picture);
+        sendData.append(
+          "user[profile_picture]",
+          formData.profile_picture
+        );
       }
 
+      // User site details
+      sendData.append(
+        "user[user_sites][][site_id]",
+        String(siteId)
+      );
+
+      sendData.append(
+        "user[user_sites][][build_id]",
+        String(selectedTower)
+      );
+
+      sendData.append(
+        "user[user_sites][][floor_id]",
+        String(selectedFloorId)
+      );
+
+      sendData.append(
+        "user[user_sites][][unit_id]",
+        String(selectedUnit)
+      );
+
+      sendData.append(
+        "user[user_sites][][ownership]",
+        formData.occupancy_type
+      );
+
+      sendData.append(
+        "user[user_sites][][ownership_type]",
+        formData.membershipType.toLowerCase()
+      );
+
+      sendData.append(
+        "user[user_sites][][lives_here]",
+        String(livesHereValue)
+      );
+
       await putSetupUser(id, sendData);
+
       toast.success("User updated successfully!");
       navigate(`/setup/users-details/${id}`);
     } catch (err) {
       console.error("Update failed:", err);
-      toast.error(err?.response?.data?.error || "Failed to update user");
+
+      toast.error(
+        err?.response?.data?.error || "Failed to update user"
+      );
     } finally {
       setSaving(false);
     }
@@ -339,6 +428,21 @@ const UserEdit = () => {
                   />
                 </div>
 
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    Password
+                  </label>
+
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Enter new password"
+                    autoComplete="new-password"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  />
+                </div>
                 {/* User Status */}
                 <div>
                   <label className="text-sm font-medium block mb-1">
@@ -350,11 +454,10 @@ const UserEdit = () => {
                       onClick={() =>
                         setFormData((p) => ({ ...p, user_status: true }))
                       }
-                      className={`px-4 py-1 rounded-md border text-sm font-medium transition ${
-                        formData.user_status
-                          ? "bg-green-600 text-white border-green-600"
-                          : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
-                      }`}
+                      className={`px-4 py-1 rounded-md border text-sm font-medium transition ${formData.user_status
+                        ? "bg-green-600 text-white border-green-600"
+                        : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
+                        }`}
                     >
                       Active
                     </button>
@@ -363,11 +466,10 @@ const UserEdit = () => {
                       onClick={() =>
                         setFormData((p) => ({ ...p, user_status: false }))
                       }
-                      className={`px-4 py-1 rounded-md border text-sm font-medium transition ${
-                        formData.user_status === false
-                          ? "bg-red-600 text-white border-red-600"
-                          : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
-                      }`}
+                      className={`px-4 py-1 rounded-md border text-sm font-medium transition ${formData.user_status === false
+                        ? "bg-red-600 text-white border-red-600"
+                        : "bg-white text-gray-500 border-gray-300 hover:bg-gray-50"
+                        }`}
                     >
                       Inactive
                     </button>
@@ -378,6 +480,101 @@ const UserEdit = () => {
 
             {/* Tower / Floor / Unit / Ownership row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 border-t pt-4">
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Tower *
+                </label>
+
+                <select
+                  value={selectedTower}
+                  onChange={async (e) => {
+                    const id = e.target.value;
+
+                    setSelectedTower(id);
+                    setSelectedFloorId("");
+                    setSelectedUnit("");
+
+                    setFloors([]);
+                    setUnits([]);
+
+                    if (id) {
+                      try {
+                        const res = await getFloors(id);
+                        setFloors(res.data || []);
+                      } catch (error) {
+                        toast.error("Failed to fetch floors");
+                      }
+                    }
+                  }}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select Building</option>
+
+                  {buildings.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Floor *
+                </label>
+
+                <select
+                  value={selectedFloorId}
+                  onChange={async (e) => {
+                    const id = e.target.value;
+
+                    setSelectedFloorId(id);
+                    setSelectedUnit("");
+
+                    setUnits([]);
+
+                    if (id) {
+                      try {
+                        const res = await getUnits(id);
+                        setUnits(res.data || []);
+                      } catch (error) {
+                        toast.error("Failed to fetch units");
+                      }
+                    }
+                  }}
+                  disabled={!selectedTower}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select Floor</option>
+
+                  {floors.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium block mb-1">
+                  Unit *
+                </label>
+
+                <select
+                  value={selectedUnit}
+                  onChange={(e) => setSelectedUnit(e.target.value)}
+                  disabled={!selectedFloorId}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Select Unit</option>
+
+                  {units.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {/* Ownership Type */}
               <div>
                 <label className="text-sm font-medium block mb-1">
