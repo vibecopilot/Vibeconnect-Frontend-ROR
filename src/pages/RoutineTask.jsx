@@ -268,8 +268,8 @@ const RoutineTask = () => {
     {
       name: "Schedule Time",
       selector: (row) =>
-        row.created_at
-          ? new Date(row.created_at).toLocaleTimeString("en-US", {
+        row.start_time
+          ? new Date(row.start_time).toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,
