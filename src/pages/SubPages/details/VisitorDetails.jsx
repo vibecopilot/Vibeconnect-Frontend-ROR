@@ -135,8 +135,8 @@ const VisitorDetails = () => {
         row.is_approved === true
           ? "Yes"
           : row.is_approved === false
-          ? "No"
-          : "--",
+            ? "No"
+            : "--",
     },
     { name: "Mode of Approval", selector: (row) => row.mode_of_approval || "--" },
   ];
@@ -241,15 +241,28 @@ const VisitorDetails = () => {
           {details.vehicle_number && (
             <Info label="Vehicle Number" value={details.vehicle_number} />
           )}
+          {/* Expected Date */}
           {details.expected_date && (
             <Info
               label="Expected Date"
               value={dateFormat(details.expected_date)}
             />
           )}
-          {details.expected_time && (
-            <Info label="Expected Time" value={details.expected_time} />
+
+          {/* Expected Time */}
+          <Info
+            label="Expected Time"
+            value={details.expected_time || "-"}
+          />
+
+          {/* Created Date & Time */}
+          {details.created_at && (
+            <Info
+              label="Created Date & Time"
+              value={dateTimeFormat(details.created_at)}
+            />
           )}
+
           {details.frequency && (
             <Info label="Visiting Frequency" value={details.frequency} />
           )}
@@ -262,8 +275,8 @@ const VisitorDetails = () => {
               value={
                 typeof details.parking_slot === "object"
                   ? details.parking_slot.name ||
-                    details.parking_slot.slot_name ||
-                    "-"
+                  details.parking_slot.slot_name ||
+                  "-"
                   : details.parking_slot
               }
             />
@@ -407,7 +420,7 @@ const VisitorDetails = () => {
         {/* ADDITIONAL VISITORS */}
         <Section title="Additional Visitors">
           {details.extra_visitors?.length > 0 &&
-          details.extra_visitors.some((v) => v.name || v.contact_no) ? (
+            details.extra_visitors.some((v) => v.name || v.contact_no) ? (
             <Table
               columns={visitorExtraColumns}
               data={details.extra_visitors.filter(
