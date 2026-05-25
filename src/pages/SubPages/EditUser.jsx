@@ -267,12 +267,25 @@ const UserEdit = () => {
       toast.success("User updated successfully!");
       navigate(`/setup/users-details/${id}`);
     } catch (err) {
-      console.error("Update failed:", err);
+  console.error("Update failed:", err);
 
-      toast.error(
-        err?.response?.data?.error || "Failed to update user"
-      );
-    } finally {
+  const errorData = err?.response?.data;
+
+  // Handle array errors
+  if (Array.isArray(errorData?.errors)) {
+    toast.error(errorData.errors[0]);
+  }
+
+  // Handle single error message
+  else if (errorData?.error) {
+    toast.error(errorData.error);
+  }
+
+  // Default message
+  else {
+    toast.error("Failed to update user");
+  }
+}finally {
       setSaving(false);
     }
   };
