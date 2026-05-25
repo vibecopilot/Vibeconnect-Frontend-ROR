@@ -642,20 +642,33 @@ const handleSearch = (e) => {
       name: "Work Type",
       selector: (row) => row.work_type || "-",
     },
-    {
-      name: "Check In",
-      selector: (row) =>
-        row.attendances?.length
-          ? dateTimeFormat(row.attendances[0].punched_in_at)
-          : "-",
+   {
+    name: "Check In",
+    selector: (row) => {
+      if (!row.attendances || row.attendances.length === 0) return "-";
+
+      const latestAttendance =
+        row.attendances[row.attendances.length - 1];
+
+      return latestAttendance?.punched_in_at
+        ? dateTimeFormat(latestAttendance.punched_in_at)
+        : "-";
     },
-    {
-      name: "Check Out",
-      selector: (row) =>
-        row.attendances?.length && row.attendances[0].punched_out_at
-          ? dateTimeFormat(row.attendances[0].punched_out_at)
-          : "-",
+  },
+
+  {
+    name: " Check Out",
+    selector: (row) => {
+      if (!row.attendances || row.attendances.length === 0) return "-";
+
+      const latestAttendance =
+        row.attendances[row.attendances.length - 1];
+
+      return latestAttendance?.punched_out_at
+        ? dateTimeFormat(latestAttendance.punched_out_at)
+        : "-";
     },
+  },
     {
       name: "Created At",
       selector: (row) => dateTimeFormat(row.created_at),
@@ -1044,7 +1057,7 @@ const handleSearch = (e) => {
             <Table
               columns={historyColumns}
               data={historyStaff}
-              customStyles={customTableStyles}
+              // customStyles={customTableStyles}
               pagination
             />
           )}
