@@ -843,6 +843,10 @@ import PetsEdit from "./pages/Setup/Pets/PetsEdit";
 import BookingCalendar from "./pages/BookingCalendar";
 import RVehiclesView from "./pages/SubPages/RVehiclesView";
 import PantryDetails from "./pages/PantryDetails.jsx";
+import FitOutRequestDetails from "./pages/FitOut/FitOutRequestDetailsFixed.jsx";
+import FitOutRequestDetail from "./pages/FitOut/FitOutRequestDetail.jsx";
+import FitOutRequestEditPage from "./pages/FitOut/FitOutRequestEditPage.jsx";
+import FitOutChecklistView from "./pages/FitOut/FitOutChecklistView.jsx";
 
 
 
@@ -3534,7 +3538,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-         <Route
+        <Route
           path="/admin/pantry-details/:id"
           element={
             <ProtectedAdminRoutes>
@@ -4114,7 +4118,9 @@ function App() {
           path="/fitout/request/create"
           element={<FitOutRequestPage />}
         />
+        <Route path="/fitout/request/edit/:id" element={<FitOutRequestEditPage />} />
         <Route path="/fitout/request/list" element={<RequestListPage />} />
+        <Route path="/fitout/request/details/:id" element={<FitOutRequestDetail />} />
         <Route
           path="/fitout/checklist/create"
           element={<FitOutChecklistPage />}
@@ -4135,8 +4141,12 @@ function App() {
         <Route
           path="/fitout/checklist/list"
           element={<FitoutChecklistList />}
-        />{/*  */}
+        />
 
+        <Route
+          path="/fitout/checklist/view/:id"
+          element={<FitOutChecklistView />}
+        />
 
         {/* OSR */}
 
