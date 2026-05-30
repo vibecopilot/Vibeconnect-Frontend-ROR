@@ -227,16 +227,19 @@ const CategoryPage = () => {
       cell: (row) =>
         row.attachfile && row.attachfile.document_url ? (
           <div className="flex flex-col gap-1">
+            {/* Preview/Open in new tab */}
             <a
-              href={domainPrefix + row.attachfile.document_url}
+              href={`${domainPrefix}${row.attachfile.document_url}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 underline"
             >
               View
             </a>
+
+            {/* Force Download */}
             <a
-              href={domainPrefix + row.attachfile.document_url}
+              href={`${domainPrefix}${row.attachfile.document_url}`}
               download
               className="text-green-600 underline"
             >
@@ -293,9 +296,94 @@ const CategoryPage = () => {
     setIsCatEditModalOpen(true);
   };
 
+  // ADD THIS ABOVE RETURN
+const customStyles = {
+  headRow: {
+    style: {
+      background: themeColor,
+      color: "white",
+      fontSize: "14px",
+      fontWeight: "600",
+      minHeight: "52px",
+    },
+  },
+  headCells: {
+    style: {
+      color: "white",
+      fontSize: "14px",
+      fontWeight: "600",
+    },
+  },
+};
   const closeModal1 = () => setIsModalOpen1(false);
 
   const subCatColumns = [
+    {
+      name: "Sr.no.",
+      selector: (row, index) => index + 1,
+      sortable: true,
+      width: "400px",
+    },
+    {
+      name: "Category",
+      selector: (row) => row.category_name || "-",
+      sortable: true,
+    },
+    {
+      name: "Sub Category",
+      selector: (row) => row.sub_category_name || "-",
+      sortable: true,
+    },
+    // {
+    //   name: "Building",
+    //   selector: (row) =>
+    //     row.building?.join(", ") || "-",
+    // },
+    // {
+    //   name: "Wing",
+    //   selector: (row) =>
+    //     row.wing?.join(", ") || "-",
+    // },
+    // {
+    //   name: "Zone",
+    //   selector: (row) =>
+    //     row.zone?.join(", ") || "-",
+    // },
+    // {
+    //   name: "Floor",
+    //   selector: (row) =>
+    //     row.floor?.join(", ") || "-",
+    // },
+    // {
+    //   name: "Room",
+    //   selector: (row) =>
+    //     row.room?.join(", ") || "-",
+    // },
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          {/* <button
+            onClick={() => openSubCatEditModal(row.id)}
+          >
+            <BiEdit
+              size={15}
+              className="text-blue-500"
+            />
+          </button> */}
+
+          <button>
+            <FaTrash
+              size={15}
+              className="text-red-500"
+            />
+          </button>
+        </div>
+      ),
+    },
+  ]
+
+  const documentColumns = [
     {
       name: "Sr.no.",
       selector: (row, index) => index + 1,
@@ -312,17 +400,20 @@ const CategoryPage = () => {
         row.fitout_docs && row.fitout_docs.length > 0 ? (
           <div className="flex flex-col gap-1">
             {row.fitout_docs.map((doc, index) => (
-              <div key={index} className="flex gap-2">
+              <div key={index} className="flex gap-3">
+                {/* Preview/Open */}
                 <a
-                  href={domainPrefix + doc.document_url}
+                  href={`${domainPrefix}${doc.document_url}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 underline"
                 >
                   View {index + 1}
                 </a>
+
+                {/* Download */}
                 <a
-                  href={domainPrefix + doc.document_url}
+                  href={`${domainPrefix}${doc.document_url}`}
                   download
                   className="text-green-600 underline"
                 >
@@ -409,19 +500,25 @@ const CategoryPage = () => {
       <div className="flex w-full">
         <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
           <h2
-            className={`p-1 ${
-              page === "Category" &&
+            className={`p-1 ${page === "Category" &&
               `bg-white font-medium text-blue-500 shadow-custom-all-sides`
-            } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
+              } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
             onClick={() => setPage("Category")}
           >
             Category
           </h2>
           <h2
-            className={`p-1 ${
-              page === "Documents" &&
+            className={`p-1 ${page === "SubCategory" &&
+              `bg-white font-medium text-blue-500 shadow-custom-all-sides`
+              } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
+            onClick={() => setPage("SubCategory")}
+          >
+            Sub Category
+          </h2>
+          <h2
+            className={`p-1 ${page === "Documents" &&
               "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-            } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
+              } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
             onClick={() => setPage("Documents")}
           >
             Documents
@@ -452,7 +549,33 @@ const CategoryPage = () => {
               responsive
               columns={CatColumns}
               data={categories}
+              customStyles={customStyles}
               isPagination={true}
+              pagination
+              paginationPerPage={9}
+            />
+          </div>
+        )}
+
+        {page === "SubCategory" && (
+          <div>
+            {/* ADD BUTTON */}
+            <div className="flex justify-end">
+              <button
+                style={{ background: themeColor }}
+                onClick={() => setIsModalOpen1(true)}
+                className="p-2 my-2 bg-blue-500 text-white rounded-md"
+              >
+                Add Sub Category
+              </button>
+            </div>
+
+            {/* SUB CATEGORY LIST PAGE */}
+            <DataTable
+              responsive
+              columns={subCatColumns}
+              customStyles={customStyles}
+              data={subCategories}
               pagination
               paginationPerPage={9}
             />
@@ -478,7 +601,8 @@ const CategoryPage = () => {
             <DataTable
               responsive
               //   selectableRows
-              columns={subCatColumns}
+              columns={documentColumns}
+              customStyles={customStyles}
               data={subCategories}
               isPagination={true}
               pagination
