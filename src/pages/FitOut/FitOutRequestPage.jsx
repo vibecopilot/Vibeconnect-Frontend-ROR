@@ -52,7 +52,21 @@ const FitOutRequestPage = () => {
   };
 
 
+  const getFileType = (url) => {
+    if (!url) return "";
 
+    const extension = url.split(".").pop().toLowerCase();
+
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
+      return "image";
+    }
+
+    if (extension === "pdf") {
+      return "pdf";
+    }
+
+    return "other";
+  };
 
 
   const handleCategoryChange = (event, categoryId) => {
@@ -306,25 +320,52 @@ const FitOutRequestPage = () => {
 
                     {/* Show attachfile if present */}
                     {attachfile && attachfile.document_url && (
-                      <div className="flex flex-col gap-1">
-                        <a
-                          href={domainPrefix + attachfile.document_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 underline"
+                      <div className="flex flex-col gap-3 w-full">
+
+                        {/* Image Preview */}
+                        {getFileType(attachfile.document_url) === "image" && (
+                          <img
+                            src={domainPrefix + attachfile.document_url}
+                            alt="Preview"
+                            className="w-40 h-40 object-cover border rounded-md"
+                          />
+                        )}
+
+                        {/* PDF Preview */}
+                        {getFileType(attachfile.document_url) === "pdf" && (
+                          <iframe
+                            src={domainPrefix + attachfile.document_url}
+                            title="PDF Preview"
+                            className="w-full h-64 border rounded-md"
+                          />
+                        )}
+
+                        {/* View Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.open(
+                              domainPrefix + attachfile.document_url,
+                              "_blank"
+                            );
+                          }}
+                          className="text-blue-600 underline text-left"
                         >
                           View File
-                        </a>
+                        </button>
+
+                        {/* Download Button */}
                         <a
                           href={domainPrefix + attachfile.document_url}
                           download
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-green-600 underline"
                         >
                           Download File
                         </a>
                       </div>
                     )}
-
                     <button
                       onClick={() => removeCategory(category.id)}
                       type="button"
