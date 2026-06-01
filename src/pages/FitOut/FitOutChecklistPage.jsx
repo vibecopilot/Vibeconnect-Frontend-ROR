@@ -45,7 +45,7 @@ const FitOutChecklistPage = () => {
   // Get site ID from local storage
   const SiteId = getItemInLocalStorage("SITEID");
   console.log("Current Site ID from localStorage:", SiteId);
-  
+
   const [formData, setFormData] = useState({
     title: "",
     snag_audit_category_id: "",
@@ -100,7 +100,7 @@ const FitOutChecklistPage = () => {
     fetchCatData();
     fetchSubCatData(category);
   }, []);
-  
+
   // Update site_id in formData if the value in localStorage changes
   useEffect(() => {
     const currentSiteId = getItemInLocalStorage("SITEID");
@@ -137,9 +137,9 @@ const FitOutChecklistPage = () => {
       questions.map((q) =>
         q.id === id
           ? {
-              ...q,
-              options: q.options.map((opt, i) => (i === index ? value : opt)),
-            }
+            ...q,
+            options: q.options.map((opt, i) => (i === index ? value : opt)),
+          }
           : q
       )
     );
@@ -178,8 +178,42 @@ const FitOutChecklistPage = () => {
 
   const handleSubmit = async () => {
     // Always get the latest site ID from local storage when submitting
+    if (!formData.snag_audit_category_id) {
+      toast.error("Category is required");
+      return;
+    }
+
+    if (!formData.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      toast.error("Description is required");
+      return;
+    }
+
+    const emptyQuestion = questions.find(
+      (q) => !q.text || !q.text.trim()
+    );
+
+    if (emptyQuestion) {
+      toast.error("All questions are mandatory");
+      return;
+    }
+
+    const invalidMultipleChoice = questions.find(
+      (q) =>
+        q.answerType === "Multiple Choice" &&
+        q.options.length === 0
+    );
+
+    if (invalidMultipleChoice) {
+      toast.error("Please add options for Multiple Choice questions");
+      return;
+    }
     const currentSiteId = getItemInLocalStorage("SITEID");
-    
+
     const data = new FormData();
     data.append("snag_checklist[name]", formData.title);
     data.append(
@@ -455,7 +489,8 @@ const FitOutChecklistPage = () => {
             >
               Create Checklist
             </button>
-            <button className="border border-gray-700 text-white bg-red-500 py-2 px-6 rounded">
+            <button className="border text-white bg-red-500 py-2 px-6 rounded"
+              onClick={() => navigate("/fitout/checklist/list")}>
               Cancel
             </button>
           </div>

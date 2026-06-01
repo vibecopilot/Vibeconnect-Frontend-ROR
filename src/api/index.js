@@ -618,6 +618,13 @@ export const getFitoutSubCategoriesSetup = async () =>
       token: token,
     },
   });
+
+export const destroyFitoutSubcategory = async (id) =>
+  axiosInstance.delete(`/fitout_subcategories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
 export const getAllVendors = async () =>
   axiosInstance.get("/vendors/all_vendors.json", {
     params: {
