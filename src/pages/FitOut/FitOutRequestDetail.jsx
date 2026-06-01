@@ -4,6 +4,8 @@ import { Link, useParams } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import { BiEdit } from "react-icons/bi";
 import { FaRegFileAlt } from "react-icons/fa";
+import { FaTimes } from "react-icons/fa";
+import { MdOpenInNew } from "react-icons/md";
 
 import Navbar from "../../components/Navbar";
 import { domainPrefix, getFitoutRequest } from "../../api";
@@ -13,8 +15,16 @@ const RequestDetails = () => {
 
   const [requestDetails, setRequestDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const themeColor = useSelector((state) => state.theme.color);
+  const openPreview = (docUrl) => {
+    const fullUrl = docUrl.startsWith("http")
+      ? docUrl
+      : `${domainPrefix}${docUrl}`;
+
+    setPreviewUrl(fullUrl);
+  };
 
   useEffect(() => {
     fetchDetails();
@@ -147,8 +157,8 @@ const RequestDetails = () => {
               <p>
                 {requestDetails?.selected_date
                   ? new Date(
-                      requestDetails.selected_date
-                    ).toLocaleDateString()
+                    requestDetails.selected_date
+                  ).toLocaleDateString()
                   : "NA"}
               </p>
             </div>
@@ -221,7 +231,7 @@ const RequestDetails = () => {
 
             <div className="flex gap-4 flex-wrap my-4 items-center text-center">
               {requestDetails?.fitout_request_categories &&
-              requestDetails.fitout_request_categories.length > 0 ? (
+                requestDetails.fitout_request_categories.length > 0 ? (
                 requestDetails.fitout_request_categories.map(
                   (item, index) => {
                     const fileUrl = `${domainPrefix}${item?.attachfile?.document_url}`;
@@ -236,29 +246,30 @@ const RequestDetails = () => {
                                 alt={`Attachment ${index + 1}`}
                                 className="w-40 h-28 object-cover rounded-md cursor-pointer"
                                 onClick={() =>
-                                  window.open(
-                                    fileUrl,
-                                    "_blank"
-                                  )
+                                  openPreview(item.attachfile.document_url)
                                 }
                               />
                             ) : (
                               <div className="flex flex-col items-center gap-2">
-                                <a
-                                  href={fileUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="hover:text-blue-500 transition-all duration-300 flex flex-col items-center"
-                                >
+                                <div className="flex flex-col items-center gap-2">
                                   <FaRegFileAlt size={50} />
-                                  <span className="text-sm">
-                                    {getFileName(
-                                      item.attachfile.document_url
-                                    )}
-                                  </span>
-                                </a>
 
-                                <button
+                                  <span className="text-sm">
+                                    {getFileName(item.attachfile.document_url)}
+                                  </span>
+
+                                  {/* <button
+                                    onClick={() =>
+                                      openPreview(item.attachfile.document_url)
+                                    }
+                                    className="flex items-center gap-1 text-blue-600 underline"
+                                  >
+                                    <BsEye />
+                                    View
+                                  </button> */}
+                                </div>
+
+                                {/* <button
                                   onClick={() =>
                                     window.open(
                                       fileUrl,
@@ -270,7 +281,7 @@ const RequestDetails = () => {
                                 >
                                   <BsEye />
                                   View
-                                </button>
+                                </button> */}
                               </div>
                             )}
                           </>
