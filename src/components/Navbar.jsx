@@ -90,7 +90,7 @@ const Navbar = () => {
   };
 
 
-  
+
 
   const handleMouseLeave = () => {
     setOpen(false);
@@ -212,33 +212,36 @@ const Navbar = () => {
                   {firstName} {lastName}
                 </h2>
               </NavLink>
-              {(siteId == "74" || siteId == "78" || userID == "1960") && (
-                <NavLink
-                  to={"/grouped-dashboard"}
-                  className={({ isActive }) =>
-                    ` ${isActive
-                      ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium text-sm`
-                      : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
-                    }`
-                  }
-                >
-                  <div>
-                    {React.createElement(GrDashboard, { size: "20" })}
-                  </div>
-                  <h2
-                    className={`whitespace-pre duration-300 ${!open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
+              {(siteId == "74" || siteId == "78" || siteId == "77" || siteId == "85" || siteId == "86" || siteId == "87" ||
+                siteId == "88" || siteId == "89" || siteId == "90" || siteId == "91" || siteId == "92" || siteId == "93" ||
+                siteId == "94" || siteId == "95" || siteId == "96" || siteId == "97" || siteId == "98" || siteId == "99" ||
+                siteId == "100" || siteId == "101" || siteId == "102" || siteId == "103" || userID == "1960") && (
+                  <NavLink
+                    to={"/grouped-dashboard"}
+                    className={({ isActive }) =>
+                      ` ${isActive
+                        ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium text-sm`
+                        : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
+                      }`
+                    }
                   >
-                    Grouped Dashboard
-                  </h2>
-                  <h2
-                    className={`${open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                  >
-                    Grouped Dashboard
-                  </h2>
-                </NavLink>
-              )}
+                    <div>
+                      {React.createElement(GrDashboard, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${!open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                    >
+                      Grouped Dashboard
+                    </h2>
+                    <h2
+                      className={`${open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Grouped Dashboard
+                    </h2>
+                  </NavLink>
+                )}
               <NavLink
                 to={"/dashboard"}
                 className={({ isActive }) =>
