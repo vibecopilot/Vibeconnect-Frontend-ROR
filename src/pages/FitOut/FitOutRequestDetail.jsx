@@ -51,6 +51,59 @@ const RequestDetails = () => {
     }
   };
 
+  const DocumentPreviewModal = ({ url, onClose }) => {
+    if (!url) return null;
+
+    const isImage = /\.(png|jpe?g|gif|bmp|webp|svg)(\?.*)?$/i.test(url);
+    const isPdf = /\.pdf(\?.*)?$/i.test(url);
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70"
+          onClick={onClose}
+        />
+
+        <div
+          className="relative z-10 bg-white rounded-lg shadow-lg"
+          style={{ width: "85vw", height: "88vh" }}
+        >
+          <div className="flex justify-between items-center border-b p-3">
+            <h3 className="font-semibold">Document Preview</h3>
+
+            <button onClick={onClose}>
+              <FaTimes size={18} />
+            </button>
+          </div>
+
+          <div className="h-full p-2">
+            {isImage ? (
+              <img
+                src={url}
+                alt="Preview"
+                className="w-full h-full object-contain"
+              />
+            ) : isPdf ? (
+              <iframe
+                src={url}
+                title="Preview"
+                className="w-full h-full border-0"
+              />
+            ) : (
+              <iframe
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(
+                  url
+                )}&embedded=true`}
+                title="Preview"
+                className="w-full h-full border-0"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const isImage = (filePath) => {
     const imageExtensions = [
       "jpg",
@@ -106,7 +159,13 @@ const RequestDetails = () => {
       </div>
 
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <h1
+
+        {previewUrl && (
+          <DocumentPreviewModal
+            url={previewUrl}
+            onClose={() => setPreviewUrl(null)}
+          />
+        )}        <h1
           style={{ background: themeColor }}
           className="text-center p-2 my-2 text-white rounded-md font-medium"
         >
@@ -251,22 +310,25 @@ const RequestDetails = () => {
                               />
                             ) : (
                               <div className="flex flex-col items-center gap-2">
-                                <div className="flex flex-col items-center gap-2">
-                                  <FaRegFileAlt size={50} />
+                                <div className="flex flex-col items-center gap-2 border rounded-md p-3 w-40 h-28 justify-center bg-white">
+                                  <FaRegFileAlt
+                                    size={40}
+                                    className="text-gray-500"
+                                  />
 
-                                  <span className="text-sm">
+                                  <span className="text-xs break-all text-center">
                                     {getFileName(item.attachfile.document_url)}
                                   </span>
 
-                                  {/* <button
+                                  <button
                                     onClick={() =>
                                       openPreview(item.attachfile.document_url)
                                     }
-                                    className="flex items-center gap-1 text-blue-600 underline"
+                                    className="flex items-center gap-1 text-blue-600 underline text-sm"
                                   >
                                     <BsEye />
                                     View
-                                  </button> */}
+                                  </button>
                                 </div>
 
                                 {/* <button
