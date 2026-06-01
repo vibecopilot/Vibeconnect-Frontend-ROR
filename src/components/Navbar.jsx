@@ -216,9 +216,9 @@ const Navbar = () => {
                 //  siteId == "77" || siteId == "85" || siteId == "86" || siteId == "87" ||
                 //   siteId == "88" || siteId == "89" || siteId == "90" || siteId == "91" || siteId == "92" || siteId == "93" ||
                 //   siteId == "94" || siteId == "95" || siteId == "96" || siteId == "97" || siteId == "98" || siteId == "99" ||
-                siteId == "100" ||
+                // siteId == "100" ||
                 // siteId == "101" || siteId == "102" || siteId == "103" ||
-                userID == "1960") && (
+                userID == "1960" || userID == "1666" || userID == "1859" || userID == "1807") && (
                   <NavLink
                     to={"/grouped-dashboard"}
                     className={({ isActive }) =>
