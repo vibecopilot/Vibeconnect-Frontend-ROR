@@ -200,6 +200,8 @@ const CategoryPage = () => {
   };
 
   const handleSubCatDelete = async (id) => {
+    console.log("Delete ID:", id);
+
     try {
       await destroyFitoutSubcategory(id);
 
@@ -208,27 +210,8 @@ const CategoryPage = () => {
       setSubCategories((prev) =>
         prev.filter((item) => item.id !== id)
       );
-
-      setSubCatRefresh((prev) => !prev);
     } catch (error) {
-      console.log("Delete Error:", error);
-
-      // If record is already deleted on backend
-      if (
-        error?.response?.status === 204 ||
-        error?.response?.status === 200
-      ) {
-        toast.success("Sub Category deleted successfully");
-
-        setSubCategories((prev) =>
-          prev.filter((item) => item.id !== id)
-        );
-
-        setSubCatRefresh((prev) => !prev);
-        return;
-      }
-
-      toast.error("Failed to delete sub category");
+      console.log(error);
     }
   };
 
