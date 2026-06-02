@@ -212,6 +212,14 @@ const CategoryPage = () => {
       );
     } catch (error) {
       console.log(error);
+      // If backend returns 404 (resource already removed) treat as success
+      const status = error?.response?.status;
+      if (status === 404 || status === 410) {
+        toast.success("Sub Category deleted successfully");
+        setSubCategories((prev) => prev.filter((item) => item.id !== id));
+        return;
+      }
+      toast.error("Failed to delete sub category");
     }
   };
 
