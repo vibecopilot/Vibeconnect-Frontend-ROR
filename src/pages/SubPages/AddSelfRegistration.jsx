@@ -35,6 +35,8 @@ const translations = {
     thankYouTitle: "Registration Successful!",
     thankYouMsg: "Thank you for registering. Your host will be notified shortly.",
     registerAnother: "Register Another",
+    poNumber: "PO Number",
+    poNumberPlaceholder: "Enter PO Number",
   },
   Hindi: {
     title: "स्वयं पंजीकरण",
@@ -62,6 +64,8 @@ const translations = {
     thankYouTitle: "पंजीकरण सफल!",
     thankYouMsg: "पंजीकरण के लिए धन्यवाद। आपके होस्ट को शीघ्र ही सूचित किया जाएगा।",
     registerAnother: "एक और पंजीकरण करें",
+    poNumber: "पीओ नंबर",
+    poNumberPlaceholder: "पीओ नंबर दर्ज करें",
   },
   Marathi: {
     title: "स्वयं नोंदणी",
@@ -89,6 +93,8 @@ const translations = {
     thankYouTitle: "नोंदणी यशस्वी!",
     thankYouMsg: "नोंदणीसाठी धन्यवाद. तुमच्या होस्टला लवकरच कळवले जाईल.",
     registerAnother: "आणखी एक नोंदणी करा",
+    poNumber: "पीओ क्रमांक",
+    poNumberPlaceholder: "पीओ क्रमांक प्रविष्ट करा",
   },
 };
 
@@ -254,7 +260,7 @@ const AddSelfRegistration = () => {
 
   // ── Registration Form ─────────────────────────────────────────────────────
   return (
-    <div className="m-3 justify-center items-center w-full md:mx-5">
+    <div className="m-3 justify-center items-center w-full px-10">
       <div className="md:border rounded-lg md:p-4 w-full">
         <h2
           className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white"
@@ -419,6 +425,22 @@ const AddSelfRegistration = () => {
               <option value="Fitout Staff">{t.fitout}</option>
               <option value="Other">{t.other}</option>
             </select>
+          </div>
+
+          <div className="grid gap-2 items-center w-full">
+            <label htmlFor="poNumber" className="font-semibold">
+              {t.poNumber} :
+            </label>
+
+            <input
+              type="text"
+              id="poNumber"
+              name="poNumber"
+              value={formData.poNumber}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+              placeholder={t.poNumberPlaceholder}
+            />
           </div>
         </div>
 
