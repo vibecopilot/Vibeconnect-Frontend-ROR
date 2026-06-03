@@ -81,6 +81,8 @@ const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
   const [feat, setFeat] = useState("");
+  const [siteIdState, setSiteIdState] = useState(getItemInLocalStorage("SITEID"));
+  const [userEmail, setUserEmail] = useState(getItemInLocalStorage("USEREMAIL") || "");
   const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
   const fontSize = useSelector((state) => state.fontSize);
@@ -102,6 +104,28 @@ const Navbar = () => {
     const userType = getItemInLocalStorage("USERTYPE");
     setUser(userType);
     getAllowedFeatures();
+  }, []);
+
+  useEffect(() => {
+    const syncLocalStorage = () => {
+      setSiteIdState(getItemInLocalStorage("SITEID"));
+      setUserEmail(getItemInLocalStorage("USEREMAIL") || "");
+    };
+
+    syncLocalStorage();
+    const handleStorage = (event) => {
+      if (!event || event.key === "SITEID" || event.key === "USEREMAIL") {
+        syncLocalStorage();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("site-change", syncLocalStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("site-change", syncLocalStorage);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -135,6 +159,18 @@ const Navbar = () => {
   };
   const siteId = getItemInLocalStorage("SITEID");
   const userID = getItemInLocalStorage("UserId")
+  const groupedDashboardEmails = [
+    "mitesh.garg@hiparks.com",
+    "nikhil.navalkar@hiparks.com",
+    "prashant.govekar@hiparks.com",
+  ];
+  const groupedDashboardSiteIds = ["74", "78"];
+  const groupedDashboardUserIds = ["1960", "1666", "1859", "1807"];
+
+  const showGroupedDashboard =
+    groupedDashboardSiteIds.includes(String(siteIdState)) ||
+    groupedDashboardUserIds.includes(String(userID)) ||
+    groupedDashboardEmails.includes(String(userEmail).toLowerCase());
 
   const getAllowedFeatures = () => {
     const storedFeatures = getItemInLocalStorage("FEATURES");
@@ -212,13 +248,7 @@ const Navbar = () => {
                   {firstName} {lastName}
                 </h2>
               </NavLink>
-              {(siteId == "74" || siteId == "78" ||
-                //  siteId == "77" || siteId == "85" || siteId == "86" || siteId == "87" ||
-                //   siteId == "88" || siteId == "89" || siteId == "90" || siteId == "91" || siteId == "92" || siteId == "93" ||
-                //   siteId == "94" || siteId == "95" || siteId == "96" || siteId == "97" || siteId == "98" || siteId == "99" ||
-                // siteId == "100" ||
-                // siteId == "101" || siteId == "102" || siteId == "103" ||
-                userID == "1960" || userID == "1666" || userID == "1859" || userID == "1807") && (
+              {showGroupedDashboard && (
                   <NavLink
                     to={"/grouped-dashboard"}
                     className={({ isActive }) =>
