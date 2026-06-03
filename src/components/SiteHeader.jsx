@@ -53,6 +53,7 @@ const SiteHeader = ({ onSiteChange }) => {
       setSiteName(name);
       setActiveSiteId(id);
       setSiteOpen(false);
+      window.dispatchEvent(new Event("site-change"));
       if (onSiteChange) onSiteChange(id, name);
     } catch (err) {
       console.error("Site change error:", err);
