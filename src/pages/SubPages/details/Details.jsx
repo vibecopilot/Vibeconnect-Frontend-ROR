@@ -28,7 +28,7 @@ const TicketDetails = () => {
   const { id } = useParams();
 
   const [approval, setApproval] = useState(false);
-  const [ticketinfo, setTicketInfo] = useState([]);
+  const [ticketinfo, setTicketInfo] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [items, setItems] = useState([]);
   const [feat, setFeat] = useState("");
@@ -268,22 +268,30 @@ const TicketDetails = () => {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 p-4">
-          {ticketinfo.documents &&
+          {ticketinfo?.documents?.length > 0 ? (
             ticketinfo.documents.map((doc, index) => (
               <div key={index}>
                 <a
-                  href={domainPrefix + doc.document}
+                  href={doc.document}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                 >
                   <img
-                    src={domainPrefix + doc.document}
+                    src={doc.document}
                     alt="Attachment"
-                    className="w-full h-52 object-cover rounded-lg border shadow-sm hover:scale-105 transition-all duration-300"
+                    className="w-full h-52 object-cover rounded-lg border shadow-sm"
+                    onError={(e) => {
+                      console.log("Image failed:", doc.document);
+                      e.target.src =
+                        "https://via.placeholder.com/300x200?text=Image+Not+Found";
+                    }}
                   />
                 </a>
               </div>
-            ))}
+            ))
+          ) : (
+            <p>No Attachments Found</p>
+          )}
         </div>
       </div>
 
@@ -340,12 +348,12 @@ const TicketDetails = () => {
                       log.documents.map((doc, index) => (
                         <a
                           key={index}
-                          href={domainPrefix + doc.document}
+                          href={doc.document}
                           target="_blank"
                           rel="noreferrer"
                         >
                           <img
-                            src={domainPrefix + doc.document}
+                            src={doc.document}
                             alt={`Attachment ${index}`}
                             className="w-full h-48 object-cover rounded-lg border"
                           />
