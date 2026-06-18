@@ -51,14 +51,14 @@ const StatCard = ({ title, value, onDownload, onClick, tone = "blue" }) => {
       onClick={onClick ? (e) => { if (!e.target.closest("button")) onClick(); } : undefined}
       onKeyDown={onClick ? (e) => e.key === "Enter" && onClick() : undefined}
       className={[
-        "h-[132px] rounded-2xl p-4 flex flex-col",
+        "h-[132px] min-h-[132px] rounded-2xl p-4 flex flex-col",
         "shadow-[0_8px_24px_rgba(15,23,42,0.06)]",
         t.card,
-        onClick ? "cursor-pointer hover:shadow-md transition" : "",
+        onClick ? "cursor-pointer hover:shadow-md transition-all active:scale-[0.98]" : "",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-sm font-semibold text-gray-900 truncate">
+        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1">
           {title}
         </h3>
 
@@ -67,7 +67,7 @@ const StatCard = ({ title, value, onDownload, onClick, tone = "blue" }) => {
           onClick={(e) => { e.stopPropagation(); onDownload(); }}
           title="Download"
           className={[
-            "h-9 w-9 rounded-xl grid place-items-center transition",
+            "h-9 w-9 rounded-xl grid place-items-center transition-all flex-shrink-0",
             t.btn,
           ].join(" ")}
         >
@@ -102,7 +102,6 @@ const PER_PAGE = 10;
 const triggerXlsxDownload = async (response, filename) => {
   const contentType = response.headers["content-type"];
 
-  // ❌ If API returns JSON (error)
   if (contentType && contentType.includes("application/json")) {
     const text = await response.data.text();
     const error = JSON.parse(text);
@@ -110,8 +109,7 @@ const triggerXlsxDownload = async (response, filename) => {
   }
 
   const blob = new Blob([response.data], {
-    type:
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
 
   if (blob.size === 0) {
@@ -215,18 +213,16 @@ const TicketDashboard = () => {
   };
 
   // ------------------------------------------------------------------
-  // ✅ FIXED — Download all tickets (no status filter)
+  // Downloads
   // ------------------------------------------------------------------
   const handleTicketStatusDownload = async () => {
     const toastId = toast.loading("Downloading, please wait...");
     try {
       const response = await getTicketStatusDownload();
-
       await triggerXlsxDownload(
         response,
         `tickets_export_${new Date().toISOString().split("T")[0]}.xlsx`
       );
-
       toast.dismiss(toastId);
       toast.success("Tickets downloaded successfully");
     } catch (error) {
@@ -235,19 +231,15 @@ const TicketDashboard = () => {
       console.error(error);
     }
   };
-  // ------------------------------------------------------------------
-  // ✅ FIXED — Download tickets filtered by status
-  // ------------------------------------------------------------------
+
   const handleStatusDownload = async (key) => {
     const toastId = toast.loading("Downloading, please wait...");
     try {
       const response = await getStatusDownload(key);
-
       await triggerXlsxDownload(
         response,
         `tickets_${key}_${new Date().toISOString().split("T")[0]}.xlsx`
       );
-
       toast.dismiss(toastId);
       toast.success("Downloaded successfully");
     } catch (error) {
@@ -271,8 +263,9 @@ const TicketDashboard = () => {
   );
 
   return (
-    <div className="w-full px-3">
-      <div className="grid grid-cols-6 sm:grid-cols-6 gap-4">
+    <div className="w-full px-3 py-4">
+      {/* Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
         <StatCard
           title="Tickets Created"
           value={totalTickets}
@@ -280,6 +273,7 @@ const TicketDashboard = () => {
           onDownload={handleTicketStatusDownload}
           onClick={() => handleTicketCardClick("total_recs", "total_recs", "Tickets Created")}
         />
+
         {cards.map((card) => (
           <StatCard
             key={card.key}

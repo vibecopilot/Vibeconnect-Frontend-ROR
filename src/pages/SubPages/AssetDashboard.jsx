@@ -666,17 +666,17 @@ function AssetDashboard() {
   return (
     <div className="w-full overflow-hidden flex flex-col">
       {/* Top Controls */}
-      <div className="w-full flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
+      <div className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
           {/* Site dropdown */}
           <div className="relative">
             <button onClick={() => setSite((p) => !p)}
-              className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex justify-between gap-2 items-center w-60 shadow-sm">
+              className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex justify-between gap-2 items-center w-full sm:w-60 shadow-sm">
               <span className="flex items-center gap-2"><FaBuilding /> Select site</span>
               {site ? <FaChevronUp size={14} /> : <FaChevronDown size={14} />}
             </button>
             {site && (
-              <div className="absolute left-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 w-60 overflow-y-auto z-10 px-3 py-2 space-y-2">
+              <div className="absolute left-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 w-full sm:w-60 overflow-y-auto z-10">
                 <div className="flex items-center space-x-2 px-2">
                   <input type="checkbox" id="selectAll" checked={siteData.length > 0 && selectedSites.length === siteData.length} onChange={handleSelectAll} />
                   <label htmlFor="selectAll" className="cursor-pointer text-sm">Select All</label>
@@ -699,7 +699,7 @@ function AssetDashboard() {
               <IoSettingsOutline /> Assets {isDropdownOpen ? <FaChevronUp /> : <FaChevronDown />}
             </button>
             {isDropdownOpen && (
-              <div className="absolute top-12 left-0 w-64 rounded-xl shadow-lg bg-white border border-gray-200 z-10">
+              <div className="absolute top-12 left-0 w-full sm:w-64 rounded-xl shadow-lg bg-white border border-gray-200 z-10">
                 {cardData.map((card) => (
                   <label key={card.title} className="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
                     <input type="checkbox" checked={selectedTitles.includes(card.title)} onChange={() => handleCheckboxChange(card.title)} />
@@ -712,7 +712,7 @@ function AssetDashboard() {
         </div>
 
         {/* Refresh + Filter */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
           <button onClick={handleRefresh} disabled={refreshing} title="Reload data"
             className="bg-white border border-gray-200 text-gray-700 px-3 py-2 rounded-xl flex items-center shadow-sm hover:bg-gray-50 disabled:opacity-50">
             <FaSyncAlt className={refreshing ? "animate-spin" : ""} />
@@ -753,7 +753,7 @@ function AssetDashboard() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-5 gap-5 mx-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mx-2 sm:mx-3">
         {cardData.map((card) => {
           if (!selectedTitles.includes(card.title)) return null;
           const theme = cardTheme(card.title);
@@ -764,7 +764,7 @@ function AssetDashboard() {
               tabIndex={isClickable ? 0 : undefined}
               onClick={isClickable ? (e) => { if (!e.target.closest("button")) handleAssetCardClick(card.title); } : undefined}
               onKeyDown={isClickable ? (e) => e.key === "Enter" && handleAssetCardClick(card.title) : undefined}
-              className={`${theme.bg} ${theme.text} shadow-custom-all-sides border py-3 px-3 rounded-2xl flex flex-col text-sm font-medium h-32 ${isClickable ? "cursor-pointer hover:shadow-md transition" : ""}`}>
+              className={`${theme.bg} ${theme.text} shadow-custom-all-sides border py-3 px-3 rounded-2xl flex flex-col text-sm font-medium min-h-[130px] ${isClickable ? "cursor-pointer hover:shadow-md transition" : ""}`}>
               <div className="flex justify-between items-center">
                 <h2 className="font-semibold text-base text-gray-800">{card.title}</h2>
                 <div className="flex items-center gap-2">
@@ -782,7 +782,7 @@ function AssetDashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 my-6 mx-3">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 my-6 mx-2 sm:mx-3">
         <ChartCard title="Total Asset" trendPercent={20.7} trendDirection="down"
           onExcelDownload={handleAssetChartDownload}
           onChartDownload={() => downloadSingleChartPdf(assetChartRef, "Total_Asset_Chart")}
