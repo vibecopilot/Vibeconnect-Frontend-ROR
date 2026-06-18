@@ -91,10 +91,10 @@ const StatCard = ({
         <div className="flex items-start gap-3 min-w-0">
           <IconBadge tone={tone}>{icon}</IconBadge>
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900 truncate">
+            <h3 className="text-sm font-semibold text-gray-900 break-words">
               {title}
             </h3>
-            <div className="mt-2 text-3xl font-semibold text-gray-900 leading-none">
+            <div className="mt-2 text-2xl sm:text-3xl font-semibold text-gray-900 leading-none break-words">
               {value ?? 0}
             </div>
           </div>
@@ -291,23 +291,23 @@ const ChartCard = ({
   const footerColor = footerDirection === "up" ? "text-red-600" : "text-emerald-700";
 
   return (
-    <CardShell className="p-5">
-      <div className="flex items-start justify-between gap-3">
+    <CardShell className="p-4 sm:p-5 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
+          <p className="text-base sm:text-[18px] font-bold text-gray-900 break-words">{title}</p>
           {subtitle ? (
-            <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
+            <p className="text-sm text-gray-500 break-words mt-1">{subtitle}</p>
           ) : null}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <TrendPill percent={trendPercent} direction={trendDirection} />
           <ChartTypeMenu value={chartType} onChange={setChartType} />
           <DownloadMenu onExcelDownload={onExcelDownload} onChartDownload={onChartDownload} />
         </div>
       </div>
       <LegendRow items={legendItems} />
-      <div className="mt-2">
-        <div ref={chartRef}>
+      <div className="mt-2 overflow-x-auto">
+        <div ref={chartRef} className="min-w-[280px]">
           <HighchartsReact highcharts={Highcharts} options={options} />
         </div>
       </div>
@@ -361,7 +361,7 @@ const makeTwoValueOptions = ({
     chart: {
       type: hcType,
       backgroundColor: "transparent",
-      height: 280,
+      height: window.innerWidth < 640 ? 250 : 280,
       spacing: [8, 8, 8, 8],
     },
     title: { text: null },
@@ -395,8 +395,9 @@ const makeTwoValueOptions = ({
         ...baseNoSelect,
         allowPointSelect: false,
         dataLabels: {
-          enabled: true,
+          enabled: window.innerWidth >= 480,
           format: "<b>{point.name}</b>: {point.y}",
+          style: { fontSize: window.innerWidth < 640 ? "10px" : "12px", textOutline: "none" },
         },
       },
       column: {
@@ -438,7 +439,7 @@ const makeTwoValueOptions = ({
       categories: [aName, bName],
       lineColor: "#E5E7EB",
       tickColor: "#E5E7EB",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
       title: { text: null },
     },
     yAxis: {
@@ -446,7 +447,7 @@ const makeTwoValueOptions = ({
       title: { text: null },
       gridLineColor: "#E5E7EB",
       gridLineDashStyle: "Dash",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
     },
     series: [
       {
@@ -688,7 +689,7 @@ function ComplianceDashboard() {
   ];
 
   return (
-    <div className="w-full overflow-hidden flex flex-col px-3">
+    <div className="w-full overflow-x-hidden flex flex-col px-2 sm:px-3">
       {/* ✅ TOP SUMMARY CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {topCards.map((c) => (

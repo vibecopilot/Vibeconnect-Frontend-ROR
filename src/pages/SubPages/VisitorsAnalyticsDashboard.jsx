@@ -207,15 +207,15 @@ const ChartTypeMenu = ({ value, onChange }) => {
 };
 
 const Card = ({ title, subtitle, right, children }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
-    <div className="flex items-start justify-between gap-3">
+  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5 overflow-hidden">
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
+        <p className="text-base sm:text-[18px] font-bold text-gray-900 break-words">{title}</p>
         {subtitle ? (
-          <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
+          <p className="text-sm text-gray-500 break-words mt-1">{subtitle}</p>
         ) : null}
       </div>
-      {right ? <div className="shrink-0">{right}</div> : null}
+      {right ? <div className="shrink-0 flex justify-start sm:justify-end">{right}</div> : null}
     </div>
     <div className="mt-4">{children}</div>
   </div>
@@ -235,13 +235,13 @@ const StatCard = ({ title, value, icon, accent = CHART_PALETTE[0], note, onClick
     <div className="flex items-start justify-between gap-3">
       <div>
         <p className="text-sm font-semibold text-gray-600">{title}</p>
-        <p className="text-3xl font-extrabold text-gray-900 mt-2">
+        <p className="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-2 break-words">
           {Number(value) || 0}
         </p>
         {note ? <p className="text-xs text-gray-500 mt-2">{note}</p> : null}
       </div>
       <div
-        className="h-11 w-11 rounded-xl grid place-items-center"
+        className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl grid place-items-center shrink-0"
         style={{ backgroundColor: `${accent}1A` }}
       >
         <span style={{ color: accent }} className="text-xl">
@@ -254,7 +254,7 @@ const StatCard = ({ title, value, icon, accent = CHART_PALETTE[0], note, onClick
 
 const buildPieOptions = ({ title, points, palette = CHART_PALETTE }) => {
   return {
-    chart: { type: "pie", backgroundColor: "transparent", height: 320 },
+    chart: { type: "pie", backgroundColor: "transparent", height: window.innerWidth < 640 ? 260 : 320 },
     title: { text: null },
     tooltip: {
       backgroundColor: "#FFFFFF",
@@ -272,7 +272,7 @@ const buildPieOptions = ({ title, points, palette = CHART_PALETTE }) => {
         allowPointSelect: false,
         cursor: "pointer",
         dataLabels: {
-          enabled: true,
+          enabled: window.innerWidth >= 480,
           formatter: function () {
             return `<b>${this.point.name}</b>: ${this.point.y}`;
           },
@@ -334,7 +334,7 @@ const buildXYOptions = ({
     chart: {
       type: hcType,
       backgroundColor: "transparent",
-      height: 320,
+      height: window.innerWidth < 640 ? 260 : 320,
       spacing: [8, 8, 8, 8],
     },
     title: { text: null },
@@ -345,7 +345,12 @@ const buildXYOptions = ({
       categories: (points || []).map((point) => point.label),
       lineColor: "#E5E7EB",
       tickColor: "#E5E7EB",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: {
+        style: {
+          color: "#6B7280",
+          fontSize: window.innerWidth < 640 ? "10px" : "12px",
+        },
+      },
       title: { text: null },
     },
     yAxis: {
@@ -1025,9 +1030,9 @@ const VisitorsAnalyticsDashboard = () => {
   }
 
   return (
-    <div className="w-full px-3 pb-4 space-y-6">
+    <div className="w-full px-2 sm:px-4 lg:px-6 pb-4 space-y-4 sm:space-y-6 overflow-x-hidden">
       {/* ── Top bar ── */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           onClick={() => {
@@ -1035,14 +1040,14 @@ const VisitorsAnalyticsDashboard = () => {
             setTempToDate(toDate);
             setFilterOpen(true);
           }}
-          className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+          className="h-10 w-full sm:w-auto px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
         >
           Filter by Date
         </button>
         <button
           type="button"
           onClick={() => { setFromDate(""); setToDate(""); }}
-          className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+          className="h-10 w-full sm:w-auto px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
         >
           Clear Filter
         </button>
@@ -1051,7 +1056,7 @@ const VisitorsAnalyticsDashboard = () => {
       {/* ── Date filter modal ── */}
       {filterOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-4 sm:p-5">
             <h3 className="text-lg font-semibold text-gray-900">Filter Visitors by Date</h3>
             <p className="text-sm text-gray-500 mt-1">
               Choose start and end date to refresh dashboard.
@@ -1080,11 +1085,11 @@ const VisitorsAnalyticsDashboard = () => {
                 />
               </div>
             </div>
-            <div className="mt-4 flex gap-2 justify-end">
+            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:justify-end">
               <button
                 type="button"
                 onClick={() => setFilterOpen(false)}
-                className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                className="h-10 w-full sm:w-auto px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
               >
                 Cancel
               </button>
@@ -1099,7 +1104,7 @@ const VisitorsAnalyticsDashboard = () => {
                   setToDate(tempToDate);
                   setFilterOpen(false);
                 }}
-                className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                className="h-10 w-full sm:w-auto px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
               >
                 Apply Filter
               </button>
@@ -1109,7 +1114,7 @@ const VisitorsAnalyticsDashboard = () => {
       )}
 
       {/* ── Visitor stat cards (dynamic – all API fields) ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {[
           { key: "total", drillKey: "total", title: "Total Visitors", note: "All time visitors", accent: CHART_PALETTE[0], icon: <FaUsers /> },
           { key: "in", drillKey: "in", title: "Total In", note: "Currently inside", accent: CHART_PALETTE[1], icon: <FaUserCheck /> },
@@ -1147,20 +1152,20 @@ const VisitorsAnalyticsDashboard = () => {
         title="Analytics"
         subtitle="Choose a chart and chart type"
         right={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <ChartTypeMenu value={chartType} onChange={setChartType} />
             <IconBtn title="Refresh" onClick={() => fetchVisitorAnalytics(0)}>↻</IconBtn>
           </div>
         }
       >
-        <div className="flex flex-wrap gap-3 mt-1">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           {chartButtons.map((opt) => (
             <button
               key={opt.id}
               type="button"
               onClick={() => setSelectedChart(opt.id)}
               className={[
-                "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition",
+                "whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition",
                 selectedChart === opt.id
                   ? "bg-gray-900 text-white shadow"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200",
@@ -1187,19 +1192,21 @@ const VisitorsAnalyticsDashboard = () => {
             >
               <FaFileExcel className="text-sm" />
             </button> */}
-            <button type="button" title="Export Chart PDF" onClick={() => downloadSingleChartPdf(selectedChart || "Visitors_Chart")} className="h-10 w-auto px-3 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-lg flex items-center gap-2 hover:opacity-90 transition">
+            <button type="button" title="Export Chart PDF" onClick={() => downloadSingleChartPdf(selectedChart || "Visitors_Chart")} className="h-10 min-w-[44px] px-4  bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-lg flex items-center gap-2 hover:opacity-90 transition">
               <FaDownload className="text-sm" />
             </button>
           </div>
         }
       >
-        <div ref={chartRef}>
-          <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
+        <div ref={chartRef} className="w-full min-w-0 overflow-x-auto">
+          <div className="min-w-[280px]">
+            <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
+          </div>
         </div>
       </Card>
 
       {/* ── Staff & vehicle stat cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* <StatCard
           title="Staff Total"
           value={staffData.total}

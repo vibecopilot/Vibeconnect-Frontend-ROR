@@ -225,22 +225,22 @@ const ChartCard = ({
   const footerColor = footerDirection === "up" ? "text-red-600" : "text-emerald-700";
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
+          <p className="text-base sm:text-[18px] font-bold text-gray-900 break-words">{title}</p>
           {subtitle ? (
-            <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
+            <p className="text-sm text-gray-500 break-words mt-1">{subtitle}</p>
           ) : null}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <TrendPill percent={trendPercent} direction={trendDirection} />
           <ChartTypeMenu value={chartType} onChange={setChartType} includeBar={includeBar} />
           <DownloadMenu onExcelDownload={onExcelDownload} onChartDownload={onChartDownload} />
         </div>
       </div>
       <LegendRow items={legendItems} />
-      <div className="mt-2">{children}</div>
+      <div className="mt-2 overflow-x-auto">{children}</div>
       {footerText ? (
         <div className="mt-2 text-center text-sm">
           <span className={footerColor}>{footerArrow} {footerText}</span>
@@ -270,7 +270,7 @@ const toSortedEntries = (obj = {}, order = "desc") =>
 
 /** ✅ PIE supports palette for multi colors */
 const buildPieOptions = ({ title, data, colorsMap, palette = CHART_PALETTE }) => ({
-  chart: { type: "pie", backgroundColor: "transparent", height: 280 },
+  chart: { type: "pie", backgroundColor: "transparent", height: window.innerWidth < 640 ? 250 : 280 },
   title: { text: null },
   tooltip: {
     backgroundColor: "#FFFFFF",
@@ -287,7 +287,11 @@ const buildPieOptions = ({ title, data, colorsMap, palette = CHART_PALETTE }) =>
       borderWidth: 0,
       allowPointSelect: false,
       cursor: "pointer",
-      dataLabels: { enabled: true, format: "<b>{point.name}</b>: {point.y}" },
+      dataLabels: {
+        enabled: window.innerWidth >= 480,
+        format: "<b>{point.name}</b>: {point.y}",
+        style: { fontSize: window.innerWidth < 640 ? "10px" : "12px", textOutline: "none" },
+      },
     },
   },
   series: [
@@ -342,7 +346,7 @@ const buildXYOptions = ({
     chart: {
       type: hcType,
       backgroundColor: "transparent",
-      height: 280,
+      height: window.innerWidth < 640 ? 250 : 280,
       spacing: [8, 8, 8, 8],
     },
     title: { text: null },
@@ -354,7 +358,7 @@ const buildXYOptions = ({
       categories,
       lineColor: "#E5E7EB",
       tickColor: "#E5E7EB",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
       title: { text: null },
     },
     yAxis: {
@@ -362,7 +366,7 @@ const buildXYOptions = ({
       title: { text: null },
       gridLineColor: "#E5E7EB",
       gridLineDashStyle: "Dash",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
     },
 
     tooltip: {
@@ -728,7 +732,7 @@ const SoftServiceHighCharts = () => {
   }, [byAssignedUser, unitType]);
 
   const Loading = () => (
-    <div className="h-[320px] flex items-center justify-center">
+    <div className="h-[280px] sm:h-[320px] flex items-center justify-center">
       <DNA visible height="120" width="120" ariaLabel="dna-loading" />
     </div>
   );
@@ -738,7 +742,7 @@ const SoftServiceHighCharts = () => {
   const floorTrend = calcTrendFromTotals(byFloor);
 
   return (
-    <div className="w-full px-3 pb-4">
+    <div className="w-full px-2 sm:px-3 pb-4 overflow-x-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartCard
           title="Soft Services"
@@ -752,7 +756,7 @@ const SoftServiceHighCharts = () => {
           includeBar={false}
         >
           {byStatus && Object.keys(byStatus).length ? (
-            <div ref={statusChartRef}>
+            <div ref={statusChartRef} className="min-w-[280px]">
               <HighchartsReact highcharts={Highcharts} options={statusOptions} />
             </div>
           ) : (
@@ -772,7 +776,7 @@ const SoftServiceHighCharts = () => {
           includeBar={true}
         >
           {byBuilding && Object.keys(byBuilding).length ? (
-            <div ref={buildingChartRef}>
+            <div ref={buildingChartRef} className="min-w-[280px]">
               <HighchartsReact highcharts={Highcharts} options={buildingOptions} />
             </div>
           ) : (
@@ -792,7 +796,7 @@ const SoftServiceHighCharts = () => {
           includeBar={true}
         >
           {byFloor && Object.keys(byFloor).length ? (
-            <div ref={floorChartRef}>
+            <div ref={floorChartRef} className="min-w-[280px]">
               <HighchartsReact highcharts={Highcharts} options={floorOptions} />
             </div>
           ) : (
@@ -816,7 +820,7 @@ const SoftServiceHighCharts = () => {
           includeBar={false}
         >
           {byAssignedUser && Object.keys(byAssignedUser).length ? (
-            <div ref={unitChartRef}>
+            <div ref={unitChartRef} className="min-w-[280px]">
               <HighchartsReact highcharts={Highcharts} options={unitOptions} />
             </div>
           ) : (
