@@ -2,6 +2,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import "./App.css";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import AppDashboard from "./pages/AppDashboard.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import toast from "react-hot-toast";
 import Notification from "./pages/SubPages/Notification.jsx";
@@ -1078,6 +1079,15 @@ function App() {
         {/* Public survey (no login): shareable link for anyone to take survey */}
         <Route path="/survey/:id" element={<TakeSurvey />} />
         <Route path="/survey/:id/thank-you" element={<SurveyThankYou />} />
+
+        <Route
+          path="/apps/dashboard"
+          element={
+            // <ProtectedAdminRoutes>
+            <AppDashboard />
+            // </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/dashboard"
