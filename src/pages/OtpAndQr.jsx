@@ -35,9 +35,9 @@ const OtpAndQr = () => {
     fetchData();
   }, [id]);
 
-  const ProfilePic = userData.profile_picture ? domainPrefix + userData.profile_picture : "/visitor.png";
+  const ProfilePic = userData.profile_picture ? userData.profile_picture : "/visitor.png";
   const QrCodePic = userData.qr_code
-    ? domainPrefix + userData.qr_code
+    ? userData.qr_code
     : null;
   const isApproved = userData?.hosts?.some((host) => host.is_approved === true);
   const qrValue = userData?.card_id ? String(userData.card_id) : "";
