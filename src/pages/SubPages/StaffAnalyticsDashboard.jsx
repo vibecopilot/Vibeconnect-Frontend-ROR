@@ -196,13 +196,13 @@ const ChartTypeMenu = ({ value, onChange }) => {
 };
 
 const Card = ({ title, subtitle, right, children }) => (
-  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
-    <div className="flex items-start justify-between gap-3">
+  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5 overflow-hidden">
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
-        {subtitle ? <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p> : null}
+        <p className="text-base sm:text-[18px] font-bold text-gray-900 break-words">{title}</p>
+        {subtitle ? <p className="text-sm text-gray-500 mt-1">{subtitle}</p> : null}
       </div>
-      {right ? <div className="shrink-0">{right}</div> : null}
+      {right ? <div className="shrink-0 flex justify-start sm:justify-end">{right}</div> : null}
     </div>
     <div className="mt-4">{children}</div>
   </div>
@@ -211,11 +211,11 @@ const Card = ({ title, subtitle, right, children }) => (
 const StatCard = ({ title, value, accent, onClick }) => (
   <div
     onClick={onClick}
-    className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5 cursor-pointer hover:shadow-lg transition"
+    className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5 cursor-pointer hover:shadow-lg transition active:scale-[0.98]"
   >
-    <div className="h-1 w-full rounded-full mb-4" style={{ backgroundColor: accent, opacity: 0.9 }} />
-    <p className="text-[15px] font-bold text-gray-900 truncate">{title}</p>
-    <div className="mt-4 text-3xl font-extrabold text-gray-900">{Number(value) || 0}</div>
+    <div className="h-1 w-full rounded-full mb-3" style={{ backgroundColor: accent, opacity: 0.9 }} />
+    <p className="text-sm sm:text-[15px] font-bold text-gray-900 line-clamp-2">{title}</p>
+    <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-gray-900">{Number(value) || 0}</div>
   </div>
 );
 
@@ -229,7 +229,7 @@ const SkeletonCard = () => (
 
 /* ── Chart builders ─────────────────────────────────────────────────────── */
 const buildPieOptions = ({ title, points }) => ({
-  chart: { type: "pie", backgroundColor: "transparent", height: 320 },
+  chart: { type: "pie", backgroundColor: "transparent", height: window.innerWidth < 640 ? 260 : 320 },
   title: { text: null },
   tooltip: {
     backgroundColor: "#FFFFFF", borderColor: "#E5E7EB", borderRadius: 10, shadow: false,
@@ -241,7 +241,7 @@ const buildPieOptions = ({ title, points }) => ({
       ...baseNoSelect,
       innerSize: "55%", borderWidth: 0, allowPointSelect: false, cursor: "pointer",
       dataLabels: {
-        enabled: true,
+        enabled: window.innerWidth >= 480,
         formatter: function () { return `<b>${this.point.name}</b>: ${this.point.y}`; },
         style: { color: "#111827", textOutline: "none", fontSize: "12px" },
       },
@@ -276,7 +276,7 @@ const buildXYOptions = ({ title, type, points, colorByPoint = false }) => {
     : undefined;
 
   return {
-    chart: { type: hcType, backgroundColor: "transparent", height: 320, spacing: [8, 8, 8, 8] },
+    chart: { type: hcType, backgroundColor: "transparent", height: window.innerWidth < 640 ? 260 : 320, spacing: [8, 8, 8, 8] },
     title: { text: null },
     credits: { enabled: false },
     exporting: { enabled: false },
@@ -284,12 +284,12 @@ const buildXYOptions = ({ title, type, points, colorByPoint = false }) => {
     xAxis: {
       categories: (points || []).map((point) => point.label),
       lineColor: "#E5E7EB", tickColor: "#E5E7EB",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
       title: { text: null },
     },
     yAxis: {
       min: 0, title: { text: null }, gridLineColor: "#E5E7EB", gridLineDashStyle: "Dash",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
     },
     tooltip: { backgroundColor: "#FFFFFF", borderColor: "#E5E7EB", borderRadius: 10, shadow: false, pointFormat: "<b>{point.y}</b>" },
     plotOptions: {
@@ -632,20 +632,20 @@ const StaffAnalyticsDashboard = () => {
   }
 
   return (
-    <div className="w-full px-3 pb-4 space-y-6">
+    <div className="w-full px-2 sm:px-4 lg:px-6 pb-4 space-y-4 sm:space-y-6 overflow-x-hidden">
       {/* ── Top bar ── */}
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
         <button
           type="button"
           onClick={() => { setTempFromDate(fromDate); setTempToDate(toDate); setFilterOpen(true); }}
-          className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+          className="h-10 w-full sm:w-auto px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
         >
           Filter by Date
         </button>
         <button
           type="button"
           onClick={() => { setFromDate(""); setToDate(""); }}
-          className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+          className="h-10 w-full sm:w-auto px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
         >
           Clear Filter
         </button>
@@ -654,7 +654,7 @@ const StaffAnalyticsDashboard = () => {
       {/* ── Date filter modal ── */}
       {filterOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-4 sm:p-5">
             <h3 className="text-lg font-semibold text-gray-900">Filter Staff by Date</h3>
             <p className="text-sm text-gray-500 mt-1">Choose start and end date to refresh dashboard.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
@@ -669,9 +669,9 @@ const StaffAnalyticsDashboard = () => {
                   className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" />
               </div>
             </div>
-            <div className="mt-4 flex gap-2 justify-end">
+            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:justify-end">
               <button type="button" onClick={() => setFilterOpen(false)}
-                className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                className="h-10 w-full sm:w-auto px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
                 Cancel
               </button>
               <button
@@ -682,7 +682,7 @@ const StaffAnalyticsDashboard = () => {
                   setToDate(tempToDate);
                   setFilterOpen(false);
                 }}
-                className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                className="h-10 w-full sm:w-auto px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
               >
                 Apply Filter
               </button>
@@ -692,7 +692,7 @@ const StaffAnalyticsDashboard = () => {
       )}
 
       {/* ── Stat cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {visibleCards.length > 0
           ? visibleCards.map((cfg) => (
             <StatCard
@@ -712,7 +712,7 @@ const StaffAnalyticsDashboard = () => {
         title="Staff Analytics"
         subtitle="Select a breakdown type and chart style"
         right={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <ChartTypeMenu value={chartType} onChange={setChartType} />
             <button
               type="button"
@@ -725,14 +725,14 @@ const StaffAnalyticsDashboard = () => {
           </div>
         }
       >
-        <div className="flex flex-wrap gap-3 mt-1">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mt-1">
           {chartButtons.map((opt) => (
             <button
               key={opt.id}
               type="button"
               onClick={() => setSelectedChart(opt.id)}
               className={[
-                "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition",
+                "whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition",
                 selectedChart === opt.id
                   ? "bg-gray-900 text-white shadow"
                   : "bg-gray-100 text-gray-800 hover:bg-gray-200",
@@ -764,15 +764,17 @@ const StaffAnalyticsDashboard = () => {
                 type="button"
                 title="Export in Chart"
                 onClick={() => downloadSingleChartPdf(selectedChart || "Staff_Chart")}
-                className="h-10 w-auto px-3 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-lg flex items-center gap-2 hover:opacity-90 transition"
+                className="h-10 min-w-[44px] px-3 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-lg flex items-center gap-2 hover:opacity-90 transition"
               >
                 <FaDownload className="text-sm" />
               </button>
             </div>
           }
         >
-          <div ref={chartRef}>
-            <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
+          <div ref={chartRef} className="overflow-x-auto">
+            <div className="min-w-[280px]">
+              <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
+            </div>
           </div>
         </Card>
       )}

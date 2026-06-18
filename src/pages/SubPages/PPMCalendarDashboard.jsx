@@ -105,8 +105,8 @@ function PPMCalendarDashboard() {
   const [view, setView] = useState("dayGridMonth"); // dayGridMonth | timeGridWeek | timeGridDay
 
   // ✅ Prevent duplicate API calls
-const [currentStart, setCurrentStart] = useState(null);
-const [currentEnd, setCurrentEnd] = useState(null);
+  const [currentStart, setCurrentStart] = useState(null);
+  const [currentEnd, setCurrentEnd] = useState(null);
 
   // ✅ Reference to control FullCalendar API
   const calendarRef = useRef(null);
@@ -306,7 +306,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
     return (
       <div className="px-2 py-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="font-semibold text-[12px] leading-4 truncate">
+          <div className="font-semibold text-[10px] sm:text-[12px] leading-4 truncate">
             {eventInfo.event.title}
           </div>
           <span className="text-[10px] opacity-90 shrink-0">
@@ -315,7 +315,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
         </div>
 
         <div className="mt-1 flex items-center justify-between gap-2">
-          <span className="text-[11px] opacity-90 truncate inline-flex items-center gap-1">
+          <span className="text-[9px] sm:text-[11px] opacity-90 truncate">
             <FaUserAlt className="text-[10px]" />
             {assignTo}
           </span>
@@ -341,12 +341,12 @@ const [currentEnd, setCurrentEnd] = useState(null);
   }, [filteredEvents]);
 
   return (
-    <div className="w-full px-3">
+    <div className="w-full px-2 sm:px-3 md:px-4">
       {/* ✅ NEW UI: header + toolbar */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 mb-3">
         <div className="flex flex-col gap-3">
           {/* top row */}
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-700 grid place-items-center">
                 <FaCalendarAlt />
@@ -361,14 +361,13 @@ const [currentEnd, setCurrentEnd] = useState(null);
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Badge tone="blue">{counts.all} tasks</Badge>
 
               <button
                 type="button"
                 onClick={() => downloadCSV(exportRows, "ppm_calendar.csv")}
-                className="h-9 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition flex items-center gap-2 text-gray-800"
-                title="Export CSV"
+                className="h-10 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center gap-2 text-gray-800 w-full sm:w-auto" title="Export CSV"
               >
                 <FaDownload className="text-sm" />
                 <span className="text-sm font-medium">Export</span>
@@ -377,9 +376,9 @@ const [currentEnd, setCurrentEnd] = useState(null);
           </div>
 
           {/* controls row */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <div className="flex flex-col xl:flex-row xl:items-center gap-3">
             {/* search */}
-            <div className="flex-1">
+            <div className="w-full xl:flex-1">
               <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
                 <input
@@ -402,7 +401,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
             </div>
 
             {/* status pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide w-full">
               {[
                 { k: "all", label: "All", tone: "gray", n: counts.all },
                 { k: "pending", label: "Pending", tone: "yellow", n: counts.pending },
@@ -431,7 +430,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
             </div>
 
             {/* view switch */}
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
               {[
                 { v: "dayGridMonth", label: "Month" },
                 { v: "timeGridWeek", label: "Week" },
@@ -444,7 +443,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
                     type="button"
                     onClick={() => setView(x.v)}
                     className={[
-                      "h-10 px-4 rounded-xl text-sm font-medium transition",
+                      "h-10 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-medium transition w-full",
                       active
                         ? "bg-blue-600 text-white shadow-sm"
                         : "bg-gray-100 text-gray-800 hover:bg-gray-200",
@@ -460,7 +459,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
       </div>
 
       {/* ✅ NEW UI: calendar inside clean card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-3">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-2 sm:p-3 overflow-hidden">
         <FullCalendar
           timeZone="local"
           dateClick={handleDateClick}
@@ -468,7 +467,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={view}
           initialDate={initialDate}
-          height="78vh"
+          height={window.innerWidth < 768 ? "65vh" : "78vh"}
           headerToolbar={{
             left: "prev,next today",
             center: "title",
@@ -492,7 +491,7 @@ const [currentEnd, setCurrentEnd] = useState(null);
       {/* ✅ Modern modal */}
       {modal && selectedEvent && (
         <ModalWrapper onclose={oncloseModal}>
-          <div className="flex flex-col gap-y-4 w-[500px] h-[300px]">
+          <div className="flex flex-col gap-y-4 w-[95vw] sm:w-[500px] min-h-[300px] max-h-[85vh] overflow-y-auto">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="text-base font-bold text-gray-900 truncate">

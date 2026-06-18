@@ -129,7 +129,7 @@ const ChartTypeMenu = ({ value, onChange, allowBar = false }) => {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-40 rounded-xl border border-gray-200 bg-white shadow-lg z-20 overflow-hidden">
+        <div className="absolute right-0 sm:right-0 left-auto mt-2 w-48 sm:w-52 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
           {items.map((it) => (
             <button
               key={it.key}
@@ -232,16 +232,16 @@ const ChartCard = ({
     footerDirection === "up" ? "text-red-600" : "text-emerald-700";
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-3 sm:p-5 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
+          <p className="text-base sm:text-lg font-bold text-gray-900 break-words">{title}</p>
           {subtitle ? (
             <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto">
           <TrendPill percent={trendPercent} direction={trendDirection} />
 
           <ChartTypeMenu
@@ -343,7 +343,10 @@ const buildOptions = ({
     chart: {
       type: hcType,
       backgroundColor: "transparent",
-      height: 280,
+      height:
+        window.innerWidth < 640
+          ? 240
+          : 280,
       spacing: [8, 8, 8, 8],
     },
 
@@ -358,7 +361,15 @@ const buildOptions = ({
         categories,
         lineColor: "#E5E7EB",
         tickColor: "#E5E7EB",
-        labels: { style: { color: "#6B7280", fontSize: "12px" } },
+        labels: {
+          style: {
+            color: "#6B7280",
+            fontSize:
+              window.innerWidth < 640
+                ? "10px"
+                : "12px"
+          }
+        },
         title: { text: null },
       },
     yAxis: isPie
@@ -368,7 +379,15 @@ const buildOptions = ({
         title: { text: yTitle },
         gridLineColor: "#E5E7EB",
         gridLineDashStyle: "Dash",
-        labels: { style: { color: "#6B7280", fontSize: "12px" } },
+        labels: {
+          style: {
+            color: "#6B7280",
+            fontSize:
+              window.innerWidth < 640
+                ? "10px"
+                : "12px"
+          }
+        },
       },
 
     tooltip: isPie
@@ -1109,8 +1128,8 @@ const TicketHighCharts = () => {
   };
 
   return (
-    <div className="w-full px-3" ref={dashboardRef} >
-      <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+    <div className="  w-full  px-2  sm:px-3  lg:px-4  overflow-x-hidden" ref={dashboardRef} >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mb-4">
         <button
           type="button"
           onClick={() => setFilterModalOpen(true)}
@@ -1168,7 +1187,7 @@ const TicketHighCharts = () => {
               <button
                 type="button"
                 onClick={() => setFilterModalOpen(false)}
-                className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+                className="h-10 w-full sm:w-auto px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
               >
                 Cancel
               </button>
@@ -1184,8 +1203,7 @@ const TicketHighCharts = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
         <ChartCard
           title="Tickets by Status"
           // subtitle="Overview of ticket lifecycle"
@@ -1301,7 +1319,7 @@ const TicketHighCharts = () => {
           )}
         </ChartCard>
 
-        <div className="lg:col-span-2">
+        <div className="md:col-span-2">
           <ChartCard
             title={Number(companyId) === 55 ? "Tickets by Tenant" : "Tickets by Unit"}
             // subtitle="Unit-wise ticket count"
