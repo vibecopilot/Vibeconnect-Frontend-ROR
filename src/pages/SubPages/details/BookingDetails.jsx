@@ -32,6 +32,8 @@ const BookingDetails = () => {
     notes: "",
   });
 
+  console.log("bookingDetails", bookingDetails)
+
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
@@ -114,24 +116,11 @@ const BookingDetails = () => {
         const updateResponse = await updateAmenityBook(id, updatedBookingData); // Pass the id and updated data
         console.log("update response", updateResponse);
 
-        const updatedPayment = {
-          payment_method: formData.payment_method,
-          total_amount: bookingDetails.amount,
-          paid_amount: formData.paid_amount,
-          paymen_date: new Date().toISOString().split("T")[0], // Use current date or adjust as needed
-          transaction_id: formData.transaction_id,
-          notes: formData.notes || "N/A",
-          resource_id: formData.resource_id,
-          resource_type: formData.resource_type,
-        };
-
-        setBookingDetails((prevDetails) => ({
-          ...prevDetails,
-          payment: updatedPayment,
-        }));
-
         setShowModal(false);
         toast.success("Payment Captured successfully!");
+
+        // Refetch the booking details to show the latest payment information
+        await fetchData();
       } else {
         toast.error("Booking failed. Please try again.");
       }
@@ -586,6 +575,34 @@ const BookingDetails = () => {
             </div>
           )}
         </div>
+
+        {/* PAYMENT DETAILS */}
+        {bookingDetails.payment && (
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold mb-3">Payment Details</h2>
+
+            <div className="bg-green-50 p-5 rounded border-2 border-green-200">
+              <div className="grid grid-cols-2 gap-5">
+                <Field label="Transaction ID" value={bookingDetails.payment.transaction_id} />
+                <Field label="Payment Method" value={bookingDetails.payment.payment_method} />
+                <Field label="Total Amount" value={`₹ ${bookingDetails.payment.total_amount}`} />
+                <Field label="Paid Amount" value={`₹ ${bookingDetails.payment.paid_amount}`} />
+                <Field label="Payment Date" value={bookingDetails.payment.paymen_date} />
+                <Field label="Status" value={
+                  <span className="bg-green-500 text-white px-2 py-1 rounded-md text-sm">
+                    Paid
+                  </span>
+                } />
+              </div>
+              {bookingDetails.payment.notes && bookingDetails.payment.notes !== "N/A" && (
+                <div className="mt-4 pt-4 border-t border-green-200">
+                  <p className="font-semibold mb-2">Remarks</p>
+                  <p>{bookingDetails.payment.notes}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* BOOKING RULES */}
         {/* <div className="mt-8">
