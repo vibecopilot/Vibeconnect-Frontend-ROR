@@ -24,6 +24,8 @@ const RVehiclesTable = ({
   const isHistory =
     pageType === "History" ||
     pageType === "Vehicle In" ||
+
+    
     pageType === "Vehicle Out";
 
   const getVehicleId = (row) => {
