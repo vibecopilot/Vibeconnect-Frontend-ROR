@@ -399,21 +399,21 @@ const Assetinfo = ({ assetData }) => {
                   assetData.purchase_invoices.length > 0 ? (
                     assetData.purchase_invoices.map((invoice, index) => (
                       <div key={invoice.id} className="">
-                        {isImage(domainPrefix + invoice.document) ? (
+                        {isImage( invoice.document) ? (
                           <img
-                            src={domainPrefix + invoice.document}
+                            src={ invoice.document}
                             alt={`Attachment ${index + 1}`}
                             className="w-full h-auto cursor-pointer"
                             onClick={() =>
                               window.open(
-                                domainPrefix + invoice.document,
+                                 invoice.document,
                                 "_blank"
                               )
                             }
                           />
                         ) : (
                           <a
-                            href={domainPrefix + invoice.document}
+                            href={ invoice.document}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="attachment-link hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center  "
@@ -435,21 +435,21 @@ const Assetinfo = ({ assetData }) => {
                   {assetData.insurances && assetData.insurances.length > 0 ? (
                     assetData.insurances.map((insurance, index) => (
                       <div key={insurance.id} className="">
-                        {isImage(domainPrefix + insurance.document) ? (
+                        {isImage( insurance.document) ? (
                           <img
-                            src={domainPrefix + insurance.document}
+                            src={ insurance.document}
                             alt={`Attachment ${index + 1}`}
                             className="w-40 h-28 object-cover rounded-md"
                             onClick={() =>
                               window.open(
-                                domainPrefix + insurance.document,
+                                 insurance.document,
                                 "_blank"
                               )
                             }
                           />
                         ) : (
                           <a
-                            href={domainPrefix + insurance.document}
+                            href={ insurance.document}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="attachment-link hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center  "
@@ -471,21 +471,21 @@ const Assetinfo = ({ assetData }) => {
                   {assetData.manuals && assetData.manuals.length > 0 ? (
                     assetData.manuals.map((manual, index) => (
                       <div key={manual.id} className="">
-                        {isImage(domainPrefix + manual.document) ? (
+                        {isImage( manual.document) ? (
                           <img
-                            src={domainPrefix + manual.document}
+                            src={ manual.document}
                             alt={`Attachment ${index + 1}`}
                             className="w-40 h-28 object-cover rounded-md"
                             onClick={() =>
                               window.open(
-                                domainPrefix + manual.document,
+                                 manual.document,
                                 "_blank"
                               )
                             }
                           />
                         ) : (
                           <a
-                            href={domainPrefix + manual.document}
+                            href={ manual.document}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="attachment-link hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center  "
@@ -508,18 +508,18 @@ const Assetinfo = ({ assetData }) => {
                 {assetData.other_files && assetData.other_files.length > 0 ? (
                   assetData.other_files.map((other, index) => (
                     <div key={other.id} className="">
-                      {isImage(domainPrefix + other.document) ? (
+                      {isImage( other.document) ? (
                         <img
-                          src={domainPrefix + other.document}
+                          src={ other.document}
                           alt={`Attachment ${index + 1}`}
                           className="w-40 h-28 object-cover rounded-md"
                           onClick={() =>
-                            window.open(domainPrefix + other.document, "_blank")
+                            window.open( other.document, "_blank")
                           }
                         />
                       ) : (
                         <a
-                          href={domainPrefix + other.document}
+                          href={ other.document}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="attachment-link hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center  "
