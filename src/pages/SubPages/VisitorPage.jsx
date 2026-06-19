@@ -425,6 +425,7 @@ const VisitorPage = () => {
     setApprovalPage(1);
     setHistoryPage(1);
     setRefetchTrigger((prev) => prev + 1);
+    setShowFilters(false);
   };
 
   const handleClearFilters = () => {
@@ -444,6 +445,7 @@ const VisitorPage = () => {
     setApprovalPage(1);
     setHistoryPage(1);
     setRefetchTrigger((prev) => prev + 1);
+    setShowFilters(false);
   };
 
 
@@ -1753,141 +1755,100 @@ const VisitorPage = () => {
             )}
           </div>
         </div>
-        {/* ================= FILTER DRAWER POPUP ================= */}
-        {showFilters && (
-          <>
-            {/* Overlay */}
-            <div
-              className="fixed inset-0 bg-black bg-opacity-40 z-40"
-              onClick={() => setShowFilters(false)}
-            />
+        {/* FILTER DRAWER */}
+{showFilters && (
+  <>
+    <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={() => setShowFilters(false)} />
 
-            {/* Drawer */}
-            <div className="absolute right-6 top-28 w-[360px] bg-white shadow-xl border rounded-lg z-50 p-5">
+    <div className="fixed right-6 top-28 w-[380px] bg-white shadow-xl border rounded-xl z-50 p-6 max-h-[85vh] overflow-y-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-lg font-semibold">Filters</h2>
+        <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-black">
+          <IoClose size={24} />
+        </button>
+      </div>
 
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold">Filter Visitors</h2>
-                <button onClick={() => setShowFilters(false)}>
-                  <IoClose size={22} />
-                </button>
-              </div>
+      {/* Date Range */}
+      <div className="mb-5">
+        <label className="text-sm font-medium block mb-2">
+          {page === "History" ? "Approval Date Range" : expectedDateRangeLabel}
+        </label>
+        <div className="flex gap-3">
+          <input
+            type="date"
+            value={page === "History" ? historyDateFrom : filterDateFrom}
+            onChange={(e) => page === "History" ? setHistoryDateFrom(e.target.value) : setFilterDateFrom(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          />
+          <input
+            type="date"
+            value={page === "History" ? historyDateTo : filterDateTo}
+            onChange={(e) => page === "History" ? setHistoryDateTo(e.target.value) : setFilterDateTo(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          />
+        </div>
+      </div>
 
-              {/* Expected Date Range */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  {expectedDateRangeLabel}
-                </label>
+      {/* Mobile */}
+      <div className="mb-5">
+        <label className="text-sm font-medium block mb-2">Mobile Number</label>
+        <input
+          type="text"
+          placeholder="Enter mobile number"
+          value={page === "History" ? historyMobile : filterMobile}
+          onChange={(e) => page === "History" ? setHistoryMobile(e.target.value) : setFilterMobile(e.target.value)}
+          className="border p-2 rounded-md w-full"
+        />
+      </div>
 
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={page === "History" ? historyDateFrom : filterDateFrom}
-                    onChange={(e) =>
-                      page === "History"
-                        ? setHistoryDateFrom(e.target.value)
-                        : setFilterDateFrom(e.target.value)
-                    }
-                    className="border p-2 rounded-md w-full"
-                  />
+      {/* Host / Approval Status */}
+      {page !== "History" && (
+        <div className="mb-5">
+          <label className="text-sm font-medium block mb-2">Host Approval</label>
+          <select
+            value={filterApproval}
+            onChange={(e) => setFilterApproval(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          >
+            <option value="">All</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+      )}
 
-                  <input
-                    type="date"
-                    value={page === "History" ? historyDateTo : filterDateTo}
-                    onChange={(e) =>
-                      page === "History"
-                        ? setHistoryDateTo(e.target.value)
-                        : setFilterDateTo(e.target.value)
-                    }
-                    className="border p-2 rounded-md w-full"
-                  />
-                </div>
-              </div>
+      {page === "History" && (
+        <div className="mb-5">
+          <label className="text-sm font-medium block mb-2">Approval Status</label>
+          <select
+            value={historyStatus}
+            onChange={(e) => setHistoryStatus(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          >
+            <option value="">All</option>
+            <option value="approved">Approved</option>
+            <option value="denied">Denied</option>
+          </select>
+        </div>
+      )}
 
-              {/* Mobile Number */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  Mobile Number
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Enter mobile number"
-                  value={page === "History" ? historyMobile : filterMobile}
-                  onChange={(e) =>
-                    page === "History"
-                      ? setHistoryMobile(e.target.value)
-                      : setFilterMobile(e.target.value)
-                  }
-                  className="border p-2 rounded-md w-full"
-                />
-              </div>
-
-              {/* Building */}
-              {/* <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  Building
-                </label>
-
-                <select
-                  value={filterBuilding}
-                  onChange={(e) => setFilterBuilding(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Building</option>
-
-                  {buildings.map((building) => (
-                    <option key={building.id} value={building.id}>
-                      {building.name}
-                    </option>
-                  ))}
-                </select>
-              </div> */}
-
-              {/* Host Approval */}
-              <div className="mb-6">
-                <label className="text-sm font-medium block mb-2">
-                  Host Approval
-                </label>
-
-                <select
-                  value={page === "History" ? historyStatus : filterApproval}
-                  onChange={(e) =>
-                    page === "History"
-                      ? setHistoryStatus(e.target.value)
-                      : setFilterApproval(e.target.value)
-                  }
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">All</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleClearFilters}
-                  className="w-full border py-2 rounded-md font-medium"
-                >
-                  Reset
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleApplyFilters();
-                    setShowFilters(false);
-                  }}
-                  style={{ background: themeColor }}
-                  className="w-full text-white py-2 rounded-md font-medium"
-                >
-                  Apply Filters
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+      {/* Buttons */}
+      <div className="flex gap-3 pt-4 border-t">
+        <button onClick={handleClearFilters} className="flex-1 border py-3 rounded-lg font-medium">
+          Reset
+        </button>
+        <button
+          onClick={handleApplyFilters}
+          style={{ background: themeColor }}
+          className="flex-1 text-white py-3 rounded-lg font-medium"
+        >
+          Apply Filters
+        </button>
+      </div>
+    </div>
+  </>
+)}
       </section>
     </div>
   );
