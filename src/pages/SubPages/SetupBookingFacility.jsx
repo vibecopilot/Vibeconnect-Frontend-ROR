@@ -43,7 +43,7 @@ const SetupBookingFacility = () => {
 
         const mappedData = (res?.data?.amenities || []).map((item) => ({
           id: item.id,
-          site_name: item.site_name || "-",
+          site_name: item.site_id || "-",
           fac_name: item.fac_name || "-",
           fac_type: item.fac_type || "-",
           bookBefore: item.book_before?.[0] || "-",

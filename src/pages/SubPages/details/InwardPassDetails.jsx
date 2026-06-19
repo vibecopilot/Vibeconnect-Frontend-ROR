@@ -69,6 +69,11 @@ const InwardPassDetails = () => {
             </div>
 
             <div className="grid grid-cols-2">
+              <p className="font-medium">Description :</p>
+              <p>{details.description || "-"}</p>
+            </div>
+
+            <div className="grid grid-cols-2">
               <p className="font-medium">Mode of Transport :</p>
               <p>{details.mode_of_transport || "-"}</p>
             </div>
@@ -108,7 +113,7 @@ const InwardPassDetails = () => {
               <p>{formatTime(details.goods_out_time)}</p>
             </div>
 
-             <div className="grid grid-cols-2">
+            <div className="grid grid-cols-2">
               <p className="font-medium">Returnable Type :</p>
               <p>{details.returnable_type || "-"}</p>
             </div>
@@ -156,16 +161,16 @@ const InwardPassDetails = () => {
             {details.goods_files && details.goods_files.length > 0 ? (
               details.goods_files.map((doc, index) => (
                 <div key={doc.id} className="">
-                  {isImage(domainPrefix + doc.document) ? (
+                  {isImage(doc.document) ? (
                     <img
-                      src={domainPrefix + doc.document}
+                      src={doc.document}
                       alt={`Attachment ${index + 1}`}
                       className="w-40 h-28 object-cover rounded-md"
                       onClick={() => window.open(domainPrefix + doc.document, "_blank")}
                     />
                   ) : (
                     <a
-                      href={domainPrefix + doc.document}
+                      href={doc.document}
                       target="_blank"
                       rel="noopener noreferrer"
                       className=" hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center"

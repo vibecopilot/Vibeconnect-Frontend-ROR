@@ -48,7 +48,7 @@ const AssetAmcDetails = () => {
     return (
       <div className="grid lg:grid-cols-6 md:grid-cols-4 sm:grid-cols-3 grid-cols-2 gap-4">
         {files.map((doc, index) => {
-          const fileUrl = domainPrefix + doc.document;
+          const fileUrl =  doc.document;
 
           return (
             <div
