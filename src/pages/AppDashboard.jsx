@@ -1,21 +1,31 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { MdExpandLess, MdExpandMore } from "react-icons/md";
+import { FaBuilding } from "react-icons/fa";
+
+import { setPublicAuth, clearPublicAuth } from "../api/axiosInstance";
 import { getSiteData, siteChange } from "../api";
-import { getItemInLocalStorage, setItemInLocalStorage } from "../utils/localStorage";
-import "react-datepicker/dist/react-datepicker.css";
 
 import HighchartsComponent from "../components/HighCharts";
 import TicketDashboard from "./SubPages/TicketDashboard";
 import SoftServiceHighCharts from "../components/SoftServicesHighCharts";
-import { MdExpandLess, MdExpandMore } from "react-icons/md";
-import { FaBuilding } from "react-icons/fa";
 import AssetDashboard from "./SubPages/AssetDashboard";
 import ComplianceDashboard from "./SubPages/ComplianceDashboard";
 import PPMCalendarDashboard from "./SubPages/PPMCalendarDashboard";
 import VisitorsAnalyticsDashboard from "./SubPages/VisitorsAnalyticsDashboard";
 import StaffAnalyticsDashboard from "./SubPages/StaffAnalyticsDashboard";
-import { useSearchParams } from "react-router-dom";
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Public Dashboard Context
+   Children (TicketDashboard, etc.) can consume { siteId, token } from here
+   instead of reading localStorage.
+────────────────────────────────────────────────────────────────────────────── */
+export const PublicDashboardContext = createContext({ siteId: null, token: null });
+export const usePublicDashboard = () => useContext(PublicDashboardContext);
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SectionCard
+────────────────────────────────────────────────────────────────────────────── */
 const SectionCard = ({ title, subtitle = "Analytics & overview", children }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5">
     <div className="flex items-start justify-between gap-3 mb-3">
@@ -32,219 +42,200 @@ const SectionCard = ({ title, subtitle = "Analytics & overview", children }) => 
   </div>
 );
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   AppDashboard — publicly accessible via:
+   /apps/dashboard?siteId=47&token=<token>
+   No localStorage read or write.
+────────────────────────────────────────────────────────────────────────────── */
+const BRAND_COLOR = "#4F46E5"; // indigo fallback (no redux in incognito)
+
 const AppDashboard = () => {
-  const themeColor = useSelector((state) => state.theme.color);
-
-  const [feat, setFeat] = useState([]);
-  const [siteOpen, setSiteOpen] = useState(false);
-  const [siteData, setSiteData] = useState([]);
-  const [siteName, setSiteName] = useState("");
-  const [ready, setReady] = useState(false);
-
-  const dropdownRef = useRef(null);
   const [searchParams] = useSearchParams();
 
-  /**
-   * ✅ STEP 1 — Seed localStorage from URL params so all API calls work
-   *    without requiring the user to be logged in.
-   *    Runs once on mount / whenever URL params change.
-   */
+  const [token, setToken] = useState(null);
+  const [siteId, setSiteId] = useState(null);
+  const [siteName, setSiteName] = useState("");
+  const [siteData, setSiteData] = useState([]);
+  const [siteOpen, setSiteOpen] = useState(false);
+  const [ready, setReady] = useState(false); // true after auth is set
+
+  const dropdownRef = useRef(null);
+
+  /* ── Step 1: Read URL params, set module-level auth (no localStorage) ── */
   useEffect(() => {
-    const urlSiteId = searchParams.get("siteId");
     const urlToken = searchParams.get("token");
+    const urlSiteId = searchParams.get("siteId");
 
-    if (urlToken) {
-      setItemInLocalStorage("TOKEN", urlToken);
-    }
-    if (urlSiteId) {
-      setItemInLocalStorage("SITEID", urlSiteId);
-    }
+    if (urlToken) setToken(urlToken);
+    if (urlSiteId) setSiteId(urlSiteId);
 
-    // Mark ready so child dashboards mount after localStorage is set
+    // Inject into axiosInstance interceptor — all child API calls will
+    // automatically include token (header + ?token=) and site_id param.
+    setPublicAuth(urlToken, urlSiteId);
     setReady(true);
+
+    // Clean up when user leaves the page so regular auth is restored.
+    return () => clearPublicAuth();
   }, [searchParams]);
 
-  /** ✅ STEP 2 — Load features from localStorage (if any) */
+  /* ── Step 2: Fetch site list & resolve site name from siteId ── */
   useEffect(() => {
-    let storedFeatures = getItemInLocalStorage("FEATURES");
-    if (typeof storedFeatures === "string") {
-      try { storedFeatures = JSON.parse(storedFeatures); } catch { storedFeatures = []; }
-    }
-    if (Array.isArray(storedFeatures)) {
-      setFeat(
-        storedFeatures
-          .map((f) => (f?.feature_name || "").toString().toLowerCase().trim())
-          .filter(Boolean)
-      );
-    } else {
-      setFeat([]);
-    }
-  }, []);
+    if (!ready || !token) return;
 
-  /** ✅ STEP 3 — Fetch sites list (token is now in localStorage) */
-  useEffect(() => {
-    if (!ready) return;
-    const fetchSiteData = async () => {
+    const fetchSites = async () => {
       try {
-        const response = await getSiteData();
-        const sites = response?.data?.sites || [];
+        const res = await getSiteData();
+        const sites = res?.data?.sites || [];
         setSiteData(sites);
 
-        // Resolve site name from URL siteId OR stored SITEID
-        const urlSiteId = searchParams.get("siteId");
-        const storedSiteId = getItemInLocalStorage("SITEID");
-        const activeSiteId = urlSiteId || storedSiteId;
-        if (activeSiteId) {
-          const matched = sites.find((s) => String(s.id) === String(activeSiteId));
-          if (matched) {
-            setSiteName(matched.name);
-            setItemInLocalStorage("SITENAME", matched.name);
-          }
-        } else {
-          const storedName = getItemInLocalStorage("SITENAME");
-          if (storedName) setSiteName(storedName);
+        if (siteId) {
+          const match = sites.find((s) => String(s.id) === String(siteId));
+          if (match) setSiteName(match.name);
         }
-      } catch (error) {
-        console.error("Error fetching sites:", error);
-        // Still show stored name if API fails
-        const storedName = getItemInLocalStorage("SITENAME");
-        if (storedName) setSiteName(storedName);
+      } catch (err) {
+        console.error("Error fetching sites:", err);
       }
     };
-    fetchSiteData();
-  }, [ready]);
+    fetchSites();
+  }, [ready, token, siteId]);
 
+  /* ── Site switcher ── */
   const toggleSite = () => setSiteOpen((v) => !v);
 
   const handleSiteChange = async (id, name) => {
     try {
       await siteChange(id);
-      setItemInLocalStorage("SITEID", id) || 1;
-      setItemInLocalStorage("SITENAME", name);
+      // Update module-level override with new siteId (no localStorage)
+      setPublicAuth(token, id);
+      setSiteId(String(id));
       setSiteName(name);
       setSiteOpen(false);
-
-      // ✅ keep (if your app depends on full reload)
-      window.location.reload();
-    } catch (error) {
-      console.error("Error changing site:", error);
+      // Reload so all child dashboards re-fetch with the new siteId
+      window.location.href =
+        `/apps/dashboard?siteId=${id}&token=${token}`;
+    } catch (err) {
+      console.error("Error changing site:", err);
     }
   };
 
-  /** ✅ close dropdown on outside click */
+  /* ── Close dropdown on outside click ── */
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setSiteOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Fallback brand color when no redux theme is loaded (e.g. incognito/no login)
-  const headerBg = themeColor || "#4F46E5";
-
+  /* ── Render ── */
   return (
-    <section className="flex bg-gray-50 min-h-screen">
-      <div className="w-full flex flex-col overflow-hidden pb-10">
-        {/* ✅ TOP HEADER — always visible, no auth required */}
-        <header className="px-3 sm:px-5 pt-3 sticky top-0 z-30">
-          <div
-            style={{ background: headerBg }}
-            className="w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-[0_8px_24px_rgba(15,23,42,0.12)]"
-          >
-            <h1 className="text-white font-semibold text-base sm:text-lg whitespace-nowrap">
-              Vibe Connect
-            </h1>
+    <PublicDashboardContext.Provider value={{ siteId, token }}>
+      <section className="flex bg-gray-50 min-h-screen w-full">
+        <div className="w-full flex flex-col overflow-x-hidden pb-12">
 
-            <div className="relative" ref={dropdownRef}>
-              <button
-                type="button"
-                onClick={toggleSite}
-                className="cursor-pointer flex items-center gap-2 font-medium px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition text-white text-sm"
-              >
-                <FaBuilding />
-                <span className="max-w-[120px] sm:max-w-[220px] truncate">
-                  {siteName || "Select Site"}
-                </span>
-                {siteOpen ? <MdExpandLess size={20} /> : <MdExpandMore size={20} />}
-              </button>
+          {/* ── TOP HEADER (always visible, no login needed) ── */}
+          <header className="px-3 sm:px-5 pt-3 sticky top-0 z-30 bg-gray-50">
+            <div
+              style={{ background: BRAND_COLOR }}
+              className="w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-[0_8px_24px_rgba(79,70,229,0.25)]"
+            >
+              {/* Logo */}
+              <h1 className="text-white font-bold text-base sm:text-lg whitespace-nowrap tracking-tight">
+                Vibe Connect
+              </h1>
 
-              {siteOpen && (
-                <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-72 w-64 sm:w-80 overflow-y-auto z-50 p-2">
-                  {siteData.length ? (
-                    siteData.map((s) => (
-                      <button
-                        type="button"
-                        key={s.id}
-                        onClick={() => handleSiteChange(s.id, s.name)}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800 text-sm"
-                      >
-                        <span className="block truncate">{s.name}</span>
-                      </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-sm text-gray-500">No sites found</div>
-                  )}
-                </div>
-              )}
+              {/* Site selector */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={toggleSite}
+                  className="flex items-center gap-1.5 font-medium px-3 py-2 rounded-xl
+                             bg-white/15 hover:bg-white/25 active:bg-white/30
+                             transition text-white text-sm max-w-[55vw] sm:max-w-xs"
+                >
+                  <FaBuilding className="shrink-0" />
+                  <span className="truncate">{siteName || "Select Site"}</span>
+                  {siteOpen
+                    ? <MdExpandLess size={18} className="shrink-0" />
+                    : <MdExpandMore size={18} className="shrink-0" />}
+                </button>
+
+                {siteOpen && (
+                  <div
+                    className="absolute right-0 mt-2 bg-white border border-gray-200
+                               rounded-2xl shadow-xl max-h-64 w-60 sm:w-72
+                               overflow-y-auto z-50 p-1.5"
+                  >
+                    {siteData.length ? (
+                      siteData.map((s) => (
+                        <button
+                          type="button"
+                          key={s.id}
+                          onClick={() => handleSiteChange(s.id, s.name)}
+                          className="w-full text-left px-3 py-2 rounded-xl
+                                     hover:bg-indigo-50 text-gray-800 text-sm transition"
+                        >
+                          <span className="block truncate">{s.name}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-3 text-sm text-gray-400 text-center">
+                        No sites found
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        {/* ✅ CONTENT — only mount after token is in localStorage */}
-        {!ready ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-10 w-10 border-4 border-indigo-500 border-t-transparent" />
-          </div>
-        ) : (
-          <main className="px-3 sm:px-5 mt-4 space-y-4">
-            {feat.includes("assets") && (
+          {/* ── CONTENT ── */}
+          {!ready ? (
+            /* Loading spinner while auth is being seeded */
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-10 w-10 border-4
+                              border-indigo-500 border-t-transparent" />
+            </div>
+          ) : (
+            <main className="px-3 sm:px-5 mt-4 space-y-4">
               <SectionCard title="Asset Analytics">
                 <AssetDashboard />
               </SectionCard>
-            )}
-
-            {feat.includes("assets") && (
               <SectionCard title="PPM Calendar">
                 <PPMCalendarDashboard />
               </SectionCard>
-            )}
+              <SectionCard title="Ticket">
+                <TicketDashboard />
+              </SectionCard>
 
-            <SectionCard title="Ticket">
-              <TicketDashboard />
-            </SectionCard>
+              <SectionCard title="Highcharts Overview">
+                <HighchartsComponent />
+              </SectionCard>
 
-            <SectionCard title="Highcharts Overview">
-              <HighchartsComponent />
-            </SectionCard>
+              <SectionCard title="Visitors Dashboard">
+                <VisitorsAnalyticsDashboard />
+              </SectionCard>
 
-            <SectionCard title="Visitors Dashboard">
-              <VisitorsAnalyticsDashboard />
-            </SectionCard>
+              <SectionCard title="Staff Dashboard">
+                <StaffAnalyticsDashboard />
+              </SectionCard>
 
-            <SectionCard title="Staff Dashboard">
-              <StaffAnalyticsDashboard />
-            </SectionCard>
-
-            {feat.includes("compliance") && (
               <SectionCard title="Compliance">
                 <ComplianceDashboard />
               </SectionCard>
-            )}
 
-            {feat.includes("soft_services") && (
               <SectionCard title="Soft Service">
                 <SoftServiceHighCharts />
               </SectionCard>
-            )}
-          </main>
-        )}
-      </div>
-    </section>
+
+            </main>
+          )}
+        </div>
+      </section>
+    </PublicDashboardContext.Provider>
   );
 };
 
 export default AppDashboard;
-

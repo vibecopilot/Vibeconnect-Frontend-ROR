@@ -6,6 +6,7 @@ import {
   getComplaintsDrill,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { usePublicDashboard } from "../AppDashboard";
 import { FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
 import DetailPopup from "../../components/DetailPopup";
@@ -143,7 +144,10 @@ const TicketDashboard = () => {
     totalRecords: 0,
   });
 
-  const siteId = getItemInLocalStorage("SITEID");
+  // Use siteId from the public URL context first (works in incognito),
+  // fall back to localStorage for regular authenticated sessions.
+  const { siteId: publicSiteId } = usePublicDashboard();
+  const siteId = publicSiteId || getItemInLocalStorage("SITEID");
 
   useEffect(() => {
     const fetchTicketInfo = async () => {
