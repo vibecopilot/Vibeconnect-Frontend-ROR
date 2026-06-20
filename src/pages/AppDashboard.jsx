@@ -60,6 +60,8 @@ const AppDashboard = () => {
       setItemInLocalStorage("TOKEN", token);
     }
 
+      window.location.href = "/apps/dashboard";
+
     console.log("Site ID:", siteId);
     console.log("Token:", token);
   }, []);
