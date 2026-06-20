@@ -1083,9 +1083,7 @@ function App() {
         <Route
           path="/apps/dashboard"
           element={
-            // <ProtectedAdminRoutes>
             <AppDashboard />
-            // </ProtectedAdminRoutes>
           }
         />
 

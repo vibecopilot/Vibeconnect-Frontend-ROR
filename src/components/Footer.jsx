@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 
 const Footer = () => {
-const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color)
   const location = useLocation();
   const isSurveyPage = location.pathname.includes('/survey/');
 
@@ -40,8 +40,8 @@ const themeColor = useSelector((state)=> state.theme.color)
 
   return (
     !isSurveyPage && (
-      <footer className="hideIt fixed bottom-0 w-screen z-10">
-        <div style={{background: themeColor}}>
+      <footer className="hideIt fixed bottom-0 w-screen z-10 hidden md:block">
+        <div style={{ background: themeColor }}>
           <p className="text-center text-white">
             Copyright © 2023-2026 Digielves Tech Wizards Private Limited. All rights
             reserved
