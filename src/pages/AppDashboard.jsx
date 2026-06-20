@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import Navbar from "../components/Navbar";
 import { useSelector } from "react-redux";
 import { getVibeCalendar, getSiteData, siteChange } from "../api";
 import { getItemInLocalStorage, setItemInLocalStorage } from "../utils/localStorage";
@@ -43,28 +42,20 @@ const AppDashboard = () => {
   const [siteOpen, setSiteOpen] = useState(false);
   const [siteData, setSiteData] = useState([]);
   const [siteName, setSiteName] = useState("");
+  const [siteId, setSiteId] = useState(null);
+const [token, setToken] = useState(null);
 
   const dropdownRef = useRef(null);
 
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const siteId = searchParams.get("siteId");
-    const token = searchParams.get("token");
+  const urlSiteId = searchParams.get("siteId");
+  const urlToken = searchParams.get("token");
 
-    if (siteId) {
-      setItemInLocalStorage("SITEID", siteId);
-    }
-
-    if (token) {
-      setItemInLocalStorage("TOKEN", token);
-    }
-
-      window.location.href = "/apps/dashboard";
-
-    console.log("Site ID:", siteId);
-    console.log("Token:", token);
-  }, []);
+  setSiteId(urlSiteId);
+  setToken(urlToken);
+}, [searchParams]);
 
   /** ✅ always keep current sitename in state */
   useEffect(() => {
@@ -169,7 +160,6 @@ const AppDashboard = () => {
 
   return (
     <section className="flex bg-gray-50 min-h-screen">
-      {/* <Navbar /> */}
 
       <div className="w-full flex flex-col overflow-hidden pb-10">
         {/* ✅ TOP HEADER */}
