@@ -17,6 +17,7 @@ import VisitorsDashboard from "./SubPages/VisitorsDashboard";
 import VisitorsAnalyticsDashboard from "./SubPages/VisitorsAnalyticsDashboard";
 import StaffDashboard from "./SubPages/StaffDashboard";
 import StaffAnalyticsDashboard from "./SubPages/StaffAnalyticsDashboard";
+import { useSearchParams } from "react-router-dom";
 
 const SectionCard = ({ title, subtitle = "Analytics & overview", children }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5">
@@ -44,6 +45,24 @@ const AppDashboard = () => {
   const [siteName, setSiteName] = useState("");
 
   const dropdownRef = useRef(null);
+
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const siteId = searchParams.get("siteId");
+    const token = searchParams.get("token");
+
+    if (siteId) {
+      setItemInLocalStorage("SITEID", siteId);
+    }
+
+    if (token) {
+      setItemInLocalStorage("TOKEN", token);
+    }
+
+    console.log("Site ID:", siteId);
+    console.log("Token:", token);
+  }, []);
 
   /** ✅ always keep current sitename in state */
   useEffect(() => {
@@ -148,7 +167,7 @@ const AppDashboard = () => {
 
   return (
     <section className="flex bg-gray-50 min-h-screen">
-      <Navbar />
+      {/* <Navbar /> */}
 
       <div className="w-full flex flex-col overflow-hidden pb-10">
         {/* ✅ TOP HEADER */}
