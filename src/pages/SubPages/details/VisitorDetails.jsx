@@ -16,6 +16,7 @@ const VisitorDetails = () => {
 const hasProfileImage =
   details.profile_picture &&
   !details.profile_picture.includes("upload.svg");
+  
   const { id } = useParams();
   const themeColor = useSelector((state) => state.theme.color);
 
