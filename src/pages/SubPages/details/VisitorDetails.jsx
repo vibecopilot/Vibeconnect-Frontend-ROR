@@ -13,7 +13,9 @@ const VisitorDetails = () => {
   const [deviceLogs, setDeviceLogs] = useState([]);
   const [visitorLogs, setVisitorLogs] = useState([]);
   const [qrModal, setQrmodal] = useState(false);
-
+const hasProfileImage =
+  details.profile_picture &&
+  !details.profile_picture.includes("upload.svg");
   const { id } = useParams();
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -61,10 +63,15 @@ const VisitorDetails = () => {
   };
 
   // ✅ Build full URL (handle both absolute & relative paths)
-  const buildUrl = (path) => {
-    if (!path) return "";
-    return String(path).startsWith("http") ? path : domainPrefix + path;
-  };
+ const buildUrl = (path) => {
+  if (!path) return "";
+
+  if (path.startsWith("http")) {
+    return path;
+  }
+
+  return `${domainPrefix}${path}`;
+};
 
   // ✅ visitor_license[] and visitor_consignment[] are arrays of {id, document, ...}
   const getLicenseDocuments = () => details.visitor_license || [];
@@ -206,21 +213,24 @@ const VisitorDetails = () => {
 
         {/* PROFILE PICTURE */}
         <div className="flex justify-center mt-2">
-          {details.profile_picture ? (
-            <img
-              src={buildUrl(details.profile_picture)}
-              alt="Visitor Profile"
-              className="w-48 h-48 rounded-full cursor-pointer object-cover"
-              onClick={() => window.open(buildUrl(details.profile_picture))}
-            />
-          ) : (
-            <img
-              src={image}
-              alt="Default Profile"
-              className="w-48 h-48 rounded-full object-cover"
-            />
-          )}
-        </div>
+  {hasProfileImage ? (
+    <img
+      src={buildUrl(details.profile_picture)}
+      alt="Visitor Profile"
+      className="w-48 h-48 rounded-full object-cover cursor-pointer"
+      onClick={() => window.open(buildUrl(details.profile_picture))}
+      onError={(e) => {
+        e.target.src = image;
+      }}
+    />
+  ) : (
+    <img
+      src={image}
+      alt="Default Profile"
+      className="w-48 h-48 rounded-full object-cover"
+    />
+  )}
+</div>
 
         {/* BASIC INFO */}
         <div className="grid md:grid-cols-3 px-4 gap-5 mt-4">
