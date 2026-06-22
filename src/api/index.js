@@ -2349,6 +2349,13 @@ export const editStaffDetails = async (id, data) =>
       token: token,
     },
   });
+
+  export const amenityInvoicePdf = async (id) => axiosInstance.get(`/amenity_bookings/${id}/invoice_pdf.json`, {
+    params: {
+      token: token
+    }
+  })
+
 export const postStaff = async (data) =>
   axiosInstance.post("/staffs.json", data, {
     params: {
