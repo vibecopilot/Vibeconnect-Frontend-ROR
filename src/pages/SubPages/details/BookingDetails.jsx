@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import {
+    amenityInvoicePdf,
   domainPrefix,
   getAmenitiesBookingById,
   postPaymentBookings,
-  updateAmenityBook
+  updateAmenityBook,
 } from "../../../api";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
+import { FaFileInvoice } from "react-icons/fa";
 
 const BookingDetails = () => {
   const { id } = useParams();
@@ -32,13 +34,12 @@ const BookingDetails = () => {
     notes: "",
   });
 
-  console.log("bookingDetails", bookingDetails)
+  console.log("bookingDetails", bookingDetails);
 
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
 
   const fetchData = async () => {
     setLoading(true);
@@ -56,10 +57,7 @@ const BookingDetails = () => {
 
       setBookingDetails(bookingD);
       setBooking(bookingD);
-
-      // ✅ Use direct amenity
       setFacilityDetails(bookingD.amenity);
-
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Failed to fetch data. Please try again.");
@@ -74,13 +72,8 @@ const BookingDetails = () => {
     }
   }, [id]);
 
-
-
   const postPaymentBooking = async () => {
-    if (
-      !formData.payment_method ||
-      !formData.paid_amount
-    ) {
+    if (!formData.payment_method || !formData.paid_amount) {
       toast.error("Payment Type and amount are mandatory!");
       return;
     }
@@ -98,7 +91,7 @@ const BookingDetails = () => {
 
       // Append all form data fields
       Object.keys(formData).forEach((key) =>
-        postData.append(`payment[${key}]`, formData[key])
+        postData.append(`payment[${key}]`, formData[key]),
       );
 
       // Append the total amount (payable amount) to the request
@@ -142,6 +135,25 @@ const BookingDetails = () => {
     }));
   };
 
+const handleInvoice = async () => {
+  try {
+    const response = await amenityInvoicePdf(id);
+
+    const url = window.URL.createObjectURL(
+      new Blob([response.data], { type: "application/pdf" })
+    );
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `invoice_${id}.pdf`;
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Invoice download failed:", error);
+  }
+};
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -166,11 +178,9 @@ const BookingDetails = () => {
     );
   }
 
-
   const handleCancelClick = () => {
     setShowConfirmPopup(true); // Show confirmation popup when cancel is clicked
   };
-
 
   const handleConfirmCancel = async () => {
     console.log("id", id);
@@ -185,7 +195,6 @@ const BookingDetails = () => {
       console.log("response", response);
 
       if (response?.status === 200) {
-
         toast.success("Status Cancelled!");
         navigate("/bookings");
       } else {
@@ -212,7 +221,6 @@ const BookingDetails = () => {
           ...prev,
           status: "refunded",
         }));
-
       } else {
         toast.error("Refund failed!");
       }
@@ -246,7 +254,7 @@ const BookingDetails = () => {
 
   if (amenitySlotId) {
     selectedSlot = facilityDetails?.amenity_slots?.find(
-      (slot) => slot.id === amenitySlotId
+      (slot) => slot.id === amenitySlotId,
     );
   } else if (facilityDetails?.amenity_slots?.length > 0) {
     // fallback: take first slot
@@ -254,16 +262,15 @@ const BookingDetails = () => {
   }
   const slotTime = selectedSlot
     ? `${String(selectedSlot.start_hr || 0).padStart(2, "0")}:${String(
-      selectedSlot.start_min || 0
-    ).padStart(2, "0")} - ${String(selectedSlot.end_hr || 0).padStart(
-      2,
-      "0"
-    )}:${String(selectedSlot.end_min || 0).padStart(2, "0")}`
+        selectedSlot.start_min || 0,
+      ).padStart(2, "0")} - ${String(selectedSlot.end_hr || 0).padStart(
+        2,
+        "0",
+      )}:${String(selectedSlot.end_min || 0).padStart(2, "0")}`
     : "N/A";
   // console.log("slot time", slotTime);
 
   // console.log("fac anem", bookingDetails.amount);
-
 
   if (loading) return <p className="p-6 text-center">Loading...</p>;
   if (!booking) return <p className="p-6 text-center">Booking Not Found</p>;
@@ -277,8 +284,10 @@ const BookingDetails = () => {
 
       <div className="w-full p-6 overflow-y-auto">
         {/* HEADER */}
-        <div className=" text-white p-2 rounded text-center text-lg font-semibold"
-          style={{ background: themeColor }}>
+        <div
+          className=" text-white p-2 rounded text-center text-lg font-semibold"
+          style={{ background: themeColor }}
+        >
           Amenity Booking Details
         </div>
 
@@ -296,12 +305,20 @@ const BookingDetails = () => {
                   </button>
                 )}
               {bookingDetails.status === "paid" && (
-                <button
-                  className="bg-orange-500 rounded-md text-white p-2 w-[150px] cursor-pointer"
-                  onClick={() => handleRefund()}
-                >
-                  Refund
-                </button>
+                <>
+                  <button className="w-[150px] flex items-center justify-center gap-2 bg-blue-500 text-white p-2 rounded-md"
+                  onClick={() => handleInvoice()}
+                  >
+                    <FaFileInvoice className="w-6 h-6" />
+                    <span>Download</span>
+                  </button>
+                  <button
+                    className="bg-orange-500 rounded-md text-white p-2 w-[150px] cursor-pointer"
+                    onClick={() => handleRefund()}
+                  >
+                    Refund
+                  </button>
+                </>
               )}
 
               <div>
@@ -480,12 +497,13 @@ const BookingDetails = () => {
             label="Status"
             value={
               <span
-                className={`${booking.status === "booked"
-                  ? "bg-yellow-500"
-                  : booking.status === "cancelled"
-                    ? "bg-red-500"
-                    : "bg-green-500"
-                  } text-white px-2 py-1 rounded-md text-sm`}
+                className={`${
+                  booking.status === "booked"
+                    ? "bg-yellow-500"
+                    : booking.status === "cancelled"
+                      ? "bg-red-500"
+                      : "bg-green-500"
+                } text-white px-2 py-1 rounded-md text-sm`}
               >
                 {booking.status.charAt(0).toUpperCase() +
                   booking.status.slice(1)}
@@ -494,7 +512,10 @@ const BookingDetails = () => {
           />
           <Field label="Booked By" value={booking.book_by_user} />
           <Field label="Scheduled Date" value={booking.booking_date} />
-          <Field label="Booked Date" value={booking.created_at?.split("T")[0]} />
+          <Field
+            label="Booked Date"
+            value={booking.created_at?.split("T")[0]}
+          />
           <Field
             label="Slot"
             value={
@@ -532,7 +553,6 @@ const BookingDetails = () => {
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-5">
-
               {/* MEMBER */}
               {(amenity?.member_price_adult || amenity?.member_price_child) && (
                 <div className="bg-gray-100 p-4 rounded">
@@ -571,7 +591,6 @@ const BookingDetails = () => {
                   )}
                 </div>
               )}
-
             </div>
           )}
         </div>
@@ -583,23 +602,42 @@ const BookingDetails = () => {
 
             <div className="bg-green-50 p-5 rounded border-2 border-green-200">
               <div className="grid grid-cols-2 gap-5">
-                <Field label="Transaction ID" value={bookingDetails.payment.transaction_id} />
-                <Field label="Payment Method" value={bookingDetails.payment.payment_method} />
-                <Field label="Total Amount" value={`₹ ${bookingDetails.payment.total_amount}`} />
-                <Field label="Paid Amount" value={`₹ ${bookingDetails.payment.paid_amount}`} />
-                <Field label="Payment Date" value={bookingDetails.payment.paymen_date} />
-                <Field label="Status" value={
-                  <span className="bg-green-500 text-white px-2 py-1 rounded-md text-sm">
-                    Paid
-                  </span>
-                } />
+                <Field
+                  label="Transaction ID"
+                  value={bookingDetails.payment.transaction_id}
+                />
+                <Field
+                  label="Payment Method"
+                  value={bookingDetails.payment.payment_method}
+                />
+                <Field
+                  label="Total Amount"
+                  value={`₹ ${bookingDetails.payment.total_amount}`}
+                />
+                <Field
+                  label="Paid Amount"
+                  value={`₹ ${bookingDetails.payment.paid_amount}`}
+                />
+                <Field
+                  label="Payment Date"
+                  value={bookingDetails.payment.paymen_date}
+                />
+                <Field
+                  label="Status"
+                  value={
+                    <span className="bg-green-500 text-white px-2 py-1 rounded-md text-sm">
+                      Paid
+                    </span>
+                  }
+                />
               </div>
-              {bookingDetails.payment.notes && bookingDetails.payment.notes !== "N/A" && (
-                <div className="mt-4 pt-4 border-t border-green-200">
-                  <p className="font-semibold mb-2">Remarks</p>
-                  <p>{bookingDetails.payment.notes}</p>
-                </div>
-              )}
+              {bookingDetails.payment.notes &&
+                bookingDetails.payment.notes !== "N/A" && (
+                  <div className="mt-4 pt-4 border-t border-green-200">
+                    <p className="font-semibold mb-2">Remarks</p>
+                    <p>{bookingDetails.payment.notes}</p>
+                  </div>
+                )}
             </div>
           </div>
         )}
