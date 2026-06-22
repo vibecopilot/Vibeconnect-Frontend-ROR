@@ -461,18 +461,18 @@ const ServiceDetails = () => {
             {attachments.length > 0 ? (
               attachments.map((doc, index) => (
                 <div key={doc.id || index}>
-                  {isImage(domainPrefix + doc.document) ? (
+                  {isImage( doc.document) ? (
                     <img
-                      src={`${domainPrefix}${doc.document || doc.file_url || doc.url}`}
+                      src={`${doc.document || doc.file_url || doc.url}`}
                       alt={`Attachment ${index + 1}`}
                       className="w-40 h-28 object-cover rounded-md"
                       onClick={() =>
-                        window.open(`${domainPrefix}${doc.document || doc.file_url || doc.url}`, "_blank")
+                        window.open(`${doc.document || doc.file_url || doc.url}`, "_blank")
                       }
                     />
                   ) : (
                     <a
-                      href={domainPrefix + doc.document}
+                      href={ doc.document}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="hover:text-blue-400 transition-all duration-300 flex flex-col items-center"
@@ -659,7 +659,7 @@ const ServiceDetails = () => {
         <SoftServiceQr
           assetName={details.name}
           onClose={() => setQrCode(false)}
-          QR={domainPrefix + details.qr_code_image_url}
+          QR={details.qr_code_image_url}
           softId={details.id}
         />
       )}
