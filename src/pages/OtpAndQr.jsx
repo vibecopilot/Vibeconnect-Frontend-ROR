@@ -98,10 +98,6 @@ if (Number(userData?.company_id) === 56) {
             src={LotusLogo}
             alt="Lotus Developers"
             className="w-[360px] mb-4"
-            style={{
-              filter:
-                "brightness(0) saturate(100%) invert(79%) sepia(35%) saturate(734%) hue-rotate(359deg) brightness(103%) contrast(100%)"
-            }}
           />
 
 
