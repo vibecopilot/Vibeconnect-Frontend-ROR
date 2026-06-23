@@ -108,17 +108,18 @@ const Readings = () => {
   const { id } = useParams()
   useEffect(() => {
     const fetchReading = async () => {
-      toast.loading("Please wait");
+      const toastId = toast.loading("Please wait");
+
       try {
         const readingResp = await getAssetReadingDetails(id);
-        toast.dismiss();
 
         let data = readingResp.data || [];
 
-        // ✅ Step 1: Sort ASC for correct calculation
-        data.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+        data.sort(
+          (a, b) =>
+            new Date(a.created_at) - new Date(b.created_at)
+        );
 
-        // ✅ Step 2: Group by date
         const groupedByDate = {};
 
         data.forEach((item) => {
@@ -132,27 +133,31 @@ const Readings = () => {
         });
 
         let finalData = [];
-        let prevKwhClosing = null;
+        let previousValues = {};
 
-        // ✅ Step 3: Process data
         Object.keys(groupedByDate).forEach((date) => {
           const dayRecords = groupedByDate[date];
 
           dayRecords.forEach((item) => {
-            if (item.asset_param_name === "KWH") {
-              const closing = Number(item.value);
+            const currentValue = Number(item.value);
+
+            if (!isNaN(currentValue)) {
+              const param = item.asset_param_name;
 
               const opening =
-                prevKwhClosing !== null ? prevKwhClosing : closing;
+                previousValues[param] !== undefined
+                  ? previousValues[param]
+                  : currentValue;
 
-              const consumption = closing - opening;
+              const consumption =
+                currentValue - opening; 
 
-              prevKwhClosing = closing;
+              previousValues[param] = currentValue;
 
               finalData.push({
                 ...item,
                 opening: opening.toFixed(2),
-                value: closing.toFixed(2),
+                value: currentValue.toFixed(2),
                 consumption: consumption.toFixed(2),
               });
             } else {
@@ -165,21 +170,21 @@ const Readings = () => {
           });
         });
 
-        // ✅ Step 4: Reverse for latest first display
         finalData.reverse();
 
         setReadings(finalData);
 
+        toast.dismiss(toastId);
         toast.success("Reading fetched successfully");
       } catch (error) {
-        toast.dismiss();
+        toast.dismiss(toastId);
         console.log(error);
         toast.error("Error fetching readings");
       }
     };
 
     fetchReading();
-  }, []);
+  }, [id]);
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
