@@ -69,7 +69,7 @@ const OtpAndQr = () => {
       ? new Date(`2000-01-01T${userData.expected_time}`).toLocaleTimeString("en-GB", {
         hour: "2-digit",
         minute: "2-digit",
-        hour12: false,
+        hour12: true,
       })
       : "";
 
@@ -136,7 +136,7 @@ const OtpAndQr = () => {
           {/* ── Visitor Name ── */}
           <h2
             className="text-2xl font-bold uppercase text-center mb-1"
-            style={{ color: gold, fontFamily: "Georgia, serif", letterSpacing: "0.12em" }}
+            style={{ color: gold, fontFamily: "Century Gothic", letterSpacing: "0.12em" }}
           >
             {userData?.name || "N/A"}
           </h2>
