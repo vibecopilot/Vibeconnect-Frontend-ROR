@@ -848,6 +848,7 @@ import FitOutRequestDetails from "./pages/FitOut/FitOutRequestDetailsFixed.jsx";
 import FitOutRequestDetail from "./pages/FitOut/FitOutRequestDetail.jsx";
 import FitOutRequestEditPage from "./pages/FitOut/FitOutRequestEditPage.jsx";
 import FitOutChecklistView from "./pages/FitOut/FitOutChecklistView.jsx";
+import BannerManagement from "./pages/Setup/BannerManagement.jsx";
 
 
 
@@ -3834,6 +3835,16 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+
+        <Route
+          path="/admin/banner-setup"
+          element={
+            <ProtectedAdminRoutes>
+              <BannerManagement />
+            </ProtectedAdminRoutes>
+          }
+        />
+
         {/* SAC/HSN Setup */}
         <Route
           path="/admin/sac-hsn-setup"
