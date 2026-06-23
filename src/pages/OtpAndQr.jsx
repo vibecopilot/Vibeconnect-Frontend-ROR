@@ -10,15 +10,17 @@ const OtpAndQr = () => {
   const id = searchParams.get("v");
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
-  const companyId = getItemInLocalStorage("COMPANYID");
   const [otpDigits, setOtpDigits] = useState([]);
+  const [companyId, setCompanyId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
       try {
         const response = await getUserOtp(id);
-        setUserData(response.data);
+     setUserData(response.data);
+setCompanyId(response.data.company_id);
+
         if (response.data.otp) {
           setOtpDigits(response.data.otp.toString().split(""));
         }
@@ -50,7 +52,7 @@ const OtpAndQr = () => {
   const qrValue = userData?.card_id ? String(userData.card_id) : "";
 
   // ─── Company 56 — Lotus Developers Layout ────────────────────────────────────
-  if (Number(companyId) === 56) {
+if (Number(userData?.company_id) === 56) {
     const getOrdinal = (n) => {
       const s = [ "RD"];
       const v = n % 100;
@@ -167,7 +169,7 @@ const OtpAndQr = () => {
                     <rect x="15" y="14" width="2" height="2" fill={gold} stroke="none" />
                   </svg>
                   <span
-                    className="text-lg  uppercase"
+                    className="text-lg uppercase"
                     style={{ color: white, letterSpacing: "0.05em", }}
                   >
                     {formattedDay}
@@ -185,7 +187,7 @@ const OtpAndQr = () => {
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
                   <span
-                    className="text-lg  uppercase"
+                    className="text-lg uppercase"
                     style={{ color: white, letterSpacing: "0.05em", }}
                   >
                     {formattedTime}
