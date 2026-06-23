@@ -12196,12 +12196,38 @@ export const deleteVehicleSetup = async (id) =>
   });
 
 export const putVehicleSetup = async (id, data) =>
-  axiosInstance.put(`/vehicle_setups/${id}.json`, data, {
+  axiosInstance.put(`/banners/${id}.json`, data, {
     params: {
       token: token,
     },
   });
 
+  export const getBanner = async () =>
+  axiosInstance.get(`/banners.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+    export const putBanner = async (id,data) =>
+  axiosInstance.put(`/banners/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+  export const deleteBanner = async (id) =>
+  axiosInstance.delete(`/banners/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+    export const postBanner = async (data) =>
+  axiosInstance.post(`/banners.json`, data, {
+    params: {
+      token: token,
+    },
+  });
 export const getComplianceTrackers = async () =>
   axiosInstance.get("/compliance_trackers.json", {
     params: { token },
