@@ -144,7 +144,7 @@ const OtpAndQr = () => {
           {/* ── Site Name ── */}
           <p
             className="text-sm uppercase text-center mb-5"
-            style={{ color: gold, opacity: 0.85, letterSpacing: "0.18em" }}
+            style={{ color: gold, fontFamily: "Century Gothic",opacity: 0.85, letterSpacing: "0.18em" }}
           >
             {comingForm}
           </p>
@@ -168,10 +168,10 @@ const OtpAndQr = () => {
                   </svg>
                   <span
                     className="text-lg  uppercase"
-                    style={{ color: white, letterSpacing: "0.05em" }}
+                    style={{ color: white, letterSpacing: "0.05em", }}
                   >
                     {formattedDay}
-                    <sup className="text-xs font-bold">{getOrdinal(formattedDay)}</sup>{" "}
+                    <sup className="text-xs">{getOrdinal(formattedDay)}</sup>{" "}
                     {formattedMonth}
                   </span>
                 </div>
@@ -186,7 +186,7 @@ const OtpAndQr = () => {
                   </svg>
                   <span
                     className="text-lg  uppercase"
-                    style={{ color: white, letterSpacing: "0.05em" }}
+                    style={{ color: white, letterSpacing: "0.05em", }}
                   >
                     {formattedTime}
                   </span>
@@ -212,7 +212,7 @@ const OtpAndQr = () => {
               <div>
                 <p
                   className="text-lg  uppercase"
-                  style={{ color: white, letterSpacing: "0.1em" }}
+                  style={{ color: white, letterSpacing: "0.1em" ,fontFamily: "Century Gothic",}}
                 >
                   THE OBEROI, GURUGRAM
                 </p>
