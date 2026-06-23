@@ -718,7 +718,7 @@ function AssetDashboard() {
             <FaSyncAlt className={refreshing ? "animate-spin" : ""} />
           </button>
 
-          <div className="relative">
+          <div className="relative inline-block">
             <button onClick={() => setFilterOpen((p) => !p)}
               className="bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm">
               <FaRegCalendar />
@@ -726,28 +726,90 @@ function AssetDashboard() {
               {filterOpen ? <FaChevronUp size={12} /> : <FaChevronDown size={12} />}
             </button>
             {filterOpen && (
-              <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-xl shadow-lg w-52 z-30">
-                {[["today", "Today"], ["week", "This Week"], ["month", "This Month"], ["quarter", "This Quarter"], ["year", "This Year"]].map(([k, label]) => (
-                  <button key={k} onClick={() => { applyDateFilter(k); setFilterOpen(false); }} className="block w-full text-left px-4 py-2 hover:bg-gray-50">{label}</button>
-                ))}
-                <button onClick={() => setFilterType("custom")} className="block w-full text-left px-4 py-2 hover:bg-gray-50">Custom Range</button>
-                {activeStartDate && <button onClick={handleClearFilter} className="block w-full text-left px-4 py-2 text-red-500 hover:bg-red-50">Clear Filter</button>}
-                {filterType === "custom" && (
-                  <div className="p-3 border-t">
-                    <DatePicker selected={customStartDate} onChange={setCustomStartDate} placeholderText="Start Date" className="border p-2 w-full rounded mb-2" />
-                    <DatePicker selected={customEndDate} onChange={setCustomEndDate} placeholderText="End Date" className="border p-2 w-full rounded mb-2" />
-                    <button onClick={() => {
-                      if (customStartDate) {
-                        const endD = customEndDate || new Date();
-                        setActiveStartDate(customStartDate); setActiveEndDate(endD);
-                        fetchAllCounts(fmtDate(customStartDate), fmtDate(endD));
-                      }
-                      setFilterOpen(false);
-                    }} className="w-full bg-black text-white py-2 rounded">Apply</button>
-                  </div>
-                )}
-              </div>
-            )}
+  <div
+    className="
+      absolute top-full mt-2 left-0
+      w-48 sm:w-52
+      bg-white
+      border border-gray-200
+      rounded-lg
+      shadow-xl
+      z-[9999]
+      overflow-hidden
+    "
+  >
+    {[
+      ["today", "Today"],
+      ["week", "This Week"],
+      ["month", "This Month"],
+      ["quarter", "This Quarter"],
+      ["year", "This Year"],
+    ].map(([k, label]) => (
+      <button
+        key={k}
+        onClick={() => {
+          applyDateFilter(k);
+          setFilterOpen(false);
+        }}
+        className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100"
+      >
+        {label}
+      </button>
+    ))}
+
+    <button
+      onClick={() => setFilterType("custom")}
+      className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100"
+    >
+      Custom Range
+    </button>
+
+    {activeStartDate && (
+      <button
+        onClick={handleClearFilter}
+        className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50"
+      >
+        Clear Filter
+      </button>
+    )}
+
+    {filterType === "custom" && (
+      <div className="border-t p-3">
+        <DatePicker
+          selected={customStartDate}
+          onChange={setCustomStartDate}
+          placeholderText="Start Date"
+          className="w-full border rounded p-2 mb-2"
+        />
+
+        <DatePicker
+          selected={customEndDate}
+          onChange={setCustomEndDate}
+          placeholderText="End Date"
+          className="w-full border rounded p-2 mb-2"
+        />
+
+        <Button
+          className="w-full"
+          onClick={() => {
+            if (customStartDate) {
+              const endD = customEndDate || new Date();
+              setActiveStartDate(customStartDate);
+              setActiveEndDate(endD);
+              fetchAllCounts(
+                fmtDate(customStartDate),
+                fmtDate(endD)
+              );
+            }
+            setFilterOpen(false);
+          }}
+        >
+          Apply
+        </Button>
+      </div>
+    )}
+  </div>
+)}
           </div>
         </div>
       </div>
