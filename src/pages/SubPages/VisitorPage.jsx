@@ -198,6 +198,22 @@ const VisitorPage = () => {
     hour12: true,
   });
 };
+const actualFormat = (dateString) => {
+  if (!dateString) return "-";
+
+  const [date, time] = dateString.split("T");
+  const [year, month, day] = date.split("-");
+
+  const formattedTime = new Date(`1970-01-01T${time}`)
+    .toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "UTC",
+    });
+
+  return `${month}/${day}/${year} ${formattedTime}`;
+};
 
   // ✅ helper: safe csv escape
   const csvEscape = (v) => {
@@ -319,6 +335,8 @@ const VisitorPage = () => {
         "Created By",
         "Host",
         "Created At",
+        "CheckedIn At",
+        "CheckedOut At"
       ];
 
       const csvRows = allRows.map((r) => {
@@ -334,13 +352,16 @@ const VisitorPage = () => {
           csvEscape(r.expected_date ? formatDateUS(r.expected_date) : ""),
           csvEscape(r.expected_time ? actualTimeZ(r.expected_time) : ""),
           csvEscape(r.vehicle_number || ""),
-          csvEscape(r.skip_host_approval ? "Approved" : "Rejected"),
+          csvEscape(r?.hosts[0]?.is_approved ? "Approved" : "Not Approved!"),
           csvEscape(r.start_pass ? dateFormat(r.start_pass) : ""),
           csvEscape(r.end_pass ? dateFormat(r.end_pass) : ""),
           csvEscape(r.visitor_in_out || ""),
           csvEscape(createdBy),
           csvEscape(r.hosts_display || (createdBy ? createdBy : "No Host")),
           csvEscape(r.created_at ? dateTimeFormat(r.created_at) : ""),
+          csvEscape(r.visits_log[0]?.check_in ? actualFormat(r.visits_log[0]?.check_in) : ""),
+          csvEscape(r.visits_log[0]?.check_out ? actualFormat(r.visits_log[0]?.check_out) : "")
+
         ].join(",");
       });
 
