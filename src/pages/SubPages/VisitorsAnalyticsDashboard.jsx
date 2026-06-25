@@ -661,7 +661,7 @@ const VisitorsAnalyticsDashboard = () => {
       const records = Array.isArray(bucket?.records) ? bucket.records : Array.isArray(bucket) ? bucket : [];
       const total = bucket?.count ?? bucket?.total ?? records.length;
       const perPage = bucket?.per_page ?? 10;
-      const pages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      const pages = bucket?.total_pages ?? (perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1);
 
       setDetailTotalPages(pages);
       setDetailPopup({ open: true, title, records, loading: false, columns: visitorColumns });
@@ -876,7 +876,7 @@ const VisitorsAnalyticsDashboard = () => {
       const records = Array.isArray(bucket?.records) ? bucket.records : [];
       const total = bucket?.count ?? bucket?.total ?? records.length;
       const perPage = bucket?.per_page ?? 10;
-      const totalPages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      const totalPages = bucket?.total_pages ?? (perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1);
       setDetailTotalPages(totalPages);
       setDetailPopup({ open: true, title, records, loading: false, columns: visitorColumns });
     } catch (err) {
