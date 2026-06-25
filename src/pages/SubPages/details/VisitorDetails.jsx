@@ -28,7 +28,7 @@ const hasProfileImage =
       try {
         const res = await getVisitorDetails(id);
         const data = res.data;
-        console.log("Visitor API Response:", JSON.stringify(data, null, 2));
+        // console.log("Visitor API Response:", JSON.stringify(data, null, 2));
 
         setDetails(data);
         setDeviceLogs(data.logs || []);
@@ -62,6 +62,33 @@ const hasProfileImage =
     const date = new Date(dateString);
     return isNaN(date) ? "-" : date.toLocaleString();
   };
+
+const actualFormat = (dateString) => {
+  if (!dateString) return "-";
+
+  const [date, time] = dateString.split("T");
+  const [year, month, day] = date.split("-");
+
+  const formattedTime = new Date(`1970-01-01T${time}`)
+    .toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "UTC",
+    });
+
+  return `${month}/${day}/${year} ${formattedTime}`;
+};
+
+const actualTime = (time) => {
+  if (!time) return "-";
+
+  return new Date(`1970-01-01T${time}`).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
 
   // ✅ Build full URL (handle both absolute & relative paths)
  const buildUrl = (path) => {
@@ -125,8 +152,8 @@ const hasProfileImage =
   const visitorLogColumn = [
     { name: "Sr. No.", selector: (_, index) => index + 1 },
     { name: "Visitor Name", selector: (row) => row.name || "-" },
-    { name: "Check In", selector: (row) => dateTimeFormat(row.check_in) },
-    { name: "Check Out", selector: (row) => dateTimeFormat(row.check_out) },
+    { name: "Check In", selector: (row) => actualFormat(row.check_in) },
+    { name: "Check Out", selector: (row) => actualFormat(row.check_out) },
   ];
 
   const visitorExtraColumns = [
@@ -263,7 +290,7 @@ const hasProfileImage =
           {/* Expected Time */}
           <Info
             label="Expected Time"
-            value={details.expected_time || "-"}
+            value={ actualTime(details.expected_time) || "-"}
           />
 
           {/* Created Date & Time */}
@@ -453,14 +480,14 @@ const hasProfileImage =
         </Section>
 
         {/* DEVICE LOGS */}
-        {deviceLogs.length > 0 && (
+       {/* {deviceLogs.length > 0 && (
           <Section title="Device Logs">
             <Table
               columns={visitorDeviceLogColumn}
               data={paginatedDeviceLogs}
             />
           </Section>
-        )}
+        )}*/}
       </div>
 
       {qrModal && (
