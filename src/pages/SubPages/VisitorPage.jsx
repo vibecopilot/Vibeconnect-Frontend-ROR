@@ -20,7 +20,6 @@ import {
 } from "../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
-import { formatTime } from "../../utils/dateUtils";
 import { getItemInLocalStorage, setItemInLocalStorage } from "../../utils/localStorage";
 import { IoClose } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
@@ -165,6 +164,41 @@ const VisitorPage = () => {
     return date.toLocaleString();
   };
 
+  const formatDateUS = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "-";
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  const actualTime = (time) => {
+    if (!time) return "-";
+
+    const normalized = time.split(".")[0].replace("Z", "");
+    const date = new Date(`1970-01-01T${normalized}`);
+    if (isNaN(date.getTime())) return "-";
+
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "UTC",
+    });
+  };
+
+  const actualTimeZ = (time) => {
+  if (!time) return "-";
+
+  return new Date(`1970-01-01T${time}`).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
   // ✅ helper: safe csv escape
   const csvEscape = (v) => {
     if (v === null || v === undefined) return "";
@@ -297,8 +331,8 @@ const VisitorPage = () => {
           csvEscape(r.contact_no || ""),
           csvEscape(r.purpose || ""),
           csvEscape(r.coming_from || ""),
-          csvEscape(r.expected_date || ""),
-          csvEscape(r.expected_time ? formatTime(r.expected_time) : ""),
+          csvEscape(r.expected_date ? formatDateUS(r.expected_date) : ""),
+          csvEscape(r.expected_time ? actualTimeZ(r.expected_time) : ""),
           csvEscape(r.vehicle_number || ""),
           csvEscape(r.skip_host_approval ? "Approved" : "Rejected"),
           csvEscape(r.start_pass ? dateFormat(r.start_pass) : ""),
@@ -888,8 +922,8 @@ const VisitorPage = () => {
     { name: "Contact No.", selector: (row) => row.contact_no, sortable: true },
     { name: "Purpose", selector: (row) => row.purpose, sortable: true },
     { name: "Coming from", selector: (row) => row.coming_from, sortable: true },
-    { name: expectedDateLabel, selector: (row) => row.expected_date, sortable: true },
-    { name: expectedTimeLabel, selector: (row) => row.expected_time, sortable: true },
+    { name: expectedDateLabel, selector: (row) => row.expected_date ? formatDateUS(row.expected_date) : "-", sortable: true },
+    { name: expectedTimeLabel, selector: (row) => row.expected_time ? actualTimeZ(row.expected_time) : "-", sortable: true },
     { name: "Vehicle No.", selector: (row) => row.vehicle_number, sortable: true },
     {
       name: "Host Approval",
@@ -1228,14 +1262,14 @@ const VisitorPage = () => {
     {
       name: expectedDateLabel,
       selector: (row) =>
-        row.expected_date ? dateFormat(row.expected_date) : "--",
+        row.expected_date ? formatDateUS(row.expected_date) : "--",
       sortable: true,
     },
 
     {
       name: expectedTimeLabel,
       selector: (row) =>
-        row.expected_time ? formatTime(row.expected_time) : "--",
+        row.expected_time ? actualTimeZ(row.expected_time) : "--",
       sortable: true,
     },
 
