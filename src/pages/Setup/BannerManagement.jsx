@@ -223,8 +223,8 @@ const BannerManagement = () => {
 
                 {banners.length === 0 && (
                   <tr>
-                    <td colSpan="5" className="text-center p-4">
-                      No Data Found
+                    <td colSpan="5" className="text-center py-8 text-gray-500 font-medium">
+                      No submission yet
                     </td>
                   </tr>
                 )}
