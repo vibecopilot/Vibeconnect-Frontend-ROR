@@ -420,11 +420,30 @@ const buildXYOptions = ({
 /** =========================
  *  Main Component
  *  ========================= */
+const formatDateForApi = (isoDate) => {
+  if (!isoDate) return null;
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return null;
+  return `${day}/${month}/${year}`;
+};
+
 const SoftServiceHighCharts = () => {
   const [byStatus, setByStatus] = useState({});
   const [byBuilding, setByBuilding] = useState({});
   const [byFloor, setByFloor] = useState({});
   const [byAssignedUser, setByAssignedUser] = useState({});
+
+  /* ── Date filter state ── */
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [tempFromDate, setTempFromDate] = useState("");
+  const [tempToDate, setTempToDate] = useState("");
+  const fromDateRef = useRef("");
+  const toDateRef = useRef("");
+  useEffect(() => { fromDateRef.current = fromDate; }, [fromDate]);
+  useEffect(() => { toDateRef.current = toDate; }, [toDate]);
+  const isDateFilterActive = Boolean(fromDate && toDate);
 
   const [detailPopup, setDetailPopup] = useState({
     open: false,
@@ -481,7 +500,9 @@ const SoftServiceHighCharts = () => {
   useEffect(() => {
     const fetchInfo = async () => {
       try {
-        const resp = await getServicesTaskList();
+        const rangeFrom = formatDateForApi(fromDate);
+        const rangeTo = formatDateForApi(toDate);
+        const resp = await getServicesTaskList(rangeFrom, rangeTo);
         const d = resp?.data || {};
         setByStatus(d.by_task_status || {});
         setByBuilding(d.by_building || {});
@@ -492,7 +513,8 @@ const SoftServiceHighCharts = () => {
       }
     };
     fetchInfo();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromDate, toDate]);
 
   /* ── generic drill-down fetcher ── */
   const fetchDrillDetails = async (countType, countValue, page = 1) => {
@@ -505,10 +527,14 @@ const SoftServiceHighCharts = () => {
     setDetailPage(page);
 
     try {
+      const rangeFrom = formatDateForApi(fromDateRef.current) || undefined;
+      const rangeTo = formatDateForApi(toDateRef.current) || undefined;
       const res = await getSoftServicesDashboardDrill(
         countType,
         countValue,
         page,
+        rangeFrom,
+        rangeTo,
       );
       const data = res?.data || {};
 
@@ -743,6 +769,77 @@ const SoftServiceHighCharts = () => {
 
   return (
     <div className="w-full px-2 sm:px-3 pb-4 overflow-x-hidden">
+
+      {/* ── Date Filter Bar ── */}
+      <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+        {/* {isDateFilterActive && (
+          <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-medium">
+            📅 {fromDate} → {toDate}
+          </span>
+        )} */}
+        <button
+          onClick={() => { setTempFromDate(fromDate); setTempToDate(toDate); setFilterOpen(true); }}
+          className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition font-medium text-sm"
+        >
+          Filter by Date
+        </button>
+        <button
+          onClick={() => { setFromDate(""); setToDate(""); }}
+          className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition font-medium text-sm"
+        >
+          Clear Filter
+        </button>
+      </div>
+
+      {/* ── Date Filter Modal ── */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
+            <h3 className="text-lg font-semibold text-gray-900">Filter Soft Services by Date</h3>
+            <p className="text-sm text-gray-500 mt-1">Choose start and end date.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={tempFromDate}
+                  onChange={(e) => setTempFromDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={tempToDate}
+                  onChange={(e) => setTempToDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2 justify-end">
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!tempFromDate || !tempToDate) { toast.error("Please select both dates"); return; }
+                  setFromDate(tempFromDate);
+                  setToDate(tempToDate);
+                  setFilterOpen(false);
+                }}
+                className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-medium text-sm"
+              >
+                Apply Filter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartCard
           title="Soft Services"
