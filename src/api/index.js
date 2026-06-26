@@ -2922,10 +2922,12 @@ export const getServicesRoutineList = async (
     },
   });
 };
-export const getServicesTaskList = async () =>
-  axiosInstance.get(`/soft_services/soft_services_dashboard.json?`, {
+export const getServicesTaskList = async (startDate = null, endDate = null) =>
+  axiosInstance.get(`/soft_services/soft_services_dashboard.json`, {
     params: {
       token: token,
+      ...(startDate ? { start_date: startDate } : {}),
+      ...(endDate ? { end_date: endDate } : {}),
     },
   });
 
@@ -2933,6 +2935,8 @@ export const getSoftServicesDashboardDrill = async (
   countType,
   countValue,
   page = 1,
+  startDate = null,
+  endDate = null,
 ) =>
   axiosInstance.get(`/soft_services/soft_services_dashboard.json`, {
     params: {
@@ -2940,6 +2944,8 @@ export const getSoftServicesDashboardDrill = async (
       count_type: countType,
       count_value: countValue,
       record_page: page,
+      ...(startDate ? { start_date: startDate } : {}),
+      ...(endDate ? { end_date: endDate } : {}),
     },
   });
 export const postServicePR = async (data) =>
