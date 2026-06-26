@@ -13,10 +13,10 @@ const VisitorDetails = () => {
   const [deviceLogs, setDeviceLogs] = useState([]);
   const [visitorLogs, setVisitorLogs] = useState([]);
   const [qrModal, setQrmodal] = useState(false);
-const hasProfileImage =
-  details.profile_picture &&
-  !details.profile_picture.includes("upload.svg");
-  
+  const hasProfileImage =
+    details.profile_picture &&
+    !details.profile_picture.includes("upload.svg");
+
   const { id } = useParams();
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -32,8 +32,8 @@ const hasProfileImage =
 
         setDetails(data);
         setDeviceLogs(data.logs || []);
-
         let merged = [];
+
         data.logs?.forEach((log) => {
           log.visits_log?.forEach((entry) => {
             merged.push({
@@ -44,6 +44,13 @@ const hasProfileImage =
             });
           });
         });
+
+        // Latest records first
+        merged.sort(
+          (a, b) => new Date(b.check_in || 0) - new Date(a.check_in || 0)
+        );
+
+        setVisitorLogs(merged);
         setVisitorLogs(merged);
       } catch (error) {
         console.log(error);
@@ -63,43 +70,43 @@ const hasProfileImage =
     return isNaN(date) ? "-" : date.toLocaleString();
   };
 
-const actualFormat = (dateString) => {
-  if (!dateString) return "-";
+  const actualFormat = (dateString) => {
+    if (!dateString) return "-";
 
-  const [date, time] = dateString.split("T");
-  const [year, month, day] = date.split("-");
+    const [date, time] = dateString.split("T");
+    const [year, month, day] = date.split("-");
 
-  const formattedTime = new Date(`1970-01-01T${time}`)
-    .toLocaleTimeString("en-US", {
+    const formattedTime = new Date(`1970-01-01T${time}`)
+      .toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "UTC",
+      });
+
+    return `${month}/${day}/${year} ${formattedTime}`;
+  };
+
+  const actualTime = (time) => {
+    if (!time) return "-";
+
+    return new Date(`1970-01-01T${time}`).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-      timeZone: "UTC",
     });
-
-  return `${month}/${day}/${year} ${formattedTime}`;
-};
-
-const actualTime = (time) => {
-  if (!time) return "-";
-
-  return new Date(`1970-01-01T${time}`).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-};
+  };
 
   // ✅ Build full URL (handle both absolute & relative paths)
- const buildUrl = (path) => {
-  if (!path) return "";
+  const buildUrl = (path) => {
+    if (!path) return "";
 
-  if (path.startsWith("http")) {
-    return path;
-  }
+    if (path.startsWith("http")) {
+      return path;
+    }
 
-  return `${domainPrefix}${path}`;
-};
+    return `${domainPrefix}${path}`;
+  };
 
   // ✅ visitor_license[] and visitor_consignment[] are arrays of {id, document, ...}
   const getLicenseDocuments = () => details.visitor_license || [];
@@ -241,24 +248,24 @@ const actualTime = (time) => {
 
         {/* PROFILE PICTURE */}
         <div className="flex justify-center mt-2">
-  {hasProfileImage ? (
-    <img
-      src={buildUrl(details.profile_picture)}
-      alt="Visitor Profile"
-      className="w-48 h-48 rounded-full object-cover cursor-pointer"
-      onClick={() => window.open(buildUrl(details.profile_picture))}
-      onError={(e) => {
-        e.target.src = image;
-      }}
-    />
-  ) : (
-    <img
-      src={image}
-      alt="Default Profile"
-      className="w-48 h-48 rounded-full object-cover"
-    />
-  )}
-</div>
+          {hasProfileImage ? (
+            <img
+              src={buildUrl(details.profile_picture)}
+              alt="Visitor Profile"
+              className="w-48 h-48 rounded-full object-cover cursor-pointer"
+              onClick={() => window.open(buildUrl(details.profile_picture))}
+              onError={(e) => {
+                e.target.src = image;
+              }}
+            />
+          ) : (
+            <img
+              src={image}
+              alt="Default Profile"
+              className="w-48 h-48 rounded-full object-cover"
+            />
+          )}
+        </div>
 
         {/* BASIC INFO */}
         <div className="grid md:grid-cols-3 px-4 gap-5 mt-4">
@@ -290,7 +297,7 @@ const actualTime = (time) => {
           {/* Expected Time */}
           <Info
             label="Expected Time"
-            value={ actualTime(details.expected_time) || "-"}
+            value={actualTime(details.expected_time) || "-"}
           />
 
           {/* Created Date & Time */}
@@ -480,7 +487,7 @@ const actualTime = (time) => {
         </Section>
 
         {/* DEVICE LOGS */}
-       {/* {deviceLogs.length > 0 && (
+        {/* {deviceLogs.length > 0 && (
           <Section title="Device Logs">
             <Table
               columns={visitorDeviceLogColumn}
