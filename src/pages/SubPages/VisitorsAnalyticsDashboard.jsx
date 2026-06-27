@@ -689,7 +689,7 @@ const VisitorsAnalyticsDashboard = () => {
       key: "company_name",
       label: "Company",
       accessor: (r) =>
-        r.company_name,
+        r.coming_from || "-",
     },
     { key: "contact_no", label: "Contact", accessor: (r) => r.contact_no },
     { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
