@@ -5,6 +5,7 @@ import {
   getSoftServicesDashboardDrill,
 } from "../../api";
 import DetailPopup from "../../components/DetailPopup";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 /* ── Stat card config (maps to API JSON keys) ──────────────────────────── */
 const STAT_CONFIG = [
@@ -32,7 +33,7 @@ const STAT_CONFIG = [
     subtitle: "All tasks",
     accent: "#0EA5E9",
     countType: "total_tasks",
-    countValue: "total",
+    countValue: "total_tasks",
     drillable: true,
   },
   {
@@ -154,6 +155,7 @@ const SoftServicesDashboard = () => {
   const [toDate, setToDate] = useState("");
   const [tempFromDate, setTempFromDate] = useState("");
   const [tempToDate, setTempToDate] = useState("");
+  const siteId = getItemInLocalStorage("SITEID");
 
   const [popup, setPopup] = useState(POPUP_INITIAL);
   const popupRef = useRef(POPUP_INITIAL);
@@ -178,7 +180,13 @@ const SoftServicesDashboard = () => {
     try {
       const rangeFrom = formatDateForApi(fromDate);
       const rangeTo = formatDateForApi(toDate);
-      const resp = await getServicesTaskList(rangeFrom, rangeTo);
+    //   console.log({
+    //   rangeFrom,
+    //   rangeTo,
+    //   siteId,
+    // });
+
+      const resp = await getServicesTaskList(rangeFrom, rangeTo,siteId);
       setStats(resp?.data || {});
     } catch (err) {
       console.error("Error fetching soft services dashboard:", err);
@@ -196,27 +204,43 @@ const SoftServicesDashboard = () => {
       const rangeFrom = formatDateForApi(fromDateRef.current) || undefined;
       const rangeTo = formatDateForApi(toDateRef.current) || undefined;
 
-      const res = await getSoftServicesDashboardDrill(countType, countValue, page, rangeFrom, rangeTo);
+      const res = await getSoftServicesDashboardDrill(countType, countValue, page, rangeFrom, rangeTo,siteId);
       const data = res?.data || {};
 
       /* resolve nested bucket */
-      const groupKey = COUNT_TYPE_TO_KEY[countType];
-      const bucket =
-        groupKey && data[groupKey]
-          ? data[groupKey][countValue] ||
-          data[groupKey][countValue?.toLowerCase()] ||
-          {}
-          : {};
+      let bucket = {};
+
+      // Handle Total Tasks API
+      if (countType === "total_tasks") {
+        bucket = data.total_tasks || {};
+      } else {
+        const groupKey = COUNT_TYPE_TO_KEY[countType];
+
+        bucket =
+          groupKey && data[groupKey]
+            ? data[groupKey][countValue] ||
+            data[groupKey][countValue?.toLowerCase()] ||
+            {}
+            : {};
+      }
 
       let records = [];
-      if (Array.isArray(bucket?.records)) records = bucket.records;
-      else if (Array.isArray(bucket)) records = bucket;
-      else if (Array.isArray(data?.records)) records = data.records;
+
+      if (Array.isArray(bucket.records)) {
+        records = bucket.records;
+      } else if (Array.isArray(bucket)) {
+        records = bucket;
+      } else if (Array.isArray(data.records)) {
+        records = data.records;
+      }
 
       const totalPages =
         Number(bucket.total_pages) ||
-        (bucket.per_page > 0
-          ? Math.max(1, Math.ceil((bucket.count || records.length) / bucket.per_page))
+        (bucket.per_page
+          ? Math.max(
+            1,
+            Math.ceil((bucket.count || records.length) / bucket.per_page)
+          )
           : 1);
 
       setPopup({ open: true, title, records, loading: false, page, totalPages });
