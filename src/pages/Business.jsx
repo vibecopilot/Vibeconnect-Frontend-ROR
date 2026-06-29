@@ -116,7 +116,7 @@ const Business = () => {
         cell: (row) =>
           Array.isArray(row?.logo) && row.logo.length > 0 ? (
             <img
-              src={domainPrefix + row.logo[0].document}
+              src={row.logo[0].document}
               alt="logo"
               width={40}
               height={40}
