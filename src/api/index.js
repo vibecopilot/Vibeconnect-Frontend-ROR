@@ -505,7 +505,7 @@ export const postFitoutRequest = async (data) =>
       token: token,
     },
   });
-  export const putFitoutRequest = async (id, data) =>
+export const putFitoutRequest = async (id, data) =>
   axiosInstance.put(`/fitout_request/${id}.json`, data, {
     params: {
       token: token,
@@ -1034,8 +1034,8 @@ export const getAssignedTo = async (data) =>
     },
   });
 
-  export const getPmsAdmins = async () => {
-   return axiosInstance.get(
+export const getPmsAdmins = async () => {
+  return axiosInstance.get(
     `/users/pms_admins.json?admin=true`
   );
 };
@@ -1379,7 +1379,7 @@ export const downloadInventorySample = async () => {
   return response.blob();
 };
 
-  export const importInventory = async (formData) =>
+export const importInventory = async (formData) =>
   axiosInstance.post(`/inventories/import.json`, formData, {
     params: {
       token: token,
@@ -2363,11 +2363,11 @@ export const getStaffPunchedInToday = async (page = 1, perPage = 10, siteId) =>
   });
 
 /** Staff punched out today */
-export const getStaffPunchedOutToday = async (page = 1, perPage = 10,siteId) =>
+export const getStaffPunchedOutToday = async (page = 1, perPage = 10, siteId) =>
   axiosInstance.get("/staffs/punched_out_today.json", {
     params: {
       token: token,
-       page: page,
+      page: page,
       per_page: perPage,
       ...(siteId && { site_id: siteId }),
     },
@@ -2385,11 +2385,11 @@ export const editStaffDetails = async (id, data) =>
     },
   });
 
-  export const amenityInvoicePdf = async (id) => axiosInstance.get(`/amenity_bookings/${id}/invoice_pdf.json`, {
-    params: {
-      token: token
-    }
-  })
+export const amenityInvoicePdf = async (id) => axiosInstance.get(`/amenity_bookings/${id}/invoice_pdf.json`, {
+  params: {
+    token: token
+  }
+})
 
 export const postStaff = async (data) =>
   axiosInstance.post("/staffs.json", data, {
@@ -2688,9 +2688,9 @@ export const downloadSoftServiceSample = async () => {
     `/soft_services/sample_file.xlsx`,
     {
       params: {
-        token: token, 
+        token: token,
       },
-      responseType: "blob", 
+      responseType: "blob",
     }
   );
 };
@@ -2710,7 +2710,7 @@ export const exportSoftServices = (startDate, endDate) => {
 
 export const importSoftServices = (file) => {
   const formData = new FormData();
-  formData.append("file", file); 
+  formData.append("file", file);
 
   return axiosInstance.post("/soft_services/import.json", formData, {
     headers: {
@@ -2939,10 +2939,13 @@ export const getServicesRoutineList = async (
     },
   });
 };
-export const getServicesTaskList = async () =>
-  axiosInstance.get(`/soft_services/soft_services_dashboard.json?`, {
+export const getServicesTaskList = async (startDate = null, endDate = null, siteId = null) =>
+  axiosInstance.get(`/soft_services/soft_services_dashboard.json`, {
     params: {
       token: token,
+      ...(startDate ? { start_date: startDate } : {}),
+      ...(endDate ? { end_date: endDate } : {}),
+      ...(siteId ? { site_id: siteId } : {}),
     },
   });
 
@@ -2950,6 +2953,9 @@ export const getSoftServicesDashboardDrill = async (
   countType,
   countValue,
   page = 1,
+  startDate = null,
+  endDate = null,
+  siteId = null
 ) =>
   axiosInstance.get(`/soft_services/soft_services_dashboard.json`, {
     params: {
@@ -2957,6 +2963,9 @@ export const getSoftServicesDashboardDrill = async (
       count_type: countType,
       count_value: countValue,
       record_page: page,
+      ...(startDate ? { start_date: startDate } : {}),
+      ...(endDate ? { end_date: endDate } : {}),
+      ...(siteId ? { site_id: siteId } : {}),
     },
   });
 export const postServicePR = async (data) =>
@@ -10534,7 +10543,7 @@ export const updateBreakdown = (id, value, token) => {
   );
 };
 
-  export const downloadSampleAsset = () => {
+export const downloadSampleAsset = () => {
   return axiosInstance.get(
     `/site_assets/download_sample.json?token=${token}`,
     {
@@ -10935,7 +10944,7 @@ export const postIncidentTags = async (data) =>
       token: token,
     },
   });
- export const updateIncidentTag = async (id, data) =>
+export const updateIncidentTag = async (id, data) =>
   axiosInstance.put(`/incidence_tags/${id}.json`, data, {
     params: {
       token: token,
@@ -11576,9 +11585,9 @@ export const postProjectLike = (data) =>
 //       "Content-Type": "multipart/form-data",
 //     },
 //   });
-export const uploadVisitorLicense = (formData) =>{
-  return axiosInstance.post("/visitor_licenses.json", formData,{
-       headers: {
+export const uploadVisitorLicense = (formData) => {
+  return axiosInstance.post("/visitor_licenses.json", formData, {
+    headers: {
       "Content-Type": "multipart/form-data",
     },
   });
@@ -12219,27 +12228,27 @@ export const putVehicleSetup = async (id, data) =>
     },
   });
 
-  export const getBanner = async () =>
+export const getBanner = async () =>
   axiosInstance.get(`/banners.json`, {
     params: {
       token: token,
     },
   });
 
-    export const putBanner = async (id,data) =>
+export const putBanner = async (id, data) =>
   axiosInstance.put(`/banners/${id}.json`, data, {
     params: {
       token: token,
     },
   });
-  export const deleteBanner = async (id) =>
+export const deleteBanner = async (id) =>
   axiosInstance.delete(`/banners/${id}.json`, {
     params: {
       token: token,
     },
   });
 
-    export const postBanner = async (data) =>
+export const postBanner = async (data) =>
   axiosInstance.post(`/banners.json`, data, {
     params: {
       token: token,
