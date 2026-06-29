@@ -34,6 +34,7 @@ const BusinessSetup = () => {
 
   const [catModal, setCatModal] = useState(false);
   const [catId, setCatId] = useState("");
+  const siteId=getItemInLocalStorage("SITEID");
 
   const themeColor = useSelector((state) => state.theme.color);
 
