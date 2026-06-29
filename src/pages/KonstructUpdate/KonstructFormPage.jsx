@@ -24,9 +24,11 @@ const initialForm = {
 
 const getImageUrl = (img) => {
   if (!img) return "";
-  if (typeof img === "string") return img.startsWith("http") ? img : domainPrefix + img;
+  if (typeof img === "string")
+    return img.startsWith("http") ? img : domainPrefix + img;
   const path = img.document || img.url || img.image_url || "";
-  if (typeof path === "string" && path) return path.startsWith("http") ? path : domainPrefix + path;
+  if (typeof path === "string" && path)
+    return path.startsWith("http") ? path : domainPrefix + path;
   return "";
 };
 
@@ -141,27 +143,35 @@ const KonstructFormPage = () => {
   }
 
   return (
-    <section className="flex">
-      <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden mb-5">
-        <div className="flex items-center gap-4 my-5">
-          <button
-            onClick={() => navigate("/v1/konstruct_updates")}
-            className="p-2 rounded-lg hover:bg-gray-100"
-          >
-            <BiArrowBack size={20} />
-          </button>
-          <h1 className="text-xl font-semibold">
-            {isView
-              ? "Konstruct Update"
-              : isEdit
+   <section className="flex min-h-screen bg-gray-50">
+  <Navbar />
+  <div className="w-full flex flex-col overflow-hidden">
+    {/* Form Container Card */}
+    <div className="my-5 mb-10 border border-gray-200 p-6 m-5 rounded-xl bg-white shadow-sm max-w-4xl mx-auto w-full">
+      
+      {/* Header Section: Back button and Title correctly aligned */}
+      <div className="flex items-center justify-between border-b pb-4 mb-6">
+        <button
+          onClick={() => navigate("/v1/konstruct_updates")}
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+        >
+          <BiArrowBack size={20} />
+        </button>
+        
+        <h1 className="text-xl font-semibold text-gray-800 flex-1 text-center pr-8">
+          {isView
+            ? "Konstruct Update"
+            : isEdit
               ? "Edit Konstruct Update"
               : "New Konstruct Update"}
-          </h1>
-        </div>
+        </h1>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5 max-w-3xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* Form Section */}
+      <div className="flex justify-center">
+        <form onSubmit={handleSubmit} className="space-y-6 w-full">
+          {/* Grid Layout for Row inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium mb-1.5 text-gray-700">
                 Project ID <span className="text-red-500">*</span>
@@ -172,7 +182,7 @@ const KonstructFormPage = () => {
                 value={form.project_id}
                 onChange={handleChange}
                 readOnly={isView}
-                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
                   isView ? "cursor-default opacity-80" : ""
                 }`}
                 required
@@ -188,7 +198,7 @@ const KonstructFormPage = () => {
                 value={form.title_of}
                 onChange={handleChange}
                 readOnly={isView}
-                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
                   isView ? "cursor-default opacity-80" : ""
                 }`}
                 required
@@ -203,7 +213,7 @@ const KonstructFormPage = () => {
                 value={form.share_with}
                 onChange={handleChange}
                 disabled={isView}
-                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
                   isView ? "cursor-default opacity-80" : ""
                 }`}
               >
@@ -221,7 +231,7 @@ const KonstructFormPage = () => {
                 value={form.status}
                 onChange={handleChange}
                 disabled={isView}
-                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
                   isView ? "cursor-default opacity-80" : ""
                 }`}
               >
@@ -233,6 +243,7 @@ const KonstructFormPage = () => {
             </div>
           </div>
 
+          {/* Full Width Description */}
           <div>
             <label className="block text-sm font-medium mb-1.5 text-gray-700">
               Description
@@ -243,12 +254,13 @@ const KonstructFormPage = () => {
               onChange={handleChange}
               readOnly={isView}
               rows={4}
-              className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+              className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
                 isView ? "cursor-default opacity-80" : ""
               }`}
             />
           </div>
 
+          {/* Images Section */}
           <div>
             <label className="block text-sm font-medium mb-1.5 text-gray-700">
               Back Images
@@ -288,24 +300,21 @@ const KonstructFormPage = () => {
             )}
           </div>
 
+          {/* Action Buttons */}
           {!isView && (
-            <div className="flex gap-3 pt-4">
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
               <button
                 type="submit"
                 disabled={submitting}
                 className="rounded-lg text-white p-2.5 px-8 font-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
                 style={{ background: themeColor }}
               >
-                {submitting
-                  ? "Submitting..."
-                  : isEdit
-                  ? "Update"
-                  : "Create"}
+                {submitting ? "Submitting..." : isEdit ? "Update" : "Create"}
               </button>
               <button
                 type="button"
                 onClick={() => navigate("/v1/konstruct_updates")}
-                className="border border-gray-300 rounded-lg p-2.5 px-8 font-medium hover:bg-gray-50 transition-colors"
+                className="border border-gray-300 rounded-lg p-2.5 px-8 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
@@ -313,7 +322,7 @@ const KonstructFormPage = () => {
           )}
 
           {isView && (
-            <div className="flex gap-3 pt-4">
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => navigate(`/v1/konstruct_updates/${id}/edit`)}
@@ -325,7 +334,7 @@ const KonstructFormPage = () => {
               <button
                 type="button"
                 onClick={() => navigate("/v1/konstruct_updates")}
-                className="border border-gray-300 rounded-lg p-2.5 px-8 font-medium hover:bg-gray-50 transition-colors"
+                className="border border-gray-300 rounded-lg p-2.5 px-8 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Back to List
               </button>
@@ -333,7 +342,9 @@ const KonstructFormPage = () => {
           )}
         </form>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
   );
 };
 
