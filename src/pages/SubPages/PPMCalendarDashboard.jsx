@@ -6,7 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
 import ModalWrapper from "../../containers/modals/ModalWrapper";
 import { getCalendarActivities } from "../../api";
-import "../../pages/style/Calendar.css";
+import "../style/Calendar.css";
 import {
   FaCalendarAlt,
   FaCheckCircle,

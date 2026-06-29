@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import wave from "/wave.png";
+const wave = "/wave.png";
 export const backgroundSlice = createSlice({
   name: "background",
   initialState: {
