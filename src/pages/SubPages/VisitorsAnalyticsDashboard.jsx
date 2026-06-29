@@ -465,7 +465,7 @@ const VisitorsAnalyticsDashboard = () => {
   });
   const [detailPage, setDetailPage] = useState(1);
   const [detailTotalPages, setDetailTotalPages] = useState(1);
-  const [detailFilter, setDetailFilter] = useState({ byKey: "", countValue: "" });
+  const [detailFilter, setDetailFilter] = useState({ byKey: "", countValue: "", countType: "" });
 
   const [staffData, setStaffData] = useState({
     total: 0,
@@ -661,7 +661,7 @@ const VisitorsAnalyticsDashboard = () => {
       const records = Array.isArray(bucket?.records) ? bucket.records : Array.isArray(bucket) ? bucket : [];
       const total = bucket?.count ?? bucket?.total ?? records.length;
       const perPage = bucket?.per_page ?? 10;
-      const pages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      const pages = bucket?.total_pages ?? (perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1);
 
       setDetailTotalPages(pages);
       setDetailPopup({ open: true, title, records, loading: false, columns: visitorColumns });
@@ -674,11 +674,8 @@ const VisitorsAnalyticsDashboard = () => {
 
   const onDetailPageChange = async (nextPage) => {
     if (nextPage < 1 || nextPage > detailTotalPages) return;
-    // Stat card pagination uses __stat__<filter> as byKey
-    if (detailFilter.byKey?.startsWith("__stat__")) {
-      const filter = detailFilter.countValue;
-      const title = detailPopup.title;
-      await handleStatClick(filter, title, nextPage);
+    if (detailFilter.byKey === "__stat__") {
+      await handleStatClick(detailFilter.countType, detailFilter.countValue, detailPopup.title, nextPage);
     } else {
       await handleChartPointClick(detailFilter.byKey, detailFilter.countValue, nextPage);
     }
@@ -692,7 +689,7 @@ const VisitorsAnalyticsDashboard = () => {
       key: "company_name",
       label: "Company",
       accessor: (r) =>
-        r.company_name,
+        r.coming_from || "-",
     },
     { key: "contact_no", label: "Contact", accessor: (r) => r.contact_no },
     { key: "purpose", label: "Purpose", accessor: (r) => r.purpose },
@@ -850,26 +847,36 @@ const VisitorsAnalyticsDashboard = () => {
 
   // ─── Click handlers ───────────────────────────────────────────────────────
 
-  const handleStatClick = async (filter, title, page = 1) => {
+  const handleStatClick = async (countType, countValue, title, page = 1) => {
     setDetailPopup({ open: true, title, records: [], loading: true, columns: visitorColumns });
-    setDetailFilter({ byKey: `__stat__${filter}`, countValue: filter });
+    setDetailFilter({ byKey: "__stat__", countType, countValue });
     setDetailPage(page);
     try {
       const rangeFrom = formatDateForApi(fromDate);
       const rangeTo = formatDateForApi(toDate);
       const res = await getVisitorsDashboardDrill(
-        filter,
-        filter,
+        countType,
+        countValue,
         siteId,
         page,
         rangeFrom || undefined,
         rangeTo || undefined
       );
-      const bucket = res?.data?.[filter] ?? res?.data ?? {};
+      const responseData = res?.data ?? {};
+      let bucket;
+      if (countType === 'total' || countType === 'today') {
+        bucket = responseData[countType];
+      } else {
+        const groupKey = `by_${countType}`;
+        bucket =
+          responseData?.[groupKey]?.[countValue] ??
+          responseData?.[groupKey] ??
+          responseData;
+      }
       const records = Array.isArray(bucket?.records) ? bucket.records : [];
       const total = bucket?.count ?? bucket?.total ?? records.length;
       const perPage = bucket?.per_page ?? 10;
-      const totalPages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      const totalPages = bucket?.total_pages ?? (perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1);
       setDetailTotalPages(totalPages);
       setDetailPopup({ open: true, title, records, loading: false, columns: visitorColumns });
     } catch (err) {
@@ -1116,17 +1123,17 @@ const VisitorsAnalyticsDashboard = () => {
       {/* ── Visitor stat cards (dynamic – all API fields) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {[
-          { key: "total", drillKey: "total", title: "Total Visitors", note: "All time visitors", accent: CHART_PALETTE[0], icon: <FaUsers /> },
-          { key: "in", drillKey: "in", title: "Total In", note: "Currently inside", accent: CHART_PALETTE[1], icon: <FaUserCheck /> },
-          { key: "out", drillKey: "out", title: "Total Out", note: "Currently out", accent: CHART_PALETTE[2], icon: <FaUserClock /> },
-          { key: "today", drillKey: "today", title: "Today's Activities", note: "Today", accent: CHART_PALETTE[5], icon: <FaUsers /> },
-          { key: "today_in", drillKey: "today_in", title: "Today's In", note: "Today check-in", accent: CHART_PALETTE[6], icon: <FaUserCheck /> },
-          { key: "today_out", drillKey: "today_out", title: "Today's Out", note: "Today check-out", accent: CHART_PALETTE[3], icon: <FaUserClock /> },
-          { key: "expected", drillKey: "expected_v", title: expectedLabel, note: "Pre-registered", accent: CHART_PALETTE[9], icon: <FaUserClock /> },
-          { key: "unexpected", drillKey: "unexpected_v", title: unexpectedLabel, note: "Walk-in visitors", accent: CHART_PALETTE[4], icon: <FaUsers /> },
+          { key: "total", title: "Total Visitors", note: "All time visitors", accent: CHART_PALETTE[0], icon: <FaUsers />, countType: "total", countValue: "All" },
+          { key: "in", title: "Total In", note: "Currently inside", accent: CHART_PALETTE[1], icon: <FaUserCheck />, countType: "in_out", countValue: "IN" },
+          { key: "out", title: "Total Out", note: "Currently out", accent: CHART_PALETTE[2], icon: <FaUserClock />, countType: "in_out", countValue: "OUT" },
+          { key: "today", title: "Today's Activities", note: "Today", accent: CHART_PALETTE[5], icon: <FaUsers />, countType: "today", countValue: "All" },
+          { key: "today_in", title: "Today's In", note: "Today check-in", accent: CHART_PALETTE[6], icon: <FaUserCheck />, countType: "in_out", countValue: "IN" },
+          { key: "today_out", title: "Today's Out", note: "Today check-out", accent: CHART_PALETTE[3], icon: <FaUserClock />, countType: "in_out", countValue: "OUT" },
+          { key: "expected", title: expectedLabel, note: "Pre-registered", accent: CHART_PALETTE[9], icon: <FaUserClock />, countType: "entry_type", countValue: "Expected" },
+          { key: "unexpected", title: unexpectedLabel, note: "Walk-in visitors", accent: CHART_PALETTE[4], icon: <FaUsers />, countType: "entry_type", countValue: "Unexpected" },
         ]
           .filter(({ key }) => dashboardData[key] !== undefined)
-          .map(({ key, drillKey, title, note, accent, icon }) => (
+          .map(({ key, title, note, accent, icon, countType, countValue }) => (
             <StatCard
               key={key}
               title={title}
@@ -1134,7 +1141,7 @@ const VisitorsAnalyticsDashboard = () => {
               icon={icon}
               accent={accent}
               note={note}
-              onClick={() => handleStatClick(drillKey, title)}
+              onClick={countType && countValue ? () => handleStatClick(countType, countValue, title) : undefined}
             />
           ))
         }
