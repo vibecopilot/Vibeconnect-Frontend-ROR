@@ -849,6 +849,8 @@ import FitOutRequestDetail from "./pages/FitOut/FitOutRequestDetail.jsx";
 import FitOutRequestEditPage from "./pages/FitOut/FitOutRequestEditPage.jsx";
 import FitOutChecklistView from "./pages/FitOut/FitOutChecklistView.jsx";
 import BannerManagement from "./pages/Setup/BannerManagement.jsx";
+import KonstructListPage from "./pages/KonstructUpdate/KonstructListPage.jsx";
+import KonstructFormPage from "./pages/KonstructUpdate/KonstructFormPage.jsx";
 
 
 
@@ -2827,6 +2829,40 @@ function App() {
         <Route
           path="/admin/passes"
           element={<Navigate to="/admin/passes/visitors" replace />}
+        />
+
+        {/* Konstruct Update */}
+        <Route
+          path="/v1/konstruct_updates"
+          element={
+            // <ProtectedRoute>
+              <KonstructListPage />
+            // </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/v1/konstruct_updates/new"
+          element={
+            // <ProtectedRoute>
+              <KonstructFormPage />
+            // </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/v1/konstruct_updates/:id"
+          element={
+            // <ProtectedRoute>
+              <KonstructFormPage />
+            // </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/v1/konstruct_updates/:id/edit"
+          element={
+            // <ProtectedRoute>
+              <KonstructFormPage />
+            // </ProtectedRoute>
+          }
         />
 
         <Route
