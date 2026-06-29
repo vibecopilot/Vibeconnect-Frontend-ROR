@@ -341,6 +341,23 @@ export {
   createPublicSurveyResponse,
 } from "./surveyApi";
 
+// Konstruct Updates
+export const getKonstructUpdates = async (page = 1, perPage = 10) =>
+  axiosInstance.get("/konstruct_updates.json", {
+    params: { token, page, per_page: perPage },
+  });
+
+export const getKonstructUpdate = async (id) =>
+  axiosInstance.get(`/konstruct_updates/${id}.json`, {
+    params: { token },
+  });
+
+export const createKonstructUpdate = async (formData) =>
+  axiosInstance.post(`/konstruct_updates.json?token=${token}`, formData);
+
+export const updateKonstructUpdate = async (id, formData) =>
+  axiosInstance.put(`/konstruct_updates/${id}.json?token=${token}`, formData);
+
 // vendor
 export const getVendors = async () =>
   axiosInstance.get("/vendors.json", {
