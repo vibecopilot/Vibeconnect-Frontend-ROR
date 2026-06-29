@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
-import wave from "/wave.png";
+const wave = "/wave.png";
 import {
   getEmployeeAssociatedSites,
   getHRMSEmployeeID,
