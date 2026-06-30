@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
 import Table from "../../components/table/Table";
 import { useSelector } from "react-redux";
-import { getKonstructUpdates, domainPrefix } from "../../api";
+import { getKonstructUpdates, getSites, domainPrefix } from "../../api";
 import toast from "react-hot-toast";
 import SiteHeader from "../../components/SiteHeader";
 import { BsEye } from "react-icons/bs";
@@ -28,6 +28,13 @@ const KonstructListPage = () => {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [totalRows, setTotalRows] = useState(0);
+  const [sites, setSites] = useState([]);
+
+  const siteMap = useMemo(() => {
+    const map = {};
+    sites.forEach((s) => { map[s.id] = s.name; });
+    return map;
+  }, [sites]);
 
   const fetchUpdates = useCallback(async () => {
     try {
@@ -54,15 +61,29 @@ const KonstructListPage = () => {
     fetchUpdates();
   }, [fetchUpdates]);
 
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        const res = await getSites();
+        const list = Array.isArray(res.data) ? res.data : [];
+        setSites(list);
+      } catch (err) {
+        console.error("Failed to fetch sites", err);
+      }
+    };
+    fetchSites();
+  }, []);
+
   const filteredData = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return updates;
-    return updates.filter((item) =>
-      [item.title_of, item.project_id, item.status, item.share_with].some(
+    return updates.filter((item) => {
+      const projectName = siteMap[item.project_id] || "";
+      return [item.title_of, projectName, item.status, item.share_with].some(
         (field) => String(field || "").toLowerCase().includes(q)
-      )
-    );
-  }, [updates, search]);
+      );
+    });
+  }, [updates, search, siteMap]);
 
   const columns = useMemo(
     () => [
@@ -82,7 +103,7 @@ const KonstructListPage = () => {
       },
       { name: "ID", selector: (row) => row.id, sortable: true, width: "80px" },
       { name: "Title", selector: (row) => row.title_of || "—", sortable: true },
-      { name: "Project", selector: (row) => row.project_id || "—", sortable: true },
+      { name: "Project", selector: (row) => siteMap[row.project_id] || row.project_id || "—", sortable: true },
       { name: "Status", selector: (row) => row.status || "—", sortable: true },
       { name: "Share With", selector: (row) => row.share_with || "—" },
       {

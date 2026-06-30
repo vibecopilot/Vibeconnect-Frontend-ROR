@@ -7,12 +7,15 @@ import {
   getKonstructUpdate,
   updateKonstructUpdate,
   domainPrefix,
+  getSites,
+  getHostList,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import toast from "react-hot-toast";
 import { BiArrowBack } from "react-icons/bi";
 import { BsTrash } from "react-icons/bs";
+import MultiSelect from "../AdminHrms/Components/MultiSelect";
 
 const initialForm = {
   project_id: "",
@@ -52,6 +55,15 @@ const KonstructFormPage = () => {
   const [removeIds, setRemoveIds] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(isEdit);
+  const [sites, setSites] = useState([]);
+  const [siteUsers, setSiteUsers] = useState([]);
+  const [allSiteUsers, setAllSiteUsers] = useState([]);
+  const [selectedUserIds, setSelectedUserIds] = useState([]);
+
+  const currentUserName =
+    getItemInLocalStorage("Name") || "";
+  const currentUserLastName =
+    getItemInLocalStorage("LASTNAME") || "";
 
   useEffect(() => {
     if (!isEdit) return;
@@ -83,8 +95,65 @@ const KonstructFormPage = () => {
     fetch();
   }, [id, isEdit, navigate]);
 
+  useEffect(() => {
+    const fetchSites = async () => {
+      try {
+        const res = await getSites();
+        const list = Array.isArray(res.data) ? res.data : [];
+        setSites(list);
+      } catch (err) {
+        console.error("Failed to fetch sites", err);
+      }
+    };
+    fetchSites();
+  }, []);
+
+  useEffect(() => {
+    const siteId = form.project_id;
+    if (!siteId || form.share_with !== "Individuals") {
+      setSiteUsers([]);
+      setAllSiteUsers([]);
+      setSelectedUserIds([]);
+      return;
+    }
+    const fetchUsers = async () => {
+      try {
+        const res = await getHostList(siteId);
+        const list = Array.isArray(res.data)
+          ? res.data
+          : Array.isArray(res.data?.hosts)
+            ? res.data.hosts
+            : [];
+        const mapped = list.map((u) => ({
+          value: u.id,
+          label:
+            u.name ||
+            `${u.firstname || ""} ${u.lastname || ""}`.trim() ||
+            u.full_name ||
+            `User ${u.id}`,
+        }));
+        setSiteUsers(mapped);
+        setAllSiteUsers(mapped);
+        setSelectedUserIds([]);
+      } catch (err) {
+        console.error("Failed to fetch site users", err);
+        setSiteUsers([]);
+        setAllSiteUsers([]);
+      }
+    };
+    fetchUsers();
+  }, [form.project_id, form.share_with]);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSelectUser = (option) => {
+    if (selectedUserIds.includes(option)) {
+      setSelectedUserIds(selectedUserIds.filter((item) => item !== option));
+    } else {
+      setSelectedUserIds([...selectedUserIds, option]);
+    }
   };
 
   const handleRemoveExisting = (index) => {
@@ -108,6 +177,10 @@ const KonstructFormPage = () => {
       formData.append("konstruct_update[description]", form.description);
       formData.append("konstruct_update[created_by_id]", userId);
       formData.append("konstruct_update[site_id]", siteId);
+
+      selectedUserIds.forEach((uid) => {
+        formData.append("konstruct_update[shared_user_ids][]", uid);
+      });
 
       newFiles.forEach((file) => {
         formData.append("konstruct_update[back_images][]", file);
@@ -143,208 +216,258 @@ const KonstructFormPage = () => {
   }
 
   return (
-   <section className="flex min-h-screen bg-gray-50">
-  <Navbar />
-  <div className="w-full flex flex-col overflow-hidden">
-    {/* Form Container Card */}
-    <div className="my-5 mb-10 border border-gray-200 p-6 m-5 rounded-xl bg-white shadow-sm max-w-4xl mx-auto w-full">
-      
-      {/* Header Section: Back button and Title correctly aligned */}
-      <div className="flex items-center justify-between border-b pb-4 mb-6">
-        <button
-          onClick={() => navigate("/v1/konstruct_updates")}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
-        >
-          <BiArrowBack size={20} />
-        </button>
-        
-        <h1 className="text-xl font-semibold text-gray-800 flex-1 text-center pr-8">
-          {isView
-            ? "Konstruct Update"
-            : isEdit
-              ? "Edit Konstruct Update"
-              : "New Konstruct Update"}
-        </h1>
-      </div>
+    <section className="flex min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="w-full flex flex-col overflow-hidden">
+        {/* Form Container Card */}
+        <div className="my-5 mb-10 border border-gray-200 p-6 m-5 rounded-xl bg-white shadow-sm max-w-4xl mx-auto w-full">
+          {/* Header Section: Back button and Title correctly aligned */}
+          <div className="flex items-center justify-between border-b pb-4 mb-6">
+            <button
+              onClick={() => navigate("/v1/konstruct_updates")}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
+            >
+              <BiArrowBack size={20} />
+            </button>
 
-      {/* Form Section */}
-      <div className="flex justify-center">
-        <form onSubmit={handleSubmit} className="space-y-6 w-full">
-          {/* Grid Layout for Row inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-gray-700">
-                Project ID <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="project_id"
-                value={form.project_id}
-                onChange={handleChange}
-                readOnly={isView}
-                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
-                  isView ? "cursor-default opacity-80" : ""
-                }`}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-gray-700">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="title_of"
-                value={form.title_of}
-                onChange={handleChange}
-                readOnly={isView}
-                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
-                  isView ? "cursor-default opacity-80" : ""
-                }`}
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-gray-700">
-                Share With
-              </label>
-              <select
-                name="share_with"
-                value={form.share_with}
-                onChange={handleChange}
-                disabled={isView}
-                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
-                  isView ? "cursor-default opacity-80" : ""
-                }`}
-              >
-                <option value="Individuals">Individuals</option>
-                <option value="Group">Group</option>
-                <option value="Everyone">Everyone</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-gray-700">
-                Status
-              </label>
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                disabled={isView}
-                className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
-                  isView ? "cursor-default opacity-80" : ""
-                }`}
-              >
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="On Hold">On Hold</option>
-              </select>
-            </div>
+            <h1 className="text-xl font-semibold text-gray-800 flex-1 text-center pr-8">
+              {isView
+                ? "Konstruct Update"
+                : isEdit
+                  ? "Edit Konstruct Update"
+                  : "New Konstruct Update"}
+            </h1>
           </div>
 
-          {/* Full Width Description */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5 text-gray-700">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              readOnly={isView}
-              rows={4}
-              className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
-                isView ? "cursor-default opacity-80" : ""
-              }`}
-            />
-          </div>
-
-          {/* Images Section */}
-          <div>
-            <label className="block text-sm font-medium mb-1.5 text-gray-700">
-              Back Images
-            </label>
-            {existingImages.length > 0 && (
-              <div className="flex flex-wrap gap-3 mb-4">
-                {existingImages.map((img, i) => (
-                  <div key={i} className="relative group">
-                    <img
-                      src={getImageUrl(img)}
-                      alt={`Back image ${i + 1}`}
-                      className="w-32 h-24 object-cover rounded-lg border"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                    {!isView && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveExisting(i)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <BsTrash size={12} />
-                      </button>
-                    )}
-                  </div>
-                ))}
+          {/* Form Section */}
+          <div className="flex justify-center">
+            <form onSubmit={handleSubmit} className="space-y-6 w-full">
+              {/* Grid Layout for Row inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                    Project / Site <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="project_id"
+                    value={form.project_id}
+                    onChange={handleChange}
+                    disabled={isView}
+                    className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
+                      isView ? "cursor-default opacity-80" : ""
+                    }`}
+                    required
+                  >
+                    <option value="">Select Project / Site</option>
+                    {sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                    Created By
+                  </label>
+                  <input
+                    type="text"
+                    value={`${currentUserName} ${currentUserLastName}`.trim() || "Current User"}
+                    readOnly
+                    className="border bg-gray-100 p-2.5 w-full border-gray-300 rounded-lg text-sm cursor-default opacity-80 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="title_of"
+                    value={form.title_of}
+                    onChange={handleChange}
+                    readOnly={isView}
+                    className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
+                      isView ? "cursor-default opacity-80" : ""
+                    }`}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                    Share With
+                  </label>
+                  <select
+                    name="share_with"
+                    value={form.share_with}
+                    onChange={handleChange}
+                    disabled={isView}
+                    className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
+                      isView ? "cursor-default opacity-80" : ""
+                    }`}
+                  >
+                    <option value="Individuals">Individuals</option>
+                    <option value="Group">Group</option>
+                    <option value="Everyone">Everyone</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                    Status
+                  </label>
+                  <select
+                    name="status"
+                    value={form.status}
+                    onChange={handleChange}
+                    disabled={isView}
+                    className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
+                      isView ? "cursor-default opacity-80" : ""
+                    }`}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="On Hold">On Hold</option>
+                  </select>
+                </div>
               </div>
-            )}
-            {!isView && (
-              <FileInputBox
-                handleChange={(files) => setNewFiles(files)}
-                fieldName="back_images"
-                isMulti={true}
-                fileType="image/*"
-              />
-            )}
+
+              {form.share_with === "Individuals" && !isView && (
+                <div className="w-full">
+                  <MultiSelect
+                    options={siteUsers}
+                    title="Select Individuals"
+                    handleSelect={handleSelectUser}
+                    selectedOptions={selectedUserIds}
+                    setSelectedOptions={setSelectedUserIds}
+                    setOptions={setSiteUsers}
+                    searchOptions={allSiteUsers}
+                    compTitle={
+                      form.project_id
+                        ? "Select users from this site"
+                        : "Select a project/site first"
+                    }
+                  />
+                </div>
+              )}
+
+              {form.share_with === "Individuals" && isView && selectedUserIds.length > 0 && (
+                <div className="w-full">
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                    Shared With Individuals
+                  </label>
+                  <div className="border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm">
+                    {selectedUserIds.length} user(s) selected
+                  </div>
+                </div>
+              )}
+
+              {/* Full Width Description */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={handleChange}
+                  readOnly={isView}
+                  rows={4}
+                  className={`border bg-gray-50 p-2.5 w-full border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${
+                    isView ? "cursor-default opacity-80" : ""
+                  }`}
+                />
+              </div>
+
+              {/* Images Section */}
+              <div>
+                <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                  Back Images
+                </label>
+                {existingImages.length > 0 && (
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    {existingImages.map((img, i) => (
+                      <div key={i} className="relative group">
+                        <img
+                          src={getImageUrl(img)}
+                          alt={`Back image ${i + 1}`}
+                          className="w-32 h-24 object-cover rounded-lg border"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                        {!isView && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExisting(i)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <BsTrash size={12} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!isView && (
+                  <FileInputBox
+                    handleChange={(files) => setNewFiles(files)}
+                    fieldName="back_images"
+                    isMulti={true}
+                    fileType="image/*"
+                  />
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              {!isView && (
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="rounded-lg text-white p-2.5 px-8 font-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
+                    style={{ background: themeColor }}
+                  >
+                    {submitting
+                      ? "Submitting..."
+                      : isEdit
+                        ? "Update"
+                        : "Create"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/v1/konstruct_updates")}
+                    className="border border-gray-300 rounded-lg p-2.5 px-8 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {isView && (
+                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/v1/konstruct_updates/${id}/edit`)}
+                    className="rounded-lg text-white p-2.5 px-8 font-medium hover:opacity-90 transition-opacity"
+                    style={{ background: themeColor }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/v1/konstruct_updates")}
+                    className="border border-gray-300 rounded-lg p-2.5 px-8 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Back to List
+                  </button>
+                </div>
+              )}
+            </form>
           </div>
-
-          {/* Action Buttons */}
-          {!isView && (
-            <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-lg text-white p-2.5 px-8 font-medium disabled:opacity-50 hover:opacity-90 transition-opacity"
-                style={{ background: themeColor }}
-              >
-                {submitting ? "Submitting..." : isEdit ? "Update" : "Create"}
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/v1/konstruct_updates")}
-                className="border border-gray-300 rounded-lg p-2.5 px-8 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {isView && (
-            <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => navigate(`/v1/konstruct_updates/${id}/edit`)}
-                className="rounded-lg text-white p-2.5 px-8 font-medium hover:opacity-90 transition-opacity"
-                style={{ background: themeColor }}
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/v1/konstruct_updates")}
-                className="border border-gray-300 rounded-lg p-2.5 px-8 font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Back to List
-              </button>
-            </div>
-          )}
-        </form>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
+    </section>
   );
 };
 
