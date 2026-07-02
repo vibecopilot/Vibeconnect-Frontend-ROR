@@ -137,6 +137,7 @@ const AddChecklist = () => {
     ]);
   };
   useEffect(() => {
+    if (!masterid) return;
     const fetchServicesChecklistDetails = async () => {
       const checklistDetailsResponse = await getChecklistDetails(masterid);
       const data = checklistDetailsResponse.data;
@@ -189,6 +190,7 @@ const AddChecklist = () => {
           image_for_question: [],
           weightage: "",
           rating: false,
+          field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
         },
       ],
     },
@@ -212,6 +214,7 @@ const AddChecklist = () => {
             image_for_question: [],
             weightage: "",
             rating: false,
+            field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
           },
         ],
       },
@@ -238,6 +241,7 @@ const AddChecklist = () => {
       image_for_question: [],
       weightage: "",
       rating: false,
+      field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
     });
     setSections(updatedSections);
   };
@@ -267,8 +271,13 @@ const AddChecklist = () => {
     // Deep copy the specific question being modified
     const updatedQuestion = { ...updatedQuestions[questionIndex] };
 
-    if (field === "name" || field === "type") {
+    if (field === "name") {
       updatedQuestion[field] = value;
+    } else if (field === "type") {
+      updatedQuestion.type = value;
+      if (value === "Numeric" && !updatedQuestion.field_type) {
+        updatedQuestion.field_type = "numeric";
+      }
     } else if (field === "option") {
       const updatedOptions = [...updatedQuestion.options];
       updatedOptions[optionIndex] = value;
@@ -284,12 +293,30 @@ const AddChecklist = () => {
       field === "rating"
     ) {
       updatedQuestion[field] = value;
+      if (field === "reading") {
+        if (value === true) {
+          updatedQuestion.field_type = "meter";
+          updatedQuestion.type = "Numeric";
+        } else {
+          if (updatedQuestion.field_type === "meter") updatedQuestion.field_type = "";
+        }
+      }
+    } else if (field === "field_type") {
+      updatedQuestion.field_type = value;
+      if (value === "meter") {
+        updatedQuestion.reading = true;
+        updatedQuestion.type = "Numeric";
+      } else if (updatedQuestion.reading && value !== "meter") {
+        updatedQuestion.reading = false;
+      }
     } else if (field === "help_text") {
       updatedQuestion.help_text = value;
     } else if (field === "image_for_question") {
-      updatedQuestion.image_for_question = [...value]; // Ensure it's a new array
+      updatedQuestion.image_for_question = [...value];
     } else if (field === "weightage") {
       updatedQuestion.weightage = value;
+    } else {
+      updatedQuestion[field] = value;
     }
 
     // Update the questions array with the modified question
@@ -308,6 +335,9 @@ const AddChecklist = () => {
 
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
+  const showAssetDashboard = (getItemInLocalStorage("FEATURES") || []).some(
+    (f) => f.feature_name === "asset_dashboard"
+  );
   const navigate = useNavigate();
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -321,12 +351,21 @@ const AddChecklist = () => {
       return toast.error("Start date must be before End date");
     }
 
+    if (weightage && totalWeightage) {
+      const allQuestions = sections.flatMap(s => s.questions);
+      const questionSum = allQuestions.reduce((sum, q) => sum + (parseFloat(q.weightage) || 0), 0);
+      if (Math.round(questionSum * 100) !== Math.round(parseFloat(totalWeightage) * 100)) {
+        return toast.error(`Question weightage sum (${questionSum}) must equal checklist total weightage (${totalWeightage})`);
+      }
+    }
+
     // Prepare FormData for file uploads
     const formData = new FormData();
 
     // Add checklist data
     formData.append("checklist[site_id]", siteId);
     formData.append("checklist[weightage_enabled]", weightage);
+    formData.append("checklist[total_weightage]", totalWeightage || "");
     formData.append("checklist[occurs]", "");
     formData.append("checklist[name]", name);
     formData.append("checklist[start_date]", startDate);
@@ -371,6 +410,13 @@ const AddChecklist = () => {
         formData.append(`groups[][questions][][help_text]`, q.help_text || "");
         formData.append(`groups[][questions][][weightage]`, q.weightage);
         formData.append(`groups[][questions][][rating]`, q.rating);
+        formData.append(`groups[][questions][][field_type]`, q.field_type || "");
+        formData.append(`groups[][questions][][kpi_key]`, q.kpi_key || "");
+        formData.append(`groups[][questions][][aggregation_type]`, q.aggregation_type || "last");
+        formData.append(`groups[][questions][][category_tag]`, q.category_tag || "");
+        formData.append(`groups[][questions][][unit_label]`, q.unit_label || "");
+        formData.append(`groups[][questions][][min_value]`, q.min_value || "");
+        formData.append(`groups[][questions][][max_value]`, q.max_value || "");
 
         // Add options and value types
         q.options.forEach((option, optionIndex) => {
@@ -466,6 +512,7 @@ const AddChecklist = () => {
   const [createNew, setCreateNew] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
+  const [totalWeightage, setTotalWeightage] = useState("");
 
   const handleToggle = (type) => {
     switch (type) {
@@ -546,7 +593,7 @@ const AddChecklist = () => {
               </div>
 
               {/* Weightage Toggle */}
-              <div className="flex items-center">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="mr-2">Weightage</span>
                 <div
                   onClick={() => handleToggle("weightage")}
@@ -558,6 +605,29 @@ const AddChecklist = () => {
                       }`}
                   />
                 </div>
+                {weightage && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600 whitespace-nowrap">Total Weightage:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="border rounded px-2 py-1 text-sm w-24"
+                      placeholder="e.g. 100"
+                      value={totalWeightage}
+                      onChange={(e) => setTotalWeightage(e.target.value)}
+                    />
+                    {totalWeightage && (() => {
+                      const allQ = sections.flatMap(s => s.questions);
+                      const qsum = allQ.reduce((s, q) => s + (parseFloat(q.weightage) || 0), 0);
+                      const ok = Math.round(qsum * 100) === Math.round(parseFloat(totalWeightage) * 100);
+                      return (
+                        <span className={`text-xs font-medium ${ok ? "text-green-600" : "text-red-500"}`}>
+                          Sum: {qsum} / {totalWeightage} {ok ? "✓" : "✗"}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
 
               {/* Show Weightage and Rating Fields if Weightage is on */}
@@ -1132,6 +1202,111 @@ const AddChecklist = () => {
                             </div>
                           </div>
                         )}
+                        {/* Additional Inputs — only shown when asset_dashboard feature is enabled for this company */}
+                        <div className={`mt-2 border border-indigo-200 rounded-md ${showAssetDashboard ? "" : "hidden"}`}>
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-t-md hover:bg-indigo-100"
+                            onClick={() => handleQuestionChange(sectionIndex, questionIndex, "showIntelligence", !question.showIntelligence)}
+                          >
+                            <span>Additional Inputs {question.field_type ? `— ${question.field_type}${question.kpi_key ? ` / ${question.kpi_key}` : ""}` : "(not set)"}</span>
+                            <span>{question.showIntelligence ? "▲" : "▼"}</span>
+                          </button>
+                          {question.showIntelligence && (
+                            <div className="p-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">Measurement Type</label>
+                                <select
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.field_type}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "field_type", e.target.value)}
+                                >
+                                  <option value="">— select type —</option>
+                                  <option value="numeric">Numeric</option>
+                                  <option value="meter">Meter Reading</option>
+                                  <option value="remaining_life">Remaining Life</option>
+                                  <option value="pass_fail">Pass / Fail</option>
+                                  <option value="condition">Condition</option>
+                                  <option value="severity">Severity</option>
+                                  <option value="scored">Custom Score</option>
+                                </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">KPI Name</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. fuel_level"
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.kpi_key}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "kpi_key", e.target.value)}
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">Aggregation</label>
+                                <select
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.aggregation_type}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "aggregation_type", e.target.value)}
+                                >
+                                  <option value="last">Last Value</option>
+                                  <option value="average">Average</option>
+                                  <option value="sum_mtd">Sum (Month)</option>
+                                  <option value="count_mtd">Count (Month)</option>
+                                  <option value="text">Text</option>
+                                </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">Category</label>
+                                <select
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.category_tag}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "category_tag", e.target.value)}
+                                >
+                                  <option value="">— none —</option>
+                                  <option value="mechanical">Mechanical</option>
+                                  <option value="electrical">Electrical</option>
+                                  <option value="performance">Performance</option>
+                                  <option value="safety">Safety</option>
+                                </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">Unit</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. %, °C, kWh"
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.unit_label}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "unit_label", e.target.value)}
+                                />
+                              </div>
+                              {["numeric","meter","remaining_life"].includes(question.field_type) && (
+                                <>
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-semibold text-gray-600">Min Value</label>
+                                    <input
+                                      type="number"
+                                      placeholder="Min"
+                                      className="border p-1 text-sm border-gray-400 rounded"
+                                      value={question.min_value}
+                                      onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "min_value", e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-semibold text-gray-600">Max Value</label>
+                                    <input
+                                      type="number"
+                                      placeholder="Max"
+                                      className="border p-1 text-sm border-gray-400 rounded"
+                                      value={question.max_value}
+                                      onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "max_value", e.target.value)}
+                                    />
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         <div className="flex justify-end ">
                           <button
                             className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "

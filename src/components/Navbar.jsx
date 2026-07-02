@@ -174,6 +174,8 @@ const Navbar = () => {
     groupedDashboardUserIds.includes(String(userID)) ||
     groupedDashboardEmails.includes(String(userEmail).toLowerCase());
 
+  const showAssetDashboard = feat.includes("asset_dashboard");
+
   const getAllowedFeatures = () => {
     const storedFeatures = getItemInLocalStorage("FEATURES");
     if (storedFeatures) {
@@ -275,6 +277,33 @@ const Navbar = () => {
                   </h2>
                 </NavLink>
               )}
+              {showAssetDashboard && (
+                  <NavLink
+                    to={"/asset-dashboard"}
+                    className={({ isActive }) =>
+                      ` ${isActive
+                        ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium text-sm`
+                        : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(GrDashboard, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${!open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                    >
+                      Asset Dashboard
+                    </h2>
+                    <h2
+                      className={`${open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Asset Dashboard
+                    </h2>
+                  </NavLink>
+                )}
               <NavLink
                 to={"/dashboard"}
                 className={({ isActive }) =>

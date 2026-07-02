@@ -836,6 +836,7 @@ import UnitConfigurations from "./pages/OSR/UnitConfig.jsx";
 import AdminBookings from "./pages/OSR/OsrBookings.jsx";
 import MyBookings from "./pages/OSR/ResidentialBookings.jsx";
 import GroupedDashboardPage from "./groupedDashboard/GroupDashboard.jsx";
+import AssetDashboardPage from "./groupedDashboard/AssetDashboard.jsx";
 import Pets from "./pages/Setup/Pets/Pets";
 
 import PetsAdd from "./pages/Setup/Pets/PetsAdd";
@@ -1100,13 +1101,12 @@ function App() {
         />
         <Route
           path="/grouped-dashboard"
-          element={
-            // <ProtectedAdminRoutes>
-            <GroupedDashboardPage />
-            // </ProtectedAdminRoutes>
-          }
+          element={<GroupedDashboardPage />}
         />
-
+        <Route
+          path="/asset-dashboard"
+          element={<AssetDashboardPage />}
+        />
         <Route
           path="/settings"
           element={

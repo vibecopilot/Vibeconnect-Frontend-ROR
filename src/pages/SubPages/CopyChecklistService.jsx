@@ -176,6 +176,7 @@ const CopyChecklistService = () => {
     setCronExpression(newCron);
   };
   useEffect(() => {
+    if (!masterid) return;
     const fetchServicesChecklistDetails = async () => {
       const checklistDetailsResponse = await getChecklistDetails(masterid);
       const data = checklistDetailsResponse.data;
