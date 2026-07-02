@@ -16,7 +16,7 @@ const GroupedDashboardPage = () => {
     const userDetails = readLS("user_details") ?? readLS("user");
     const activeSite = readLS("active_site") ?? readLS("SITEID");
 
-    const baseUrl = "https://horizondashboard.vibecopilot.ai"; 
+    const baseUrl = "https://horizondashboard.vibecopilot.ai";
     const url = new URL(baseUrl);
 
     if (token) url.searchParams.set("t", String(token));

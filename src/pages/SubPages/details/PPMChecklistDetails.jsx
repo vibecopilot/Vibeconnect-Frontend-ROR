@@ -160,6 +160,8 @@ const [extensionMinutes, setExtensionMinutes] = useState(0);
       setLockOverdueTask(data.lock_overdue)
       setallowedmin(data.grace_period)
       setextensionmin(data.grace_period_unit)
+      setWeightage(data.weightage_enabled || false);
+      setTotalWeightage(data.total_weightage || "");
       // setCronExpression(data.checklist_cron.expression)
       setSelectedSupervisors(
         data.supervisors?.map((sup) => ({
@@ -209,6 +211,8 @@ const [extensionMinutes, setExtensionMinutes] = useState(0);
     const totalExtensionMinutes = extensionDays * 24 * 60 + extensionHours * 60 + extensionMinutes;
     const formData = new FormData();
     formData.append("checklist[site_id]", siteId);
+    formData.append("checklist[weightage_enabled]", weightage);
+    formData.append("checklist[total_weightage]", totalWeightage || "");
     formData.append("checklist[occurs]", "");
     formData.append("checklist[name]", name);
     formData.append("checklist[start_date]", startDate);
@@ -277,6 +281,7 @@ const [extensionMinutes, setExtensionMinutes] = useState(0);
   const [createNew, setCreateNew] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
+  const [totalWeightage, setTotalWeightage] = useState("");
 
   const handleToggle = (type) => {
     switch (type) {
@@ -363,7 +368,7 @@ const [extensionMinutes, setExtensionMinutes] = useState(0);
         
 
         {/* Weightage Toggle */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="mr-2">Weightage</span>
           <div
             onClick={() => handleToggle('weightage')}
@@ -377,6 +382,28 @@ const [extensionMinutes, setExtensionMinutes] = useState(0);
               }`}
             />
           </div>
+          {weightage && (
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 whitespace-nowrap">Total Weightage:</label>
+              <input
+                type="number"
+                min="0"
+                className="border rounded px-2 py-1 text-sm w-24"
+                placeholder="e.g. 100"
+                value={totalWeightage}
+                onChange={(e) => setTotalWeightage(e.target.value)}
+              />
+              {totalWeightage && (() => {
+                const qsum = addNewQuestion.reduce((s, q) => s + (parseFloat(q.weightage) || 0), 0);
+                const ok = Math.round(qsum * 100) === Math.round(parseFloat(totalWeightage) * 100);
+                return (
+                  <span className={`text-xs font-medium ${ok ? "text-green-600" : "text-red-500"}`}>
+                    Sum: {qsum} / {totalWeightage} {ok ? "✓" : "✗"}
+                  </span>
+                );
+              })()}
+            </div>
+          )}
         </div>
 
         {/* Show Weightage and Rating Fields if Weightage is on */}
