@@ -375,6 +375,23 @@ const FacilityDetails = () => {
           </div>
         </div>
 
+        {/* Sub Facilities */}
+        {facilityData.sub_facilities && facilityData.sub_facilities.length > 0 && (
+          <div className="mt-6 p-4 bg-white rounded-lg shadow-md border">
+            <h2 className="font-semibold text-lg mb-3">Sub Facilities</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {facilityData.sub_facilities.map((sf, index) => (
+                <div key={index} className="border rounded-lg p-3 flex justify-between items-center">
+                  <span className="font-medium text-gray-700">{sf.name}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${sf.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                    {sf.status || "N/A"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Description */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg shadow-md border">
           <div className="mb-4">

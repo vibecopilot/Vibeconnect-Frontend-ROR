@@ -52,6 +52,7 @@ const OtherProject = () => {
     description: "",
     address: "",
     contact_us: "",
+    project_type: "",
     attachments: null,
     pdf: null,
     amenities: [
@@ -68,6 +69,7 @@ const OtherProject = () => {
       description: "",
       address: "",
       contact_us: "",
+      project_type: "",
       attachments: null,
       pdf: null,
       amenities: [
@@ -344,6 +346,8 @@ const OtherProject = () => {
       title: project.title || "",
       description: project.description || "",
       address: project.address || "",
+      contact_us: project.contact_us || "",
+      project_type: project.project_type || "",
       attachments: null,
       pdf: null,
     });
@@ -419,10 +423,8 @@ const OtherProject = () => {
     fd.append("other_project[title]", formData.title?.trim() || "");
     fd.append("other_project[description]", formData.description?.trim() || "");
     fd.append("other_project[address]", formData.address?.trim() || "");
-    fd.append(
-      "other_project[contact_us]",
-      formData.contact_us?.trim() || ""
-    );
+    fd.append("other_project[contact_us]", formData.contact_us?.trim() || "");
+    fd.append("other_project[project_type]", formData.project_type || "");
     if (activeSiteId) {
       fd.append(
         "other_project[site_id]",
@@ -594,12 +596,19 @@ const OtherProject = () => {
 
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-2 gap-3">
-                      <h2
-                        className="font-bold text-lg truncate"
-                        title={project.title || ""}
-                      >
-                        {project.title || "—"}
-                      </h2>
+                      <div className="min-w-0">
+                        <h2
+                          className="font-bold text-lg truncate"
+                          title={project.title || ""}
+                        >
+                          {project.title || "—"}
+                        </h2>
+                        {project.project_type && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${project.project_type === "Residential" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+                            {project.project_type}
+                          </span>
+                        )}
+                      </div>
 
                       {isOwnerOrAdmin && (
                         <div className="flex gap-2 shrink-0">
@@ -754,6 +763,19 @@ const OtherProject = () => {
                 }
                 className="border rounded-lg p-2 w-full"
               />
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Project Type</label>
+                <select
+                  value={formData.project_type}
+                  onChange={(e) => setFormData((p) => ({ ...p, project_type: e.target.value }))}
+                  className="border rounded-lg p-2 w-full"
+                >
+                  <option value="">Select Type</option>
+                  <option value="Residential">Residential</option>
+                  <option value="Commercial">Commercial</option>
+                </select>
+              </div>
 
               <div className="space-y-4">
                 <div className="flex justify-between items-center">

@@ -414,6 +414,10 @@ const EditAmenitySetup = () => {
             }];
           })(),
         });
+        if (facility.sub_facilities && facility.sub_facilities.length > 0) {
+          setSubFacilityAvailable(true);
+          setSubFacilities(facility.sub_facilities.map(sf => ({ id: sf.id, name: sf.name || "", status: sf.status || "" })));
+        }
         setError(null);
       }
     } catch (error) {
@@ -729,6 +733,19 @@ const EditAmenitySetup = () => {
         postData.append("attachments[]", attachment);
       }
     });
+    // ── Sub facilities ────────────────────────────────────────────────────────
+    if (subFacilityAvailable && subFacilities.length) {
+      subFacilities.forEach((sf, idx) => {
+        if (sf.id) postData.append(`amenity[sub_facilities_attributes][${idx}][id]`, sf.id);
+        if (sf._destroy) {
+          postData.append(`amenity[sub_facilities_attributes][${idx}][_destroy]`, "1");
+        } else {
+          postData.append(`amenity[sub_facilities_attributes][${idx}][name]`, sf.name || "");
+          postData.append(`amenity[sub_facilities_attributes][${idx}][status]`, sf.status || "");
+        }
+      });
+    }
+
     // ── Payment methods ────────────────────────────────────────────────────────
     if (formData.amenity.payment_methods?.length > 0) {
       formData.amenity.payment_methods.forEach((method) => {
@@ -928,8 +945,14 @@ const EditAmenitySetup = () => {
     setSubFacilities([...subFacilities, { name: "", status: "" }]);
   };
   const handleRemoveSubFacility = (index) => {
-    const updatedSubFacilities = subFacilities.filter((_, i) => i !== index);
-    setSubFacilities(updatedSubFacilities);
+    const sf = subFacilities[index];
+    if (sf.id) {
+      // existing record — mark for destruction so Rails deletes it
+      setSubFacilities(subFacilities.map((s, i) => i === index ? { ...s, _destroy: true } : s));
+    } else {
+      // new unsaved record — just drop it
+      setSubFacilities(subFacilities.filter((_, i) => i !== index));
+    }
   };
 
   const handleSubChange = (index, field, value) => {
@@ -1258,6 +1281,60 @@ const EditAmenitySetup = () => {
             </div>
           </div>
         </div>
+        {/* Sub Facility */}
+        <div className="my-2">
+          <label htmlFor="subFacility" className="flex items-center gap-2">
+            Sub Facility
+            <input
+              type="checkbox"
+              id="subFacility"
+              checked={subFacilityAvailable}
+              onChange={() => setSubFacilityAvailable(!subFacilityAvailable)}
+              className="h-4 w-4"
+            />
+          </label>
+        </div>
+        {subFacilityAvailable && (
+          <>
+            <div className="flex flex-wrap gap-4 mt-3">
+              {subFacilities.map((subFacility, index) => subFacility._destroy ? null : (
+                <div key={index} className="flex items-end gap-3 p-3 border rounded-lg bg-gray-50 w-fit">
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor={`sf-name-${index}`} className="text-sm font-medium text-gray-600">Sub Facility name</label>
+                    <input
+                      type="text"
+                      id={`sf-name-${index}`}
+                      className="border p-2 rounded-md w-44"
+                      placeholder="Sub Facility name"
+                      value={subFacility.name}
+                      onChange={(e) => handleSubChange(index, "name", e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor={`sf-status-${index}`} className="text-sm font-medium text-gray-600">Status</label>
+                    <select
+                      id={`sf-status-${index}`}
+                      className="border p-2 rounded-md w-36"
+                      value={subFacility.status}
+                      onChange={(e) => handleSubChange(index, "status", e.target.value)}
+                    >
+                      <option value="">Select</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                  <button onClick={() => handleRemoveSubFacility(index)} className="text-red-500 mb-1 hover:text-red-700">
+                    <FaTrash />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button onClick={handleAddSubFacility} className="mt-2 p-2 bg-blue-500 text-white rounded-md">
+              Add Sub Facility
+            </button>
+          </>
+        )}
+
         <div className="my-4">
           <div className="flex gap-4  border-black items-center mt-6">
             <label className="flex items-center gap-2">

@@ -917,6 +917,14 @@ const SetupFacility = () => {
       });
     }
 
+    // ── Sub facilities ────────────────────────────────────────────────────────
+    if (subFacilityAvailable && subFacilities.length) {
+      subFacilities.forEach((sf, idx) => {
+        sendData.append(`amenity[sub_facilities_attributes][${idx}][name]`, sf.name || "");
+        sendData.append(`amenity[sub_facilities_attributes][${idx}][status]`, sf.status || "");
+      });
+    }
+
     try {
       toast.loading("Saving facility...");
       const response = await postFacilitySetup(sendData);
@@ -1135,43 +1143,33 @@ const SetupFacility = () => {
             </div>
             {subFacilityAvailable && (
               <>
-                <div className="grid grid-cols-3 gap-x-5">
+                <div className="flex flex-wrap gap-4 mt-3">
                   {subFacilities.map((subFacility, index) => (
-                    <div className="flex items-end gap-2 mb-4" key={index}>
-                      <div className="flex flex-col">
-                        <label
-                          htmlFor={`name-${index}`}
-                          className="font-medium"
-                        >
+                    <div key={index} className="flex items-end gap-3 p-3 border rounded-lg bg-gray-50 w-fit">
+                      <div className="flex flex-col gap-1">
+                        <label htmlFor={`name-${index}`} className="text-sm font-medium text-gray-600">
                           Sub Facility name
                         </label>
                         <input
                           type="text"
                           name={`name-${index}`}
                           id={`name-${index}`}
-                          className="border p-2 rounded-md"
+                          className="border p-2 rounded-md w-44"
                           placeholder="Sub Facility name"
                           value={subFacility.name}
-                          onChange={(e) =>
-                            handleSubChange(index, "name", e.target.value)
-                          }
+                          onChange={(e) => handleSubChange(index, "name", e.target.value)}
                         />
                       </div>
-                      <div className="flex flex-col">
-                        <label
-                          htmlFor={`status-${index}`}
-                          className="font-medium"
-                        >
-                          Active
+                      <div className="flex flex-col gap-1">
+                        <label htmlFor={`status-${index}`} className="text-sm font-medium text-gray-600">
+                          Status
                         </label>
                         <select
                           name={`status-${index}`}
                           id={`status-${index}`}
-                          className="border p-2 rounded-md w-48"
+                          className="border p-2 rounded-md w-36"
                           value={subFacility.status}
-                          onChange={(e) =>
-                            handleSubChange(index, "status", e.target.value)
-                          }
+                          onChange={(e) => handleSubChange(index, "status", e.target.value)}
                         >
                           <option value="">Select</option>
                           <option value="active">Active</option>
@@ -1180,7 +1178,7 @@ const SetupFacility = () => {
                       </div>
                       <button
                         onClick={() => handleRemoveSubFacility(index)}
-                        className="text-red-500 mb-2 "
+                        className="text-red-500 mb-1 hover:text-red-700"
                       >
                         <FaTrash />
                       </button>
