@@ -11558,13 +11558,14 @@ export const postReceiptNumber = async (data) =>
     },
   });
 
-export const getOtherProject = () =>
+export const getOtherProject = (siteId) =>
   axiosInstance.get("/other_projects.json", {
     headers: {
       "Cache-Control": "no-cache",
       Pragma: "no-cache",
       Expires: "0",
     },
+    params: siteId ? { site_id: siteId } : {},
   });
 
 export const postOtherProject = (data) =>
