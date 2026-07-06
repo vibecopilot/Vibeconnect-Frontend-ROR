@@ -1044,7 +1044,7 @@ const SetupFacility = () => {
           <h2 className="border-b border-black text-lg  font-medium my-3">
             Facility Details
           </h2>
-          <div className="grid md:grid-cols-4 gap-2">
+          <div className="grid md:grid-cols-5 gap-2">
             <div className="flex flex-col gap-1">
               <label htmlFor="" className="font-medium">
                 Facility name
@@ -1122,6 +1122,23 @@ const SetupFacility = () => {
               {billingError && (
                 <div className="text-red-500 text-sm mt-2">{billingError}</div>
               )}
+            </div>
+             <div className="flex flex-col gap-1">
+              <label htmlFor="" className="font-medium">
+                Type of Facility
+              </label>
+              <select
+                name="type_of_facility"
+                id="type_of_facility"
+                value={formData.type_of_facility}
+                className="border rounded-md border-gray-400 p-2"
+                onChange={handleDropdownChange3}
+                onBlur={handleDropdownChange3}
+              >
+                <option value="">Select </option>
+                <option value="bookings">Bookings</option>
+                <option value="amenities">Amenities</option>
+              </select>
             </div>
           </div>
 
