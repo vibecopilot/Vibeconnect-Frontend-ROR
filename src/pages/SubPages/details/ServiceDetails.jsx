@@ -201,6 +201,7 @@ const ServiceDetails = () => {
       );
       setFilteredScheduleData(filteredResult);
     }
+    setSearchText(e.target.value);
   };
 
   const FormatedDate = (dateString) => {
@@ -233,6 +234,9 @@ const ServiceDetails = () => {
         const itemDate = new Date(item.start_time).setHours(0, 0, 0, 0);
         const start = startDate.setHours(0, 0, 0, 0);
         const end = endDate.setHours(23, 59, 59, 999);
+
+        // const start = new Date(startDate).setHours(0, 0, 0, 0);
+        // const end = new Date(endDate).setHours(23, 59, 59, 999);
         // Check if the itemDate falls within the start and end date range
         return itemDate >= start && itemDate <= end;
       });
@@ -272,6 +276,39 @@ const ServiceDetails = () => {
     sortable: true,
   },
 ];
+  // const ScheduleColumn = [
+  //   {
+  //     name: "View",
+  //     cell: (row) => (
+  //       <div className="flex items-center gap-4">
+  //         <Link to={`/soft-service/schedule-task-details/${id}/${row.id}`}>
+  //           <BsEye size={15} />
+  //         </Link>
+  //       </div>
+  //     ),
+  //     maxWidth: "2rem",
+  //   },
+  //   {
+  //     name: "Checklist",
+  //     selector: (row) => row.checklist?.name,
+  //     sortable: true,
+  //   },
+  //   {
+  //     name: "Start Date",
+  //     selector: (row) => dateFormat(row.start_time),
+  //     sortable: true,
+  //   },
+  //   {
+  //     name: "Status",
+  //     selector: (row) => row.status,
+  //     sortable: true,
+  //   },
+  //   {
+  //     name: "Assigned To",
+  //     selector: (row) => row.assigned_name,
+  //     sortable: true,
+  //   },
+  // ];
 
  const attachments =
   details?.soft_service_attach?.length > 0

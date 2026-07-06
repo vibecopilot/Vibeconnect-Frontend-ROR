@@ -11567,7 +11567,6 @@ export const getOtherProject = (siteId) =>
     },
     params: siteId ? { site_id: siteId } : {},
   });
-  
 
 export const postOtherProject = (data) =>
   axiosInstance.post("/other_projects.json", data);
