@@ -641,27 +641,6 @@ const OtherProject = () => {
                         </button>
                       </div>
                       {/* )} */}
-                      {isOwnerOrAdmin && (
-                        <div className="flex gap-2 shrink-0">
-                          <button
-                            onClick={() => handleEdit(project.id)}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Edit"
-                            type="button"
-                          >
-                            <FiEdit size={16} />
-                          </button>
-
-                          <button
-                            onClick={() => handleDelete(project.id)}
-                            className="text-red-600 hover:text-red-800"
-                            title="Delete"
-                            type="button"
-                          >
-                            <FiTrash2 size={16} />
-                          </button>
-                        </div>
-                      )}
                     </div>
 
                     <div className="flex justify-between items-center mb-2 gap-3">
