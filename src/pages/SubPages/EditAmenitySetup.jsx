@@ -2298,7 +2298,7 @@ const EditAmenitySetup = () => {
                     <img
                       src={
                         cover.image_url
-                          ? domainPrefix + cover.image_url
+                          ?  cover.image_url
                           : URL.createObjectURL(cover)
                       }
                       alt={`Cover ${index + 1}`}
@@ -2348,7 +2348,7 @@ const EditAmenitySetup = () => {
                       <img
                         src={
                           doc.image_url
-                            ? domainPrefix + doc.image_url
+                            ?doc.image_url
                             : URL.createObjectURL(doc)
                         }
                         alt={`Attachment ${index + 1}`}
