@@ -11,7 +11,7 @@ import {
 import { FaQrcode, FaRegFileAlt } from "react-icons/fa";
 import Table from "../../../components/table/Table";
 import { dateTimeFormat } from "../../../utils/dateUtils";
-import DatePicker from "react-datepicker";
+import DatePicker from "react-datepicker";``
 import "react-datepicker/dist/react-datepicker.css";
 import { BsEye } from "react-icons/bs";
 import { HiArrowLeft, HiArrowRight } from "react-icons/hi";
@@ -191,6 +191,16 @@ const ServiceDetails = () => {
 
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
+    const searchValue = e.target.value;
+    setSearchText(searchValue);
+   if (searchValue.trim() === "") {
+      setFilteredScheduleData(ScheduleData);
+    } else {
+      const filteredResult = ScheduleData.filter((item) =>
+        item.assigned_name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredScheduleData(filteredResult);
+    }
     setSearchText(e.target.value);
   };
 
@@ -222,47 +232,83 @@ const ServiceDetails = () => {
       return data.filter((item) => {
         console.log(item.start_time);
         const itemDate = new Date(item.start_time).setHours(0, 0, 0, 0);
-        const start = new Date(startDate).setHours(0, 0, 0, 0);
-        const end = new Date(endDate).setHours(23, 59, 59, 999);
+        const start = startDate.setHours(0, 0, 0, 0);
+        const end = endDate.setHours(23, 59, 59, 999);
+
+        // const start = new Date(startDate).setHours(0, 0, 0, 0);
+        // const end = new Date(endDate).setHours(23, 59, 59, 999);
         // Check if the itemDate falls within the start and end date range
         return itemDate >= start && itemDate <= end;
       });
     }
     return data;
   };
-  const ScheduleColumn = [
-    {
-      name: "View",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/soft-service/schedule-task-details/${id}/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-        </div>
-      ),
-      maxWidth: "2rem",
-    },
-    {
-      name: "Checklist",
-      selector: (row) => row.checklist?.name,
-      sortable: true,
-    },
-    {
-      name: "Start Date",
-      selector: (row) => dateFormat(row.start_time),
-      sortable: true,
-    },
-    {
-      name: "Status",
-      selector: (row) => row.status,
-      sortable: true,
-    },
-    {
-      name: "Assigned To",
-      selector: (row) => row.assigned_name,
-      sortable: true,
-    },
-  ];
+ const ScheduleColumn = [
+  {
+    name: "View",
+    cell: (row) => (
+      <div className="flex items-center gap-4">
+        <Link to={`/soft-service/schedule-task-details/${id}/${row.id}`}>
+          <BsEye size={15} />
+        </Link>
+      </div>
+    ),
+    maxWidth: "2rem",
+  },
+  {
+    name: "Checklist",
+    selector: (row) => row.checklist?.name,
+    sortable: true,
+  },
+  {
+    name: "Start Date",
+    selector: (row) => dateFormat(row.start_time),
+    sortable: true,
+  },
+  {
+    name: "Status",
+    selector: (row) => row.status,
+    sortable: true,
+  },
+  {
+    name: "Assigned To",
+    selector: (row) => row.assigned_name,
+    sortable: true,
+  },
+];
+  // const ScheduleColumn = [
+  //   {
+  //     name: "View",
+  //     cell: (row) => (
+  //       <div className="flex items-center gap-4">
+  //         <Link to={`/soft-service/schedule-task-details/${id}/${row.id}`}>
+  //           <BsEye size={15} />
+  //         </Link>
+  //       </div>
+  //     ),
+  //     maxWidth: "2rem",
+  //   },
+  //   {
+  //     name: "Checklist",
+  //     selector: (row) => row.checklist?.name,
+  //     sortable: true,
+  //   },
+  //   {
+  //     name: "Start Date",
+  //     selector: (row) => dateFormat(row.start_time),
+  //     sortable: true,
+  //   },
+  //   {
+  //     name: "Status",
+  //     selector: (row) => row.status,
+  //     sortable: true,
+  //   },
+  //   {
+  //     name: "Assigned To",
+  //     selector: (row) => row.assigned_name,
+  //     sortable: true,
+  //   },
+  // ];
 
  const attachments =
   details?.soft_service_attach?.length > 0
@@ -525,18 +571,17 @@ const ServiceDetails = () => {
                   className="p-2 border-gray-300 rounded-md w-full  my-2 outline-none border"
                 />
                 <DatePicker
-                  selectsRange
+                  selectsRange={true}
                   startDate={startDate}
                   endDate={endDate}
                   onChange={(update) => {
-                    const [start, end] = update;
-
-                    setStartDate(start);
-                    setEndDate(end);
+                    setStartDate(update[0]);
+                    setEndDate(update[1]);
+                    setFilteredScheduleData(filterByDateRange(ScheduleData));
                   }}
-                  isClearable
+                  isClearable={true}
                   placeholderText="Search by Date range"
-                  className="p-2 border-gray-300 rounded-md w-64 my-2 outline-none border"
+                  className="p-2 border-gray-300 rounded-md w-64  my-2 outline-none border"
                 />
               </div>
               <Table columns={ScheduleColumn} data={filteredScheduleData || []} />

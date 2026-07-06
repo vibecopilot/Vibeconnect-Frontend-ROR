@@ -350,6 +350,16 @@ const OtherProject = () => {
       project_type: project.project_type || "",
       attachments: null,
       pdf: null,
+      amenities:
+        project.amenities?.map((item) => ({
+          name: item.name || "",
+          icon: item.icon || null,
+        })) || [
+          {
+            name: "",
+            icon: null,
+          },
+        ],
     });
 
     if (fileImageRef.current) fileImageRef.current.value = "";
@@ -520,12 +530,12 @@ const OtherProject = () => {
                 0
               );
 
-              const isOwnerOrAdmin =
-                Number(userID) > 0 &&
-                (
-                  createdById === Number(userID) ||
-                  [574, 570].includes(Number(userID))
-                );
+              // const isOwnerOrAdmin =
+              //   Number(userID) > 0 &&
+              //   (
+              //     createdById === Number(userID) ||
+              //     [574, 570].includes(Number(userID))
+              //   );
 
               const hasMultipleImages = (project.images?.length || 0) > 1;
               const currentImgIndex = imageIndexes[project.id] ?? 0;
@@ -610,6 +620,27 @@ const OtherProject = () => {
                         )}
                       </div>
 
+                      {/* {isOwnerOrAdmin && ( */}
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleEdit(project.id)}
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Edit"
+                          type="button"
+                        >
+                          <FiEdit size={16} />
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(project.id)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Delete"
+                          type="button"
+                        >
+                          <FiTrash2 size={16} />
+                        </button>
+                      </div>
+                      {/* )} */}
                       {isOwnerOrAdmin && (
                         <div className="flex gap-2 shrink-0">
                           <button
@@ -718,6 +749,7 @@ const OtherProject = () => {
       {/* CREATE / UPDATE MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
+         <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6">
           <div className="bg-white p-8 rounded-xl w-full max-w-lg">
             <h2 className="text-2xl font-bold mb-6">
               {isEditMode ? "Update Project" : "Create New Project"}
@@ -803,7 +835,7 @@ const OtherProject = () => {
                   </button>
                 </div>
 
-                {formData.amenities.map((amenity, index) => (
+               {(formData.amenities || []).map((amenity, index) => (
                   <div
                     key={index}
                     className="border rounded-lg p-3 space-y-3"
@@ -904,6 +936,7 @@ const OtherProject = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

@@ -298,6 +298,7 @@ const EditAmenitySetup = () => {
           amenity: {
             site_id: facility.site_id || "",
             fac_type: facility.fac_type || "",
+            type_of_facility: facility.type_of_facility || "",
             fac_name: facility.fac_name || "",
             member_charges: facility.member_charges || "",
             book_before: facility.book_before || [],
@@ -1178,7 +1179,7 @@ const EditAmenitySetup = () => {
           <h2 className="border-b border-black text-lg font-medium my-3">
             Facility Details
           </h2>
-          <div className="grid md:grid-cols-4 gap-2">
+          <div className="grid md:grid-cols-5 gap-2">
             <div className="flex flex-col gap-1">
               <label htmlFor="" className="font-medium">
                 Facility name
@@ -1277,6 +1278,26 @@ const EditAmenitySetup = () => {
                 <option value="">Select</option>
                 <option value="true">Yes</option>
                 <option value="false">No</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-medium">Type of Facility</label>
+              <select
+                className="border rounded-md border-gray-400 p-2 py-3"
+                value={formData.amenity.type_of_facility || ""}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    amenity: {
+                      ...prev.amenity,
+                      type_of_facility: e.target.value,
+                    },
+                  }))
+                }
+              >
+                <option value="">Select</option>
+                <option value="bookings">Bookings</option>
+                <option value="amenities">Amenities</option>
               </select>
             </div>
           </div>

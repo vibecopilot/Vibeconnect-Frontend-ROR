@@ -84,7 +84,7 @@ const FacilityDetails = () => {
             </h2>
 
           </div>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-4 gap-4">
             <div>
               <p className="font-medium">Facility Name:</p>
               <p>{facilityData.fac_name || "N/A"}</p>
@@ -100,6 +100,10 @@ const FacilityDetails = () => {
             <div>
               <p className="font-medium">Active:</p>
               <p>{facilityData.active ? "Yes" : "No"}</p>
+            </div>
+            <div>
+              <p className="font-medium">Type of Facility:</p>
+              <p>{facilityData.type_of_facility || "-"}</p>
             </div>
           </div>
         </div>
@@ -330,7 +334,7 @@ const FacilityDetails = () => {
                       className="rounded-lg border overflow-hidden"
                     >
                       <img
-                        src={domainPrefix + image_url.image_url}
+                        src={image_url.image_url}
                         alt={`Cover ${index + 1}`}
                         className="object-cover rounded-md w-full h-40 transition-transform transform hover:scale-110"
                       />
@@ -361,7 +365,7 @@ const FacilityDetails = () => {
                       className="rounded-lg border overflow-hidden"
                     >
                       <img
-                        src={domainPrefix + doc.image_url}
+                        src={doc.image_url}
                         alt={`Attachment`}
                         className="object-cover rounded-md w-full h-40 transition-transform transform hover:scale-110"
                       />
