@@ -18,7 +18,7 @@ import SetupNavbar from "../../../components/navbars/SetupNavbar";
 import SiteHeader from "../../../components/SiteHeader";
 
 const API_BASE = "https://admin.vibecopilot.ai";
-const PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
+// const PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 
 const OtherProject = () => {
   const userID = Number(getItemInLocalStorage("UserId")) || null;
@@ -264,7 +264,14 @@ const OtherProject = () => {
           : [];
 
         const images = attachments
-          .map((a) => buildFileUrl(a?.document))
+          .map((a) =>
+            buildFileUrl(
+              a?.document ||
+              a?.url ||
+              a?.file ||
+              a?.file_url
+            )
+          )
           .filter(Boolean);
 
         const likesArr = Array.isArray(project?.likes)
@@ -298,9 +305,10 @@ const OtherProject = () => {
           likedByMe,
           likeUsers,
           amenities,
-          images: images.length > 0
-            ? images
-            : [PLACEHOLDER],
+          images,
+          // images: images.length > 0
+          //   ? images
+          //   : [PLACEHOLDER],
         };
       });
 
@@ -352,6 +360,7 @@ const OtherProject = () => {
       pdf: null,
       amenities:
         project.amenities?.map((item) => ({
+          id: item.id,
           name: item.name || "",
           icon: item.icon || null,
         })) || [
@@ -425,6 +434,13 @@ const OtherProject = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (
+      !isEditMode &&
+      (!formData.attachments || formData.attachments.length === 0)
+    ) {
+      toast.error("Please upload at least one project image.");
+      return;
+    }
     const toastId = toast.loading("Processing...");
 
     const companyId = Number(getItemInLocalStorage("COMPANYID")) || null;
@@ -443,13 +459,25 @@ const OtherProject = () => {
     }
     if (Array.isArray(formData.amenities)) {
       formData.amenities.forEach((amenity, index) => {
+
+        // send id while editing
+        if (amenity.id) {
+          fd.append(
+            `other_project[other_p_amenities_attributes][${index}][id]`,
+            amenity.id
+          );
+        }
+
         fd.append(
           `other_project[other_p_amenities_attributes][${index}][name]`,
           amenity.name || ""
         );
 
-        if (amenity.icon) {
-          fd.append(`amenity_icons[${index}]`, amenity.icon);
+        if (amenity.icon instanceof File) {
+          fd.append(
+            `amenity_icons[${index}]`,
+            amenity.icon
+          );
         }
       });
     }
@@ -552,20 +580,41 @@ const OtherProject = () => {
                 >
                   {/* IMAGE CAROUSEL */}
                   <div className="relative h-56 bg-gray-200 overflow-hidden">
-                    <a
-                      href={(project.images || [PLACEHOLDER])[currentImgIndex] ?? PLACEHOLDER}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        src={(project.images || [PLACEHOLDER])[currentImgIndex] ?? PLACEHOLDER}
-                        className="h-56 w-full object-cover cursor-pointer"
-                        alt={project?.title ? `Project: ${project.title}` : "project"}
-                        onError={(e) => {
-                          e.currentTarget.src = PLACEHOLDER;
-                        }}
-                      />
-                    </a>
+                    {project.images?.length > 0 ? (
+                      <a
+                        href={project.images[currentImgIndex]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <img
+                          src={project.images[currentImgIndex]}
+                          alt={project.title}
+                          className="h-56 w-full object-cover cursor-pointer"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      </a>
+                    ) : (
+                      <div className="h-56 w-full bg-gray-100 flex flex-col items-center justify-center text-gray-500">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-12 h-12 mb-2 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 16.5V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v9.75M3 16.5l4.72-4.72a2.25 2.25 0 013.18 0l2.1 2.1a2.25 2.25 0 003.18 0L21 9.75M3 16.5v.75A2.25 2.25 0 005.25 19.5h13.5A2.25 2.25 0 0021 17.25v-.75"
+                          />
+                        </svg>
+
+                        <p className="text-sm font-medium">No Image Available</p>
+                      </div>
+                    )}
 
                     {hasMultipleImages && (
                       <>
@@ -728,193 +777,194 @@ const OtherProject = () => {
       {/* CREATE / UPDATE MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
-         <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6">
-          <div className="bg-white p-8 rounded-xl w-full max-w-lg">
-            <h2 className="text-2xl font-bold mb-6">
-              {isEditMode ? "Update Project" : "Create New Project"}
-            </h2>
+          <div className="bg-white rounded-xl w-full max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6">
+            <div className="bg-white p-8 rounded-xl w-full max-w-lg">
+              <h2 className="text-2xl font-bold mb-6">
+                {isEditMode ? "Update Project" : "Create New Project"}
+              </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                placeholder="Project Title"
-                required
-                value={formData.title}
-                onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
-                className="border rounded-lg p-2 w-full"
-              />
-
-              <textarea
-                placeholder="Description"
-                rows="3"
-                required
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, description: e.target.value }))
-                }
-                className="border rounded-lg p-2 w-full"
-              />
-
-              <input
-                placeholder="Address"
-                value={formData.address}
-                onChange={(e) => setFormData((p) => ({ ...p, address: e.target.value }))}
-                className="border rounded-lg p-2 w-full"
-              />
-
-              <input
-                placeholder="Contact Number"
-                value={formData.contact_us}
-                maxlength={10}
-                minlength={10}
-                onChange={(e) =>
-                  setFormData((p) => ({
-                    ...p,
-                    contact_us: e.target.value,
-                  }))
-                }
-                className="border rounded-lg p-2 w-full"
-              />
-
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">Project Type</label>
-                <select
-                  value={formData.project_type}
-                  onChange={(e) => setFormData((p) => ({ ...p, project_type: e.target.value }))}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <input
+                  placeholder="Project Title"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
                   className="border rounded-lg p-2 w-full"
-                >
-                  <option value="">Select Type</option>
-                  <option value="Residential">Residential</option>
-                  <option value="Commercial">Commercial</option>
-                </select>
-              </div>
+                />
 
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-semibold text-gray-700">
-                    Amenities
-                  </h3>
+                <textarea
+                  placeholder="Description"
+                  rows="3"
+                  required
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, description: e.target.value }))
+                  }
+                  className="border rounded-lg p-2 w-full"
+                />
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        amenities: [
-                          ...prev.amenities,
-                          {
-                            name: "",
-                            icon: null,
-                          },
-                        ],
-                      }))
-                    }
-                    className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                <input
+                  placeholder="Address"
+                  value={formData.address}
+                  onChange={(e) => setFormData((p) => ({ ...p, address: e.target.value }))}
+                  className="border rounded-lg p-2 w-full"
+                />
+
+                <input
+                  placeholder="Contact Number"
+                  value={formData.contact_us}
+                  maxlength={10}
+                  minlength={10}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      contact_us: e.target.value,
+                    }))
+                  }
+                  className="border rounded-lg p-2 w-full"
+                />
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Project Type</label>
+                  <select
+                    value={formData.project_type}
+                    onChange={(e) => setFormData((p) => ({ ...p, project_type: e.target.value }))}
+                    className="border rounded-lg p-2 w-full"
                   >
-                    + Add Amenity
-                  </button>
+                    <option value="">Select Type</option>
+                    <option value="Residential">Residential</option>
+                    <option value="Commercial">Commercial</option>
+                  </select>
                 </div>
 
-               {(formData.amenities || []).map((amenity, index) => (
-                  <div
-                    key={index}
-                    className="border rounded-lg p-3 space-y-3"
-                  >
-                    <input
-                      type="text"
-                      placeholder="Amenity Name"
-                      value={amenity.name}
-                      onChange={(e) => {
-                        const updated = [...formData.amenities];
-                        updated[index].name = e.target.value;
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-gray-700">
+                      Amenities
+                    </h3>
 
+                    <button
+                      type="button"
+                      onClick={() =>
                         setFormData((prev) => ({
                           ...prev,
-                          amenities: updated,
-                        }));
-                      }}
-                      className="border rounded-lg p-2 w-full"
-                    />
+                          amenities: [
+                            ...prev.amenities,
+                            {
+                              name: "",
+                              icon: null,
+                            },
+                          ],
+                        }))
+                      }
+                      className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                    >
+                      + Add Amenity
+                    </button>
+                  </div>
 
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const updated = [...formData.amenities];
-                        updated[index].icon = e.target.files[0];
-
-                        setFormData((prev) => ({
-                          ...prev,
-                          amenities: updated,
-                        }));
-                      }}
-                      className="w-full"
-                    />
-
-                    {formData.amenities.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = formData.amenities.filter(
-                            (_, i) => i !== index
-                          );
+                  {(formData.amenities || []).map((amenity, index) => (
+                    <div
+                      key={index}
+                      className="border rounded-lg p-3 space-y-3"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Amenity Name"
+                        value={amenity.name}
+                        onChange={(e) => {
+                          const updated = [...formData.amenities];
+                          updated[index].name = e.target.value;
 
                           setFormData((prev) => ({
                             ...prev,
                             amenities: updated,
                           }));
                         }}
-                        className="text-red-500 text-sm"
-                      >
-                        Remove
-                      </button>
-                    )}
+                        className="border rounded-lg p-2 w-full"
+                      />
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const updated = [...formData.amenities];
+                          updated[index].icon = e.target.files[0];
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenities: updated,
+                          }));
+                        }}
+                        className="w-full"
+                      />
+
+                      {formData.amenities.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = formData.amenities.filter(
+                              (_, i) => i !== index
+                            );
+
+                            setFormData((prev) => ({
+                              ...prev,
+                              amenities: updated,
+                            }));
+                          }}
+                          className="text-red-500 text-sm"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">Images</p>
+                    <input
+                      ref={fileImageRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      required={!isEditMode}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, attachments: e.target.files }))
+                      }
+                    />
                   </div>
-                ))}
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-600">Images</p>
-                  <input
-                    ref={fileImageRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, attachments: e.target.files }))
-                    }
-                  />
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">PDF</p>
+                    <input
+                      ref={filePdfRef}
+                      type="file"
+                      multiple
+                      accept="application/pdf,.pdf"
+                      onChange={(e) => setFormData((p) => ({ ...p, pdf: e.target.files }))}
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-600">PDF</p>
-                  <input
-                    ref={filePdfRef}
-                    type="file"
-                    multiple
-                    accept="application/pdf,.pdf"
-                    onChange={(e) => setFormData((p) => ({ ...p, pdf: e.target.files }))}
-                  />
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      resetForm();
+                    }}
+                    className="px-4 py-2 border rounded"
+                  >
+                    Cancel
+                  </button>
+
+                  <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">
+                    {isEditMode ? "Update" : "Create"}
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2 border rounded"
-                >
-                  Cancel
-                </button>
-
-                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">
-                  {isEditMode ? "Update" : "Create"}
-                </button>
-              </div>
-            </form>
+              </form>
             </div>
           </div>
         </div>
