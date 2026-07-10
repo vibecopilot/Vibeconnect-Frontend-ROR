@@ -340,11 +340,11 @@ const EventDetails = () => {
                     .map((img, idx) => (
                       <img
                         key={idx}
-                        src={domainPrefix + img.document_url}
+                        src={ img.document_url}
                         alt={`attachment-${idx}`}
                         className="w-96 h-52 object-cover rounded border cursor-pointer hover:scale-105 transition mx-6"
                         onClick={() =>
-                          window.open(domainPrefix + img.document_url, "_blank")
+                          window.open( img.document_url, "_blank")
                         }
                       />
                     ))
@@ -361,11 +361,11 @@ const EventDetails = () => {
               {eventDetails?.qr_code ? (
                 <div className="border-dotted border-2 rounded-md border-gray-400 mr-11">
                   <img
-                    src={domainPrefix + eventDetails.qr_code}
+                    src={ eventDetails.qr_code}
                     alt="Event QR Code"
                     className="w-96 h-52 cursor-pointer mr-32"
                     onClick={() =>
-                      window.open(domainPrefix + eventDetails.qr_code, "_blank")
+                      window.open( eventDetails.qr_code, "_blank")
                     }
                   />
                 </div>
