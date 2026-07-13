@@ -118,7 +118,7 @@ const themeColor = useSelector((state)=> state.theme.color)
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await getComplaints();
+        const response = await getComplaints({ hide_closed: true });
         const complaints = response.data.complaints || [];
         setFilteredData(complaints);
         setComplaints(complaints);

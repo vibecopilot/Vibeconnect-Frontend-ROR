@@ -470,10 +470,11 @@ export const removeVendor = async (forumId) => {
 };
 
 //
-export const getComplaints = async () =>
+export const getComplaints = async (extraParams = {}) =>
   axiosInstance.get(`/pms/complaints.json`, {
     params: {
       token: token,
+      ...extraParams,
     },
   });
 export const getHelpDeskCategoriesSetup = async () =>

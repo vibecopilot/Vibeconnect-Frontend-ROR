@@ -548,7 +548,7 @@ const DocumentPro = ({ activeSiteId }) => {
               >
                 {file && file.document_url ? (
                   <a
-                    href={`${domainPrefix}/${file.document_url}`}
+                    href={file.document_url?.startsWith('http') ? file.document_url : `${domainPrefix}/${file.document_url}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex flex-col items-center"
