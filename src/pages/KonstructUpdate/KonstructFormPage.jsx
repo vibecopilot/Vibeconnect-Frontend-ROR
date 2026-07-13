@@ -9,6 +9,12 @@ import {
   domainPrefix,
   getSites,
   getHostList,
+  getBuildings,
+  getFloors,
+  getUnits,
+  getSetupUsersByBuilding,
+  getSetupUsersByFloor,
+  getSetupUsersByUnit,
 } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
@@ -59,6 +65,14 @@ const KonstructFormPage = () => {
   const [siteUsers, setSiteUsers] = useState([]);
   const [allSiteUsers, setAllSiteUsers] = useState([]);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
+
+  const [filterBuildings, setFilterBuildings] = useState([]);
+  const [filterFloors, setFilterFloors] = useState([]);
+  const [filterUnits, setFilterUnits] = useState([]);
+  const [selectedBuildingId, setSelectedBuildingId] = useState("");
+  const [selectedFloorId, setSelectedFloorId] = useState("");
+  const [selectedUnitId, setSelectedUnitId] = useState("");
+  const [loadingFilterUsers, setLoadingFilterUsers] = useState(false);
 
   const currentUserName =
     getItemInLocalStorage("Name") || "";
@@ -114,6 +128,12 @@ const KonstructFormPage = () => {
       setSiteUsers([]);
       setAllSiteUsers([]);
       setSelectedUserIds([]);
+      setFilterBuildings([]);
+      setFilterFloors([]);
+      setFilterUnits([]);
+      setSelectedBuildingId("");
+      setSelectedFloorId("");
+      setSelectedUnitId("");
       return;
     }
     const fetchUsers = async () => {
@@ -141,8 +161,106 @@ const KonstructFormPage = () => {
         setAllSiteUsers([]);
       }
     };
+    const fetchBuildings = async () => {
+      try {
+        const res = await getBuildings(1, 1000);
+        const list = Array.isArray(res.data) ? res.data : [];
+        setFilterBuildings(list);
+      } catch (err) {
+        console.error("Failed to fetch buildings", err);
+      }
+    };
     fetchUsers();
+    fetchBuildings();
   }, [form.project_id, form.share_with]);
+
+  const handleBuildingFilter = async (buildingId) => {
+    setSelectedBuildingId(buildingId);
+    setSelectedFloorId("");
+    setSelectedUnitId("");
+    setFilterFloors([]);
+    setFilterUnits([]);
+    if (!buildingId) {
+      setSiteUsers(allSiteUsers);
+      return;
+    }
+    try {
+      const floorsRes = await getFloors(buildingId);
+      const floorsList = Array.isArray(floorsRes.data)
+        ? floorsRes.data
+        : floorsRes.data?.floors || [];
+      setFilterFloors(floorsList);
+      setLoadingFilterUsers(true);
+      const usersRes = await getSetupUsersByBuilding("users", buildingId);
+      const usersList = Array.isArray(usersRes.data)
+        ? usersRes.data
+        : usersRes.data?.users || [];
+      const mapped = usersList.map((u) => ({
+        value: u.id,
+        label: u.name || u.full_name || `${u.firstname || ""} ${u.lastname || ""}`.trim() || `User ${u.id}`,
+      }));
+      setSiteUsers(mapped);
+    } catch (err) {
+      console.error("Failed to filter by building", err);
+    } finally {
+      setLoadingFilterUsers(false);
+    }
+  };
+
+  const handleFloorFilter = async (floorId) => {
+    setSelectedFloorId(floorId);
+    setSelectedUnitId("");
+    setFilterUnits([]);
+    if (!floorId) {
+      await handleBuildingFilter(selectedBuildingId);
+      return;
+    }
+    try {
+      const unitsRes = await getUnits(floorId);
+      const unitsList = Array.isArray(unitsRes.data)
+        ? unitsRes.data
+        : unitsRes.data?.units || [];
+      setFilterUnits(unitsList);
+      setLoadingFilterUsers(true);
+      const usersRes = await getSetupUsersByFloor("users", floorId);
+      const usersList = Array.isArray(usersRes.data)
+        ? usersRes.data
+        : usersRes.data?.users || [];
+      const mapped = usersList.map((u) => ({
+        value: u.id,
+        label: u.name || u.full_name || `${u.firstname || ""} ${u.lastname || ""}`.trim() || `User ${u.id}`,
+      }));
+      setSiteUsers(mapped);
+    } catch (err) {
+      console.error("Failed to filter by floor", err);
+    } finally {
+      setLoadingFilterUsers(false);
+    }
+  };
+
+  const handleUnitFilter = async (unitId) => {
+    setSelectedUnitId(unitId);
+    if (!unitId) {
+      await handleFloorFilter(selectedFloorId);
+      return;
+    }
+    try {
+      setLoadingFilterUsers(true);
+      const usersRes = await getSetupUsersByUnit("users", unitId);
+      const usersList = Array.isArray(usersRes.data)
+        ? usersRes.data
+        : usersRes.data?.users || [];
+      const mapped = usersList.map((u) => ({
+        value: u.id,
+        label: u.name || u.full_name || `${u.firstname || ""} ${u.lastname || ""}`.trim() || `User ${u.id}`,
+      }));
+      setSiteUsers(mapped);
+    } catch (err) {
+      console.error("Failed to filter by unit", err);
+    } finally {
+      setLoadingFilterUsers(false);
+    }
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -333,7 +451,61 @@ const KonstructFormPage = () => {
               </div>
 
               {form.share_with === "Individuals" && !isView && (
-                <div className="w-full">
+                <div className="w-full space-y-4">
+                  {form.project_id && filterBuildings.length > 0 && (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <p className="text-sm font-medium text-gray-700 mb-3">Filter by Location</p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Tower</label>
+                          <select
+                            value={selectedBuildingId}
+                            onChange={(e) => handleBuildingFilter(e.target.value)}
+                            className="border bg-white p-2 w-full border-gray-300 rounded-lg text-sm outline-none"
+                          >
+                            <option value="">All Towers</option>
+                            {filterBuildings.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Floor</label>
+                          <select
+                            value={selectedFloorId}
+                            onChange={(e) => handleFloorFilter(e.target.value)}
+                            disabled={!selectedBuildingId}
+                            className="border bg-white p-2 w-full border-gray-300 rounded-lg text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="">All Floors</option>
+                            {filterFloors.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Flat / Unit</label>
+                          <select
+                            value={selectedUnitId}
+                            onChange={(e) => handleUnitFilter(e.target.value)}
+                            disabled={!selectedFloorId}
+                            className="border bg-white p-2 w-full border-gray-300 rounded-lg text-sm outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="">All Flats</option>
+                            {filterUnits.map((u) => (
+                              <option key={u.id} value={u.id}>
+                                {u.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <MultiSelect
                     options={siteUsers}
                     title="Select Individuals"
@@ -343,7 +515,9 @@ const KonstructFormPage = () => {
                     setOptions={setSiteUsers}
                     searchOptions={allSiteUsers}
                     compTitle={
-                      form.project_id
+                      loadingFilterUsers
+                        ? "Loading users..."
+                        : form.project_id
                         ? "Select users from this site"
                         : "Select a project/site first"
                     }
