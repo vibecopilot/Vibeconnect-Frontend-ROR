@@ -12,16 +12,18 @@ import { FaTrash } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Select from "react-select";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
-import { getSetupUsers, postHelpDeskCategoriesSetup } from "../../../api";
+import { getSetupUsers, postHelpDeskCategoriesSetup, getIssueType } from "../../../api";
 
 const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
   const [isChecked, setIsChecked] = useState(false);
   const [engineers, setEngineers] = useState([]);
+  const [issueTypes, setIssueTypes] = useState([]);
   const [categoryAdded, setCategoryAdded] = useState(false);
   const [formData, setFormData] = useState({
     category: "",
     engineer: [],
     minTat: "",
+    issueTypeId: "",
   });
 
   const handleCheckboxChange = () => {
@@ -130,6 +132,7 @@ const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
     sendData.append("helpdesk_category[of_phase]", "pms");
     sendData.append("helpdesk_category[name]", formData.category);
     sendData.append("helpdesk_category[tat]", formData.minTat);
+    if (formData.issueTypeId) sendData.append("helpdesk_category[issue_type_id]", formData.issueTypeId);
     const engineers = Array.isArray(formData.engineer) ? formData.engineer : [];
     engineers.forEach((workerId, index) => {
       sendData.append(`complaint_worker[assign_to][]`, workerId);
@@ -139,7 +142,7 @@ const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
       toast.success("Category added successfully");
       setCatAdded(true);
       handleToggleCategoryPage();
-      setFormData({ ...formData, category: "", minTat: "", engineer: [] });
+      setFormData({ ...formData, category: "", minTat: "", engineer: [], issueTypeId: "" });
     } catch (error) {
       console.log(error);
       toast.error("Failed to add category");
@@ -162,13 +165,21 @@ const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
         const filteredTechnician = userResp.data.filter(
           (tech) => tech.user_type === "pms_technician"
         );
-
         setEngineers(filteredTechnician);
       } catch (error) {
         console.log(error);
       }
     };
+    const fetchIssueTypes = async () => {
+      try {
+        const res = await getIssueType();
+        setIssueTypes(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchSetupUser();
+    fetchIssueTypes();
   }, []);
   return (
     <div className="">
@@ -217,6 +228,20 @@ const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
             onChange={handleChange}
             name="minTat"
           />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="font-medium">Related To</label>
+          <select
+            className="border p-2 w-full rounded-md"
+            value={formData.issueTypeId}
+            onChange={handleChange}
+            name="issueTypeId"
+          >
+            <option value="">Select Related To</option>
+            {issueTypes.map((it) => (
+              <option key={it.id} value={it.id}>{it.name}</option>
+            ))}
+          </select>
         </div>
       </div>
       {/* <div className="form-group">

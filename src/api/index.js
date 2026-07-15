@@ -1097,6 +1097,20 @@ export const getIssueType = async () =>
     },
   });
 
+export const postIssueType = async (name, siteId) =>
+  axiosInstance.post(
+    `/pms/admin/create_issue_type.json`,
+    new URLSearchParams({ name, society_id: siteId, custom_redirect: "/", token }),
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+  );
+
+export const updateIssueType = async (id, name, active = 1) =>
+  axiosInstance.post(
+    `/pms/admin/modify_issue_type.json`,
+    new URLSearchParams({ id, name, active, custom_redirect: "/", token }),
+    { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+  );
+
 export const getfloorsType = async (buildId) =>
   axiosInstance.get(`/floors.json`, {
     params: {
