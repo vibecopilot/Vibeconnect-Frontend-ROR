@@ -18,6 +18,7 @@ import {
   getHelpDeskSubCategoriesSetup,
   getHelpDeskSubCategoriesSetupDetails,
   getSetupUsers,
+  getIssueType,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
@@ -34,10 +35,12 @@ const TicketCategorySetup = () => {
   const themeColor = "rgb(3,19,37)";
   const [isCatEditModalOpen, setIsCatEditModalOpen] = useState(false);
   const [isSubCatEditModalOpen, setIsSubCatEditModalOpen] = useState(false);
+  const [issueTypes, setIssueTypes] = useState([]);
   const [formData, setFormData] = useState({
     category: "",
     minTat: "",
     engineer: "",
+    issueTypeId: "",
   });
 
   const handleToggleCategoryPage = () => {
@@ -150,6 +153,15 @@ const TicketCategorySetup = () => {
   useEffect(() => {
     fetchCategory();
     fetchSubCategory();
+    const fetchIssueTypes = async () => {
+      try {
+        const res = await getIssueType();
+        setIssueTypes(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchIssueTypes();
   }, [catAdded]);
 
   console.log("category --", categories);
@@ -215,6 +227,14 @@ const TicketCategorySetup = () => {
       selector: (row) => row.tat,
       sortable: true,
     },
+    {
+      name: "Related To",
+      selector: (row) => {
+        const it = issueTypes.find((t) => t.id === row.issue_type_id);
+        return it ? it.name : "-";
+      },
+      sortable: true,
+    },
 
     // {
     //   name: "Vendor Email",
@@ -275,6 +295,7 @@ const TicketCategorySetup = () => {
         fetchCatDetails.data.complaint_worker.assign_to
           ? fetchCatDetails.data.complaint_worker.assign_to
           : [],
+      issueTypeId: fetchCatDetails.data.issue_type_id || "",
     });
     setIsCatEditModalOpen(true);
   };
@@ -294,16 +315,13 @@ const TicketCategorySetup = () => {
   const closeModal1 = () => setIsModalOpen1(false);
 
   const subCatColumns = [
-       {
+    {
       name: "Action",
       cell: (row) => (
         <div className="flex items-center gap-4">
           <button onClick={() => openSubCatEditModal(row.id)}>
             <BiEdit size={15} />
           </button>
-          {/* <button>
-            <FaTrash size={15} />
-          </button> */}
         </div>
       ),
     },
@@ -320,6 +338,14 @@ const TicketCategorySetup = () => {
     {
       name: "Sub Category Type",
       selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Related To",
+      selector: (row) => {
+        const it = issueTypes.find((t) => t.id === row.issue_type_id);
+        return it ? it.name : "-";
+      },
       sortable: true,
     },
     // {
@@ -361,6 +387,7 @@ const TicketCategorySetup = () => {
     sendData.append("helpdesk_category[of_phase]", "pms");
     sendData.append("helpdesk_category[name]", formData.category);
     sendData.append("helpdesk_category[tat]", formData.minTat);
+    if (formData.issueTypeId) sendData.append("helpdesk_category[issue_type_id]", formData.issueTypeId);
     const engineers = Array.isArray(formData.engineer) ? formData.engineer : [];
     engineers.forEach((workerId, index) => {
       sendData.append(`complaint_worker[assign_to][]`, workerId);
@@ -613,6 +640,20 @@ const TicketCategorySetup = () => {
                       onChange={handleChange}
                       name="minTat"
                     />
+                  </div>
+                  <div className="form-group">
+                    <label className="block mb-2">Related To</label>
+                    <select
+                      className="border p-2 w-full"
+                      value={formData.issueTypeId}
+                      onChange={handleChange}
+                      name="issueTypeId"
+                    >
+                      <option value="">Select Related To</option>
+                      {issueTypes.map((it) => (
+                        <option key={it.id} value={it.id}>{it.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 

@@ -12,6 +12,7 @@ import {
   getHelpDeskCategoriesSetup,
   getHelpDeskSubCategoriesSetup,
   postHelpDeskSubCategoriesSetup,
+  getIssueType,
 } from "../../../api";
 import { IoClose } from "react-icons/io5";
 import toast from "react-hot-toast";
@@ -86,9 +87,11 @@ const TicketSubCategory = ({ handleToggleCategoryPage1 , setCAtAdded }) => {
     }
   };
   const [categories, setCategories] = useState([]);
+  const [issueTypes, setIssueTypes] = useState([]);
   const [formData, setFormData] = useState({
     category: "",
     subCategory: [],
+    issueTypeId: "",
   });
   useEffect(() => {
     const fetchCategory = async () => {
@@ -99,7 +102,16 @@ const TicketSubCategory = ({ handleToggleCategoryPage1 , setCAtAdded }) => {
         console.log(error);
       }
     };
+    const fetchIssueTypes = async () => {
+      try {
+        const res = await getIssueType();
+        setIssueTypes(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
     fetchCategory();
+    fetchIssueTypes();
   }, []);
 
 
@@ -130,6 +142,7 @@ const handleAddSubCat = async () => {
     formData.category
   );
   sendData.append("sub_category_tags[]", updatedSubCategory.join(","));
+  if (formData.issueTypeId) sendData.append("helpdesk_sub_category[issue_type_id]", formData.issueTypeId);
 
   try {
     await postHelpDeskSubCategoriesSetup(sendData);
@@ -138,7 +151,7 @@ const handleAddSubCat = async () => {
     setCAtAdded(true);
     handleToggleCategoryPage1();
 
-    setFormData({ category: "", subCategory: [] });
+    setFormData({ category: "", subCategory: [], issueTypeId: "" });
   } catch (error) {
     console.log(error);
   } finally {
@@ -165,7 +178,7 @@ const handleAddSubCat = async () => {
   };
   return (
     <div className=" ">
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-4 gap-2">
         <div className="flex flex-col gap-2">
           <select
             type="text"
@@ -182,6 +195,17 @@ const handleAddSubCat = async () => {
             ))}
           </select>
         </div>
+        <select
+          className="border p-2 rounded-md"
+          value={formData.issueTypeId}
+          onChange={handleChange}
+          name="issueTypeId"
+        >
+          <option value="">Related To</option>
+          {issueTypes.map((it) => (
+            <option key={it.id} value={it.id}>{it.name}</option>
+          ))}
+        </select>
         <input
           type="text"
           value={inputValue}
