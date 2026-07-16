@@ -212,7 +212,7 @@ if (Number(userData?.company_id) === 56) {
                   className="text-lg  uppercase"
                   style={{ color: white, letterSpacing: "0.1em" ,fontFamily: "Century Gothic",}}
                 >
-                  THE OBEROI, GURUGRAM
+                  {userData?.site_name || "-"}
                 </p>
               </div>
             </div>
