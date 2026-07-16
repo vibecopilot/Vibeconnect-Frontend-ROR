@@ -78,7 +78,7 @@ const EditContactBook = () => {
           attachments: data.attachments || [],
         });
         if (data.logo && data.logo.length > 0) {
-          setLogo(`${domainPrefix}${data.logo[0].document}`);
+          setLogo(`${data.logo[0].document}`);
           setLogoId(data.logo[0].id);
         }
         fetchSubCategory(data.generic_info_id);
@@ -143,18 +143,14 @@ const EditContactBook = () => {
     sendData.append("contact_book[description]", formData.description);
     sendData.append("contact_book[profile]", formData.profile);
     sendData.append("contact_book[status]", formData.status);
-    if (imageFile) {
-      sendData.append(
-        "contact_book[logo]",
-        imageFile,
-        imageFile.name
-      );
-    }
+   if (imageFile instanceof File) {
+    sendData.append("contact_book[logo][]", imageFile);
+}
 
     // if (logoId) {
     //   sendData.append("contact_book[logo][id]", logoId);
     // }
-    formData.attachments.forEach((file) => {
+ formData.attachments.forEach((file) => {
       sendData.append("attachfiles[]", file);
     });
     for (let pair of sendData.entries()) {
