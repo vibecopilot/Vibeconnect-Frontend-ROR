@@ -773,27 +773,35 @@ formData.append(
           <div className=" mt-2 px-2">
             {/* --- Response Escalation Setup Form (Create) --- */}
             <div className="flex flex-col my-2">
-              <select
-                className="border p-2 rounded-md mb-2"
-                value={selectedIssueTypeId}
-                onChange={(e) => {
-                  setSelectedIssueTypeId(e.target.value);
-                  setSelectedOptions((prev) => ({ ...prev, categories: [] }));
-                }}
-              >
-                <option value="">All Related To</option>
-                {issueTypes.map((it) => (
-                  <option key={it.id} value={it.id}>{it.name}</option>
-                ))}
-              </select>
-              <Select
-                id="categories"
-                isMulti
-                value={selectedOptions.categories}
-                onChange={(selected) => handleChange(selected, "categories")}
-                options={categories}
-                placeholder="Select Categories"
-              />
+              <div className="flex gap-3 mb-2">
+                <div className="w-1/3">
+                  <label className="text-sm font-medium mb-1 block">Related To</label>
+                  <select
+                    className="border p-2 rounded-md w-full bg-white"
+                    value={selectedIssueTypeId}
+                    onChange={(e) => {
+                      setSelectedIssueTypeId(e.target.value);
+                      setSelectedOptions((prev) => ({ ...prev, categories: [] }));
+                    }}
+                  >
+                    <option value="">All Related To</option>
+                    {issueTypes.map((it) => (
+                      <option key={it.id} value={it.id}>{it.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">Categories</label>
+                  <Select
+                    id="categories"
+                    isMulti
+                    value={selectedOptions.categories}
+                    onChange={(selected) => handleChange(selected, "categories")}
+                    options={categories}
+                    placeholder="Select Categories"
+                  />
+                </div>
+              </div>
 
               <div className=" w-full my-2">
                 <table className=" w-full border-collapse">
@@ -932,27 +940,35 @@ formData.append(
           <div className=" m-2">
             {/* --- Resolution Escalation Setup Form (Create) --- */}
             <div className=" flex flex-col my-2 ">
-              <select
-                className="border p-2 rounded-md mb-2"
-                value={selectedIssueTypeId}
-                onChange={(e) => {
-                  setSelectedIssueTypeId(e.target.value);
-                  setSelectedOptions((prev) => ({ ...prev, categories: [] }));
-                }}
-              >
-                <option value="">All Related To</option>
-                {issueTypes.map((it) => (
-                  <option key={it.id} value={it.id}>{it.name}</option>
-                ))}
-              </select>
-              <Select
-                isMulti
-                noOptionsMessage={() => "Categories not available..."}
-                onChange={(selected) => handleChange(selected, "categories")}
-                options={categories}
-                value={selectedOptions.categories}
-                placeholder="Select Categories"
-              />
+              <div className="flex gap-3 mb-2">
+                <div className="w-1/3">
+                  <label className="text-sm font-medium mb-1 block">Related To</label>
+                  <select
+                    className="border p-2 rounded-md w-full bg-white"
+                    value={selectedIssueTypeId}
+                    onChange={(e) => {
+                      setSelectedIssueTypeId(e.target.value);
+                      setSelectedOptions((prev) => ({ ...prev, categories: [] }));
+                    }}
+                  >
+                    <option value="">All Related To</option>
+                    {issueTypes.map((it) => (
+                      <option key={it.id} value={it.id}>{it.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">Categories</label>
+                  <Select
+                    isMulti
+                    noOptionsMessage={() => "Categories not available..."}
+                    onChange={(selected) => handleChange(selected, "categories")}
+                    options={categories}
+                    value={selectedOptions.categories}
+                    placeholder="Select Categories"
+                  />
+                </div>
+              </div>
               <div className=" w-full overflow-auto ">
                 <table className="border-collapse rounded-sm w-full my-2 ">
                   <thead style={{ background: themeColor }}>

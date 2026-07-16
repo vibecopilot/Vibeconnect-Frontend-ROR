@@ -190,6 +190,21 @@ const handleAddSubCat = async () => {
     <div className=" ">
       <div className="grid grid-cols-4 gap-2">
         <div className="flex flex-col gap-2">
+          <label className="font-medium text-sm">Related To</label>
+          <select
+            className="border p-2 rounded-md bg-white"
+            value={formData.issueTypeId}
+            onChange={handleChange}
+            name="issueTypeId"
+          >
+            <option value="">Select Related To</option>
+            {issueTypes.map((it) => (
+              <option key={it.id} value={it.id}>{it.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="font-medium text-sm">Select Category</label>
           <select
             type="text"
             className="border p-2 rounded-md"
@@ -205,26 +220,18 @@ const handleAddSubCat = async () => {
             ))}
           </select>
         </div>
-        <select
-          className="border p-2 rounded-md"
-          value={formData.issueTypeId}
-          onChange={handleChange}
-          name="issueTypeId"
-        >
-          <option value="">Related To</option>
-          {issueTypes.map((it) => (
-            <option key={it.id} value={it.id}>{it.name}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={AddSubCat}
-          placeholder="Enter Sub Category and press Enter"
-          className="border p-2 rounded-md"
-        />
-        <div className="flex  gap-2">
+        <div className="flex flex-col gap-2">
+          <label className="font-medium text-sm">Sub Category</label>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={AddSubCat}
+            placeholder="Enter and press Enter"
+            className="border p-2 rounded-md"
+          />
+        </div>
+        <div className="flex  gap-2 items-end">
           <button
             style={{ background: themeColor }}
             type="button"
