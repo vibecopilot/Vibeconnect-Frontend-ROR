@@ -11,6 +11,7 @@ import {
   deleteEscalationRule,
   getHelpDeskCategoriesSetup,
   getHelpDeskEscalationSetup,
+  getIssueType,
   getSetupUsers,
   postHelpDeskEscalationSetup,
   postHelpDeskResolutionEscalationSetup,
@@ -91,7 +92,13 @@ const TicketEscalationSetup = ({ activeSiteId }) => {
 
   const [page, setPage] = useState("Response");
   const themeColor = useSelector((state) => state.theme.color);
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+  const [issueTypes, setIssueTypes] = useState([]);
+  const [selectedIssueTypeId, setSelectedIssueTypeId] = useState("");
+
+  const categories = selectedIssueTypeId
+    ? allCategories.filter((c) => String(c.issue_type_id) === String(selectedIssueTypeId))
+    : allCategories;
   // const [resEscalationAdded, setResEscalationAdded] = useState(false);
   // const [resolutionEscalationAdded, setResolutionEscalationAdded] =
   //   useState(false);
@@ -145,8 +152,9 @@ const TicketEscalationSetup = ({ activeSiteId }) => {
       const transformedCategory = catResp.data.map((category) => ({
         value: category.id,
         label: category.name,
+        issue_type_id: category.issue_type_id,
       }));
-      setCategories(transformedCategory);
+      setAllCategories(transformedCategory);
     } catch (error) {
       console.log(error);
     }
@@ -193,6 +201,7 @@ const TicketEscalationSetup = ({ activeSiteId }) => {
     fetchAllCategories();
     fetchEscalation();
     fetchSetupUsers();
+    getIssueType().then((res) => setIssueTypes(Array.isArray(res.data) ? res.data : [])).catch(() => {});
   }, [activeSiteId]); // ✅ re-fetch when site changes
 
 
@@ -764,6 +773,19 @@ formData.append(
           <div className=" mt-2 px-2">
             {/* --- Response Escalation Setup Form (Create) --- */}
             <div className="flex flex-col my-2">
+              <select
+                className="border p-2 rounded-md mb-2"
+                value={selectedIssueTypeId}
+                onChange={(e) => {
+                  setSelectedIssueTypeId(e.target.value);
+                  setSelectedOptions((prev) => ({ ...prev, categories: [] }));
+                }}
+              >
+                <option value="">All Related To</option>
+                {issueTypes.map((it) => (
+                  <option key={it.id} value={it.id}>{it.name}</option>
+                ))}
+              </select>
               <Select
                 id="categories"
                 isMulti
@@ -910,6 +932,19 @@ formData.append(
           <div className=" m-2">
             {/* --- Resolution Escalation Setup Form (Create) --- */}
             <div className=" flex flex-col my-2 ">
+              <select
+                className="border p-2 rounded-md mb-2"
+                value={selectedIssueTypeId}
+                onChange={(e) => {
+                  setSelectedIssueTypeId(e.target.value);
+                  setSelectedOptions((prev) => ({ ...prev, categories: [] }));
+                }}
+              >
+                <option value="">All Related To</option>
+                {issueTypes.map((it) => (
+                  <option key={it.id} value={it.id}>{it.name}</option>
+                ))}
+              </select>
               <Select
                 isMulti
                 noOptionsMessage={() => "Categories not available..."}

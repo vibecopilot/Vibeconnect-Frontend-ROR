@@ -86,18 +86,23 @@ const TicketSubCategory = ({ handleToggleCategoryPage1 , setCAtAdded }) => {
       }));
     }
   };
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [issueTypes, setIssueTypes] = useState([]);
   const [formData, setFormData] = useState({
     category: "",
     subCategory: [],
     issueTypeId: "",
   });
+
+  const filteredCategories = formData.issueTypeId
+    ? allCategories.filter((c) => String(c.issue_type_id) === String(formData.issueTypeId))
+    : allCategories;
+
   useEffect(() => {
     const fetchCategory = async () => {
       try {
         const catResp = await getHelpDeskCategoriesSetup();
-        setCategories(catResp.data);
+        setAllCategories(catResp.data);
       } catch (error) {
         console.log(error);
       }
@@ -174,7 +179,12 @@ const handleAddSubCat = async () => {
   };
   console.log(formData);
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "issueTypeId") {
+      setFormData({ ...formData, issueTypeId: value, category: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
   return (
     <div className=" ">
@@ -188,7 +198,7 @@ const handleAddSubCat = async () => {
             name="category"
           >
             <option value="">Select Category</option>
-            {categories.map((category) => (
+            {filteredCategories.map((category) => (
               <option value={category.id} key={category.id}>
                 {category.name}
               </option>
