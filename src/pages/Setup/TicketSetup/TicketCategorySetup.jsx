@@ -594,6 +594,20 @@ const TicketCategorySetup = () => {
               <div>
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="form-group">
+                    <label className="block mb-2">Related To</label>
+                    <select
+                      className="border p-2 w-full bg-white"
+                      value={formData.issueTypeId}
+                      onChange={handleChange}
+                      name="issueTypeId"
+                    >
+                      <option value="">Select Related To</option>
+                      {issueTypes.map((it) => (
+                        <option key={it.id} value={it.id}>{it.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
                     <label className="block mb-2">Enter Category</label>
                     <input
                       type="text"
@@ -640,20 +654,6 @@ const TicketCategorySetup = () => {
                       onChange={handleChange}
                       name="minTat"
                     />
-                  </div>
-                  <div className="form-group">
-                    <label className="block mb-2">Related To</label>
-                    <select
-                      className="border p-2 w-full"
-                      value={formData.issueTypeId}
-                      onChange={handleChange}
-                      name="issueTypeId"
-                    >
-                      <option value="">Select Related To</option>
-                      {issueTypes.map((it) => (
-                        <option key={it.id} value={it.id}>{it.name}</option>
-                      ))}
-                    </select>
                   </div>
                 </div>
 

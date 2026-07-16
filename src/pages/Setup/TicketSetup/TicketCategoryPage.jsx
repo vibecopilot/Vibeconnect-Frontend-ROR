@@ -186,6 +186,20 @@ const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
       {/* <h1 className="text-2xl font-bold mb-4">Dynamic FAQ Form</h1> */}
       <div className="grid md:grid-cols-3 gap-4 ">
         <div className="flex flex-col gap-2">
+          <label className="font-medium">Related To</label>
+          <select
+            className="border p-2 w-full rounded-md bg-white"
+            value={formData.issueTypeId}
+            onChange={handleChange}
+            name="issueTypeId"
+          >
+            <option value="">Select Related To</option>
+            {issueTypes.map((it) => (
+              <option key={it.id} value={it.id}>{it.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-2">
           <label className="font-medium">Enter Category </label>
           <input
             type="text"
@@ -228,20 +242,6 @@ const TicketCategoryPage = ({ handleToggleCategoryPage, setCatAdded }) => {
             onChange={handleChange}
             name="minTat"
           />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label className="font-medium">Related To</label>
-          <select
-            className="border p-2 w-full rounded-md"
-            value={formData.issueTypeId}
-            onChange={handleChange}
-            name="issueTypeId"
-          >
-            <option value="">Select Related To</option>
-            {issueTypes.map((it) => (
-              <option key={it.id} value={it.id}>{it.name}</option>
-            ))}
-          </select>
         </div>
       </div>
       {/* <div className="form-group">

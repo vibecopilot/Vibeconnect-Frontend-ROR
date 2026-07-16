@@ -11,6 +11,7 @@ import {
   deleteEscalationRule,
   getHelpDeskCategoriesSetup,
   getHelpDeskEscalationSetup,
+  getIssueType,
   getSetupUsers,
   postHelpDeskEscalationSetup,
   postHelpDeskResolutionEscalationSetup,
@@ -91,7 +92,13 @@ const TicketEscalationSetup = ({ activeSiteId }) => {
 
   const [page, setPage] = useState("Response");
   const themeColor = useSelector((state) => state.theme.color);
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+  const [issueTypes, setIssueTypes] = useState([]);
+  const [selectedIssueTypeId, setSelectedIssueTypeId] = useState("");
+
+  const categories = selectedIssueTypeId
+    ? allCategories.filter((c) => String(c.issue_type_id) === String(selectedIssueTypeId))
+    : allCategories;
   // const [resEscalationAdded, setResEscalationAdded] = useState(false);
   // const [resolutionEscalationAdded, setResolutionEscalationAdded] =
   //   useState(false);
@@ -145,8 +152,9 @@ const TicketEscalationSetup = ({ activeSiteId }) => {
       const transformedCategory = catResp.data.map((category) => ({
         value: category.id,
         label: category.name,
+        issue_type_id: category.issue_type_id,
       }));
-      setCategories(transformedCategory);
+      setAllCategories(transformedCategory);
     } catch (error) {
       console.log(error);
     }
@@ -193,6 +201,7 @@ const TicketEscalationSetup = ({ activeSiteId }) => {
     fetchAllCategories();
     fetchEscalation();
     fetchSetupUsers();
+    getIssueType().then((res) => setIssueTypes(Array.isArray(res.data) ? res.data : [])).catch(() => {});
   }, [activeSiteId]); // ✅ re-fetch when site changes
 
 
@@ -764,14 +773,35 @@ formData.append(
           <div className=" mt-2 px-2">
             {/* --- Response Escalation Setup Form (Create) --- */}
             <div className="flex flex-col my-2">
-              <Select
-                id="categories"
-                isMulti
-                value={selectedOptions.categories}
-                onChange={(selected) => handleChange(selected, "categories")}
-                options={categories}
-                placeholder="Select Categories"
-              />
+              <div className="flex gap-3 mb-2">
+                <div className="w-1/3">
+                  <label className="text-sm font-medium mb-1 block">Related To</label>
+                  <select
+                    className="border p-2 rounded-md w-full bg-white"
+                    value={selectedIssueTypeId}
+                    onChange={(e) => {
+                      setSelectedIssueTypeId(e.target.value);
+                      setSelectedOptions((prev) => ({ ...prev, categories: [] }));
+                    }}
+                  >
+                    <option value="">All Related To</option>
+                    {issueTypes.map((it) => (
+                      <option key={it.id} value={it.id}>{it.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">Categories</label>
+                  <Select
+                    id="categories"
+                    isMulti
+                    value={selectedOptions.categories}
+                    onChange={(selected) => handleChange(selected, "categories")}
+                    options={categories}
+                    placeholder="Select Categories"
+                  />
+                </div>
+              </div>
 
               <div className=" w-full my-2">
                 <table className=" w-full border-collapse">
@@ -910,14 +940,35 @@ formData.append(
           <div className=" m-2">
             {/* --- Resolution Escalation Setup Form (Create) --- */}
             <div className=" flex flex-col my-2 ">
-              <Select
-                isMulti
-                noOptionsMessage={() => "Categories not available..."}
-                onChange={(selected) => handleChange(selected, "categories")}
-                options={categories}
-                value={selectedOptions.categories}
-                placeholder="Select Categories"
-              />
+              <div className="flex gap-3 mb-2">
+                <div className="w-1/3">
+                  <label className="text-sm font-medium mb-1 block">Related To</label>
+                  <select
+                    className="border p-2 rounded-md w-full bg-white"
+                    value={selectedIssueTypeId}
+                    onChange={(e) => {
+                      setSelectedIssueTypeId(e.target.value);
+                      setSelectedOptions((prev) => ({ ...prev, categories: [] }));
+                    }}
+                  >
+                    <option value="">All Related To</option>
+                    {issueTypes.map((it) => (
+                      <option key={it.id} value={it.id}>{it.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-1 block">Categories</label>
+                  <Select
+                    isMulti
+                    noOptionsMessage={() => "Categories not available..."}
+                    onChange={(selected) => handleChange(selected, "categories")}
+                    options={categories}
+                    value={selectedOptions.categories}
+                    placeholder="Select Categories"
+                  />
+                </div>
+              </div>
               <div className=" w-full overflow-auto ">
                 <table className="border-collapse rounded-sm w-full my-2 ">
                   <thead style={{ background: themeColor }}>

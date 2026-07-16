@@ -86,18 +86,23 @@ const TicketSubCategory = ({ handleToggleCategoryPage1 , setCAtAdded }) => {
       }));
     }
   };
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [issueTypes, setIssueTypes] = useState([]);
   const [formData, setFormData] = useState({
     category: "",
     subCategory: [],
     issueTypeId: "",
   });
+
+  const filteredCategories = formData.issueTypeId
+    ? allCategories.filter((c) => String(c.issue_type_id) === String(formData.issueTypeId))
+    : allCategories;
+
   useEffect(() => {
     const fetchCategory = async () => {
       try {
         const catResp = await getHelpDeskCategoriesSetup();
-        setCategories(catResp.data);
+        setAllCategories(catResp.data);
       } catch (error) {
         console.log(error);
       }
@@ -174,12 +179,32 @@ const handleAddSubCat = async () => {
   };
   console.log(formData);
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "issueTypeId") {
+      setFormData({ ...formData, issueTypeId: value, category: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
   return (
     <div className=" ">
       <div className="grid grid-cols-4 gap-2">
         <div className="flex flex-col gap-2">
+          <label className="font-medium text-sm">Related To</label>
+          <select
+            className="border p-2 rounded-md bg-white"
+            value={formData.issueTypeId}
+            onChange={handleChange}
+            name="issueTypeId"
+          >
+            <option value="">Select Related To</option>
+            {issueTypes.map((it) => (
+              <option key={it.id} value={it.id}>{it.name}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="font-medium text-sm">Select Category</label>
           <select
             type="text"
             className="border p-2 rounded-md"
@@ -188,33 +213,25 @@ const handleAddSubCat = async () => {
             name="category"
           >
             <option value="">Select Category</option>
-            {categories.map((category) => (
+            {filteredCategories.map((category) => (
               <option value={category.id} key={category.id}>
                 {category.name}
               </option>
             ))}
           </select>
         </div>
-        <select
-          className="border p-2 rounded-md"
-          value={formData.issueTypeId}
-          onChange={handleChange}
-          name="issueTypeId"
-        >
-          <option value="">Related To</option>
-          {issueTypes.map((it) => (
-            <option key={it.id} value={it.id}>{it.name}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={AddSubCat}
-          placeholder="Enter Sub Category and press Enter"
-          className="border p-2 rounded-md"
-        />
-        <div className="flex  gap-2">
+        <div className="flex flex-col gap-2">
+          <label className="font-medium text-sm">Sub Category</label>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={AddSubCat}
+            placeholder="Enter and press Enter"
+            className="border p-2 rounded-md"
+          />
+        </div>
+        <div className="flex  gap-2 items-end">
           <button
             style={{ background: themeColor }}
             type="button"
