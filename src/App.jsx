@@ -852,6 +852,7 @@ import FitOutChecklistView from "./pages/FitOut/FitOutChecklistView.jsx";
 import BannerManagement from "./pages/Setup/BannerManagement.jsx";
 import KonstructListPage from "./pages/KonstructUpdate/KonstructListPage.jsx";
 import KonstructFormPage from "./pages/KonstructUpdate/KonstructFormPage.jsx";
+import DirectorySetupPages from "./pages/Setup/DirectorySetupPages.jsx";
 
 
 
@@ -3877,6 +3878,15 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <BannerManagement />
+            </ProtectedAdminRoutes>
+          }
+        />
+
+        <Route
+          path="/admin/directory-setup"
+          element={
+            <ProtectedAdminRoutes>
+              <DirectorySetupPages />
             </ProtectedAdminRoutes>
           }
         />

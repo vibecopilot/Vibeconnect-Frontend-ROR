@@ -23,8 +23,8 @@ const BannerManagement = () => {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [image, setImage] = useState(null); // newly selected file
-  const [removedAttachmentIds, setRemovedAttachmentIds] = useState([]); // IDs of attachments removed by user
+  const [image, setImage] = useState(null); 
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState([]); 
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteBannerId, setDeleteBannerId] = useState(null);

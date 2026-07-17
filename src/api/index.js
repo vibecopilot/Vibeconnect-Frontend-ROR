@@ -978,7 +978,7 @@ export const getAdminPerPageComplaints = async (page, perPage, search) =>
       token: token,
       per_page: perPage,
       page: page,
-      search: search,
+    search: search,
     },
   });
 
@@ -12270,6 +12270,42 @@ export const postBanner = async (data) =>
       token: token,
     },
   });
+
+  // directory 
+  export const getDirectory = async () =>
+  axiosInstance.get(`/directories.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+   export const getDirectoryById = async (id) =>
+  axiosInstance.get(`/directories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const putDirectory = async (id, data) =>
+  axiosInstance.put(`/directories/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+export const deleteDirectory = async (id) =>
+  axiosInstance.delete(`/directories/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postDirectory = async (data) =>
+  axiosInstance.post(`/directories.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
 export const getComplianceTrackers = async () =>
   axiosInstance.get("/compliance_trackers.json", {
     params: { token },
