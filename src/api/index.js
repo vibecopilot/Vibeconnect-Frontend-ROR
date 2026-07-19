@@ -894,6 +894,10 @@ export const getAdminComplaints = async (
     token: token,
     page: page,
     per_page: perPage,
+    // Keep seeing merged (secondary) tickets here regardless of the merge feature
+    // introduced for another frontend sharing this backend - this app has no UI to
+    // view or reach a merged-away ticket otherwise, so it must not silently disappear.
+    include_merged: true,
     ...(search ? { "q[search_cont]": search } : {}),
     ...(status && status !== "all" ? { "q[complaint_status_name_eq]": status } : {}),
     ...(filters.category_id ? { "q[category_type_id_eq]": filters.category_id } : {}),
@@ -979,6 +983,8 @@ export const getAdminPerPageComplaints = async (page, perPage, search) =>
       per_page: perPage,
       page: page,
     search: search,
+      // See merged (secondary) tickets too - this app has no way to reach one otherwise.
+      include_merged: true,
     },
   });
 
@@ -10845,6 +10851,8 @@ export const getFilterData = async (searchValue) =>
     params: {
       "q[search_cont]": searchValue,
       token: token,
+      // See merged (secondary) tickets too - this app has no way to reach one otherwise.
+      include_merged: true,
     },
   });
 
