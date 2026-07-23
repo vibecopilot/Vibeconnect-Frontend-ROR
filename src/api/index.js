@@ -477,14 +477,19 @@ export const getComplaints = async (extraParams = {}) =>
       ...extraParams,
     },
   });
-export const getHelpDeskCategoriesSetup = async (issueTypeId, siteId) =>
-  axiosInstance.get(`/pms/admin/helpdesk_categories.json`, {
-    params: {
-      token: token,
-      site_id: siteId,
-      "q[issue_type_id_eq]": issueTypeId,
-    },
-  });
+export const getHelpDeskCategoriesSetup = async (issueTypeId, siteId) => {
+  const params = { token: token };
+
+  if (siteId) {
+    params.site_id = siteId;
+  }
+
+  if (issueTypeId) {
+    params["q[issue_type_id_eq]"] = issueTypeId;
+  }
+
+  return axiosInstance.get(`/pms/admin/helpdesk_categories.json`, { params });
+};
   
 //FitOut Checklist
 export const postFitoutChecklist = async (data) =>

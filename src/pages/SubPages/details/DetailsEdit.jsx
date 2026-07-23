@@ -66,6 +66,15 @@ const DetailsEdit = () => {
   const statuses = getItemInLocalStorage("STATUS");
   console.log(statuses)
 
+  const getIssueTypeCategories = (issueType) => {
+    const categories =
+      issueType?.helpdesk_categories ||
+      issueType?.categories ||
+      issueType?.category_types;
+
+    return Array.isArray(categories) ? categories : [];
+  };
+
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -115,10 +124,17 @@ const DetailsEdit = () => {
         console.log("check",response.data)
         setTicketInfo(response.data);
         setEditTicketInfo(response.data);
+
+        // If no issue types are configured, load all helpdesk categories for
+        // the site so Category / Sub-Category dropdowns are still usable.
+        const categoriesToLoad =
+          availableIssueTypes.length === 0 ? null : relatedIssueType;
+
         await Promise.all([
           fetchEditSubCategories(response.data.category_type_id),
-          loadTicketCategories(issueTypeId),
+          loadTicketCategories(categoriesToLoad),
         ]);
+
       } catch (error) {
         console.error("Error fetching details:", error);
       }
@@ -160,12 +176,21 @@ const DetailsEdit = () => {
     // fetchEditSubCategories(formData.category_type_id);
   }, [id]);
 
-  const loadTicketCategories = async (issueTypeId) => {
+  const loadTicketCategories = async (issueType) => {
     setTicketCategories([]);
-    if (!issueTypeId) return;
+
+    const issueTypeCategories = getIssueTypeCategories(issueType);
+    if (issueTypeCategories.length) {
+      setTicketCategories(issueTypeCategories);
+      return;
+    }
 
     try {
-      const response = await getHelpDeskCategoriesSetup(issueTypeId, getItemInLocalStorage("SITEID"));
+      // No related-to category data was returned, so load all categories for the site.
+      const response = await getHelpDeskCategoriesSetup(
+        undefined,
+        getItemInLocalStorage("SITEID")
+      );
       const categoryData = response.data;
       setTicketCategories(
         Array.isArray(categoryData)
@@ -192,7 +217,7 @@ const DetailsEdit = () => {
         complaint: {
           category_type_id: formData.category_type_id,
           sub_category_id: formData.sub_category_id,
-          // issue_type_id: formData.issue_type_id,
+          issue_type_id: formData.issue_type_id,
           issue_related_to: formData.issue_related_to,
           issue_status: formData?.issue_status,
           issue_status_id : formData.issue_status_id,
@@ -275,6 +300,9 @@ const DetailsEdit = () => {
   const handleRelatedToChange = async (e) => {
     const issueTypeId = e.target.value;
     const issueRelatedTo = e.target.options[e.target.selectedIndex]?.text || "";
+    const selectedIssueType = issueTypes.find(
+      (issueType) => String(issueType.id) === String(issueTypeId)
+    );
 
     setFormData((previousFormData) => ({
       ...previousFormData,
@@ -284,7 +312,9 @@ const DetailsEdit = () => {
       sub_category_id: "",
     }));
     setUnits([]);
-    await loadTicketCategories(issueTypeId);
+    if (selectedIssueType) {
+      await loadTicketCategories(selectedIssueType);
+    }
   };
 
 
@@ -681,5 +711,4 @@ const themeColor = useSelector((state)=> state.theme.color)
 
 
 export default DetailsEdit;
-
 

@@ -83,7 +83,24 @@ const CreateTicket = () => {
     const fetchIssueTypes = async () => {
       try {
         const response = await getIssueType();
-        setIssueTypes(response.data);
+        const types = Array.isArray(response.data) ? response.data : [];
+        setIssueTypes(types);
+
+        // If no issue types are configured, fetch all helpdesk categories
+        // directly so Category/Sub-Category are still usable.
+        if (types.length === 0) {
+          try {
+            const catResponse = await getHelpDeskCategoriesSetup(undefined, siteID);
+            const categoryData = catResponse.data;
+            setTicketCategories(
+              Array.isArray(categoryData)
+                ? categoryData
+                : categoryData?.helpdesk_categories || categoryData?.categories || []
+            );
+          } catch (catError) {
+            console.error("Error fetching helpdesk categories:", catError);
+          }
+        }
       } catch (error) {
         console.log(error);
       }
