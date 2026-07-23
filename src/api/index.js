@@ -477,13 +477,15 @@ export const getComplaints = async (extraParams = {}) =>
       ...extraParams,
     },
   });
-export const getHelpDeskCategoriesSetup = async () =>
+export const getHelpDeskCategoriesSetup = async (issueTypeId, siteId) =>
   axiosInstance.get(`/pms/admin/helpdesk_categories.json`, {
     params: {
       token: token,
+      site_id: siteId,
+      "q[issue_type_id_eq]": issueTypeId,
     },
   });
-
+  
 //FitOut Checklist
 export const postFitoutChecklist = async (data) =>
   axiosInstance.post(`/snag_checklists.json`, data, {

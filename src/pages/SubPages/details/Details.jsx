@@ -110,7 +110,7 @@ const TicketDetails = () => {
     { title: "Priority :", description: ticketinfo.priority },
     { title: "Floor Name :", description: ticketinfo.floor_name },
     { title: "Sub Category :", description: ticketinfo.sub_category },
-    { title: "Related To :", description: ticketinfo.issue_type_id },
+    { title: "Related To :", description: ticketinfo.issue_related_to },
     { title: "Unit :", description: ticketinfo.unit },
     {
       title: "Total Time :",
