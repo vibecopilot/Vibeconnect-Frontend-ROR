@@ -510,7 +510,7 @@ const Ticket = () => {
 
     {
       key: "Closed",
-      value: statusData.Closed || 0,
+      value: statusData.Closed || statusData.Close || 0,
       color: "border-blue-300 bg-blue-100",
     },
 
@@ -533,10 +533,9 @@ const Ticket = () => {
     {
       key: "Completed",
       value:
-        siteId === 74
-          ? statusData.Completed
-          : statusData["Development Done"] || 0,
-
+        statusData.Completed ||
+        statusData["Development Done"] ||
+        0,
       color: "border-pink-300 bg-pink-100",
     },
 
@@ -554,28 +553,28 @@ const Ticket = () => {
   const dashboardCards =
     siteId === 74
       ? allDashboardCards.filter((card) =>
-          [
-            "Total Tickets",
-            "Pending",
-            "Completed",
-            "Work in Progress",
-            "Received",
-          ].includes(card.key)
-        )
-      : allDashboardCards;
-
-  const filteredDashboardKeys =
-    siteId === 74
-      ? [
+        [
           "Total Tickets",
           "Pending",
           "Completed",
           "Work in Progress",
           "Received",
-          "Complaint",
-          "Suggestion",
-          "Request",
-        ]
+        ].includes(card.key)
+      )
+      : allDashboardCards;
+
+  const filteredDashboardKeys =
+    siteId === 74
+      ? [
+        "Total Tickets",
+        "Pending",
+        "Completed",
+        "Work in Progress",
+        "Received",
+        "Complaint",
+        "Suggestion",
+        "Request",
+      ]
       : Object.keys(dashboardVisibility);
 
   const ticketTypeCards = [
@@ -729,8 +728,7 @@ const Ticket = () => {
 
       link.setAttribute(
         "download",
-        `tickets_export_${
-          new Date().toISOString().split("T")[0]
+        `tickets_export_${new Date().toISOString().split("T")[0]
         }.xlsx`
       );
 
