@@ -271,6 +271,7 @@ const UserSetup = () => {
           ? "User Activated Successfully ✅"
           : "User Deactivated Successfully ❌"
       );
+      fetchUsers();
     } catch (error) {
       console.error(error);
 
