@@ -534,6 +534,9 @@ const handleInvoice = async () => {
 
           <div className="grid grid-cols-3 gap-5 bg-gray-100 p-5 rounded">
             <Field label="Facility Name" value={amenity?.fac_name} />
+            {booking.sub_facility?.name && (
+              <Field label="Sub Facility Name" value={booking.sub_facility.name} />
+            )}
             <Field label="Type" value={amenity?.fac_type} />
             <Field label="Active" value={amenity?.active ? "Yes" : "No"} />
             <Field label="Min People" value={amenity?.min_people} />
