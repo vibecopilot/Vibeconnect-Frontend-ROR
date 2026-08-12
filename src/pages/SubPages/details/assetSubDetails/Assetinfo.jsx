@@ -7,7 +7,6 @@ import AssetQrCode from "./AssetQrCode";
 import DataTable from "react-data-table-component";
 import { Link, useParams } from "react-router-dom";
 import {
-  domainPrefix,
   getAssetparamsDetails,
   postAssetparams,
 } from "../../../../api";
@@ -963,7 +962,7 @@ const Assetinfo = ({ assetData }) => {
             floor={floor_name}
             unit={unit_name}
             onClose={() => setQrCode(false)}
-            QR={domainPrefix + assetData.qr_code_image_url}
+            QR={ assetData.qr_code_image_url}
           />
         )}
         {editParams && (
