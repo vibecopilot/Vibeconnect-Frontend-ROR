@@ -19,7 +19,7 @@ const ParineePrivacyPolicy = () => {
                     <h3 className="text-lg font-medium text-gray-700 mb-2">Definitions</h3>
                     <ul className="list-disc list-inside text-gray-600 space-y-2">
                         <li><strong>Employee ID:</strong> A unique account created for You to access.</li>
-                        <li><strong>Application:</strong> Refers to the “HRMS” app provided by the Company.</li>
+                        <li><strong>Application:</strong> Refers to the “Prop Tech” app provided by the Company.</li>
                         <li><strong>Company:</strong> Refers to (Company Name & Address).</li>
                         <li><strong>Country:</strong> India.</li>
                         <li><strong>Device:</strong> Your mobile or laptop that can access the app.</li>
