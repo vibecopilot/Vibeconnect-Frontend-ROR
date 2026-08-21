@@ -853,6 +853,8 @@ import BannerManagement from "./pages/Setup/BannerManagement.jsx";
 import KonstructListPage from "./pages/KonstructUpdate/KonstructListPage.jsx";
 import KonstructFormPage from "./pages/KonstructUpdate/KonstructFormPage.jsx";
 import DirectorySetupPages from "./pages/Setup/DirectorySetupPages.jsx";
+import ParineePrivacyPolicy from "./pages/Setup/Abous/ParineePrivacyPolicy.jsx";
+import HappyHomesPrivacyPolicy from "./pages/Setup/Abous/HappyHomes.jsx";
 
 
 
@@ -7072,6 +7074,9 @@ function App() {
           }
         />
         <Route path="/setup/privacy_policy" element={<PrivacyPolicy />} />
+        <Route path="/parinee/privacy_policy" element={<ParineePrivacyPolicy />} />
+        <Route path="/happy_homes/privacy_policy" element={<HappyHomesPrivacyPolicy />} />
+
         <Route
           path="/admin/skill-grow/create-course-details"
           element={
