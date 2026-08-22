@@ -855,6 +855,7 @@ import KonstructFormPage from "./pages/KonstructUpdate/KonstructFormPage.jsx";
 import DirectorySetupPages from "./pages/Setup/DirectorySetupPages.jsx";
 import ParineePrivacyPolicy from "./pages/Setup/Abous/ParineePrivacyPolicy.jsx";
 import HappyHomesPrivacyPolicy from "./pages/Setup/Abous/HappyHomes.jsx";
+import SugeePrivacyPolicy from "./pages/Setup/Abous/SugeePrivacyPolicy.jsx";
 
 
 
@@ -7076,6 +7077,7 @@ function App() {
         <Route path="/setup/privacy_policy" element={<PrivacyPolicy />} />
         <Route path="/parinee/privacy_policy" element={<ParineePrivacyPolicy />} />
         <Route path="/happy_homes/privacy_policy" element={<HappyHomesPrivacyPolicy />} />
+        <Route path="/sugee/privacy_policy" element={<SugeePrivacyPolicy />} />
 
         <Route
           path="/admin/skill-grow/create-course-details"
