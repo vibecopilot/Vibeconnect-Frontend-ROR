@@ -2459,6 +2459,19 @@ export const sendMailToUsers = async (userId) =>
       token: token,
     },
   });
+
+// Sends the organization-branded welcome email to multiple users at once
+// (used by the "Send Bulk Email" action on Setup > Users).
+export const sendBulkWelcomeEmail = async (userIds) =>
+  axiosInstance.post(
+    "/users/bulk_send_welcome_email.json",
+    { user_ids: userIds },
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
 export const getAttendance = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(
