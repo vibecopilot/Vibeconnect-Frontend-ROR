@@ -7,6 +7,7 @@ import {
   getUserCount,
   putSetupUser,
   updateUserAdminApproval,
+  sendBulkWelcomeEmail,
 } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
@@ -19,6 +20,7 @@ import {
   FaTimesCircle,
   FaDownload,
   FaUsers,
+  FaEnvelope,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { BiEdit, BiUserCheck } from "react-icons/bi";
@@ -46,6 +48,10 @@ const UserSetup = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // ✅ BULK EMAIL SELECTION STATE
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [sendingBulkEmail, setSendingBulkEmail] = useState(false);
 
   /* ---------------- FETCH USERS ---------------- */
   const fetchUsers = async () => {
@@ -91,6 +97,11 @@ const UserSetup = () => {
   useEffect(() => {
     fetchUsers();
   }, [activeSiteId]);
+
+  // ✅ CLEAR SELECTION WHEN SWITCHING TABS
+  useEffect(() => {
+    setSelectedUsers([]);
+  }, [activeTab]);
 
   /* ---------------- SEARCHABLE TEXT ---------------- */
   const buildSearchableText = (item) => {
@@ -275,6 +286,37 @@ const UserSetup = () => {
       console.error(error);
 
       toast.error("Failed to update status ❌");
+    }
+  };
+
+  /* ---------------- BULK EMAIL ---------------- */
+  const handleSendBulkEmail = async () => {
+    if (selectedUsers.length === 0) return;
+
+    const userIds = selectedUsers.map((u) => u.id);
+
+    try {
+      setSendingBulkEmail(true);
+
+      const res = await sendBulkWelcomeEmail(userIds);
+      const sentCount = res?.data?.sent?.length ?? userIds.length;
+      const failedCount = res?.data?.failed?.length ?? 0;
+
+      if (failedCount > 0) {
+        toast.error(
+          `Sent ${sentCount} email(s), ${failedCount} failed ❌`
+        );
+      } else {
+        toast.success(`Welcome email sent to ${sentCount} user(s) ✅`);
+      }
+
+      setSelectedUsers([]);
+    } catch (error) {
+      console.error(error);
+
+      toast.error("Failed to send bulk email ❌");
+    } finally {
+      setSendingBulkEmail(false);
     }
   };
 
@@ -614,6 +656,27 @@ const UserSetup = () => {
           />
 
           <div className="flex gap-3">
+            {selectedUsers.length > 0 && (
+              <button
+                onClick={handleSendBulkEmail}
+                disabled={sendingBulkEmail}
+                title={
+                  sendingBulkEmail
+                    ? "Sending..."
+                    : `Send welcome email to ${selectedUsers.length} selected user(s)`
+                }
+                style={{ background: themeColor }}
+                className="relative text-white w-10 h-10 rounded-md flex items-center justify-center disabled:opacity-60"
+              >
+                <FaEnvelope size={16} />
+                {!sendingBulkEmail && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {selectedUsers.length}
+                  </span>
+                )}
+              </button>
+            )}
+
             <button
               onClick={() => setFilterOpen(true)}
               style={{ background: themeColor }}
@@ -677,6 +740,8 @@ const UserSetup = () => {
               <Table
                 columns={userColumn}
                 data={dateFilteredUsers}
+                selectableRow
+                onSelectedRows={setSelectedUsers}
               />
             </div>
           </>
