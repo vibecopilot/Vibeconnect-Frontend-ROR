@@ -674,16 +674,29 @@ const UserSetup = () => {
 
           <div className="flex gap-3">
             {selectedUsers.length > 0 && (
+              // Sends immediately on click (no attachment popup) — the
+              // popup below is intentionally left wired but unused while
+              // per-send attachments are on hold; attachments for the
+              // welcome email are configured once per site instead, in
+              // Welcome Mail Setup. Re-point this onClick at
+              // `() => setEmailModalOpen(true)` to bring the popup back.
               <button
-                onClick={() => setEmailModalOpen(true)}
-                title={`Send welcome email to ${selectedUsers.length} selected user(s)`}
+                onClick={handleSendBulkEmail}
+                disabled={sendingBulkEmail}
+                title={
+                  sendingBulkEmail
+                    ? "Sending..."
+                    : `Send welcome email to ${selectedUsers.length} selected user(s)`
+                }
                 style={{ background: themeColor }}
-                className="relative text-white w-10 h-10 rounded-md flex items-center justify-center"
+                className="relative text-white w-10 h-10 rounded-md flex items-center justify-center disabled:opacity-60"
               >
                 <FaEnvelope size={16} />
-                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                  {selectedUsers.length}
-                </span>
+                {!sendingBulkEmail && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {selectedUsers.length}
+                  </span>
+                )}
               </button>
             )}
 
