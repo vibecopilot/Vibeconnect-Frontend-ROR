@@ -2461,9 +2461,29 @@ export const sendMailToUsers = async (userId) =>
   });
 
 // Sends the organization-branded welcome email to multiple users at once
-// (used by the "Send Bulk Email" action on Setup > Users).
-export const sendBulkWelcomeEmail = async (userIds) =>
-  axiosInstance.post(
+// (used by the "Send Bulk Email" action on Setup > Users). `files` is an
+// optional array of File objects to attach to every email in the batch.
+export const sendBulkWelcomeEmail = async (userIds, files = []) => {
+  if (files && files.length > 0) {
+    const formData = new FormData();
+    userIds.forEach((id) => formData.append("user_ids[]", id));
+    files.forEach((file) => formData.append("attachments[]", file));
+
+    return axiosInstance.post(
+      "/users/bulk_send_welcome_email.json",
+      formData,
+      {
+        params: {
+          token: token,
+        },
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+  }
+
+  return axiosInstance.post(
     "/users/bulk_send_welcome_email.json",
     { user_ids: userIds },
     {
@@ -2472,6 +2492,7 @@ export const sendBulkWelcomeEmail = async (userIds) =>
       },
     }
   );
+};
 export const getAttendance = async (orgId, page) => {
   try {
     const response = await HrmsAuth.get(

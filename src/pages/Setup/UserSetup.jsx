@@ -21,6 +21,7 @@ import {
   FaDownload,
   FaUsers,
   FaEnvelope,
+  FaPaperclip,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { BiEdit, BiUserCheck } from "react-icons/bi";
@@ -52,6 +53,8 @@ const UserSetup = () => {
   // ✅ BULK EMAIL SELECTION STATE
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [sendingBulkEmail, setSendingBulkEmail] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailAttachments, setEmailAttachments] = useState([]);
 
   /* ---------------- FETCH USERS ---------------- */
   const fetchUsers = async () => {
@@ -299,7 +302,7 @@ const UserSetup = () => {
     try {
       setSendingBulkEmail(true);
 
-      const res = await sendBulkWelcomeEmail(userIds);
+      const res = await sendBulkWelcomeEmail(userIds, emailAttachments);
       const sentCount = res?.data?.sent?.length ?? userIds.length;
       const failedCount = res?.data?.failed?.length ?? 0;
 
@@ -312,6 +315,8 @@ const UserSetup = () => {
       }
 
       setSelectedUsers([]);
+      setEmailAttachments([]);
+      setEmailModalOpen(false);
     } catch (error) {
       console.error(error);
 
@@ -319,6 +324,18 @@ const UserSetup = () => {
     } finally {
       setSendingBulkEmail(false);
     }
+  };
+
+  const handleAddAttachments = (e) => {
+    const newFiles = Array.from(e.target.files || []);
+
+    setEmailAttachments((prev) => [...prev, ...newFiles]);
+
+    e.target.value = "";
+  };
+
+  const handleRemoveAttachment = (index) => {
+    setEmailAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   /* ---------------- COUNTS ---------------- */
@@ -659,22 +676,15 @@ const UserSetup = () => {
           <div className="flex gap-3">
             {selectedUsers.length > 0 && (
               <button
-                onClick={handleSendBulkEmail}
-                disabled={sendingBulkEmail}
-                title={
-                  sendingBulkEmail
-                    ? "Sending..."
-                    : `Send welcome email to ${selectedUsers.length} selected user(s)`
-                }
+                onClick={() => setEmailModalOpen(true)}
+                title={`Send welcome email to ${selectedUsers.length} selected user(s)`}
                 style={{ background: themeColor }}
-                className="relative text-white w-10 h-10 rounded-md flex items-center justify-center disabled:opacity-60"
+                className="relative text-white w-10 h-10 rounded-md flex items-center justify-center"
               >
                 <FaEnvelope size={16} />
-                {!sendingBulkEmail && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                    {selectedUsers.length}
-                  </span>
-                )}
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {selectedUsers.length}
+                </span>
               </button>
             )}
 
@@ -809,6 +819,105 @@ const UserSetup = () => {
                     className="px-5 py-2 bg-blue-600 text-white rounded-lg"
                   >
                     Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SEND EMAIL MODAL */}
+        {emailModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl shadow-xl w-[440px] p-6">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-lg font-semibold">
+                  Send Welcome Email
+                </h2>
+
+                <button
+                  onClick={() => {
+                    if (sendingBulkEmail) return;
+
+                    setEmailModalOpen(false);
+                  }}
+                  className="text-gray-500 text-xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-4">
+                This will send the welcome email to{" "}
+                <span className="font-semibold">
+                  {selectedUsers.length}
+                </span>{" "}
+                selected user(s).
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    Attachments{" "}
+                    <span className="text-gray-400 font-normal">
+                      (optional — attached to every email)
+                    </span>
+                  </label>
+
+                  <label className="flex items-center justify-center gap-2 border border-dashed rounded-lg p-3 text-sm text-gray-600 cursor-pointer hover:bg-gray-50">
+                    <FaPaperclip />
+                    Choose file(s)
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleAddAttachments}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {emailAttachments.length > 0 && (
+                    <ul className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                      {emailAttachments.map((file, index) => (
+                        <li
+                          key={`${file.name}-${index}`}
+                          className="flex items-center justify-between text-xs bg-gray-100 rounded px-2 py-1"
+                        >
+                          <span className="truncate mr-2">
+                            {file.name}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleRemoveAttachment(index)
+                            }
+                            className="text-red-500 shrink-0"
+                            title="Remove"
+                          >
+                            <FaTimes size={12} />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setEmailModalOpen(false)}
+                    disabled={sendingBulkEmail}
+                    className="px-4 py-2 rounded-lg border disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleSendBulkEmail}
+                    disabled={sendingBulkEmail}
+                    style={{ background: themeColor }}
+                    className="px-5 py-2 text-white rounded-lg disabled:opacity-60"
+                  >
+                    {sendingBulkEmail ? "Sending..." : "Send"}
                   </button>
                 </div>
               </div>
