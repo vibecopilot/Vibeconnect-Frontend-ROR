@@ -27,7 +27,7 @@ const AccountingSettings = () => {
     setLoading(true);
     try {
       const data = await getTaxRates();
-      setTaxRates(data);
+      setTaxRates(data.data || data);
     } catch (error) {
       console.error('Error fetching tax rates:', error);
     } finally {
