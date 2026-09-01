@@ -2097,6 +2097,28 @@ export const getHSNSetupDetails = async (id) =>
       token: token,
     },
   });
+  export const getHsns = async (page = 1, perPage = 10) =>
+  axiosInstance.get(`/hsns.json`, {
+    params: {
+      token: token,
+      page: page,
+      per_page: perPage,
+    },
+  });
+export const getHsnDetails = async (id) =>
+  axiosInstance.get(`/hsns/${id}.json`, {
+    params: {
+      token: token,
+    },
+  });
+export const getHsnsByDate = async (startDate, endDate) =>
+  axiosInstance.get(`/hsns.json`, {
+    params: {
+      token: token,
+      start_date: startDate,
+      end_date: endDate,
+    },
+  });
 export const postDailyPickUpTransportation = async (data) =>
   axiosInstance.post("/transportations.json", data, {
     params: {

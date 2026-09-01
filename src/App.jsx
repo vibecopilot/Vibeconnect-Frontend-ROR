@@ -813,7 +813,13 @@ import {
   JournalEntries,
   CreateJournalEntry,
   Reports,
-  AccountingSettings
+  AccountingSettings,
+  AccountGroups,
+  TaxRates,
+  AccountingPayments,
+  AccountingInvoices,
+  AccountingReports,
+  AccountingSetupTabs
 } from "./pages/Accounting";
 import TrialBalanceReport from "./pages/Accounting/Reports/TrialBalanceReport.jsx";
 // Visitor overstay alert polling
@@ -7630,15 +7636,7 @@ function App() {
           path="/accounting/invoices"
           element={
             <ProtectedAdminRoutes>
-              <Invoices />
-            </ProtectedAdminRoutes>
-          }
-        />
-        <Route
-          path="/accounting/invoices/create"
-          element={
-            <ProtectedAdminRoutes>
-              <CreateInvoice />
+              <AccountingInvoices />
             </ProtectedAdminRoutes>
           }
         />
@@ -7647,6 +7645,30 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <Ledgers />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/account-groups"
+          element={
+            <ProtectedAdminRoutes>
+              <AccountGroups />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/tax-rates"
+          element={
+            <ProtectedAdminRoutes>
+              <TaxRates />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/payments"
+          element={
+            <ProtectedAdminRoutes>
+              <AccountingPayments />
             </ProtectedAdminRoutes>
           }
         />
@@ -7670,7 +7692,7 @@ function App() {
           path="/accounting/reports"
           element={
             <ProtectedAdminRoutes>
-              <Reports />
+              <AccountingReports />
             </ProtectedAdminRoutes>
           }
         />
@@ -7687,6 +7709,14 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <AccountingSettings />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/setup/accounting"
+          element={
+            <ProtectedAdminRoutes>
+              <AccountingSetupTabs />
             </ProtectedAdminRoutes>
           }
         />
