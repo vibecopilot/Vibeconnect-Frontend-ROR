@@ -163,23 +163,23 @@ const CAMBills = () => {
       }
     }
 
-    const totalDays = Number(allocation?.totals?.days || 0);
+    const totalAreaDays = Number(allocation?.totals?.areaDays || 0);
     const baseRows = Array.isArray(allocation?.rows) ? allocation.rows : [];
 
     const rows = baseRows.map((r) => ({
       ...r,
       incomeShare:
-        totalDays > 0
-          ? (Number(totalIncome || 0) * Number(r.activeDays || 0)) / totalDays
+        totalAreaDays > 0
+          ? (Number(totalIncome || 0) * Number(r.areaDays || 0)) / totalAreaDays
           : 0,
     }));
 
     return {
       rows,
       totals: {
-        days: totalDays,
+        days: Number(allocation?.totals?.days || 0),
         area: Number(allocation?.totals?.area || 0),
-        areaDays: Number(allocation?.totals?.areaDays || 0),
+        areaDays: totalAreaDays,
         income: Number(totalIncome || 0),
       },
     };
@@ -1764,6 +1764,9 @@ const CAMBills = () => {
                       Flat
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Actual Days
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Days
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -1836,6 +1839,9 @@ const CAMBills = () => {
                           {r.activeDays}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                          {allocation?.totals?.daysInMonth || 0}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                           {Number(r.area || 0)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
@@ -1868,6 +1874,9 @@ const CAMBills = () => {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                           {r.activeDays}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                          {allocation?.totals?.daysInMonth || 0}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                           {Number(r.area || 0)}
@@ -1907,6 +1916,9 @@ const CAMBills = () => {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                           {r.activeDays}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
+                          {allocation?.totals?.daysInMonth || 0}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">
                           {Number(r.area || 0)}
@@ -1967,6 +1979,9 @@ const CAMBills = () => {
                     </td>
                     <td className="px-4 py-3 text-sm font-bold text-gray-900">
                       {allocation?.totals?.days || 0}
+                    </td>
+                    <td className="px-4 py-3 text-sm font-bold text-gray-900">
+                      {allocation?.totals?.daysInMonth || 0}
                     </td>
                     <td className="px-4 py-3 text-sm font-bold text-gray-900">
                       {allocation?.totals?.area || 0}
@@ -2145,7 +2160,7 @@ const CAMBills = () => {
                       Area (sqft)
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
-                      Days
+                      Actual Days
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
                       Base Amount
