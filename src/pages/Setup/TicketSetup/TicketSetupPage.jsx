@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { BiEdit } from "react-icons/bi";
+import { BiEdit, BiTrash } from "react-icons/bi";
 import toast from "react-hot-toast";
 
 import TicketCategorySetup from "./TicketCategorySetup";
@@ -10,17 +10,25 @@ import EditStatusModal from "./EditStatusModal";
 import {
   getHelpDeskStatusSetup,
   postHelpDeskStatusSetup,
+  getIssueType,
+  postIssueType,
+  updateIssueType,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 
-const TicketSetupPage = () => {
+const TicketSetupPage = ({ activeSiteId }) => {
   const themeColor = useSelector((state) => state.theme.color);
 
-  const [page, setPage] = useState("Category Type");
+  const [page, setPage] = useState("Related To");
   const [statuses, setStatuses] = useState([]);
-  const [statusAdded, setStatusAdded] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editId, setEditId] = useState("");
+
+  // Related To (IssueType) state
+  const [issueTypes, setIssueTypes] = useState([]);
+  const [newIssueTypeName, setNewIssueTypeName] = useState("");
+  const [editingIssueType, setEditingIssueType] = useState(null); // { id, name }
+  const [editIssueTypeName, setEditIssueTypeName] = useState("");
 
   const [formData, setFormData] = useState({
     status: "",
@@ -39,18 +47,75 @@ const TicketSetupPage = () => {
     Sunday: { enabled: false, start: "", end: "" },
   });
 
+  /* ---------------- FETCH ISSUE TYPES ---------------- */
+  const fetchIssueTypes = async () => {
+    try {
+      const res = await getIssueType();
+      setIssueTypes(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddIssueType = async () => {
+    if (!newIssueTypeName.trim()) return toast.error("Enter issue type name");
+    const siteId = activeSiteId || getItemInLocalStorage("SITEID");
+    try {
+      await postIssueType(newIssueTypeName.trim(), siteId);
+      toast.success("Issue type added");
+      setNewIssueTypeName("");
+      fetchIssueTypes();
+    } catch (err) {
+      toast.error("Failed to add issue type");
+    }
+  };
+
+  const handleUpdateIssueType = async (id) => {
+    if (!editIssueTypeName.trim()) return toast.error("Enter name");
+    try {
+      await updateIssueType(id, editIssueTypeName.trim());
+      toast.success("Issue type updated");
+      setEditingIssueType(null);
+      fetchIssueTypes();
+    } catch (err) {
+      toast.error("Failed to update issue type");
+    }
+  };
+
+  const handleDeleteIssueType = async (id) => {
+    if (!window.confirm("Delete this issue type?")) return;
+    try {
+      await updateIssueType(id, "", 0);
+      toast.success("Issue type deleted");
+      fetchIssueTypes();
+    } catch (err) {
+      toast.error("Failed to delete issue type");
+    }
+  };
+
   /* ---------------- FETCH STATUS ---------------- */
+  const fetchStatuses = async () => {
+    try {
+      const res = await getHelpDeskStatusSetup();
+      setStatuses(Object.values(res.data));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
-    const fetchStatuses = async () => {
-      try {
-        const res = await getHelpDeskStatusSetup();
-        setStatuses(Object.values(res.data));
-      } catch (err) {
-        console.error(err);
-      }
-    };
     fetchStatuses();
-  }, [statusAdded]);
+    fetchIssueTypes();
+  }, [activeSiteId]); // ✅ re-fetch when site changes
+
+  const handleReset = () => {
+    setFormData({
+      status: "",
+      fixedState: "",
+      color: "#1677ff",
+      order: "",
+    });
+  };
 
   /* ---------------- HANDLERS ---------------- */
   const handleChange = (e) => {
@@ -62,9 +127,9 @@ const TicketSetupPage = () => {
       return toast.error("Please fill all fields");
     }
 
-    const siteID = getItemInLocalStorage("SITEID");
-    const payload = new FormData();
+    const siteID = activeSiteId; // ✅ use reactive prop from parent
 
+    const payload = new FormData();
     payload.append("complaint_status[of_phase]", "pms");
     payload.append("complaint_status[society_id]", siteID);
     payload.append("complaint_status[name]", formData.status);
@@ -74,19 +139,23 @@ const TicketSetupPage = () => {
 
     try {
       await postHelpDeskStatusSetup(payload);
+
       toast.success("Status added successfully");
-      setStatusAdded(true);
+
       setFormData({
         status: "",
         fixedState: "",
         color: "#1677ff",
         order: "",
       });
+
+      fetchStatuses(); // refresh table
     } catch (err) {
-      toast.error("Failed to add status");
-    } finally {
-      setTimeout(() => setStatusAdded(false), 500);
-    }
+  const message =
+    err?.response?.data?.error || "Failed to add status";
+
+  toast.error(message);
+}
   };
 
   const updateDay = (day, field, value) => {
@@ -142,18 +211,103 @@ const TicketSetupPage = () => {
     <div className="w-full my-2">
       {/* Tabs */}
       <div className="flex border-b">
-        {["Category Type", "Status", "Operational Days"].map((tab) => (
+        {["Related To", "Category Type", "Status", "Operational Days"].map((tab) => (
           <button
             key={tab}
-            className={`px-4 py-2 ${
-              page === tab ? "border-b-2 text-blue-500" : ""
-            }`}
+            className={`px-4 py-2 ${page === tab ? "border-b-2 text-blue-500" : ""}`}
             onClick={() => setPage(tab)}
           >
             {tab}
           </button>
         ))}
       </div>
+
+      {/* Related To (IssueType) */}
+      {page === "Related To" && (
+        <div className="p-4">
+          <table className="w-full border text-sm">
+            <thead style={{ background: themeColor }} className="text-white">
+              <tr>
+                <th className="p-2 text-left w-12">S.No.</th>
+                <th className="p-2 text-left">Issue Type</th>
+                <th className="p-2 text-left w-28">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {issueTypes.map((it, idx) => (
+                <tr key={it.id} className="border-b">
+                  <td className="p-2">{idx + 1}</td>
+                  <td className="p-2">
+                    {editingIssueType?.id === it.id ? (
+                      <input
+                        className="border p-1 rounded w-full"
+                        value={editIssueTypeName}
+                        onChange={(e) => setEditIssueTypeName(e.target.value)}
+                      />
+                    ) : (
+                      it.name
+                    )}
+                  </td>
+                  <td className="p-2 flex gap-2">
+                    {editingIssueType?.id === it.id ? (
+                      <>
+                        <button
+                          className="text-green-600 font-semibold"
+                          onClick={() => handleUpdateIssueType(it.id)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="text-gray-500"
+                          onClick={() => setEditingIssueType(null)}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setEditingIssueType(it);
+                            setEditIssueTypeName(it.name);
+                          }}
+                        >
+                          <BiEdit className="text-orange-500" size={16} />
+                        </button>
+                        <button onClick={() => handleDeleteIssueType(it.id)}>
+                          <BiTrash className="text-red-500" size={16} />
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {/* Add new row */}
+              <tr>
+                <td className="p-2">{issueTypes.length + 1}</td>
+                <td className="p-2">
+                  <input
+                    className="border p-1 rounded w-full"
+                    placeholder="Enter Issue Type"
+                    value={newIssueTypeName}
+                    onChange={(e) => setNewIssueTypeName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddIssueType()}
+                  />
+                </td>
+                <td className="p-2">
+                  <button
+                    className="px-3 py-1 text-white rounded text-xs"
+                    style={{ background: themeColor }}
+                    onClick={handleAddIssueType}
+                  >
+                    + Add
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Category */}
       {page === "Category Type" && <TicketCategorySetup />}
@@ -169,6 +323,7 @@ const TicketSetupPage = () => {
               onChange={handleChange}
               className="border p-2 rounded"
             />
+
             <input
               name="fixedState"
               placeholder="Fixed State"
@@ -176,6 +331,7 @@ const TicketSetupPage = () => {
               onChange={handleChange}
               className="border p-2 rounded"
             />
+
             <input
               name="order"
               type="number"
@@ -184,12 +340,19 @@ const TicketSetupPage = () => {
               onChange={handleChange}
               className="border p-2 rounded"
             />
+
             <button
               onClick={handleAddStatus}
               className="text-white rounded"
               style={{ background: themeColor }}
             >
               Add
+            </button>
+            <button
+              onClick={handleReset}
+              className="text-white rounded bg-black"
+            >
+              Reset
             </button>
           </div>
 
@@ -209,6 +372,7 @@ const TicketSetupPage = () => {
                 <th>End</th>
               </tr>
             </thead>
+
             <tbody>
               {Object.entries(operationalDays).map(([day, data]) => (
                 <tr key={day}>
@@ -221,7 +385,9 @@ const TicketSetupPage = () => {
                       }
                     />
                   </td>
+
                   <td className="border text-center">{day}</td>
+
                   <td className="border">
                     <input
                       type="time"
@@ -232,6 +398,7 @@ const TicketSetupPage = () => {
                       }
                     />
                   </td>
+
                   <td className="border">
                     <input
                       type="time"
@@ -266,7 +433,7 @@ const TicketSetupPage = () => {
           onClose={() => setShowEditModal(false)}
           onUpdated={() => {
             setShowEditModal(false);
-            setStatusAdded(true);
+            fetchStatuses(); // refresh after edit
           }}
         />
       )}

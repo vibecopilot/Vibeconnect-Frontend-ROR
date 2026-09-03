@@ -1,18 +1,23 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+/* eslint-disable react/prop-types */
+import { useEffect, useMemo, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getTicketDashboard, getTicketStatusDownload } from "../api";
+import { getTicketDashboard, getTicketStatusDownload, getComplaintsDrill } from "../api";
+import DetailPopup from "./DetailPopup";
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
-import { FaDownload, FaChevronDown } from "react-icons/fa";
+import { FaDownload, FaChevronDown, FaFileExcel, FaFilePdf } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { RiPieChartFill } from "react-icons/ri";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {
   AiOutlineAreaChart,
   AiOutlineBarChart,
   AiOutlineLineChart,
 } from "react-icons/ai";
 import { PiChartBarHorizontal } from "react-icons/pi";
+import { getItemInLocalStorage } from "../utils/localStorage";
 
 /** ✅ Multi-color palette (used across all charts) */
 const CHART_PALETTE = [
@@ -22,7 +27,7 @@ const CHART_PALETTE = [
   "#EF4444", // red
   "#8B5CF6", // violet
   "#06B6D4", // cyan
-  "#EC4899", // pink
+  "#EC4899", // pink  
   "#84CC16", // lime
   "#F97316", // orange
   "#14B8A6", // teal
@@ -32,6 +37,7 @@ const CHART_PALETTE = [
 
 /** Highlight color you wanted earlier */
 const HIGHLIGHT_LIGHT = "#93C5FD";
+const companyId = getItemInLocalStorage("COMPANYID");
 
 const chartIcon = (type) => {
   switch (type) {
@@ -123,7 +129,7 @@ const ChartTypeMenu = ({ value, onChange, allowBar = false }) => {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-40 rounded-xl border border-gray-200 bg-white shadow-lg z-20 overflow-hidden">
+        <div className="absolute right-0 sm:right-0 left-auto mt-2 w-48 sm:w-52 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
           {items.map((it) => (
             <button
               key={it.key}
@@ -148,6 +154,63 @@ const ChartTypeMenu = ({ value, onChange, allowBar = false }) => {
   );
 };
 
+const DownloadMenu = ({
+  onExcelDownload,
+  onChartDownload,
+  downloading
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const closeMenu = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeMenu);
+    return () => document.removeEventListener("mousedown", closeMenu);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+        title="Download Options"
+      >
+        <FaDownload className="text-sm" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
+          <button
+            onClick={() => {
+              onExcelDownload();
+              setOpen(false);
+            }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium"
+          >
+            <FaFileExcel className="inline-block mr-2" /> Export in Excel
+          </button>
+
+          <button
+            onClick={() => {
+              onChartDownload();
+              setOpen(false);
+            }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium"
+          >
+            <FaFilePdf className="inline-block mr-2" />Export in Chart
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ChartCard = ({
   title,
   subtitle,
@@ -156,7 +219,8 @@ const ChartCard = ({
   legendItems = [],
   footerText = "",
   footerDirection = "down",
-  onDownload,
+  onExcelDownload,
+  onChartDownload,
   chartType,
   setChartType,
   allowBar,
@@ -168,16 +232,16 @@ const ChartCard = ({
     footerDirection === "up" ? "text-red-600" : "text-emerald-700";
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-3 sm:p-5 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
+          <p className="text-base sm:text-lg font-bold text-gray-900 break-words">{title}</p>
           {subtitle ? (
             <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
           ) : null}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full sm:w-auto">
           <TrendPill percent={trendPercent} direction={trendDirection} />
 
           <ChartTypeMenu
@@ -186,14 +250,11 @@ const ChartCard = ({
             allowBar={allowBar}
           />
 
-          <button
-            type="button"
-            onClick={onDownload}
-            className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
-            title={downloading ? "Downloading..." : "Download"}
-          >
-            <FaDownload className="text-sm" />
-          </button>
+          <DownloadMenu
+            onExcelDownload={onExcelDownload}
+            onChartDownload={onChartDownload}
+            downloading={downloading}
+          />
         </div>
       </div>
 
@@ -202,11 +263,11 @@ const ChartCard = ({
       <div className="mt-2">{children}</div>
 
       {footerText ? (
-        <ndiv className="mt-2 text-center text-sm">
+        <div className="mt-2 text-center text-sm">
           <span className={footerColor}>
             {footerArrow} {footerText}
           </span>
-        </ndiv>
+        </div>
       ) : null}
     </div>
   );
@@ -253,36 +314,39 @@ const buildOptions = ({
   const areaFill =
     type === "area"
       ? {
-          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-          stops: [
-            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
-            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
-          ],
-        }
+        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+        stops: [
+          [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+          [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+        ],
+      }
       : undefined;
 
   const seriesData = isPie
     ? categories.map((name, i) => ({
-        name,
-        y: values[i],
-        color: pointColorFn
-          ? pointColorFn(name, i, values[i])
-          : palette[i % palette.length],
-      }))
+      name,
+      y: values[i],
+      color: pointColorFn
+        ? pointColorFn(name, i, values[i])
+        : palette[i % palette.length],
+    }))
     : isBarOrColumn
-    ? categories.map((name, i) => ({
+      ? categories.map((name, i) => ({
         y: values[i],
         color: pointColorFn
           ? pointColorFn(name, i, values[i])
           : palette[i % palette.length],
       }))
-    : values;
+      : values;
 
   return {
     chart: {
       type: hcType,
       backgroundColor: "transparent",
-      height: 280,
+      height:
+        window.innerWidth < 640
+          ? 240
+          : 280,
       spacing: [8, 8, 8, 8],
     },
 
@@ -294,37 +358,53 @@ const buildOptions = ({
     xAxis: isPie
       ? undefined
       : {
-          categories,
-          lineColor: "#E5E7EB",
-          tickColor: "#E5E7EB",
-          labels: { style: { color: "#6B7280", fontSize: "12px" } },
-          title: { text: null },
+        categories,
+        lineColor: "#E5E7EB",
+        tickColor: "#E5E7EB",
+        labels: {
+          style: {
+            color: "#6B7280",
+            fontSize:
+              window.innerWidth < 640
+                ? "10px"
+                : "12px"
+          }
         },
+        title: { text: null },
+      },
     yAxis: isPie
       ? undefined
       : {
-          min: 0,
-          title: { text: yTitle },
-          gridLineColor: "#E5E7EB",
-          gridLineDashStyle: "Dash",
-          labels: { style: { color: "#6B7280", fontSize: "12px" } },
+        min: 0,
+        title: { text: yTitle },
+        gridLineColor: "#E5E7EB",
+        gridLineDashStyle: "Dash",
+        labels: {
+          style: {
+            color: "#6B7280",
+            fontSize:
+              window.innerWidth < 640
+                ? "10px"
+                : "12px"
+          }
         },
+      },
 
     tooltip: isPie
       ? {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E5E7EB",
-          borderRadius: 10,
-          shadow: false,
-          pointFormat: "<b>{point.y}</b> ({point.percentage:.1f}%)",
-        }
+        backgroundColor: "#FFFFFF",
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        shadow: false,
+        pointFormat: "<b>{point.y}</b> ({point.percentage:.1f}%)",
+      }
       : {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E5E7EB",
-          borderRadius: 10,
-          shadow: false,
-          pointFormat: "<b>{point.y}</b>",
-        },
+        backgroundColor: "#FFFFFF",
+        borderColor: "#E5E7EB",
+        borderRadius: 10,
+        shadow: false,
+        pointFormat: "<b>{point.y}</b>",
+      },
 
     plotOptions: {
       pie: {
@@ -362,12 +442,12 @@ const buildOptions = ({
         marker:
           type === "line" || type === "area"
             ? {
-                enabled: true,
-                radius: 4,
-                lineWidth: 2,
-                lineColor: seriesColor,
-                fillColor: "#FFFFFF",
-              }
+              enabled: true,
+              radius: 4,
+              lineWidth: 2,
+              lineColor: seriesColor,
+              fillColor: "#FFFFFF",
+            }
             : { enabled: false },
       },
     },
@@ -376,11 +456,11 @@ const buildOptions = ({
       isPie
         ? { name: title, colorByPoint: true, data: seriesData }
         : {
-            name: title,
-            color: seriesColor, // for line/area (and fallback)
-            data: seriesData,
-            fillColor: areaFill,
-          },
+          name: title,
+          color: seriesColor, // for line/area (and fallback)
+          data: seriesData,
+          fillColor: areaFill,
+        },
     ],
   };
 };
@@ -410,44 +490,367 @@ const TicketHighCharts = () => {
   const [unitChartType, setUnitChartType] = useState("column");
 
   const [downloading, setDownloading] = useState(false);
+  const [dashboardParams, setDashboardParams] = useState({ companyId: Number(companyId) || undefined });
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [filterStartDate, setFilterStartDate] = useState("");
+  const [filterEndDate, setFilterEndDate] = useState("");
+
+  const statusChartRef = useRef(null);
+  const categoryChartRef = useRef(null);
+  const typeChartRef = useRef(null);
+  const floorChartRef = useRef(null);
+  const unitChartRef = useRef(null);
+
+  const dashboardRef = useRef(null);
+
+  const [detailPopup, setDetailPopup] = useState({
+    open: false,
+    title: "",
+    records: [],
+    loading: false,
+  });
+
+  const [detailPage, setDetailPage] = useState(1);
+  const [detailTotalPages, setDetailTotalPages] = useState(1);
+  const [detailFilter, setDetailFilter] = useState({
+    countType: "",
+    countValue: "",
+  });
+
+  const formatDateForApi = (isoDate) => {
+    if (!isoDate) return "";
+    const [year, month, day] = isoDate.split("-");
+    if (!year || !month || !day) return "";
+    return `${day}/${Number(month)}/${Number(year)}`;
+  };
+
+  const applyDateFilter = () => {
+    if (!filterStartDate || !filterEndDate) {
+      toast.error("Please select both start and end dates.");
+      return;
+    }
+
+    setDashboardParams((prev) => ({
+      ...prev,
+      start_date_eq: formatDateForApi(filterStartDate),
+      end_date_eq: formatDateForApi(filterEndDate),
+    }));
+    setFilterModalOpen(false);
+  };
+
+  const handleClearFilter = () => {
+    setFilterStartDate("");
+    setFilterEndDate("");
+    setDashboardParams({ companyId: Number(companyId) || undefined });
+  };
+
+  const getBase64FromUrl = async (url) => {
+    const data = await fetch(url);
+    const blob = await data.blob();
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = () => resolve(reader.result);
+    });
+  };
+
+  const handleDashboardPdfDownload = async () => {
+    const toastId = toast.loading("Generating PDF...");
+    try {
+      if (!dashboardRef.current) {
+        toast.error("Dashboard not found");
+        return;
+      }
+
+      const canvas = await html2canvas(
+        dashboardRef.current,
+        {
+          scale: 2,
+          useCORS: true
+        }
+      );
+
+      const imgData = canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const width = 210;
+      const height =
+        (canvas.height * width) /
+        canvas.width;
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        0,
+        width,
+        height
+      );
+
+
+      /* Uploaded image add in PDF
+         Replace with your actual uploaded image URL */
+      const uploadedImage =
+        statusData?.attachment_url ||
+        categoryData?.attachment_url ||
+        null;
+
+      if (uploadedImage) {
+        const base64Image =
+          await getBase64FromUrl(uploadedImage);
+
+        pdf.addPage();
+
+        pdf.text(
+          "Uploaded Image",
+          15,
+          20
+        );
+
+        pdf.addImage(
+          base64Image,
+          "PNG",
+          15,
+          30,
+          180,
+          120
+        );
+      }
+
+      pdf.save(
+        "TicketDashboard.pdf"
+      );
+
+      toast.dismiss(toastId);
+      toast.success("PDF Downloaded");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error("PDF download failed");
+    }
+  };
+
+  const downloadSingleChartPdf = async (
+    chartRef,
+    fileName
+  ) => {
+
+    const toastId = toast.loading(
+      "Generating chart PDF..."
+    );
+
+    try {
+
+      if (!chartRef?.current) {
+        toast.error("Chart not found");
+        return;
+      }
+
+      const canvas = await html2canvas(
+        chartRef.current,
+        {
+          scale: 2,
+          useCORS: true
+        }
+      );
+
+      const imgData =
+        canvas.toDataURL("image/png");
+
+      const pdf = new jsPDF(
+        "p",
+        "mm",
+        "a4"
+      );
+
+      const width = 190;
+      const height =
+        (canvas.height * width) /
+        canvas.width;
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        10,
+        15,
+        width,
+        height
+      );
+
+      pdf.save(
+        `${fileName}.pdf`
+      );
+
+      toast.dismiss(toastId);
+      toast.success(
+        "Chart PDF downloaded"
+      );
+
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error(
+        "Chart PDF download failed"
+      );
+    }
+
+  };
+
+
+
+  const getGroupKeyForType = (countType) => {
+    if (!countType) return null;
+    const map = {
+      status: "by_status",
+      category: "by_category",
+      type: "by_type",
+      floor: "by_floor",
+      unit: "by_unit",
+      tenant: "by_tenant",
+    };
+    return map[countType] || null;
+  };
+
+  const resolveRecordsFromResponse = (data, countType, countValue) => {
+    if (!data) return { records: [], total: 0, perPage: 20 };
+
+    if (Array.isArray(data.records) && data.records.length) {
+      return {
+        records: data.records,
+        total: data.total || data.total_count || data.records.length,
+        perPage: data.per_page || data.perPage || 20,
+      };
+    }
+
+    const groupKey = getGroupKeyForType(countType);
+    if (groupKey && data[groupKey]) {
+      const bucket = data[groupKey][countValue] || data[groupKey][countValue?.toLowerCase()];
+
+      if (bucket) {
+        const records = Array.isArray(bucket.records) ? bucket.records : [];
+        return {
+          records,
+          total: bucket.count || bucket.total || data.total || data.total_count || records.length,
+          perPage: bucket.per_page || bucket.perPage || data.per_page || data.perPage || 20,
+        };
+      }
+    }
+
+    return {
+      records: [],
+      total: data.total || data.total_count || 0,
+      perPage: data.per_page || data.perPage || 20,
+    };
+  };
+
+  const fetchDetailRecords = async (countType, countValue, page = 1) => {
+    const title = countType
+      ? `Tickets - ${countType.charAt(0).toUpperCase() + countType.slice(1)}: ${countValue}`
+      : "Tickets";
+
+    setDetailPopup({ open: true, title, records: [], loading: true });
+    setDetailFilter({ countType, countValue });
+    setDetailPage(page);
+
+    try {
+      const drillResp = await getComplaintsDrill(
+        countType,
+        countValue,
+        Number(companyId) || undefined,
+        page,
+        dashboardParams.start_date_eq,
+        dashboardParams.end_date_eq
+      );
+
+      const {
+        records,
+        total,
+        perPage,
+      } = resolveRecordsFromResponse(drillResp?.data, countType, countValue);
+
+      const totalPages = perPage > 0 ? Math.max(1, Math.ceil(total / perPage)) : 1;
+      setDetailTotalPages(totalPages);
+      setDetailPopup({ open: true, title, records, loading: false });
+    } catch (err) {
+      console.error("Error loading detail records:", err);
+      toast.error("Failed to load ticket details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  const openDetailForFilter = async (countType, countValue, page = 1) => {
+    if (!countType || !countValue) return;
+    await fetchDetailRecords(countType, countValue, page);
+  };
+
+  const onDetailPageChange = async (nextPage) => {
+    if (!detailFilter.countType || !detailFilter.countValue) return;
+    if (nextPage < 1 || nextPage > detailTotalPages) return;
+    await fetchDetailRecords(detailFilter.countType, detailFilter.countValue, nextPage);
+  };
 
   useEffect(() => {
     const fetchTicketInfo = async () => {
       try {
-        const resp = await getTicketDashboard();
+        const resp = await getTicketDashboard(dashboardParams);
+
         setStatusData(resp?.data?.by_status || {});
         setCategoryData(resp?.data?.by_category || {});
         setTicketTypes(resp?.data?.by_type || {});
         setFloorTickets(resp?.data?.by_floor || {});
-        setUnitTickets(resp?.data?.by_unit || {});
+
+        const currentcompanyId = getItemInLocalStorage("COMPANYID");
+
+        if (Number(currentcompanyId) === 55) {
+          setUnitTickets(resp?.data?.by_tenant || {});
+        } else {
+          setUnitTickets(resp?.data?.by_unit || {});
+        }
       } catch (error) {
         console.log("Error fetching ticket info:", error);
       }
     };
 
     fetchTicketInfo();
-  }, []);
-
-  const handleTicketStatusDownload = async () => {
+  }, [dashboardParams]);
+  const handleTicketStatusDownload = async (countType, countValue) => {
     const toastId = toast.loading("Downloading Please Wait...");
     setDownloading(true);
+
     try {
-      const response = await getTicketStatusDownload();
+      const params = {
+        companyId: Number(companyId) || undefined,
+        start_date_eq: dashboardParams.start_date_eq,
+        end_date_eq: dashboardParams.end_date_eq,
+
+        // ✅ IMPORTANT (this is missing in your code)
+        ...(countType && { count_type: countType }),
+        ...(countValue && { count_value: countValue }),
+      };
+
+      const response = await getTicketStatusDownload(params);
+
       const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: response.headers["content-type"] })
+        new Blob([response.data], {
+          type: response.headers["content-type"],
+        })
       );
+
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", "ticket_file.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
+
       toast.dismiss(toastId);
-      toast.success("Ticket downloaded successfully");
+      toast.success("Filtered ticket downloaded");
     } catch (error) {
       toast.dismiss(toastId);
       console.error("Error downloading Ticket:", error);
-      toast.error("Something went wrong, please try again");
+      toast.error("Something went wrong");
     } finally {
       setDownloading(false);
     }
@@ -486,75 +889,226 @@ const TicketHighCharts = () => {
   };
 
   // options (memo)
-  const statusOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Status",
-        data: statusData,
-        type: statusChartType,
-        themeColor: chartTheme.status,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: statusPointColor, // ✅ multi-color
-      }),
-    [statusData, statusChartType]
-  );
+  const statusOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: "Tickets by Status",
+      data: statusData,
+      type: statusChartType,
+      themeColor: chartTheme.status,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: statusPointColor, // ✅ multi-color
+    });
 
-  const categoryOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Category",
-        data: categoryData,
-        type: categoryChartType,
-        themeColor: chartTheme.category,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: categoryPointColor, // ✅ multi-color + highlight
-      }),
-    [categoryData, categoryChartType]
-  );
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("status", String(value));
+    };
 
-  const typeOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Type",
-        data: ticketTypes,
-        type: ticketTypeChartType,
-        themeColor: chartTheme.type,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: typePointColor, // ✅ multi-color + highlight
-      }),
-    [ticketTypes, ticketTypeChartType]
-  );
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
 
-  const floorOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Floor",
-        data: floorTickets,
-        type: floorChartType,
-        themeColor: chartTheme.floor,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: floorPointColor, // ✅ multi-color + highlight
-      }),
-    [floorTickets, floorChartType]
-  );
+    return opts;
+  }, [statusData, statusChartType, chartTheme.status, openDetailForFilter]);
 
-  const unitOptions = useMemo(
-    () =>
-      buildOptions({
-        title: "Tickets by Unit",
-        data: unitTickets,
-        type: unitChartType,
-        themeColor: chartTheme.unit,
-        palette: CHART_PALETTE,
-        order: "descending",
-        pointColorFn: unitPointColor, // ✅ multi-color + highlight
-      }),
-    [unitTickets, unitChartType]
-  );
+  const categoryOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: "Tickets by Category",
+      data: categoryData,
+      type: categoryChartType,
+      themeColor: chartTheme.category,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: categoryPointColor, // ✅ multi-color + highlight
+    });
+
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("category", String(value));
+    };
+
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
+
+    return opts;
+  }, [categoryData, categoryChartType, chartTheme.category, openDetailForFilter]);
+
+  const typeOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: "Tickets by Type",
+      data: ticketTypes,
+      type: ticketTypeChartType,
+      themeColor: chartTheme.type,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: typePointColor, // ✅ multi-color + highlight
+    });
+
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("type", String(value));
+    };
+
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
+
+    return opts;
+  }, [ticketTypes, ticketTypeChartType, chartTheme.type, openDetailForFilter]);
+
+  const floorOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: Number(companyId) === 55 ? "Tickets by Blook" : "Tickets by Floor",
+      data: floorTickets,
+      type: floorChartType,
+      themeColor: chartTheme.floor,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: floorPointColor,
+    });
+
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      openDetailForFilter("floor", String(value));
+    };
+
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
+
+    return opts;
+  }, [floorTickets, floorChartType, chartTheme.floor, openDetailForFilter]);
+
+  const unitOptions = useMemo(() => {
+    const opts = buildOptions({
+      title: Number(companyId) === 55 ? "Tickets by Tenant" : "Tickets by Unit",
+      data: unitTickets,
+      type: unitChartType,
+      themeColor: chartTheme.unit,
+      palette: CHART_PALETTE,
+      order: "descending",
+      pointColorFn: unitPointColor, // ✅ multi-color + highlight
+    });
+
+    const handlePointClick = function () {
+      const value = this.name || this.category || this.x || this.y;
+      if (!value) return;
+      const countType = Number(companyId) === 55 ? "tenant" : "unit";
+      openDetailForFilter(countType, String(value));
+    };
+
+    opts.plotOptions = {
+      ...opts.plotOptions,
+      pie: {
+        ...opts.plotOptions?.pie,
+        point: {
+          ...opts.plotOptions?.pie?.point,
+          events: {
+            ...(opts.plotOptions?.pie?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+      series: {
+        ...opts.plotOptions?.series,
+        point: {
+          ...opts.plotOptions?.series?.point,
+          events: {
+            ...(opts.plotOptions?.series?.point?.events || {}),
+            click: handlePointClick,
+          },
+        },
+      },
+    };
+
+    return opts;
+  }, [unitTickets, unitChartType, chartTheme.unit, openDetailForFilter]);
 
   const Loader = () => (
     <div className="flex justify-center items-center py-12">
@@ -574,23 +1128,109 @@ const TicketHighCharts = () => {
   };
 
   return (
-    <div className="w-full px-3">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="  w-full  px-2  sm:px-3  lg:px-4  overflow-x-hidden" ref={dashboardRef} >
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setFilterModalOpen(true)}
+          className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+        >
+          Filter by Date
+        </button>
+        <button
+          type="button"
+          onClick={handleClearFilter}
+          className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+        >
+          Clear Filter
+        </button>
+        {/* <button
+          onClick={handleDashboardPdfDownload}
+          className="h-10 px-4 rounded-xl bg-indigo-600 text-white"
+        >
+          Download PDF
+        </button> */}
+      </div>
+
+      {filterModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
+            <h3 className="text-lg font-semibold text-gray-900">Filter Tickets by Date</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Choose start and end date to refresh dashboard.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setFilterModalOpen(false)}
+                className="h-10 w-full sm:w-auto px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={applyDateFilter}
+                className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+              >
+                Apply Filter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
         <ChartCard
           title="Tickets by Status"
           // subtitle="Overview of ticket lifecycle"
           trendPercent={null}
           trendDirection="down"
           // legendItems={legendTopTwo(statusData, statusPointColor)}
-          onDownload={handleTicketStatusDownload}
-          chartType={statusChartType}
+          onExcelDownload={() =>
+            handleTicketStatusDownload("status")
+          }
+
+          onChartDownload={() =>
+            downloadSingleChartPdf(
+              statusChartRef,
+              "Tickets_By_Status"
+            )
+          } chartType={statusChartType}
           setChartType={setStatusChartType}
           allowBar={true}
           downloading={downloading}
         >
           {statusData ? (
-            <HighchartsReact highcharts={Highcharts} options={statusOptions} />
-          ) : (
+            <div ref={statusChartRef}>
+              <HighchartsReact
+                highcharts={Highcharts}
+                options={statusOptions}
+              />
+            </div>) : (
             <Loader />
           )}
         </ChartCard>
@@ -599,14 +1239,24 @@ const TicketHighCharts = () => {
           title="Tickets by Category"
           // subtitle="Where tickets are coming from"
           // legendItems={legendTopTwo(categoryData, categoryPointColor)}
-          onDownload={handleTicketStatusDownload}
-          chartType={categoryChartType}
+          onExcelDownload={() =>
+            handleTicketStatusDownload("category")
+          }
+
+          onChartDownload={() =>
+            downloadSingleChartPdf(
+              categoryChartRef,
+              "Tickets_By_Category"
+            )
+          } chartType={categoryChartType}
           setChartType={setCategoryChartType}
           allowBar={true}
           downloading={downloading}
         >
           {categoryData ? (
-            <HighchartsReact highcharts={Highcharts} options={categoryOptions} />
+            <div ref={categoryChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={categoryOptions} />
+            </div>
           ) : (
             <Loader />
           )}
@@ -616,55 +1266,117 @@ const TicketHighCharts = () => {
           title="Tickets by Type"
           // subtitle="Distribution by ticket type"
           // legendItems={legendTopTwo(ticketTypes, typePointColor)}
-          onDownload={handleTicketStatusDownload}
-          chartType={ticketTypeChartType}
+          onExcelDownload={() =>
+            handleTicketStatusDownload("type")
+          }
+
+          onChartDownload={() =>
+            downloadSingleChartPdf(
+              typeChartRef,
+              "Tickets_By_Type"
+            )
+          } chartType={ticketTypeChartType}
           setChartType={setTicketTypeChartType}
           allowBar={true}
           downloading={downloading}
         >
           {ticketTypes ? (
-            <HighchartsReact highcharts={Highcharts} options={typeOptions} />
+            <div ref={typeChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={typeOptions} />
+            </div>
           ) : (
             <Loader />
           )}
         </ChartCard>
 
         <ChartCard
-          title="Tickets by Floor"
-          // subtitle="Floor-wise ticket count"
+          title={Number(companyId) === 55 ? "Tickets by Block" : "Tickets by Floor"}          // subtitle="Floor-wise ticket count"
           // legendItems={legendTopTwo(floorTickets, floorPointColor)}
-          onDownload={handleTicketStatusDownload}
-          chartType={floorChartType}
+          onExcelDownload={() =>
+            handleTicketStatusDownload(
+              Number(companyId) === 55
+                ? "block"
+                : "unit"
+            )
+          }
+
+          onChartDownload={() =>
+            downloadSingleChartPdf(
+              floorChartRef,
+              "Tickets_By_Floor"
+            )
+          } chartType={floorChartType}
           setChartType={setFloorChartType}
           allowBar={true}
           downloading={downloading}
         >
           {floorTickets ? (
-            <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+            <div ref={floorChartRef}>
+              <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+            </div>
           ) : (
             <Loader />
           )}
         </ChartCard>
 
-        <div className="lg:col-span-2">
+        <div className="md:col-span-2">
           <ChartCard
-            title="Tickets by Unit"
+            title={Number(companyId) === 55 ? "Tickets by Tenant" : "Tickets by Unit"}
             // subtitle="Unit-wise ticket count"
             // legendItems={legendTopTwo(unitTickets, unitPointColor)}
-            onDownload={handleTicketStatusDownload}
-            chartType={unitChartType}
+            onExcelDownload={() =>
+              handleTicketStatusDownload(
+                Number(companyId) === 55
+                  ? "tenant"
+                  : "unit"
+              )
+            }
+
+            onChartDownload={() =>
+              downloadSingleChartPdf(
+                unitChartRef,
+                "Tickets_By_Unit"
+              )
+            } chartType={unitChartType}
             setChartType={setUnitChartType}
             allowBar={true}
             downloading={downloading}
           >
             {unitTickets ? (
-              <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+              <div ref={unitChartRef}>
+                <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+              </div>
             ) : (
               <Loader />
             )}
           </ChartCard>
         </div>
       </div>
+
+      <DetailPopup
+        isOpen={detailPopup.open}
+        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        title={detailPopup.title}
+        subtitle={`${detailPopup.records.length} record(s)`}
+        records={detailPopup.records}
+        loading={detailPopup.loading}
+        page={detailPage}
+        totalPages={detailTotalPages}
+        onPageChange={onDetailPageChange}
+        columns={[
+          { key: "id", label: "ID" },
+          { key: "title", label: "Title", accessor: (r) => r.heading || r.subject || "—" },
+          {
+            key: "building",
+            label: companyId === 55 ? "Block Name" : "Building Name",
+            accessor: (r) => r.building_name || "—",
+          }, { key: "priority", label: "Priority", accessor: (r) => r.priority },
+          { key: "status", label: "Status", accessor: (r) => r.status || "—" },
+          { key: "createdBy", label: "Created By", accessor: (r) => r.created_by || "—" },
+          { key: "assigned_to", label: "Assigned To", accessor: (r) => r.assigned_to_name || r.assigned_to || "—" },
+          { key: "created_at", label: "Created At", accessor: (r) => r.created_at || r.created_date || "—" },
+        ]}
+      />
     </div>
   );
 };

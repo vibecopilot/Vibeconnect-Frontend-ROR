@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { API_URL, getAssetPPMList, getVibeBackground } from "../../api";
-import { FaCopy, FaDownload } from "react-icons/fa";
+import {
+  API_URL,
+  disableChecklistSchedule,
+  enableChecklistSchedule,
+  getAssetPPMList,
+  getVibeBackground,
+} from "../../api";
+import { FaCheckCircle, FaCopy, FaDownload, FaTimesCircle } from "react-icons/fa";
 import { BiEdit } from "react-icons/bi";
 import Table from "../../components/table/Table";
 import { Link } from "react-router-dom";
@@ -11,6 +17,8 @@ import AssetNav from "../../components/navbars/AssetNav";
 import Navbar from "../../components/Navbar";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
+import SiteHeader from "../../components/SiteHeader";
+import DisableEnableScheduleModal from "../../components/DisableEnableScheduleModal";
 
 const PPMActivity = () => {
   const [ppms, setPPms] = useState([]);
@@ -22,6 +30,11 @@ const PPMActivity = () => {
     currentPage: 1,
   });
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [scheduleModal, setScheduleModal] = useState(null); // { mode: "disable"|"enable", checklist }
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   const themeColor = useSelector((state) => state.theme.color);
 
@@ -71,6 +84,15 @@ const PPMActivity = () => {
     }
   };
 
+  const handleScheduleConfirm = async (payload) => {
+    const { mode, checklist } = scheduleModal;
+    const action = mode === "disable" ? disableChecklistSchedule : enableChecklistSchedule;
+    const res = await action(checklist.id, payload);
+    await fetchServicePPM(paginationData.currentPage, rowsPerPage);
+    setScheduleModal(null);
+    toast.success(res?.data?.message || `Checklist schedule ${mode}d successfully`);
+  };
+
   const handlePageChange = (page) => {
     fetchServicePPM(page, rowsPerPage);
   };
@@ -82,7 +104,7 @@ const PPMActivity = () => {
 
   useEffect(() => {
     fetchServicePPM();
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
 
   const PPMColumn = [
     {
@@ -95,6 +117,23 @@ const PPMActivity = () => {
           <Link to={`/admin/copy-checklist/ppm/${row.id}`}>
             <FaCopy size={15} />
           </Link>
+          {row.active === false ? (
+            <button
+              type="button"
+              title="Enable Schedule"
+              onClick={() => setScheduleModal({ mode: "enable", checklist: row })}
+            >
+              <FaCheckCircle size={15} className="text-green-600" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              title="Disable Schedule"
+              onClick={() => setScheduleModal({ mode: "disable", checklist: row })}
+            >
+              <FaTimesCircle size={15} className="text-red-500" />
+            </button>
+          )}
         </div>
       ),
     },
@@ -103,6 +142,16 @@ const PPMActivity = () => {
       selector: (row) => row.name,
       sortable: true,
       width: "350px",
+    },
+    {
+      name: "Status",
+      selector: (row) =>
+        row.active === false ? (
+          <span className="text-red-500 font-medium">Disabled</span>
+        ) : (
+          <span className="text-green-600 font-medium">Active</span>
+        ),
+      sortable: true,
     },
     {
       name: "Start Date",
@@ -122,6 +171,11 @@ const PPMActivity = () => {
     {
       name: "No. Of Groups",
       selector: (row) => row?.groups?.length,
+      sortable: true,
+    },
+     {
+      name: "Created At",
+      selector: (row) => row?.created_at,
       sortable: true,
     },
     {
@@ -174,6 +228,13 @@ const PPMActivity = () => {
     >
       <Navbar />
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setPPms([]);
+            setFilteredPPMData([]);
+          }}
+        />
         <AssetNav />
         <div className="flex flex-wrap justify-between items-center my-2 ">
           <input
@@ -205,6 +266,14 @@ const PPMActivity = () => {
           onChangeRowsPerPage={handleRowsPerPageChange}
         />
       </div>
+      {scheduleModal && (
+        <DisableEnableScheduleModal
+          mode={scheduleModal.mode}
+          checklistName={scheduleModal.checklist.name}
+          onConfirm={handleScheduleConfirm}
+          onCancel={() => setScheduleModal(null)}
+        />
+      )}
     </section>
   );
 };

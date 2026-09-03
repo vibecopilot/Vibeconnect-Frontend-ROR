@@ -5,8 +5,8 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
 import ModalWrapper from "../../containers/modals/ModalWrapper";
-import { getPPMTask } from "../../api";
-import "../../pages/style/Calendar.css";
+import { getCalendarActivities } from "../../api";
+import "../style/Calendar.css";
 import {
   FaCalendarAlt,
   FaCheckCircle,
@@ -104,71 +104,140 @@ function PPMCalendarDashboard() {
   const [statusFilter, setStatusFilter] = useState("all"); // all | pending | inprogress | complete | overdue
   const [view, setView] = useState("dayGridMonth"); // dayGridMonth | timeGridWeek | timeGridDay
 
+  // ✅ Prevent duplicate API calls
+  const [currentStart, setCurrentStart] = useState(null);
+  const [currentEnd, setCurrentEnd] = useState(null);
+
   // ✅ Reference to control FullCalendar API
   const calendarRef = useRef(null);
+  const lastRangeRef = useRef({ start: null, end: null });
 
   const initialDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
-  useEffect(() => {
-    let mounted = true;
+  //   const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
+  //     if (!startStr || !endStr) return;
+  //     const toastId = toast.loading("Loading calendar...");
+  //     try {
+  //       const data = await getCalendarActivities(startStr, endStr);
+  //       const rawList = Array.isArray(data?.data)
+  //   ? data.data
+  //   : (data?.data?.events ?? []);
 
-    const fetchPPMTask = async () => {
-      const toastId = toast.loading("Loading tasks...");
-      try {
-        const taskResponse = await getPPMTask();
-        const activities = taskResponse?.data?.activities || [];
+  // // ✅ Only allow PPM and AMC
+  //        const list = rawList.filter((item) => {
+  //        const type = (item?.activity_type || item?.checklist_type || "")
+  //        .toString()
+  //        .toLowerCase();
 
-        // ✅ Improved date parsing: Return Date objects directly to FullCalendar
-        // to avoid timezone issues caused by .toISOString()
-        const parseDate = (val) => {
-          if (!val) return null;
-          const d = new Date(val);
-          return isNaN(d.getTime()) ? null : d;
+  //       return type === "ppm" || type === "amc";
+  //      });
+  //       const parseDate = (val) => {
+  //         if (!val) return null;
+  //         const d = new Date(val);
+  //         return isNaN(d.getTime()) ? null : d;
+  //       };
+  //       const formattedEvents = list.map((ev, idx) => {
+  //         const startDate = ev.start || "";
+  //         const startTime = ev.start_time || "00:00:00";
+  //         const start = parseDate(startDate.includes("T") ? startDate : `${startDate}T${startTime}`) || new Date();
+  //         let end = parseDate(ev.end);
+  //         if (!end && ev.end_time) end = parseDate(`${ev.start || startDate}T${ev.end_time}`);
+  //         const formatForCSV = (d) => (d ? d.toISOString() : "");
+  //         return {
+  //           id: String(ev?.id ?? idx),
+  //           title: ev?.title || ev?.checklist_name || "Activity",
+  //           start,
+  //           end,
+  //           extendedProps: {
+  //             assignTo: ev?.assigned_to_name ?? ev?.assign_to ?? "—",
+  //             status: normalizeStatus(ev?.status ?? ""),
+  //             raw: ev,
+  //             startStr: formatForCSV(start),
+  //             endStr: formatForCSV(end),
+  //           },
+  //         };
+  //       });
+  //       setEvents(formattedEvents);
+  //       toast.dismiss(toastId);
+  //     } catch (error) {
+  //       toast.dismiss(toastId);
+  //       console.error(error);
+  //       toast.error("Failed to load calendar");
+  //     }
+  //   }, []);
+
+  const fetchCalendarEvents = React.useCallback(async (startStr, endStr) => {
+    if (!startStr || !endStr) return;
+
+    try {
+      const data = await getCalendarActivities(startStr, endStr);
+
+      const rawList = Array.isArray(data?.activities)
+        ? data.activities
+        : data?.data?.activities || [];
+
+      const parseDate = (val) => {
+        if (!val) return null;
+
+        const d = new Date(val);
+        return isNaN(d.getTime()) ? null : d;
+      };
+
+      const formattedEvents = rawList.map((ev, idx) => {
+        const start = parseDate(ev.start_time);
+        const end = parseDate(ev.end_time);
+
+        return {
+          id: String(ev?.id ?? idx),
+          title: ev?.checklist_name || "Activity",
+          start,
+          end,
+          extendedProps: {
+            assignTo: ev?.assigned_to_name || "—",
+            status: normalizeStatus(ev?.status ?? ""),
+            raw: ev,
+            startStr: start ? start.toISOString() : "",
+            endStr: end ? end.toISOString() : "",
+          },
         };
+      });
 
-        const formattedEvents = activities.map((task, idx) => {
-          const start = parseDate(task?.start_time) || new Date();
-          // If end_time is missing, try end_date. If still missing, leave null.
-          // FullCalendar handles null end gracefully (assumes duration based on defaults or 0).
-          let end = parseDate(task?.end_time);
-          if (!end) {
-            end = parseDate(task?.end_date);
-          }
-          
-          // Helper for export CSV string
-          const formatForCSV = (d) => (d ? d.toISOString() : "");
-
-          return {
-            id: String(task?.id ?? idx),
-            title: task?.asset_name || "No Title",
-            start,
-            end,
-            // Pass raw string for CSV export, date object for calendar
-            extendedProps: {
-              assignTo: task?.assigned_to_name || "Unassigned",
-              status: normalizeStatus(task?.status),
-              raw: task,
-              // Store CSV strings explicitly
-              startStr: formatForCSV(start),
-              endStr: formatForCSV(end),
-            },
-          };
-        });
-
-        if (mounted) setEvents(formattedEvents);
-        toast.dismiss(toastId);
-      } catch (error) {
-        toast.dismiss(toastId);
-        console.log(error);
-        toast.error("Failed to load tasks");
-      }
-    };
-
-    fetchPPMTask();
-    return () => {
-      mounted = false;
-    };
+      setEvents(formattedEvents);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load calendar");
+    }
   }, []);
+  const handleDatesSet = React.useCallback(
+    (arg) => {
+      if (arg?.view?.currentStart && arg?.view?.currentEnd) {
+        const startStr = arg.view.currentStart.toISOString().slice(0, 10);
+        const endStr = arg.view.currentEnd.toISOString().slice(0, 10);
+        if (startStr === currentStart && endStr === currentEnd) return;
+        setCurrentStart(startStr);
+        setCurrentEnd(endStr);
+        fetchCalendarEvents(startStr, endStr);
+      }
+    },
+    [fetchCalendarEvents, currentStart, currentEnd]
+  );
+
+  const handleDateClick = (arg) => {
+    const clickedDate = arg.dateStr; // YYYY-MM-DD
+
+    const dayEvents = events.filter((e) => {
+      const eventDate = new Date(e.start)
+        .toISOString()
+        .slice(0, 10);
+
+      return eventDate === clickedDate;
+    });
+
+    console.log("Clicked Date:", clickedDate);
+    console.log("Events:", dayEvents);
+
+    // show in modal or state
+  };
 
   // ✅ Fix: When 'view' state changes, tell FullCalendar to switch view
   useEffect(() => {
@@ -237,7 +306,7 @@ function PPMCalendarDashboard() {
     return (
       <div className="px-2 py-1">
         <div className="flex items-center justify-between gap-2">
-          <div className="font-semibold text-[12px] leading-4 truncate">
+          <div className="font-semibold text-[10px] sm:text-[12px] leading-4 truncate">
             {eventInfo.event.title}
           </div>
           <span className="text-[10px] opacity-90 shrink-0">
@@ -246,15 +315,15 @@ function PPMCalendarDashboard() {
         </div>
 
         <div className="mt-1 flex items-center justify-between gap-2">
-          <span className="text-[11px] opacity-90 truncate inline-flex items-center gap-1">
+          <span className="text-[9px] sm:text-[11px] opacity-90 truncate">
             <FaUserAlt className="text-[10px]" />
             {assignTo}
           </span>
 
-          <Badge tone={tone}>
+          {/* <Badge tone={tone}>
             {statusIcon(status)}
             <span className="capitalize">{status}</span>
-          </Badge>
+          </Badge> */}
         </div>
       </div>
     );
@@ -272,12 +341,12 @@ function PPMCalendarDashboard() {
   }, [filteredEvents]);
 
   return (
-    <div className="w-full px-3">
+    <div className="w-full px-2 sm:px-3 md:px-4">
       {/* ✅ NEW UI: header + toolbar */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 mb-3">
         <div className="flex flex-col gap-3">
           {/* top row */}
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div className="h-10 w-10 rounded-xl bg-blue-100 text-blue-700 grid place-items-center">
                 <FaCalendarAlt />
@@ -292,14 +361,13 @@ function PPMCalendarDashboard() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               <Badge tone="blue">{counts.all} tasks</Badge>
 
               <button
                 type="button"
                 onClick={() => downloadCSV(exportRows, "ppm_calendar.csv")}
-                className="h-9 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition flex items-center gap-2 text-gray-800"
-                title="Export CSV"
+                className="h-10 px-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center gap-2 text-gray-800 w-full sm:w-auto" title="Export CSV"
               >
                 <FaDownload className="text-sm" />
                 <span className="text-sm font-medium">Export</span>
@@ -308,9 +376,9 @@ function PPMCalendarDashboard() {
           </div>
 
           {/* controls row */}
-          <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <div className="flex flex-col xl:flex-row xl:items-center gap-3">
             {/* search */}
-            <div className="flex-1">
+            <div className="w-full xl:flex-1">
               <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
                 <input
@@ -333,7 +401,7 @@ function PPMCalendarDashboard() {
             </div>
 
             {/* status pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide w-full">
               {[
                 { k: "all", label: "All", tone: "gray", n: counts.all },
                 { k: "pending", label: "Pending", tone: "yellow", n: counts.pending },
@@ -362,7 +430,7 @@ function PPMCalendarDashboard() {
             </div>
 
             {/* view switch */}
-            <div className="flex items-center gap-2">
+            <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
               {[
                 { v: "dayGridMonth", label: "Month" },
                 { v: "timeGridWeek", label: "Week" },
@@ -375,7 +443,7 @@ function PPMCalendarDashboard() {
                     type="button"
                     onClick={() => setView(x.v)}
                     className={[
-                      "h-10 px-4 rounded-xl text-sm font-medium transition",
+                      "h-10 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-medium transition w-full",
                       active
                         ? "bg-blue-600 text-white shadow-sm"
                         : "bg-gray-100 text-gray-800 hover:bg-gray-200",
@@ -391,19 +459,22 @@ function PPMCalendarDashboard() {
       </div>
 
       {/* ✅ NEW UI: calendar inside clean card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-3">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-2 sm:p-3 overflow-hidden">
         <FullCalendar
-          ref={calendarRef} // ✅ Attached ref here
+          timeZone="local"
+          dateClick={handleDateClick}
+          ref={calendarRef}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView={view}
           initialDate={initialDate}
-          height="78vh"
+          height={window.innerWidth < 768 ? "65vh" : "78vh"}
           headerToolbar={{
             left: "prev,next today",
             center: "title",
-            right: "", // ✅ we use our own view buttons above
+            right: "",
           }}
           events={filteredEvents}
+          datesSet={handleDatesSet}
           eventClick={handleEventClick}
           eventClassNames={eventClassNames}
           eventContent={renderEventContent}
@@ -411,7 +482,7 @@ function PPMCalendarDashboard() {
           allDayText="All Day"
           nowIndicator
           selectable
-          dayMaxEvents={3}
+          dayMaxEvents={1}
           eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: true }}
           slotLabelFormat={{ hour: "2-digit", minute: "2-digit", hour12: true }}
         />
@@ -420,7 +491,7 @@ function PPMCalendarDashboard() {
       {/* ✅ Modern modal */}
       {modal && selectedEvent && (
         <ModalWrapper onclose={oncloseModal}>
-          <div className="flex flex-col gap-y-4">
+          <div className="flex flex-col gap-y-4 w-[95vw] sm:w-[500px] min-h-[300px] max-h-[85vh] overflow-y-auto">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h3 className="text-base font-bold text-gray-900 truncate">
@@ -442,7 +513,7 @@ function PPMCalendarDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                 <p className="text-xs text-gray-500">Assigned To</p>
-                <p className="text-sm font-semibold text-gray-900 mt-1 truncate">
+                <p className="text-sm font-semibold text-gray-900 mt-1 break-words whitespace-normal">
                   {selectedEvent.extendedProps?.assignTo}
                 </p>
               </div>

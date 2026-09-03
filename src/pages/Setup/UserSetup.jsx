@@ -1,259 +1,940 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PiPlusCircle } from "react-icons/pi";
+import Navbar from "../../components/Navbar";
 import Table from "../../components/table/Table";
-import { getSetupUsers, sendMailToUsers } from "../../api";
+import {
+  getSetupUsers,
+  getUserCount,
+  putSetupUser,
+  updateUserAdminApproval,
+  sendBulkWelcomeEmail,
+} from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
-import { FiEdit } from "react-icons/fi";
-import { useSelector } from "react-redux";
+import {
+  FaCheck,
+  FaCheckCircle,
+  FaClock,
+  FaFilter,
+  FaTimes,
+  FaTimesCircle,
+  FaDownload,
+  FaUsers,
+  FaEnvelope,
+  FaPaperclip,
+} from "react-icons/fa";
 import toast from "react-hot-toast";
+import { BiEdit, BiUserCheck } from "react-icons/bi";
+import { DNA } from "react-loader-spinner";
+import { MdApartment, MdDevices } from "react-icons/md";
+import { useSelector } from "react-redux";
+import SiteHeader from "../../components/SiteHeader";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 const UserSetup = () => {
+  const themeColor = useSelector((state) => state.theme.color);
+
+  // ✅ SITE CHANGE STATE
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
+
   const [users, setUsers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [filteredData, setFilteredData] = useState([]);
+  const [count, setCount] = useState("");
+  const [activeTab, setActiveTab] = useState("approved");
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const themeColor = useSelector((state) => state.theme.color);
-  const siteId = getItemInLocalStorage("SITEID");
+  // ✅ BULK EMAIL SELECTION STATE
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [sendingBulkEmail, setSendingBulkEmail] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailAttachments, setEmailAttachments] = useState([]);
 
-  // ✅ Fetch users
+  /* ---------------- FETCH USERS ---------------- */
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+
+      const setupUsers = await getSetupUsers();
+      const userCount = await getUserCount();
+
+      setCount(userCount.data);
+
+      const data = setupUsers.data || [];
+
+      // ✅ SITE WISE FILTER
+      const filteredSiteUsers = data.filter((user) => {
+        if (!activeSiteId) return true;
+
+        // direct site_id
+        if (String(user.site_id) === String(activeSiteId)) {
+          return true;
+        }
+
+        // user_sites array
+        if (Array.isArray(user.user_sites)) {
+          return user.user_sites.some(
+            (site) => String(site.site_id) === String(activeSiteId)
+          );
+        }
+
+        return false;
+      });
+
+      setUsers(filteredSiteUsers);
+      setFilteredData(filteredSiteUsers);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ---------------- USE EFFECT ---------------- */
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const setupUsers = await getSetupUsers();
-
-        // Format user data for the table
-        const formattedUsers = setupUsers.data.map((user) => ({
-          id: user.id,
-          firstname: user.firstname || "",
-          lastname: user.lastname || "",
-          mobile: user.mobile || "",
-          email: user.email || "",
-          Ownership_Types: user.user_sites?.[0]?.ownership_type || "N/A",
-          Phase: user.user_phase || "N/A",
-          Status: user.user_status ? "Active" : "Inactive",
-          Vehical: user.vehicle || "N/A",
-          App_Downloaded: user.is_downloaded ? "Yes" : "No",
-          Alternate_Address: user.user_address || "",
-          Alternate_Email_1: user.email_1 || "",
-          Landline_Number: user.landline_number || "",
-          Intercom_Number: user.intercom_number || "",
-          GST_Number: user.gst_number || "N/A",
-          PAN_Number: user.pan_number || "N/A",
-          Created_On: user.created_at
-            ? new Date(user.created_at).toLocaleDateString()
-            : "",
-          Updated_On: user.updated_at
-            ? new Date(user.updated_at).toLocaleDateString()
-            : "",
-          user_type:
-            user.user_type === ""
-              ? "N/A"
-              : user.user_type === "pms_admin"
-              ? "Admin"
-              : user.user_type === "employee"
-              ? "Employee"
-              : user.user_type,
-        }));
-
-        setUsers(formattedUsers);
-        setFilteredData(formattedUsers);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        toast.error("Failed to load users");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
-  }, []);
+  }, [activeSiteId]);
 
-  // Derived counts for the new buttons
-  const totalUsers = users.length;
-  const activeCount = users.filter((u) => u.Status === "Active").length;
-  const pendingCount = users.filter((u) => u.Status === "Inactive").length;
-  const appDownloadedCount = users.filter((u) => u.App_Downloaded === "Yes")
-    .length;
+  // ✅ CLEAR SELECTION WHEN SWITCHING TABS
+  useEffect(() => {
+    setSelectedUsers([]);
+  }, [activeTab]);
 
-  // ✅ Search functionality
+  /* ---------------- SEARCHABLE TEXT ---------------- */
+  const buildSearchableText = (item) => {
+    const userSitesHierarchy = Array.isArray(item.user_sites)
+      ? item.user_sites
+        .map((site) => site.hierarchy || site.full_unit_name || "")
+        .join(" ")
+      : "";
+
+    return [
+      item.firstname,
+      item.lastname,
+      item.email,
+      item.mobile,
+      item.user_type,
+      item.full_unit_name,
+      item.unit?.name,
+      userSitesHierarchy,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  };
+
+  /* ---------------- SEARCH ---------------- */
   const handleSearch = (e) => {
     const searchValue = e.target.value;
+
     setSearchText(searchValue);
 
     if (searchValue.trim() === "") {
       setFilteredData(users);
     } else {
-      const filteredResults = users.filter(
-        (item) =>
-          (item.firstname &&
-            item.firstname.toLowerCase().includes(searchValue.toLowerCase())) ||
-          (item.lastname &&
-            item.lastname.toLowerCase().includes(searchValue.toLowerCase())) ||
-          (item.email &&
-            item.email.toLowerCase().includes(searchValue.toLowerCase()))
-      );
+      const searchWords = searchValue
+        .toLowerCase()
+        .split(" ")
+        .filter(Boolean);
+
+      const filteredResults = users.filter((item) => {
+        const searchable = buildSearchableText(item);
+
+        return searchWords.every((word) =>
+          searchable.includes(word)
+        );
+      });
+
       setFilteredData(filteredResults);
     }
   };
 
-  // ✅ Send Mail
-  const handleSendMail = async (userId, first, last) => {
+  /* ---------------- TAB FILTER ---------------- */
+  const tabFilteredUsers = useMemo(() => {
+    if (activeTab === "approved") {
+      return filteredData.filter(
+        (user) =>
+          user.is_admin_approved === true ||
+          user.user_type === "pms_admin"
+      );
+    }
+
+    if (activeTab === "pending") {
+      return filteredData.filter(
+        (user) =>
+          user.is_admin_approved === null &&
+          user.user_type !== "pms_admin"
+      );
+    }
+
+    if (activeTab === "rejected") {
+      return filteredData.filter(
+        (user) =>
+          user.is_admin_approved === false &&
+          user.user_type !== "pms_admin"
+      );
+    }
+
+    return filteredData;
+  }, [filteredData, activeTab]);
+
+  /* ---------------- DATE FILTER ---------------- */
+  const dateFilteredUsers = useMemo(() => {
+    let data = [...tabFilteredUsers];
+
+    if (!fromDate && !toDate) return data;
+
+    return data.filter((user) => {
+      if (!user.created_at) return false;
+
+      const created = new Date(user.created_at);
+
+      if (fromDate) {
+        const from = new Date(fromDate);
+        from.setHours(0, 0, 0, 0);
+
+        if (created < from) return false;
+      }
+
+      if (toDate) {
+        const to = new Date(toDate);
+        to.setHours(23, 59, 59, 999);
+
+        if (created > to) return false;
+      }
+
+      return true;
+    });
+  }, [tabFilteredUsers, fromDate, toDate]);
+
+  /* ---------------- CLEAR FILTER ---------------- */
+  const clearDateFilter = () => {
+    setFromDate("");
+    setToDate("");
+  };
+
+  /* ---------------- USER APPROVAL ---------------- */
+  const handleUserApproval = async (id, isApproved) => {
+    const token = localStorage.getItem("TOKEN");
+
+    setUsers((prev) =>
+      prev.map((u) =>
+        u.id === id
+          ? {
+            ...u,
+            is_admin_approved: isApproved,
+            user_status: true,
+          }
+          : u
+      )
+    );
+
     try {
-      toast.loading(`Sending Mail to ${first} ${last}...`);
-      await sendMailToUsers(userId);
-      toast.dismiss();
-      toast.success("Welcome Mail Sent");
-    } catch (error) {
-      toast.dismiss();
-      toast.error("Something went wrong");
-      console.error(error);
+      await updateUserAdminApproval(
+        id,
+        {
+          user_status: true,
+          is_admin_approved: isApproved,
+        },
+        token
+      );
+
+      if (isApproved === true) {
+        toast.success("User approved successfully ✅");
+      } else {
+        toast.error("User rejected successfully ❌");
+      }
+    } catch (err) {
+      console.error(err);
+
+      toast.error("Failed to update approval ❌");
+
+      fetchUsers();
     }
   };
 
-  // ✅ Table columns
+  /* ---------------- STATUS TOGGLE ---------------- */
+  const handleStatusToggle = async (row) => {
+    const newStatus = !row.user_status;
+
+    try {
+      const token = localStorage.getItem("TOKEN");
+
+      await putSetupUser(
+        row.id,
+        { user: { user_status: newStatus } },
+        token
+      );
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === row.id
+            ? { ...user, user_status: newStatus }
+            : user
+        )
+      );
+
+      toast.success(
+        newStatus
+          ? "User Activated Successfully ✅"
+          : "User Deactivated Successfully ❌"
+      );
+      fetchUsers();
+    } catch (error) {
+      console.error(error);
+
+      toast.error("Failed to update status ❌");
+    }
+  };
+
+  /* ---------------- BULK EMAIL ---------------- */
+  const handleSendBulkEmail = async () => {
+    if (selectedUsers.length === 0) return;
+
+    const userIds = selectedUsers.map((u) => u.id);
+
+    try {
+      setSendingBulkEmail(true);
+
+      const res = await sendBulkWelcomeEmail(userIds, emailAttachments);
+      const sentCount = res?.data?.sent?.length ?? userIds.length;
+      const failedCount = res?.data?.failed?.length ?? 0;
+
+      if (failedCount > 0) {
+        toast.error(
+          `Sent ${sentCount} email(s), ${failedCount} failed ❌`
+        );
+      } else {
+        toast.success(`Welcome email sent to ${sentCount} user(s) ✅`);
+      }
+
+      setSelectedUsers([]);
+      setEmailAttachments([]);
+      setEmailModalOpen(false);
+    } catch (error) {
+      console.error(error);
+
+      toast.error("Failed to send bulk email ❌");
+    } finally {
+      setSendingBulkEmail(false);
+    }
+  };
+
+  const handleAddAttachments = (e) => {
+    const newFiles = Array.from(e.target.files || []);
+
+    setEmailAttachments((prev) => [...prev, ...newFiles]);
+
+    e.target.value = "";
+  };
+
+  const handleRemoveAttachment = (index) => {
+    setEmailAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /* ---------------- COUNTS ---------------- */
+  const approvedCount = users.filter(
+    (u) =>
+      u.is_admin_approved === true ||
+      u.user_type === "pms_admin"
+  ).length;
+
+  const pendingCount = users.filter(
+    (u) =>
+      u.is_admin_approved === null &&
+      u.user_type !== "pms_admin"
+  ).length;
+
+  const rejectedCount = users.filter(
+    (u) =>
+      u.is_admin_approved === false &&
+      u.user_type !== "pms_admin"
+  ).length;
+
+  const totalUsersCount =
+    approvedCount + pendingCount + rejectedCount;
+
+  /* ---------------- TABLE COLUMNS ---------------- */
   const userColumn = [
-  {
-    name: "Action",
-    cell: (row) => (
-      <div className="flex items-center gap-4">
-
-        {/* View User Details */}
-        <Link
-          to={`/setup/users-details/${row.id}`}
-          className="text-gray-700 hover:text-indigo-600 transition-all"
-          title="View User Details"
-        >
-          <BsEye size={15} className="cursor-pointer hover:scale-110 duration-200" />
-        </Link>
-
-        {/* Edit User */}
-        <Link
-          to={`/setup/edit-user/${row.id}`}
-          state={{ user: row }}
-          className="text-gray-700 hover:text-blue-600 transition-all"
-          title="Edit User"
-        >
-          <FiEdit size={15} className="cursor-pointer hover:scale-110 duration-200" />
-        </Link>
-
-      </div>
-    ),
-    width: "120px",
-  },
-  { name: "Name", selector: (row) => `${row.firstname} ${row.lastname}` },
-    { name: "Mobile", selector: (row) => row.mobile },
-    { name: "Email", selector: (row) => row.email },
-    { name: "Ownership Type", selector: (row) => row.Ownership_Types },
-    { name: "Phase", selector: (row) => row.Phase },
-    { name: "Occupied", selector: (row) => row.Occupied },
-    { name: "Status", selector: (row) => row.Status },
-    { name: "App Downloaded", selector: (row) => row.App_Downloaded },
-    { name: "PAN", selector: (row) => row.PAN_Number },
-    { name: "GST", selector: (row) => row.GST_Number },
-    { name: "Created On", selector: (row) => row.Created_On },
-    { name: "Updated On", selector: (row) => row.Updated_On },
-    { name: "User Type", selector: (row) => row.user_type },
     {
-      name: "Send Email",
+      name: "Action",
       cell: (row) => (
-        <button
-          style={{ background: themeColor }}
-          onClick={() => handleSendMail(row.id, row.firstname, row.lastname)}
-          className="text-white md:text-sm text-xs rounded-full shadow-custom-all-sides p-1 px-4 hover:opacity-90"
-        >
-          Send
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            to={`/setup/users-details/${row.id}`}
+            title="View"
+          >
+            <BsEye size={18} />
+          </Link>
+
+          <Link
+            to={`/setup/edit-user/${row.id}`}
+            state={{ user: row }}
+            title="Edit"
+          >
+            <BiEdit size={18} />
+          </Link>
+        </div>
       ),
+      width: "200px",
+    },
+
+    {
+      name: "First Name",
+      selector: (row) => row.firstname,
+      sortable: true,
+    },
+
+    {
+      name: "Last Name",
+      selector: (row) => row.lastname,
+      sortable: true,
+    },
+
+    {
+      name: "Email",
+      selector: (row) => row.email,
+      sortable: true,
+    },
+
+    {
+      name: "Mobile",
+      selector: (row) => row.mobile || "NA",
+      sortable: true,
+    },
+
+    {
+      name: "App Downloaded",
+      selector: (row) =>
+        row.is_downloaded ? "Yes" : "No",
+      sortable: true,
+    },
+
+    {
+      name: "Building-Floor-Unit",
+      selector: (row) => row.full_unit_name,
+      sortable: true,
+    },
+
+    {
+      name: "User Type",
+      selector: (row) => {
+        let userType = "User";
+
+        if (row.user_type === "pms_admin") {
+          userType = "Admin";
+        } else if (row.user_type === "pms_occupant_admin") {
+          userType = "Occupant Admin";
+        } else if (row.user_type === "pms_technician") {
+          userType = "Technician";
+        } else if (row.user_type === "pms_occupant") {
+          userType = "Occupant";
+        } else if (row.user_type === "security_guard") {
+          userType = "Security Guard";
+        } else if (row.user_type === "employee") {
+          userType = "Employee";
+        } else if (
+          row.user_type === "unit_resident" ||
+          row.user_type === "user" ||
+          row.user_type === "unit_owner"
+        ) {
+          userType = "Resident";
+        }
+
+        const ownership =
+          row.user_sites?.[0]?.ownership;
+
+        const ownershipType =
+          row.user_sites?.[0]?.ownership_type;
+
+        if (
+          userType === "Resident" ||
+          userType === "Occupant" ||
+          userType === "Occupant Admin"
+        ) {
+          if (ownership === "owner") {
+            userType += ` - Owner${ownershipType === "primary"
+              ? " (Primary)"
+              : ownershipType === "secondary"
+                ? " (Secondary)"
+                : ""
+              }`;
+          } else if (ownership === "tenant") {
+            userType += " - Tenant";
+          }
+        }
+
+        return userType;
+      },
+      sortable: true,
+      wrap: true,
+    },
+
+    {
+      name: "Status",
+      cell: (row) => (
+        <label className="inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={row.user_status === true}
+            onChange={() => handleStatusToggle(row)}
+            className="sr-only peer"
+          />
+
+          <div
+            className={`w-11 h-6 rounded-full relative transition-all duration-300
+            ${row.user_status
+                ? "bg-green-500"
+                : "bg-red-500"
+              }`}
+          >
+            <div
+              className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300
+              ${row.user_status
+                  ? "left-6"
+                  : "left-1"
+                }`}
+            ></div>
+          </div>
+        </label>
+      ),
+      sortable: true,
+    },
+
+    {
+      name: "Approval",
+      cell: (row) =>
+        activeTab === "pending" ? (
+          <div className="flex gap-2">
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-green-500 text-white hover:bg-green-600"
+              onClick={() =>
+                handleUserApproval(row.id, true)
+              }
+            >
+              <FaCheck size={14} />
+            </button>
+
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+              onClick={() =>
+                handleUserApproval(row.id, false)
+              }
+            >
+              <FaTimes size={14} />
+            </button>
+          </div>
+        ) : row.is_admin_approved === true ? (
+          <span className="text-green-600 font-semibold">
+            Approved
+          </span>
+        ) : row.is_admin_approved === false ? (
+          <span className="text-red-600 font-semibold">
+            Rejected
+          </span>
+        ) : (
+          <span className="text-yellow-600 font-semibold">
+            Pending
+          </span>
+        ),
+      sortable: true,
+    },
+
+    {
+      name: "Created At",
+      selector: (row) =>
+        new Date(row.created_at).toLocaleDateString(
+          "en-GB"
+        ),
+      sortable: true,
+    },
+  ];
+
+  /* ---------------- DASHBOARD CARDS ---------------- */
+  const totalDownloads =
+    users?.filter((user) => user.is_downloaded)
+      .length || 0;
+
+  const dashboardCards = [
+    {
+      title: "Total Users",
+      value: totalUsersCount || 0,
+      icon: <FaUsers size={22} />,
+      bg: "bg-blue-400 text-white",
+    },
+    {
+      title: "Total App Downloads",
+      value: totalDownloads || 0,
+      icon: <FaDownload size={22} />,
+      bg: "bg-green-400 text-white",
+    },
+    {
+      title: "Device Registered",
+      value: count?.total_user_downloads || 0,
+      icon: <MdDevices size={22} />,
+      bg: "bg-purple-400 text-white",
+    },
+    {
+      title: "Tenant Register",
+      value: count?.total_tenant_downloads || 0,
+      icon: <MdApartment size={22} />,
+      bg: "bg-orange-400 text-white",
+    },
+    {
+      title: "Owner Register",
+      value: count?.total_owner_downloads || 0,
+      icon: <BiUserCheck size={22} />,
+      bg: "bg-pink-400 text-white",
+    },
+    {
+      title: "Approved Users",
+      value: approvedCount || 0,
+      icon: <FaCheckCircle size={22} />,
+      bg: "bg-emerald-400 text-white",
+    },
+    {
+      title: "Pending Users",
+      value: pendingCount || 0,
+      icon: <FaClock size={22} />,
+      bg: "bg-yellow-400 text-white",
+    },
+    {
+      title: "Rejected Users",
+      value: rejectedCount || 0,
+      icon: <FaTimesCircle size={22} />,
+      bg: "bg-red-400 text-white",
     },
   ];
 
   return (
-    <section className="flex flex-col md:flex-row bg-gray-50 min-h-screen">
-      {/* Sidebar Navbar */}
+    <section className="flex">
       <SetupNavbar />
 
-      {/* Main Content */}
-      <div className="w-full flex mx-3 flex-col gap-4 overflow-hidden mb-5">
-        {/* 🔍 Search + Add Buttons + Counts */}
-        <div className="mt-5 flex md:flex-row flex-col justify-between md:items-center gap-4">
-          <div className="flex gap-3 sm:flex-row flex-col w-full md:w-auto">
-            <input
-              type="text"
-              placeholder="Search by name or email"
-              className="p-2 md:w-96 border border-gray-300 rounded-md placeholder:text-sm outline-none focus:ring-2 focus:ring-indigo-400"
-              value={searchText}
-              onChange={handleSearch}
-            />
+      <div className="w-full flex mx-3 flex-col gap-4 overflow-hidden ">
+
+        {/* ✅ SITE HEADER */}
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id);
+
+            setSearchText("");
+            setFromDate("");
+            setToDate("");
+            setUsers([]);
+          }}
+        />
+
+        {/* ---------- TABS ---------- */}
+        <div className="flex bg-gray-100 py-2 rounded-full shadow-inner justify-center ">
+          <button
+            onClick={() => setActiveTab("approved")}
+            className={`px-6 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "approved"
+              ? "bg-green-300 text-black shadow-md scale-105"
+              : "text-gray-600 hover:text-green-600"
+              }`}
+          >
+            Approved Users
+          </button>
+
+          <button
+            onClick={() => setActiveTab("pending")}
+            className={`px-8 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "pending"
+              ? "bg-yellow-500 text-black shadow-md scale-105"
+              : "text-gray-600 hover:text-yellow-600"
+              }`}
+          >
+            Pending Users
+          </button>
+
+          <button
+            onClick={() => setActiveTab("rejected")}
+            className={`px-8 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${activeTab === "rejected"
+              ? "bg-red-400 text-black shadow-md scale-105"
+              : "text-gray-600 hover:text-red-600"
+              }`}
+          >
+            Rejected Users
+          </button>
+        </div>
+
+        {/* SEARCH + BUTTONS */}
+        <div className="mt-2 flex md:flex-row flex-col justify-between md:items-center gap-4">
+          <input
+            type="text"
+            placeholder="Search Anything (Name, Email, Mobile and Flat)"
+            className="p-2 w-full border border-gray-300 rounded-md placeholder:text-sm outline-none"
+            value={searchText}
+            onChange={handleSearch}
+          />
+
+          <div className="flex gap-3">
+            {selectedUsers.length > 0 && (
+              // Sends immediately on click (no attachment popup) — the
+              // popup below is intentionally left wired but unused while
+              // per-send attachments are on hold; attachments for the
+              // welcome email are configured once per site instead, in
+              // Welcome Mail Setup. Re-point this onClick at
+              // `() => setEmailModalOpen(true)` to bring the popup back.
+              <button
+                onClick={handleSendBulkEmail}
+                disabled={sendingBulkEmail}
+                title={
+                  sendingBulkEmail
+                    ? "Sending..."
+                    : `Send welcome email to ${selectedUsers.length} selected user(s)`
+                }
+                style={{ background: themeColor }}
+                className="relative text-white w-10 h-10 rounded-md flex items-center justify-center disabled:opacity-60"
+              >
+                <FaEnvelope size={16} />
+                {!sendingBulkEmail && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {selectedUsers.length}
+                  </span>
+                )}
+              </button>
+            )}
+
+            <button
+              onClick={() => setFilterOpen(true)}
+              style={{ background: themeColor }}
+              className="text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              <FaFilter />
+              Filter
+            </button>
 
             <Link
               to="/setup/users-setup/add-new-user"
-              className="font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md text-black hover:bg-gray-100"
+              style={{ background: themeColor }}
+              className="font-semibold p-2 px-4 rounded-md text-white flex items-center gap-2"
             >
-              <svg
-                stroke="currentColor"
-                fill="currentColor"
-                strokeWidth="0"
-                viewBox="0 0 512 512"
-                height="1em"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M416 277.333H277.333V416h-42.666V277.333H96v-42.666h138.667V96h42.666v138.667H416v42.666z"></path>
-              </svg>
+              <PiPlusCircle size={20} />
               Add
             </Link>
           </div>
-
-          {/* Right-side controls: counts + primary add */}
-          <div className="flex items-center gap-3 flex-wrap">
-
-            {/* Count button: States (Pending / Active) */}
-            <div className="text-sm px-3 py-1 rounded-md border border-gray-200 bg-white shadow-sm flex items-center gap-2">
-              <span className="font-semibold">States</span>
-              <span className="text-xs text-gray-600">
-                Pending {pendingCount} / Active {activeCount}
-              </span>
-            </div>
-
-            {/* Count button: App Downloaded */}
-            <div className="text-sm px-3 py-1 rounded-md border border-gray-200 bg-white shadow-sm flex items-center gap-2">
-              <span className="font-semibold">App Downloaded</span>
-              <span className="text-xs text-gray-600">{appDownloadedCount}</span>
-            </div>
-
-            {/* Count button: Total Users */}
-            <div className="text-sm px-3 py-1 rounded-md border border-gray-200 bg-white shadow-sm flex items-center gap-2">
-              <span className="font-semibold">Users</span>
-              <span className="text-xs text-gray-600">{totalUsers}</span>
-            </div>
-
-            {/* Conditional Add User Button (prominent) */}
-            {siteId === 10 && (
-              <Link
-                to={"/setup/users-setup/add-new-user"}
-                style={{ background: themeColor }}
-                className="font-semibold duration-300 ease-in-out transition-all p-1 px-4 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center hover:opacity-90"
-              >
-                <PiPlusCircle size={20} />
-                Add User
-              </Link>
-            )}
-          </div>
         </div>
 
-        {/* 🧭 Table Section */}
+        {/* LOADING */}
         {loading ? (
-          <p className="text-center text-gray-500 mt-10">Loading users...</p>
-        ) : filteredData.length === 0 ? (
-          <p className="text-center text-gray-500 mt-10">No users found.</p>
+          <div className="flex justify-center items-center h-80 mt-10">
+            <DNA
+              visible={true}
+              height={110}
+              width={120}
+              ariaLabel="dna-loading"
+            />
+          </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-md p-4">
-            <Table columns={userColumn} data={filteredData} />
+          <>
+            {/* DASHBOARD */}
+            <div className="grid lg:grid-cols-8 md:grid-cols-5 grid-cols-1 gap-8">
+              {dashboardCards.map((card, index) => (
+                <div
+                  key={index}
+                  className={`bg-gradient-to-r ${card.bg} rounded-xl p-3 shadow-lg hover:scale-90 transform transition duration-300`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-sm font-medium opacity-90">
+                        {card.title}
+                      </h3>
+
+                      <p className="text-3xl font-bold mt-2">
+                        {card.value}
+                      </p>
+                    </div>
+
+                    <div className="opacity-90">
+                      {card.icon}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* TABLE */}
+            <div className="bg-white rounded-xl shadow-md p-4">
+              <Table
+                columns={userColumn}
+                data={dateFilteredUsers}
+                selectableRow
+                onSelectedRows={setSelectedUsers}
+              />
+            </div>
+          </>
+        )}
+
+        {/* FILTER MODAL */}
+        {filterOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl shadow-xl w-[420px] p-6">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-lg font-semibold">
+                  Filter Users By Date
+                </h2>
+
+                <button
+                  onClick={() => setFilterOpen(false)}
+                  className="text-gray-500 text-xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">
+                    From Date
+                  </label>
+
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) =>
+                      setFromDate(e.target.value)
+                    }
+                    className="w-full border rounded-lg p-2 mt-1"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium">
+                    To Date
+                  </label>
+
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) =>
+                      setToDate(e.target.value)
+                    }
+                    className="w-full border rounded-lg p-2 mt-1"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    onClick={clearDateFilter}
+                    className="px-4 py-2 rounded-lg border"
+                  >
+                    Clear
+                  </button>
+
+                  <button
+                    onClick={() => setFilterOpen(false)}
+                    className="px-5 py-2 bg-blue-600 text-white rounded-lg"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SEND EMAIL MODAL */}
+        {emailModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl shadow-xl w-[440px] p-6">
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-lg font-semibold">
+                  Send Welcome Email
+                </h2>
+
+                <button
+                  onClick={() => {
+                    if (sendingBulkEmail) return;
+
+                    setEmailModalOpen(false);
+                  }}
+                  className="text-gray-500 text-xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-600 mb-4">
+                This will send the welcome email to{" "}
+                <span className="font-semibold">
+                  {selectedUsers.length}
+                </span>{" "}
+                selected user(s).
+              </p>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium block mb-1">
+                    Attachments{" "}
+                    <span className="text-gray-400 font-normal">
+                      (optional — attached to every email)
+                    </span>
+                  </label>
+
+                  <label className="flex items-center justify-center gap-2 border border-dashed rounded-lg p-3 text-sm text-gray-600 cursor-pointer hover:bg-gray-50">
+                    <FaPaperclip />
+                    Choose file(s)
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleAddAttachments}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {emailAttachments.length > 0 && (
+                    <ul className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                      {emailAttachments.map((file, index) => (
+                        <li
+                          key={`${file.name}-${index}`}
+                          className="flex items-center justify-between text-xs bg-gray-100 rounded px-2 py-1"
+                        >
+                          <span className="truncate mr-2">
+                            {file.name}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleRemoveAttachment(index)
+                            }
+                            className="text-red-500 shrink-0"
+                            title="Remove"
+                          >
+                            <FaTimes size={12} />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    onClick={() => setEmailModalOpen(false)}
+                    disabled={sendingBulkEmail}
+                    className="px-4 py-2 rounded-lg border disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={handleSendBulkEmail}
+                    disabled={sendingBulkEmail}
+                    style={{ background: themeColor }}
+                    className="px-5 py-2 text-white rounded-lg disabled:opacity-60"
+                  >
+                    {sendingBulkEmail ? "Sending..." : "Send"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

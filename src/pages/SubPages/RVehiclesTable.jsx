@@ -5,19 +5,27 @@ import { BiEdit } from "react-icons/bi";
 import { FaCheck, FaTimes } from "react-icons/fa";
 import Table from "../../components/table/Table";
 
+import { useNavigate } from "react-router-dom";
+
 const RVehiclesTable = ({
   data = [],
   loading,
   error,
   currentPageNum,
+  totalCount = 0,
+  rowsPerPage = 10,
   pageType,
+  onPageChange,
   onApprove,
   onReject,
 }) => {
+  const navigate = useNavigate();
   const isApproval = pageType === "Approvals";
   const isHistory =
     pageType === "History" ||
     pageType === "Vehicle In" ||
+
+    
     pageType === "Vehicle Out";
 
   const getVehicleId = (row) => {
@@ -43,77 +51,84 @@ const RVehiclesTable = ({
 
   const columns = isApproval
     ? [
-        {
-          name: "Vehicle Number",
-          selector: (row) =>
-            row.vehicle_number ||
-            row.registered_vehicle?.vehicle_number ||
-            "-",
-        },
-        {
-          name: "Vehicle Type",
-          selector: (row) =>
-            row.name ||
-            row.vehicle_type ||
-            row.registered_vehicle?.vehicle_type ||
-            "-",
-        },
-        {
-          name: "Requested By",
-          selector: (row) =>
-            row.created_by ||
-            row.requested_by ||
-            row.registered_vehicle?.created_by ||
-            "-",
-        },
-        {
+      {
+        name: "Vehicle Number",
+        selector: (row) =>
+          row.vehicle_number ||
+          row.registered_vehicle?.vehicle_number ||
+          "-",
+      },
+      {
+        name: "Vehicle Type",
+        selector: (row) =>
+          row.name ||
+          row.vehicle_type ||
+          row.registered_vehicle?.vehicle_type ||
+          "-",
+      },
+      {
+        name: "Requested By",
+        selector: (row) =>
+          row.created_by ||
+          row.requested_by ||
+          row.registered_vehicle?.created_by ||
+          "-",
+      },
+      {
 
-          name: "Requested At",
-          selector: (row) => fmtDate(row.created_at || row.__createdAt),
-        },
-        {
-          name: "Approval",
-          cell: (row) => {
-            const vehicleId = getVehicleId(row);
-            return (
-              <div className="flex justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => vehicleId && onApprove?.(row)}
-                  disabled={!vehicleId}
-                  className={`w-8 h-8 rounded-full text-white flex items-center justify-center ${
-                    vehicleId
-                      ? "bg-green-500 hover:bg-green-600"
-                      : "bg-green-300 cursor-not-allowed"
+        name: "Requested At",
+        selector: (row) => fmtDate(row.created_at || row.__createdAt),
+      },
+      {
+        name: "Approval",
+        cell: (row) => {
+          const vehicleId = getVehicleId(row);
+          return (
+            <div className="flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => vehicleId && onApprove?.(row)}
+                disabled={!vehicleId}
+                className={`w-8 h-8 rounded-full text-white flex items-center justify-center ${vehicleId
+                  ? "bg-green-500 hover:bg-green-600"
+                  : "bg-green-300 cursor-not-allowed"
                   }`}
-                  title={vehicleId ? "Approve" : "Vehicle ID missing"}
-                >
-                  <FaCheck size={14} />
-                </button>
+                title={vehicleId ? "Approve" : "Vehicle ID missing"}
+              >
+                <FaCheck size={14} />
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() => vehicleId && onReject?.(row)}
-                  disabled={!vehicleId}
-                  className={`w-8 h-8 rounded-full text-white flex items-center justify-center ${
-                    vehicleId
-                      ? "bg-red-500 hover:bg-red-600"
-                      : "bg-red-300 cursor-not-allowed"
+              <button
+                type="button"
+                onClick={() => vehicleId && onReject?.(row)}
+                disabled={!vehicleId}
+                className={`w-8 h-8 rounded-full text-white flex items-center justify-center ${vehicleId
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-red-300 cursor-not-allowed"
                   }`}
-                  title={vehicleId ? "Reject" : "Vehicle ID missing"}
-                >
-                  <FaTimes size={14} />
-                </button>
-              </div>
-            );
-          },
+                title={vehicleId ? "Reject" : "Vehicle ID missing"}
+              >
+                <FaTimes size={14} />
+              </button>
+            </div>
+          );
         },
-      ]
+      },
+    ]
     : isHistory
-    ? [
+      ? [
         {
-          name: "Sr. No",
-          cell: (_, index) => (currentPageNum - 1) * 10 + index + 1,
+          name: "View",
+          cell: (row) => (
+            <button
+              onClick={() =>
+                navigate(`/admin/rvehicles-details/${row.id}`)
+              }
+              className="text-gray-500 hover:text-blue-800"
+            >
+              <BsEye size={16} />
+            </button>
+          ),
           width: "80px",
         },
         {
@@ -137,32 +152,32 @@ const RVehiclesTable = ({
             row.registered_vehicle?.vehicle_category ||
             "-",
         },
-        {
-          name: "Status",
-          selector: (row) => (
-            <span
-              className={
-                getStatus(row) === "Approved"
-                  ? "text-green-600 font-medium"
-                  : getStatus(row) === "Rejected"
-                  ? "text-red-600 font-medium"
-                  : "text-gray-600"
-              }
-            >
-              {getStatus(row)}
-            </span>
-          ),
-        },
+        // {
+        //   name: "Status",
+        //   selector: (row) => (
+        //     <span
+        //       className={
+        //         getStatus(row) === "Approved"
+        //           ? "text-green-600 font-medium"
+        //           : getStatus(row) === "Rejected"
+        //           ? "text-red-600 font-medium"
+        //           : "text-gray-600"
+        //       }
+        //     >
+        //       {getStatus(row)}
+        //     </span>
+        //   ),
+        // },
         {
           name: "Action Date",
           selector: (row) =>
             fmtDate(
               row.updated_at ||
-                row.approved_at ||
-                row.created_at ||
-                row.__createdAt ||
-                row.registered_vehicle?.updated_at ||
-                row.registered_vehicle?.created_at
+              row.approved_at ||
+              row.created_at ||
+              row.__createdAt ||
+              row.registered_vehicle?.updated_at ||
+              row.registered_vehicle?.created_at
             ),
         },
         {
@@ -171,8 +186,8 @@ const RVehiclesTable = ({
             row.check_in
               ? fmtDate(row.check_in)
               : row.vehicle_logs?.check_in
-              ? fmtDate(row.vehicle_logs.check_in)
-              : "-",
+                ? fmtDate(row.vehicle_logs.check_in)
+                : "-",
         },
         {
           name: "Check-Out",
@@ -180,11 +195,11 @@ const RVehiclesTable = ({
             row.check_out
               ? fmtDate(row.check_out)
               : row.vehicle_logs?.check_out
-              ? fmtDate(row.vehicle_logs.check_out)
-              : "-",
+                ? fmtDate(row.vehicle_logs.check_out)
+                : "-",
         },
       ]
-    : [
+      : [
         {
           name: "Action",
           cell: (row) => (
@@ -206,9 +221,20 @@ const RVehiclesTable = ({
   if (loading) return <p className="p-5 text-center">Loading...</p>;
   if (error) return <p className="p-5 text-center text-red-500">{error}</p>;
 
+  const useServerPagination = ["All", "Vehicle In", "Vehicle Out", "Approvals", "History"].includes(pageType);
+
   return (
     <div className="w-full">
-      <Table columns={columns} data={data} isPagination={false} />
+      <Table
+        columns={columns}
+        data={data}
+        pagination
+        paginationServer={useServerPagination}
+        paginationTotalRows={useServerPagination ? totalCount : data.length}
+        currentPage={currentPageNum}
+        rowsPerPage={rowsPerPage}
+        onChangePage={useServerPagination ? onPageChange : undefined}
+      />
     </div>
   );
 };

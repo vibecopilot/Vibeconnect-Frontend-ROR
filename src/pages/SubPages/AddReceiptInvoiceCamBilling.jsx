@@ -4,6 +4,7 @@ import Navbar from "../../components/Navbar";
 import { getCamBillingData, postInvoiceReceipt } from "../../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { error } from "highcharts";
 function AddReceiptInvoiceCamBilling() {
   const themeColor = useSelector((state) => state.theme.color);
   const [camBilling, setCamBilling] = useState([]);
@@ -32,19 +33,35 @@ function AddReceiptInvoiceCamBilling() {
     }));
   };
 
-  useEffect(() => {
-    const fetchCamBilling = async () => {
-      try {
-        const response = await getCamBillingData();
-        const invoiceNumbers = response.data.map((item) => item.invoice_number);
-        setCamBilling(invoiceNumbers);
-      } catch (err) {
-        console.error("Failed to fetch CAM Billing data:", err);
-      }
-    };
+useEffect(() => {
+  const fetchCamBilling = async () => {
+    try {
+      const response = await getCamBillingData();
 
-    fetchCamBilling();
-  }, []);
+      console.log("Full API Response:", response);
+
+      // 🔥 Safely extract data array
+      const billingData =
+        response?.data?.data || 
+        response?.data?.cam_bills || 
+        response?.data || 
+        [];
+
+      if (Array.isArray(billingData)) {
+        const invoiceNumbers = billingData
+          .map((item) => item.invoice_number)
+          .filter(Boolean); // remove null/undefined
+
+        setCamBilling(invoiceNumbers);
+      }
+
+    } catch (err) {
+      console.error("Failed to fetch CAM Billing data:", err);
+    }
+  };
+
+  fetchCamBilling();
+}, []);
 
   const navigate = useNavigate();
   const handleSubmit = async () => {
@@ -138,20 +155,24 @@ function AddReceiptInvoiceCamBilling() {
                 <label htmlFor="invoiceNumber" className="font-semibold my-2">
                   Invoice Number
                 </label>
-                <select
-                  name="invoiceNumber"
-                  id="invoiceNumber"
-                  value={formData.invoiceNumber}
-                  onChange={handleChange}
-                  className="border p-1 px-4 border-gray-500 rounded-md"
-                >
-                  <option value="">Select Invoice Number</option>
-                  {camBilling.map((invoiceNumber, index) => (
-                    <option key={index} value={invoiceNumber}>
-                      {invoiceNumber}
-                    </option>
-                  ))}
-                </select>
+              <select
+  name="invoiceNumber"
+  value={formData.invoiceNumber}
+  onChange={handleChange}
+  className="border p-2 border-gray-500 rounded-md"
+>
+  <option value="">Select Invoice Number</option>
+
+  {camBilling.length > 0 ? (
+    camBilling.map((invoiceNumber, index) => (
+      <option key={invoiceNumber || index} value={invoiceNumber}>
+        {invoiceNumber}
+      </option>
+    ))
+  ) : (
+    <option disabled>Loading...</option>
+  )}
+</select>
               </div>
               {/* Block */}
               {/* <div className="flex flex-col">
@@ -334,7 +355,12 @@ function AddReceiptInvoiceCamBilling() {
               </div>
             </div>
 
-            <div className="flex justify-center my-5">
+            <div className="flex justify-end my-5 gap-3">
+              <button    onClick={() => navigate("/cam_bill/reciept-invoice")}
+                className="p-1 px-4 border-2 rounded-md text-black font-medium bg-gray-300"
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleSubmit}
                 className="p-1 px-4 border-2 rounded-md text-white font-medium"

@@ -12,11 +12,19 @@ import {
   getFloors,
   getPerPageSiteAsset,
   getSiteAsset,
+  getFilteredSiteAssets,
   getSiteSearchedAsset,
   getUnits,
   getVibeBackground,
   downloadQrCode,
+  getVendors,
+  getGroups,
+  getSubGroups,
+  token,
+  getAssetGroups,
+  updateBreakdown,
 } from "../api";
+import axiosInstance from "../api/axiosInstance";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import AMC from "./SubPages/AMC";
 import Meter from "./Meter";
@@ -36,12 +44,15 @@ import ImportAssetModal from "../containers/modals/ImportAssetModal";
 import { Pagination } from "antd";
 import { FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
+import SiteHeader from "../components/SiteHeader";
 
 // import jsPDF from "jspdf";
 // import QRCode from "qrcode.react";
 
 const Asset = () => {
   const [searchText, setSearchText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isFilterApplied, setIsFilterApplied] = useState(false);
   const [filter, setFilter] = useState(false);
   // const [omitColumn, setOmitColumn] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(columnsData);
@@ -61,6 +72,20 @@ const Asset = () => {
   const [pageNo, setPageNo] = useState(1);
   const [total, setTotal] = useState(0);
   const [perPage, setPerPage] = useState(10);
+  const [selectedVendor, setSelectedVendor] = useState("");
+  const [selectedGroup, setSelectedGroup] = useState("");
+  const [selectedSubGroup, setSelectedSubGroup] = useState("");
+  const [filteredData, setFilteredData] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
+
+
+  const [vendors, setVendors] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [subGroups, setSubGroups] = useState([]);
   const handleCheckboxChange = (event) => {
     const value = event.target.value;
     setSelectedOptions((prevSelectedOptions) =>
@@ -83,6 +108,60 @@ const Asset = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      try {
+        const vendorRes = await getVendors();
+        const groupRes = await getAssetGroups();
+
+        setVendors(vendorRes.data);
+        setGroups(groupRes.data);
+        setSubGroups([]); // ✅ initially empty
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchDropdowns();
+  }, []);
+
+  useEffect(() => {
+    const fetchDropdowns = async () => {
+      try {
+        const vendorRes = await getVendors();
+        const groupRes = await getAssetGroups();
+        const subGroupRes = await getSubGroups();
+
+        setVendors(vendorRes.data);
+        setGroups(groupRes.data);
+        setSubGroups(subGroupRes.data);
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchDropdowns();
+  }, []);
+
+  const handleGroupChange = async (e) => {
+    const groupId = e.target.value;
+
+    setSelectedGroup(groupId);
+    setSelectedSubGroup(""); // reset
+
+    try {
+      const res = await getSubGroups(groupId); // ✅ pass groupId
+
+      console.log("Subgroups:", res.data); // debug
+
+      setSubGroups(res.data); // ✅ update dropdown
+    } catch (error) {
+      console.error("SubGroup fetch error:", error);
+    }
+  };
+
+
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString();
@@ -90,14 +169,58 @@ const Asset = () => {
   document.title = `Assets - Vibe Connect`;
   const column = [
     {
-      name: "Action",
-      cell: (row) => (
+      name: (
         <div className="flex items-center gap-4">
+          {/* Header Checkbox */}
+          <input
+            type="checkbox"
+            checked={
+              filteredData.length > 0 &&
+              selectedRows.length === filteredData.length
+            }
+            onChange={(e) => {
+              if (e.target.checked) {
+                setSelectedRows(filteredData.map((row) => row.id));
+              } else {
+                setSelectedRows([]);
+              }
+            }}
+            className="w-3 h-3 cursor-pointer"
+          />
+          <span>ACTION</span>
+        </div>
+      ),
+      width: "140px",
+      cell: (row) => (
+        <div className="flex items-center gap-4 pl-1">
+          {/* Row Checkbox */}
+          <input
+            type="checkbox"
+            checked={selectedRows.includes(row.id)}
+            onChange={() => {
+              setSelectedRows((prev) =>
+                prev.includes(row.id)
+                  ? prev.filter((id) => id !== row.id)
+                  : [...prev, row.id]
+              );
+            }}
+            className="w-3 h-3 cursor-pointer"
+          />
+
+          {/* View */}
           <Link to={`/assets/asset-details/${row.id}`}>
-            <BsEye size={15} />
+            <BsEye
+              size={14}
+              className="text-gray-600 hover:text-black cursor-pointer"
+            />
           </Link>
+
+          {/* Edit */}
           <Link to={`/assets/edit-asset/${row.id}`}>
-            <BiEdit size={15} />
+            <BiEdit
+              size={14}
+              className="text-gray-600 hover:text-black cursor-pointer"
+            />
           </Link>
         </div>
       ),
@@ -106,7 +229,6 @@ const Asset = () => {
       name: "Asset Name",
       selector: (row) => row.name,
       sortable: true,
-      width: "350px",
     },
 
     {
@@ -174,16 +296,18 @@ const Asset = () => {
     },
     {
       name: "Status",
-      selector: (row) =>
-        row.breakdown ? (
-          <p className="bg-red-400 p-1 px-2 rounded-full text-white">
-            Breakdown
-          </p>
-        ) : (
-          <p className="bg-green-400 p-1 px-2 rounded-full text-white">
-            In Use
-          </p>
-        ),
+      cell: (row) => (
+        <label className="inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={!row.breakdown}
+            onChange={() => handleStatusToggle(row)}
+            className="sr-only peer"
+          />
+          <div className="w-11 h-6 bg-red-500 rounded-full peer peer-checked:bg-green-500 transition-all duration-300"></div>
+          <div className="absolute w-5 h-5 bg-white rounded-full shadow-md transform peer-checked:translate-x-5 transition-all duration-300"></div>
+        </label>
+      ),
       sortable: true,
     },
     {
@@ -237,7 +361,7 @@ const Asset = () => {
     },
   ];
 
-  const [filteredData, setFilteredData] = useState([]);
+
 
   // const handleSearch = (e) => {
   //   const searchValue = e.target.value;
@@ -261,41 +385,132 @@ const Asset = () => {
   //   }
   // };
 
+
+
   const handleSearch = async (e) => {
     const searchValue = e.target.value;
     setSearchText(searchValue);
 
     try {
-      const response = await getSiteSearchedAsset(searchValue);
+      // if search empty → reload paginated data
+      if (!searchValue.trim()) {
+        if (isFilterApplied) {
+          const payload = {};
+          if (selectedBuilding) payload.building_id = selectedBuilding;
+          if (selectedFloor) payload.floor_id = selectedFloor;
+          if (selectedUnit) payload.unit_id = selectedUnit;
+          if (selectedGroup) payload.group_id = selectedGroup;
+          if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
+          if (selectedVendor) payload.vendor_id = selectedVendor;
+
+          const response = await getFilteredSiteAssets(payload, pageNo, perPage);
+          setFilteredData(response.data.site_assets);
+          setTotal(response.data.total_count);
+        } else {
+          const response = await getPerPageSiteAsset(pageNo, perPage);
+          setFilteredData(response.data.site_assets);
+          setAssets(response.data.site_assets);
+          setTotal(response.data.total_count);
+        }
+        return;
+      }
+
+      // Build search query with filters if applied
+      let searchQuery = `q[oem_name_or_name_or_building_name_or_unit_name_cont]=${searchValue}`;
+
+      if (isFilterApplied) {
+        if (selectedBuilding) searchQuery += `&q[building_id_eq]=${selectedBuilding}`;
+        if (selectedFloor) searchQuery += `&q[floor_id_eq]=${selectedFloor}`;
+        if (selectedUnit) searchQuery += `&q[unit_id_eq]=${selectedUnit}`;
+        if (selectedGroup) searchQuery += `&q[asset_group_id_eq]=${selectedGroup}`;
+        if (selectedSubGroup) searchQuery += `&q[sub_group_id_eq]=${selectedSubGroup}`;
+        if (selectedVendor) searchQuery += `&q[vendor_id_eq]=${selectedVendor}`;
+      }
+
+      const response = await axiosInstance.get(`/site_assets.json?token=${token}&page=${pageNo}&per_page=${perPage}&${searchQuery}`);
 
       setFilteredData(response.data.site_assets);
       setTotal(response.data.total_count);
-      console.log(response);
     } catch (error) {
-      console.error("Error fetching search data:", error);
+      console.error("Search error:", error);
+    }
+  };
+
+  const handleStatusToggle = async (row) => {
+    try {
+      const newBreakdownStatus = !row.breakdown;
+
+      // ✅ Call correct API
+      await updateBreakdown(row.id, newBreakdownStatus, token);
+
+      // ✅ Update UI instantly
+      const updatedData = filteredData.map((item) =>
+        item.id === row.id
+          ? { ...item, breakdown: newBreakdownStatus }
+          : item
+      );
+
+      setFilteredData(updatedData);
+
+      toast.success("Status updated successfully");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update status");
     }
   };
 
   useEffect(() => {
     const fetchData = async () => {
+      if (searchText.trim()) return;
+
+      setLoading(true); // 🔥
+
       try {
-        const response = await getPerPageSiteAsset(pageNo, perPage);
+        if (isFilterApplied) {
+          const payload = {};
+          if (selectedBuilding) payload.building_id = selectedBuilding;
+          if (selectedFloor) payload.floor_id = selectedFloor;
+          if (selectedUnit) payload.unit_id = selectedUnit;
+          if (selectedGroup) payload.group_id = selectedGroup;
+          if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
+          if (selectedVendor) payload.vendor_id = selectedVendor;
 
-        setFilteredData(response.data.site_assets);
-
-        setAssets(response.data.site_assets);
-        setTotal(response.data.total_count);
-        console.log(response);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+          const response = await getFilteredSiteAssets(payload, pageNo, perPage);
+          setFilteredData(response.data.site_assets);
+          setTotal(response.data.total_count);
+        } else {
+          const response = await getPerPageSiteAsset(pageNo, perPage);
+          setFilteredData(response.data.site_assets);
+          setAssets(response.data.site_assets);
+          setTotal(response.data.total_count);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false); // 🔥
       }
     };
-    fetchData();
-  }, [pageNo, perPage]);
 
-  const handlePageChange = (page, pageSize) => {
+    fetchData();
+  }, [pageNo, perPage, searchText, isFilterApplied, selectedBuilding, selectedFloor, selectedUnit, selectedGroup, selectedSubGroup, selectedVendor, activeSiteId]); // ✅ re-fetch when site changes
+
+  const handlePageChange = async (page, pageSize) => {
     setPageNo(page);
     setPerPage(pageSize);
+
+    if (isFilterApplied) {
+      const payload = {};
+      if (selectedBuilding) payload.building_id = selectedBuilding;
+      if (selectedFloor) payload.floor_id = selectedFloor;
+      if (selectedUnit) payload.unit_id = selectedUnit;
+      if (selectedGroup) payload.asset_group_id = selectedGroup;
+      if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
+      if (selectedVendor) payload.vendor_id = selectedVendor;
+
+      const response = await getFilteredSiteAssets(payload, page, pageSize);
+      setFilteredData(response.data.site_assets);
+      setTotal(response.data.total_count);
+    }
   };
 
   const exportToExcel = () => {
@@ -343,36 +558,43 @@ const Asset = () => {
 
   const buildings = getItemInLocalStorage("Building");
 
-  const handleFilterApply = () => {
-    let filteredResults = [...filteredData];
+  const handleFilterApply = async () => {
+    try {
+      setLoading(true); // 🔥 start loading
+      setPageNo(1);
 
-    if (selectedBuilding) {
-      filteredResults = filteredResults.filter(
-        (item) => item.building_id === parseInt(selectedBuilding, 10)
-      );
+      const payload = {};
+
+      if (selectedBuilding) payload.building_id = selectedBuilding;
+      if (selectedFloor) payload.floor_id = selectedFloor;
+      if (selectedUnit) payload.unit_id = selectedUnit;
+      if (selectedGroup) payload.group_id = selectedGroup;
+      if (selectedSubGroup) payload.sub_group_id = selectedSubGroup;
+      if (selectedVendor) payload.vendor_id = selectedVendor;
+
+      const response = await getFilteredSiteAssets(payload, 1, perPage);
+
+      setIsFilterApplied(true);
+      setFilteredData(response.data.site_assets);
+      setTotal(response.data.total_count);
+
+    } catch (error) {
+      console.error("Filter error:", error);
+    } finally {
+      setLoading(false); // 🔥 stop loading
     }
-
-    if (selectedFloor) {
-      filteredResults = filteredResults.filter(
-        (item) => item.floor_id === parseInt(selectedFloor, 10)
-      );
-    }
-
-    if (selectedUnit) {
-      filteredResults = filteredResults.filter(
-        (item) => item.unit_id === parseInt(selectedUnit, 10)
-      );
-    }
-
-    setFilteredData(filteredResults);
-    console.log("Filtered Results:", filteredResults);
   };
 
   const handleFilterReset = () => {
     setSelectedBuilding("");
     setSelectedFloor("");
     setSelectedUnit("");
-    setFilteredData(assets);
+    setSelectedGroup("");
+    setSelectedSubGroup("");
+    setSelectedVendor("");
+
+    setIsFilterApplied(false); // ✅ important
+    setPageNo(1);
   };
 
   const handleBuildingChange = async (e) => {
@@ -407,36 +629,32 @@ const Asset = () => {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const Get_Background = async () => {
     try {
-      // const params = {
-      //   user_id: user_id,
-      // };
       const user_id = getItemInLocalStorage("VIBEUSERID");
-      console.log(user_id);
-      const data = await getVibeBackground(user_id);
 
-      if (data.success) {
-        console.log("sucess");
+      // 🚨 If user_id not found → don't call API
+      if (!user_id) {
+        console.log("VIBEUSERID not found. Skipping background API call.");
+        return;
+      }
 
-        console.log(data.data);
-        selectedImageSrc = API_URL + data.data.image;
+      const response = await getVibeBackground(user_id);
 
-        selectedImageIndex = data.data.index;
+      if (response?.success && response?.data) {
+        const imageUrl = API_URL + response.data.image;
 
-        // Now, you can use selectedImageSrc and selectedImageIndex as needed
-        console.log("Received response:", data);
+        setSelectedImage(imageUrl);
+        setSelectedIndex(response.data.index);
 
-        // For example, update state or perform any other actions
-        setSelectedImage(selectedImageSrc);
-        setSelectedIndex(selectedImageIndex);
-        console.log("Received selectedImageSrc:", selectedImageSrc);
-        console.log("Received selectedImageIndex:", selectedImageIndex);
-        console.log(selectedImage);
-        // dispatch(setBackground(selectedImageSrc));
+        console.log("Background loaded successfully");
       } else {
-        console.log("Something went wrong");
+        console.log("Background API returned failure response");
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error(
+        "Background API Error:",
+        error.response?.status,
+        error.response?.data
+      );
     }
   };
   useEffect(() => {
@@ -446,7 +664,6 @@ const Asset = () => {
 
   console.log(uploadModal);
 
-  const [selectedRows, setSelectedRows] = useState([]);
 
   const handleSelectedRows = (rows) => {
     const selectedId = rows.map((row) => row.id);
@@ -491,65 +708,129 @@ const Asset = () => {
       }}
     >
       <Navbar />
-      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+      <div className=" w-full flex md:mx-2 overflow-hidden flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setPageNo(1);        // reset pagination
+            setIsFilterApplied(false);
+            setSelectedBuilding("");
+            setSelectedFloor("");
+            setSelectedUnit("");
+            setSelectedGroup("");
+            setSelectedSubGroup("");
+            setSelectedVendor("");
+          }}
+        />
         <AssetNav />
 
         {filter && page === "assets" && (
-          <div className="flex flex-col md:flex-row mt-1 items-center justify-center gap-2">
-            <select
-              name="building_name"
-              value={selectedBuilding}
-              id="building_name"
-              onChange={handleBuildingChange}
-              className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
-            >
-              <option value="">Select Building</option>
-              {buildings?.map((building) => (
-                <option key={building.id} value={building.id}>
-                  {building.name}
-                </option>
-              ))}
-            </select>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
 
-            <select
-              onChange={handleFloorChange}
-              value={selectedFloor}
-              name="floor_name"
-              className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
-            >
-              <option value="">Select Floor</option>
-              {floors?.map((floor) => (
-                <option value={floor.id} key={floor.id}>
-                  {floor.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedUnit}
-              onChange={handleUnitChange}
-              name="unit_name"
-              className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
-            >
-              <option value="">Select Unit</option>
-              {unitName?.map((unit) => (
-                <option value={unit.id} key={unit.id}>
-                  {unit.name}
-                </option>
-              ))}
-            </select>
-            <button
-              className=" p-1 px-4 text-white rounded-md"
-              onClick={handleFilterApply}
-              style={{ background: themeColor }}
-            >
-              Apply
-            </button>
-            <button
-              className="bg-red-400 p-1 px-4 text-white rounded-md"
-              onClick={handleFilterReset}
-            >
-              Reset
-            </button>
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[600px] relative">
+
+              {/* Close Button */}
+              <button
+                onClick={() => setFilter(false)}
+                className="absolute top-2 right-3 text-gray-600 text-xl"
+              >
+                ✕
+              </button>
+
+              <h2 className="text-lg font-semibold mb-4">Filter By</h2>
+
+              <div className="grid grid-cols-2 gap-4">
+
+                {/* Building */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Building</label>
+                  <select value={selectedBuilding} onChange={handleBuildingChange} className="border p-2 rounded">
+                    <option value="">Select Building</option>
+                    {buildings?.map((b) => (
+                      <option key={b.id} value={b.id}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Floor */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Floor</label>
+                  <select value={selectedFloor} onChange={handleFloorChange} className="border p-2 rounded">
+                    <option value="">Select Floor</option>
+                    {floors?.map((f) => (
+                      <option key={f.id} value={f.id}>{f.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Unit */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Unit</label>
+                  <select value={selectedUnit} onChange={handleUnitChange} className="border p-2 rounded">
+                    <option value="">Select Unit</option>
+                    {unitName?.map((u) => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Group */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Group</label>
+                  <select value={selectedGroup} onChange={handleGroupChange} className="border p-2 rounded">
+                    <option value="">Select Group</option>
+                    {groups.map((g) => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sub Group */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Sub Group</label>
+                  <select value={selectedSubGroup} onChange={(e) => setSelectedSubGroup(e.target.value)} className="border p-2 rounded">
+                    <option value="">Select Sub Group</option>
+                    {subGroups.map((sg) => (
+                      <option key={sg.id} value={sg.id}>{sg.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Supplier */}
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium mb-1">Supplier</label>
+                  <select value={selectedVendor} onChange={(e) => setSelectedVendor(e.target.value)} className="border p-2 rounded">
+                    <option value="">Select Supplier</option>
+                    {vendors.map((v) => (
+                      <option key={v.id} value={v.id}>{v.vendor_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    handleFilterApply();
+                    setFilter(false);
+                  }}
+                  className="px-4 py-2 text-white rounded"
+                  style={{ background: themeColor }}
+                >
+                  Apply
+                </button>
+
+                <button
+                  onClick={handleFilterReset}
+                  className="px-4 py-2 bg-gray-400 text-white rounded"
+                >
+                  Reset
+                </button>
+              </div>
+
+            </div>
           </div>
         )}
         {/* {page === "assets" && (
@@ -648,7 +929,11 @@ const Asset = () => {
           </div>
         </div>
 
-        {assets.length !== 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-full">
+            <DNA height="120" width="120" />
+          </div>
+        ) : filteredData.length > 0 ? (
           <>
             <Table
               selectableRows
@@ -658,31 +943,26 @@ const Asset = () => {
               data={filteredData}
               fixedHeader
               pagination={false}
-              selectableRow={true}
               onSelectedRows={handleSelectedRows}
             />
+
             <div className="bg-white mb-10 p-2 flex justify-end">
               <Pagination
                 current={pageNo}
                 total={total}
                 pageSize={perPage}
                 onChange={handlePageChange}
-                responsive
                 showSizeChanger
                 onShowSizeChange={handlePageChange}
+                pageSizeOptions={["10", "20", "50", "100"]}
               />
             </div>
           </>
         ) : (
-          <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
-            />
+          <div className="bg-white shadow rounded-lg p-10 text-center mt-4">
+            <h2 className="text-xl font-semibold text-gray-600">
+              No Submission Yet
+            </h2>
           </div>
         )}
         {/* </>

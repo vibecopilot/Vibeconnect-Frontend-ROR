@@ -8,6 +8,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import HighchartsComponent from "../components/HighCharts";
 import TicketDashboard from "./SubPages/TicketDashboard";
 import SoftServiceHighCharts from "../components/SoftServicesHighCharts";
+import SoftServicesDashboard from "./SubPages/SoftServicesDashboard";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { FaBuilding } from "react-icons/fa";
 import AssetDashboard from "./SubPages/AssetDashboard";
@@ -15,6 +16,8 @@ import ComplianceDashboard from "./SubPages/ComplianceDashboard";
 import PPMCalendarDashboard from "./SubPages/PPMCalendarDashboard";
 import VisitorsDashboard from "./SubPages/VisitorsDashboard";
 import VisitorsAnalyticsDashboard from "./SubPages/VisitorsAnalyticsDashboard";
+import StaffDashboard from "./SubPages/StaffDashboard";
+import StaffAnalyticsDashboard from "./SubPages/StaffAnalyticsDashboard";
 
 const SectionCard = ({ title, subtitle = "Analytics & overview", children }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5">
@@ -76,12 +79,30 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchCalendar = async () => {
       try {
-        if (!vibeUserId) return;
-        await getVibeCalendar(vibeUserId);
+        // const res = await getVibeCalendar(vibeUserId);
+
+        const allActivities = res?.data?.activities || [];
+
+        // ✅ ONLY KEEP PPM ACTIVITIES
+        const ppmActivities = allActivities.filter(
+          (item) =>
+            item?.activity_type === "ppm" ||
+            item?.checklist_type === "ppm" ||
+            item?.category === "ppm"
+        );
+
+        const formattedEvents = ppmActivities.map((item) => ({
+          title: item?.name || item?.activity_name,
+          start: item?.date || item?.start_date,
+          end: item?.end_date || item?.date,
+        }));
+
+        setEvents(formattedEvents);
       } catch (error) {
-        console.log(error);
+        console.error("Calendar fetch error:", error);
       }
     };
+
     fetchCalendar();
   }, [vibeUserId]);
 
@@ -202,8 +223,16 @@ const Dashboard = () => {
             <VisitorsDashboard />
           </SectionCard> */}
 
-          <SectionCard title="Visitors Analytics">
+          <SectionCard title="Visitors Dashboard">
             <VisitorsAnalyticsDashboard />
+          </SectionCard>
+
+          {/* <SectionCard title="Staff Dashboard">
+            <StaffDashboard />
+          </SectionCard> */}
+
+          <SectionCard title="Staff Dashboard">
+            <StaffAnalyticsDashboard />
           </SectionCard>
 
           {feat.includes("compliance") && (
@@ -213,7 +242,13 @@ const Dashboard = () => {
           )}
 
           {feat.includes("soft_services") && (
-            <SectionCard title="Soft Service">
+            <SectionCard title="Soft Services Dashboard">
+              <SoftServicesDashboard />
+            </SectionCard>
+          )}
+
+          {feat.includes("soft_services") && (
+            <SectionCard title="Soft Service Analytics" subtitle="Charts by status, building, floor & user">
               <SoftServiceHighCharts />
             </SectionCard>
           )}

@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 
 import Table from "../../../components/table/Table";
 
-const TicketCostApprovalSetup = () => {
+const TicketCostApprovalSetup = ({ activeSiteId }) => {
   const [page, setPage] = useState("FM");
   const themeColor = useSelector((state) => state.theme.color);
   const [selectedOption, setSelectedOption] = useState('');

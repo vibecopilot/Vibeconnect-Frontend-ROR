@@ -6,11 +6,16 @@ import { useSelector } from "react-redux";
 import { HiChevronDown } from "react-icons/hi";
 import Navbar from "../../../components/Navbar";
 import Table from "../../../components/table/Table";
+import { getSurveys } from "../../../api";
 
 function Survey() {
   const themeColor = useSelector((state) => state.theme.color);
   const [isStatus, setIsStatus] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({ page: 1, per_page: 100 });
 
   const statusRef = useRef(null);
   const ownerRef = useRef(null);
@@ -85,6 +90,37 @@ function Survey() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const fetchSurveys = async () => {
+    setLoading(true);
+    try {
+      const params = { page: filters.page, per_page: filters.per_page };
+      if (searchQuery) params["q[survey_title_cont]"] = searchQuery;
+      const res = await getSurveys(params);
+      const list = res.data?.survey ?? res.data ?? [];
+      setData(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.error("Failed to fetch surveys", err);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSurveys();
+  }, [filters.page, filters.per_page, searchQuery]);
+
+  const responseCount = (row) => {
+    const responses = row.survey_responses;
+    return Array.isArray(responses) ? responses.length : 0;
+  };
+
+  const formatDate = (d) => {
+    if (!d) return "";
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? d : date.toISOString().split("T")[0];
+  };
+
   const columns = [
     {
       name: "Action",
@@ -98,40 +134,28 @@ function Survey() {
     },
     {
       name: "Survey Name",
-      selector: (row, index) => row.survey_name,
+      selector: (row) => row.survey_title || "",
       sortable: true,
     },
     {
       name: "Start Date",
-      selector: (row) => row.start_date,
+      selector: (row) => formatDate(row.start_date),
       sortable: true,
     },
     {
       name: "End Date",
-      selector: (row) => row.end_date,
+      selector: (row) => formatDate(row.end_date),
       sortable: true,
     },
     {
       name: "No Of Response",
-      selector: (row) => row.response,
+      selector: (row) => responseCount(row),
       sortable: true,
     },
     {
       name: "Status",
-      selector: (row) => row.status,
+      selector: (row) => row.status || "draft",
       sortable: true,
-    },
-  ];
-
-  const data = [
-    {
-      Id: 1,
-      survey_name: "Customer Feedback Survey",
-      frequency: "Daily",
-      start_date: "2024-12-24",
-      end_date: "2024-12-31",
-      response: "12/25",
-      status: "Close",
     },
   ];
   return (
@@ -143,6 +167,8 @@ function Survey() {
             type="text"
             placeholder="Search By Survey Name"
             className=" p-2 md:w-96 border-gray-300 rounded-md placeholder:text-sm outline-none border "
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="md:flex grid grid-cols-2 sm:flex-row my-2 flex-col gap-2">
             <div className="flex gap-4">
@@ -213,7 +239,7 @@ function Survey() {
             </Link>
           </div>
         </div>
-        <Table columns={columns} data={data} selectableRow={true} />
+        <Table columns={columns} data={data} selectableRow={true} progressPending={loading} />
       </div>
     </section>
   );
