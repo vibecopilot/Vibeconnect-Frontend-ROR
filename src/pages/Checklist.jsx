@@ -5,13 +5,16 @@ import {
   API_URL,
   ChecklistImport,
   downloadSampleChecklist,
+  disableChecklistSchedule,
   editChecklist,
+  enableChecklistSchedule,
   exportChecklist,
   getChecklist,
   getChecklistTemplate,
   getVibeBackground,
   getChecklistGroups,
 } from "../api";
+import DisableEnableScheduleModal from "../components/DisableEnableScheduleModal";
 import Table from "../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { MdClose, MdDeleteForever, MdFileDownload } from "react-icons/md";
@@ -61,6 +64,7 @@ const Checklist = () => {
     group: "",
   });
   const [checklistGroups, setChecklistGroups] = useState([]);
+  const [scheduleModal, setScheduleModal] = useState(null); // { mode: "disable"|"enable", checklist }
 
   const handleFileChange = (files) => {
     setSelectedFiles(files);
@@ -86,6 +90,15 @@ const Checklist = () => {
       console.error("Error rejecting checklist:", error);
       toast.error("Failed to reject checklist");
     }
+  };
+
+  const handleScheduleConfirm = async (payload) => {
+    const { mode, checklist } = scheduleModal;
+    const action = mode === "disable" ? disableChecklistSchedule : enableChecklistSchedule;
+    const res = await action(checklist.id, payload);
+    await fetchChecklist();
+    setScheduleModal(null);
+    toast.success(res?.data?.message || `Checklist schedule ${mode}d successfully`);
   };
 
   const handleImportChecklist = async () => {
@@ -193,6 +206,16 @@ const Checklist = () => {
     { name: "Start Date", selector: (row) => row.start_date, sortable: true },
     { name: "End Date", selector: (row) => row.end_date, sortable: true },
     {
+      name: "Status",
+      selector: (row) =>
+        row.active === false ? (
+          <span className="text-red-500 font-medium">Disabled</span>
+        ) : (
+          <span className="text-green-600 font-medium">Active</span>
+        ),
+      sortable: true,
+    },
+    {
       name: "No. of Groups",
       selector: (row) => row?.groups?.length,
       sortable: true,
@@ -260,6 +283,25 @@ const Checklist = () => {
       <Link to={`/admin/copy-checklist/${row.id}`}>
         <FaCopy size={15} />
       </Link>
+
+      {/* DISABLE / ENABLE SCHEDULE */}
+      {row.active === false ? (
+        <button
+          type="button"
+          title="Enable Schedule"
+          onClick={() => setScheduleModal({ mode: "enable", checklist: row })}
+        >
+          <FaCheckCircle size={15} className="text-green-600" />
+        </button>
+      ) : (
+        <button
+          type="button"
+          title="Disable Schedule"
+          onClick={() => setScheduleModal({ mode: "disable", checklist: row })}
+        >
+          <FaTimesCircle size={15} className="text-red-500" />
+        </button>
+      )}
 
     </div>
   ),
@@ -711,6 +753,14 @@ const Checklist = () => {
             </div>
           </div>
         </div>
+      )}
+      {scheduleModal && (
+        <DisableEnableScheduleModal
+          mode={scheduleModal.mode}
+          checklistName={scheduleModal.checklist.name}
+          onConfirm={handleScheduleConfirm}
+          onCancel={() => setScheduleModal(null)}
+        />
       )}
     </section>
   );

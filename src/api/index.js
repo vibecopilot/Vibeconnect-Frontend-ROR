@@ -1461,6 +1461,16 @@ export const downloadSampleChecklist = async () =>
     },
     responseType: "blob",
   });
+// Disable/Enable Scheduled Checklist — payload: { scope: "all" | "upcoming" | "overdue" | "date_range", start_date, end_date }
+export const disableChecklistSchedule = async (id, payload) =>
+  axiosInstance.patch(`/checklists/${id}/disable_schedule.json`, payload, {
+    params: { token: token },
+  });
+export const enableChecklistSchedule = async (id, payload) =>
+  axiosInstance.patch(`/checklists/${id}/enable_schedule.json`, payload, {
+    params: { token: token },
+  });
+
 export const getAssociationList = async (checklistId) =>
   axiosInstance.get(
     `/checklist_associations.json?checklist_id=${checklistId}`,
