@@ -862,6 +862,7 @@ import DirectorySetupPages from "./pages/Setup/DirectorySetupPages.jsx";
 import ParineePrivacyPolicy from "./pages/Setup/Abous/ParineePrivacyPolicy.jsx";
 import HappyHomesPrivacyPolicy from "./pages/Setup/Abous/HappyHomes.jsx";
 import SugeePrivacyPolicy from "./pages/Setup/Abous/SugeePrivacyPolicy.jsx";
+import LotusHRMSPrivacyPolicy from "./pages/Setup/Abous/LotusHrms.jsx";
 
 
 
@@ -7084,6 +7085,8 @@ function App() {
         <Route path="/parinee/privacy_policy" element={<ParineePrivacyPolicy />} />
         <Route path="/happy_homes/privacy_policy" element={<HappyHomesPrivacyPolicy />} />
         <Route path="/sugee/privacy_policy" element={<SugeePrivacyPolicy />} />
+        <Route path="/lotus_hrms/privacy_policy" element={<LotusHRMSPrivacyPolicy />} />
+
 
         <Route
           path="/admin/skill-grow/create-course-details"
