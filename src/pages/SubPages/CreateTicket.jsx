@@ -16,6 +16,8 @@ import {
   postComplaintsDetails,
   getComplaintMode,
   getSetupUsers,
+  getIssueType,
+  getHelpDeskCategoriesSetup,
 } from "../../api";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
@@ -29,10 +31,13 @@ const CreateTicket = () => {
   const [behalf, setBehalf] = useState("self");
   const [ticketType, setTicketType] = useState("");
   //   const [selectedOption, setSelectedOption] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [issueTypes, setIssueTypes] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const [selectedCustomerPriority, setSelectedCustomerPriority] = useState("");
   const [units, setUnits] = useState([]);
+  const [ticketCategories, setTicketCategories] = useState([]);
   const [user, setUser] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [selectedSiteId, setSelectedSiteId] = useState("");
@@ -58,15 +63,13 @@ const CreateTicket = () => {
     floor_name: "",
     assigned_to: "",
     issue_type_id: "",
+    issue_related_to: "",
     complaint_type: "",
     complaint_mode_id: "",
   });
 
   console.log(formData);
   // console.log(attachments);
-
-  const categories = getItemInLocalStorage("categories");
-  // console.log("Categories", categories)
 
   const userName = localStorage.getItem("Name");
 
@@ -77,6 +80,32 @@ const CreateTicket = () => {
   // console.log("BB", building);
 
   useEffect(() => {
+    const fetchIssueTypes = async () => {
+      try {
+        const response = await getIssueType();
+        const types = Array.isArray(response.data) ? response.data : [];
+        setIssueTypes(types);
+
+        // If no issue types are configured, fetch all helpdesk categories
+        // directly so Category/Sub-Category are still usable.
+        if (types.length === 0) {
+          try {
+            const catResponse = await getHelpDeskCategoriesSetup(undefined, siteID);
+            const categoryData = catResponse.data;
+            setTicketCategories(
+              Array.isArray(categoryData)
+                ? categoryData
+                : categoryData?.helpdesk_categories || categoryData?.categories || []
+            );
+          } catch (catError) {
+            console.error("Error fetching helpdesk categories:", catError);
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
     const fetchData = async () => {
       const response = await fetchSubCategories(14);
       // console.log("subCategories:", response);
@@ -128,6 +157,7 @@ const CreateTicket = () => {
       }
     };
 
+    fetchIssueTypes();
     fetchData();
     fetchAssignedTo();
     fetchFloor();
@@ -200,20 +230,50 @@ const CreateTicket = () => {
       }
     }
 
-    if (e.target.type === "select-one" && e.target.name === "categories") {
+    if (e.target.type === "select-one" && e.target.name === "category_type_id") {
       const categoryId = Number(e.target.value);
       await fetchSubCategory(categoryId);
-      setFormData({
-        ...formData,
+      setFormData((previousFormData) => ({
+        ...previousFormData,
         category_type_id: categoryId,
         sub_category_id: "",
         documents: [],
-      });
+      }));
     } else {
-      setFormData({
-        ...formData,
+      setFormData((previousFormData) => ({
+        ...previousFormData,
         [e.target.name]: e.target.value,
-      });
+      }));
+    }
+  };
+
+  const handleRelatedToChange = async (e) => {
+    const issueTypeId = e.target.value;
+    const issueTypeName = e.target.options[e.target.selectedIndex]?.text || "";
+
+    setFormData((previousFormData) => ({
+      ...previousFormData,
+      issue_type_id: issueTypeId,
+      issue_related_to: issueTypeName,
+      category_type_id: "",
+      sub_category_id: "",
+    }));
+    setTicketCategories([]);
+    setUnits([]);
+
+    if (!issueTypeId) return;
+
+    try {
+      const response = await getHelpDeskCategoriesSetup(issueTypeId, siteID);
+      const categoryData = response.data;
+      setTicketCategories(
+        Array.isArray(categoryData)
+          ? categoryData
+          : categoryData?.helpdesk_categories || categoryData?.categories || []
+      );
+    } catch (error) {
+      console.error("Error fetching ticket categories:", error);
+      toast.error("Failed to load categories");
     }
   };
 
@@ -345,27 +405,33 @@ const CreateTicket = () => {
       return toast.error("You can upload maximum upto 4 images.");
     }
     try {
-      toast.loading("Please wait generating ticket!");
+      // toast.loading("Please wait generating ticket!");
       const sendData = new FormData();
       sendData.append(
-        "complaints[category_type_id]",
+        "category_type_id",
         formData.category_type_id
       );
-      sendData.append("complaints[sub_category_id]", formData.sub_category_id);
-      sendData.append("complaints[text]", formData.text);
-      sendData.append("complaints[heading]", formData.heading);
-      sendData.append("complaints[of_phase]", formData.of_phase);
+      setLoading(true);
 
-      sendData.append("complaints[site_id]", formData.site_id);
-      sendData.append("complaints[assigned_to]", formData.assigned_to);
-      sendData.append("complaints[priority]", formData.priority);
-      sendData.append("complaints[building_name]", formData.building_name);
-      sendData.append("complaints[unit_id]", formData.unit_id);
-      sendData.append("complaints[floor_name]", formData.floor_name);
-      sendData.append("complaints[issue_type_id]", formData.issue_type_id);
-      sendData.append("complaints[complaint_type]", formData.complaint_type);
+      const toastId = toast.loading("Please wait... Ticket is creating");
+      sendData.append("sub_category_id", formData.sub_category_id);
+      sendData.append("text", formData.text);
+      sendData.append("heading", formData.heading);
+      sendData.append("of_phase", formData.of_phase);
+      sendData.append("site_id", formData.site_id || siteID);
+      sendData.append("assigned_to", formData.assigned_to);
+      sendData.append("priority", formData.priority);
+      sendData.append("building_name", formData.building_name);
+      sendData.append("unit_id", formData.unit_id);
+      sendData.append("floor_name", formData.floor_name);
+      sendData.append("issue_type_id", formData.issue_type_id);
       sendData.append(
-        "complaints[complaint_mode_id]",
+        "issue_related_to",
+        formData.issue_related_to
+      );
+      sendData.append("complaint_type", formData.complaint_type);
+      sendData.append(
+        "complaint_mode_id",
         formData.complaint_mode_id
       );
 
@@ -373,24 +439,46 @@ const CreateTicket = () => {
         sendData.append("documents[]", file);
         // console.log(documents)
       });
+      const response = await postComplaintsDetails(sendData);
+      // toast.success("Ticket created successfully", { id: toastId });
 
-      const response = await postComplaintsDetails(formData);
-      console.log(response);
+      // console.log(response);
       toast.dismiss();
-      toast.success("Ticket generated by Admin");
+      toast.success("Ticket Created Successfully", { id: toastId });
       navigate("/tickets");
     } catch (error) {
       console.error("Error submitting complaint:", error);
       toast.dismiss();
     }
+    // finally{
+    //   setLoading(false);
+    // }
   };
 
   const handleReset = () => {
-    setAttachments([]);
-    setSelectedSubCategory("");
-    setSelectedCategory("");
-    setSelectedCustomerPriority("");
-    setSelectedCategory("");
+    setFormData({
+      category_type_id: "",
+      sub_category_id: "",
+      priority: "",
+      of_phase: "pms",
+      heading: "",
+      text: "",
+      documents: [],
+      building_name: "",
+      unit_id: "",
+      floor_name: "",
+      assigned_to: "",
+      issue_type_id: "",
+      issue_related_to: "",
+      complaint_type: "",
+      complaint_mode_id: "",
+    });
+
+    setUnits([]);
+    setTicketCategories([]);
+    setFloor([]);
+    setUnitName([]);
+    setSelectedUser(null);
   };
 
   useEffect(() => {
@@ -477,30 +565,27 @@ const CreateTicket = () => {
               {/* Related To :*/}
               <div className="grid md:grid-cols-2  gap-4 ">
                 {/* <div className="flex flex-col gap-3 md:flex-row justify-between items-center"> */}
-                {siteID === 25 && (
-                  <div className="grid grid-cols-2  items-center w-full">
-                    <label htmlFor="" className="font-semibold">
-                      Related To
-                    </label>
+                <div className="grid grid-cols-2  items-center w-full">
+                  <label htmlFor="" className="font-semibold">
+                    Related To
+                  </label>
+                  <div className="grid grid-cols-2 items-center w-full">
                     <select
-                      id="issueType"
-                      value={formData.issue_type_id}
                       name="issue_type_id"
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          issue_type_id: e.target.value,
-                        })
-                      }
+                      value={formData.issue_type_id}
+                      onChange={handleRelatedToChange}
                       className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
                     >
-                      <option value="">Select Area</option>
-                      <option value="Apartment">Apartment</option>
-                      {/* <option value="Suggestion">Shop</option> */}
-                      <option value="common Area">Common Area</option>
+                      <option value="">Select Related To</option>
+
+                      {issueTypes.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                )}
+                </div>
 
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -645,13 +730,13 @@ const CreateTicket = () => {
                   </label>
                   <select
                     id="two"
-                    value={formData.catogories}
-                    name="categories"
+                    value={formData.category_type_id}
+                    name="category_type_id"
                     onChange={handleChange}
                     className="border p-1 px-4 max-w-44 w-44 grid border-gray-500 rounded-md"
                   >
                     <option value="">Select Category</option>
-                    {categories?.map((category) => (
+                    {ticketCategories?.map((category) => (
                       <option
                         onClick={() => console.log("checking-category")}
                         value={category.id}
@@ -669,7 +754,7 @@ const CreateTicket = () => {
                   </label>
                   <select
                     id="five"
-                    value={formData.subCategories}
+                    value={formData.sub_category_id}
                     name="sub_category_id"
                     onChange={handleChange}
                     className="border p-1 px-4 max-w-44 w-44 grid border-gray-500 rounded-md"
@@ -765,9 +850,9 @@ const CreateTicket = () => {
                   <FaCheck /> Submit
                 </button>
                 <button
-                  type="reset"
-                  className="bg-red-400 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"
+                  type="button"
                   onClick={handleReset}
+                  className="bg-red-400 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"
                 >
                   <MdClose /> Reset
                 </button>
@@ -794,30 +879,24 @@ const CreateTicket = () => {
               {/* Related To :*/}
               <div className="grid md:grid-cols-2  gap-4 ">
                 {/* <div className="flex flex-col gap-3 md:flex-row justify-between items-center"> */}
-                {siteID === 25 && (
-                  <div className="grid grid-cols-2  items-center w-full">
-                    <label htmlFor="" className="font-semibold">
-                      Related To
-                    </label>
-                    <select
-                      id="issueType"
-                      value={formData.issue_type_id}
-                      name="issue_type_id"
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          issue_type_id: e.target.value,
-                        })
-                      }
-                      className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
-                    >
-                      <option value="">Select Area</option>
-                      <option value="Apartment">Apartment</option>
-                      {/* <option value="Suggestion">Shop</option> */}
-                      <option value="common Area">Common Area</option>
-                    </select>
-                  </div>
-                )}
+                <div className="grid grid-cols-2  items-center w-full">
+                  <label htmlFor="" className="font-semibold">
+                    Related To
+                  </label>
+                  <select
+                    value={formData.issue_type_id}
+                    name="issue_type_id"
+                    onChange={handleRelatedToChange}
+                    className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
+                  >
+                    <option value="">Select Related To</option>
+                    {issueTypes.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
                     Type of
@@ -961,13 +1040,13 @@ const CreateTicket = () => {
                   </label>
                   <select
                     id="two"
-                    value={formData.catogories}
-                    name="categories"
+                    value={formData.category_type_id}
+                    name="category_type_id"
                     onChange={handleChange}
                     className="border p-1 px-4 max-w-44 w-44 grid border-gray-500 rounded-md"
                   >
                     <option value="">Select Category</option>
-                    {categories?.map((category) => (
+                    {ticketCategories?.map((category) => (
                       <option
                         onClick={() => console.log("checking-category")}
                         value={category.id}
@@ -985,7 +1064,7 @@ const CreateTicket = () => {
                   </label>
                   <select
                     id="five"
-                    value={formData.subCategories}
+                    value={formData.sub_category_id}
                     name="sub_category_id"
                     onChange={handleChange}
                     className="border p-1 px-4 max-w-44 w-44 grid border-gray-500 rounded-md"
@@ -1118,30 +1197,24 @@ const CreateTicket = () => {
               {/* Related To :*/}
               <div className="grid md:grid-cols-2  gap-4 ">
                 {/* <div className="flex flex-col gap-3 md:flex-row justify-between items-center"> */}
-                {siteID === 25 && (
-                  <div className="grid grid-cols-2  items-center w-full">
-                    <label htmlFor="" className="font-semibold">
-                      Related To
-                    </label>
-                    <select
-                      id="issueType"
-                      value={formData.issue_type_id}
-                      name="issue_type_id"
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          issue_type_id: e.target.value,
-                        })
-                      }
-                      className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
-                    >
-                      <option value="">Select Area</option>
-                      <option value="Apartment">Apartment</option>
-                      {/* <option value="Suggestion">Shop</option> */}
-                      <option value="common Area">Common Area</option>
-                    </select>
-                  </div>
-                )}
+                <div className="grid grid-cols-2  items-center w-full">
+                  <label htmlFor="" className="font-semibold">
+                    Related To
+                  </label>
+                  <select
+                    value={formData.issue_type_id}
+                    name="issue_type_id"
+                    onChange={handleRelatedToChange}
+                    className="border p-1 px-4 max-w-44 w-44 border-gray-500 rounded-md"
+                  >
+                    <option value="">Select Related To</option>
+                    {issueTypes.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="grid grid-cols-2  items-center w-full">
                   <label htmlFor="" className="font-semibold ">
@@ -1287,13 +1360,13 @@ const CreateTicket = () => {
                   </label>
                   <select
                     id="two"
-                    value={formData.catogories}
-                    name="categories"
+                    value={formData.category_type_id}
+                    name="category_type_id"
                     onChange={handleChange}
                     className="border p-1 px-4 max-w-44 w-44 grid border-gray-500 rounded-md"
                   >
                     <option value="">Select Category</option>
-                    {categories?.map((category) => (
+                    {ticketCategories?.map((category) => (
                       <option
                         onClick={() => console.log("checking-category")}
                         value={category.id}
@@ -1311,7 +1384,7 @@ const CreateTicket = () => {
                   </label>
                   <select
                     id="five"
-                    value={formData.subCategories}
+                    value={formData.sub_category_id}
                     name="sub_category_id"
                     onChange={handleChange}
                     className="border p-1 px-4 max-w-44 w-44 grid border-gray-500 rounded-md"

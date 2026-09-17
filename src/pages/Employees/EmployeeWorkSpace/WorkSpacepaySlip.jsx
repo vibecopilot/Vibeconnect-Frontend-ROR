@@ -5,7 +5,7 @@ import Table from '../../../components/table/Table';
 import { BsEye } from 'react-icons/bs';
 import { FaDownload } from 'react-icons/fa';
 import jsPDF from 'jspdf';
-import pay from '/pay.png'; // Ensure the path is correct
+import pay from "/pay.png";
 import { Link } from 'react-router-dom';
 
 // Sample data for the table

@@ -31,11 +31,12 @@ export const features = [
   "calendar",
   "project_task",
   "bill pay",
-"advance saetup",
-"birthday",
-"task",
-"copilot",
-"integration",
-"Setup",
+  "advance saetup",
+  "birthday",
+  "task",
+  "copilot",
+  "integration",
+  "Setup",
+  "konstruct_updates",
 
 ];

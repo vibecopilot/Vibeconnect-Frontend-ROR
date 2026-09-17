@@ -9,6 +9,7 @@ import {
   getFloors,
   getUnits,
   getUsers,
+  domainPrefix,
 } from "../../../api";
 
 const PetsEdit = () => {
@@ -21,6 +22,7 @@ const PetsEdit = () => {
   const [submitting, setSubmitting] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
+  const [existingPetImages, setExistingPetImages] = useState([]);
   const [attachments, setAttachments] = useState(null);
 
   const [buildings, setBuildings] = useState([]);
@@ -84,7 +86,19 @@ const PetsEdit = () => {
           user_id: pet.user_id || "",
         });
 
-        if (pet.profile_image) setProfilePreview(pet.profile_image);
+        const profileDoc = pet.documents?.find(
+          (doc) => doc.relation === "PetProfile"
+        );
+        if (profileDoc) {
+          setProfilePreview(`${domainPrefix}${profileDoc.document}`);
+        }
+
+        const petImageDocs = pet.documents?.filter(
+          (doc) => doc.relation === "PetsImage"
+        ) || [];
+        setExistingPetImages(
+          petImageDocs.map((doc) => `${domainPrefix}${doc.document}`)
+        );
       } catch (err) {
         console.error("Failed to load:", err);
         alert("Failed to load pet data");
@@ -285,6 +299,22 @@ const PetsEdit = () => {
               <label className="block font-medium mb-2">Add New Pet Images</label>
               <input type="file" multiple onChange={handleAttachmentChange} />
             </div>
+
+            {existingPetImages.length > 0 && (
+              <div className="mb-6">
+                <p className="font-medium mb-3">Existing Pet Images</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {existingPetImages.map((src, index) => (
+                    <img
+                      key={index}
+                      src={src}
+                      alt={`Existing pet image ${index + 1}`}
+                      className="w-full h-40 object-cover rounded-xl border"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex justify-end gap-4">
               <button type="button" onClick={() => navigate("/setup/pets")} className="px-6 py-2 bg-gray-300 rounded-lg">Cancel</button>

@@ -213,7 +213,7 @@ const RequestListPage = () => {
             title="View Details"
           >
             <BsEye size={18} />
-            View
+            
           </Link>
         </div>
       ),

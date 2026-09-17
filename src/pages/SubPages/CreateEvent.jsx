@@ -23,6 +23,7 @@ import { FaCheck } from "react-icons/fa";
 import MultiSelect from "../AdminHrms/Components/MultiSelect";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { MdClose } from "react-icons/md";
 
 const CreateEvent = () => {
   const siteId = getItemInLocalStorage("SITEID");
@@ -53,6 +54,7 @@ const CreateEvent = () => {
     user_ids: "",
     group_id: null,
     group_name: "",
+    attachfiles: [],
     event_images: [],
     shared: "all",
     email_enabled: false,
@@ -72,16 +74,19 @@ const CreateEvent = () => {
       try {
         const usersRes = await getSetupUsers();
         const unitsRes = await getBuildings();
-
-        setUnits(unitsRes?.data || []);
-
-        const employeesList = (usersRes?.data || []).map((emp) => ({
-          id: emp.id,
-          name: `${emp.firstname || ""} ${emp.lastname || ""}`.trim(),
-          building_id: emp.building_id || emp.building?.id || null,
-          userSites: emp.user_sites || [],
-          building: emp.building || {},
-        }));
+        console.log("userSites", unitsRes);
+        setUnits(unitsRes.data);
+        console.log("usersRes", usersRes);
+        const employeesList = usersRes.data
+          .filter((emp) => emp.user_status === true) // ✅ only active users
+          .map((emp) => ({
+            id: emp.id,
+            name: `${emp.firstname} ${emp.lastname}`,
+            building_id: emp.building_id || emp.building?.id || null,
+            userSites: emp.user_sites || [],
+            building: emp.building || {},
+            user_status: emp.user_status, // ✅ ADD THIS
+          }));
 
         setMembers(employeesList);
         // ✅ important: by default show all, so multi-select has options without clicking Filter
@@ -95,27 +100,23 @@ const CreateEvent = () => {
 
   const handleFilter = () => {
     const filtered = members.filter((member) => {
-      const buildingId = Number(member.building_id ?? member.building?.id);
+      // ✅ only active users
+      if (!member.user_status) return false;
 
-      if (!selectedUnit && !selectedOwnership) return true;
+      const buildingMatch =
+        !selectedUnit || // ✅ correct variable
+        Number(member.building_id ?? member.building?.id) ===
+        Number(selectedUnit);
 
-      if (selectedUnit && !selectedOwnership) {
-        return buildingId === Number(selectedUnit);
-      }
-
-      if (!selectedUnit && selectedOwnership) {
-        return (member.userSites || []).some(
+      const ownershipMatch =
+        !selectedOwnership ||
+        member.userSites.some(
           (site) =>
-            site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
+            site.ownership?.toLowerCase() ===
+            selectedOwnership.toLowerCase()
         );
-      }
 
-      if (buildingId !== Number(selectedUnit)) return false;
-
-      return (member.userSites || []).some(
-        (site) =>
-          site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-      );
+      return buildingMatch && ownershipMatch;
     });
 
     setFilteredMembers(filtered);
@@ -144,10 +145,12 @@ const CreateEvent = () => {
     const fetchUsers = async () => {
       try {
         const response = await getSetupUsers();
-        const transformedUsers = (response.data || []).map((user) => ({
-          value: user.id,
-          label: `${user.firstname || ""} ${user.lastname || ""}`.trim(),
-        }));
+        const transformedUsers = (response.data || [])
+          .filter((user) => user.user_status === true) // ✅ ADD THIS
+          .map((user) => ({
+            value: user.id,
+            label: `${user.firstname || ""} ${user.lastname || ""}`.trim(),
+          }));
         setUsers(transformedUsers);
       } catch (error) {
         console.error("Error fetching assigned users:", error);
@@ -187,9 +190,10 @@ const CreateEvent = () => {
     const selectedGroupObj = groups.find((group) => group.id === groupId);
 
     setSelectedGroup(event.target.value);
-    setFormData((p) => ({
-      ...p,
-      group_id: groupId || null,
+
+    setFormData((prev) => ({
+      ...prev,
+      group_id: groupId,
       group_name: selectedGroupObj?.group_name || "",
     }));
 
@@ -221,36 +225,31 @@ const CreateEvent = () => {
         "event[end_date_time]",
         formatDateTime(formData.end_date_time)
       );
-      formDataSend.append("event[venue]", formData.venue || "");
-      formDataSend.append("event[email_enabled]", formData.email_enabled ? "1" : "0");
-      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "1" : "0");
+      formDataSend.append("event[venue]", formData.venue);
+      formDataSend.append("event[email_enabled]", formData.email_enabled ? "true" : "false");
+      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "true" : "false");
       formDataSend.append("event[important]", formData.important ? "1" : "0");
+      formDataSend.append("event[shared]", share);
 
-      // ✅ make payload consistent & avoid stale fields
-      if (share === "all") {
-        formDataSend.append("event[shared]", "all");
-        formDataSend.append("event[user_ids]", "");
+      if (share === "individual") {
+        formDataSend.append("event[user_ids]", formData.user_ids);
         formDataSend.append("event[group_id]", "");
-        formDataSend.append("event[group_name]", "");
-      } else if (share === "individual") {
-        formDataSend.append("event[shared]", "individual");
-        formDataSend.append("event[user_ids]", formData.user_ids || "");
-        formDataSend.append("event[group_id]", "");
-        formDataSend.append("event[group_name]", "");
       } else if (share === "groups") {
-        formDataSend.append("event[shared]", "groups");
+        formDataSend.append("event[group_id]", formData.group_id);
         formDataSend.append("event[user_ids]", "");
-        formDataSend.append("event[group_id]", formData.group_id || "");
-        formDataSend.append("event[group_name]", formData.group_name || "");
+      } else {
+        formDataSend.append("event[user_ids]", "");
+        formDataSend.append("event[group_id]", "");
       }
 
       if (formData.event_images && formData.event_images.length > 0) {
         formData.event_images.forEach((file) => {
           if (file instanceof File) {
-            formDataSend.append("event[event_images][]", file);
+            formDataSend.append("attachfiles[]", file);
           }
         });
       }
+      console.log("Images before upload:", formData.event_images);
 
       const response = await postEvents(formDataSend);
       toast.success("Event Created Successfully", { id: "createEvent" });
@@ -273,17 +272,46 @@ const CreateEvent = () => {
       user_ids: selectedUserIds.join(","),
     }));
   };
+  const handleFileAttachment = (files) => {
+    let fileArray = [];
 
-  const handleFileAttachment = (input) => {
-    let files = [];
-    if (input && input.target && input.target.files) {
-      files = Array.from(input.target.files);
-    } else if (Array.isArray(input)) {
-      files = input;
-    } else if (input) {
-      files = [input];
+    if (files instanceof FileList) {
+      fileArray = Array.from(files);
+    } else if (Array.isArray(files)) {
+      fileArray = files;
+    } else {
+      fileArray = [files];
     }
-    setFormData((p) => ({ ...p, event_images: files }));
+
+    setFormData((prev) => ({
+      ...prev,
+      event_images: [...(prev.event_images || []), ...fileArray], // ✅ SAFE SPREAD
+    }));
+
+    console.log("Selected Files:", fileArray);
+  };
+  const filterTime = (time) => {
+    const selectedDate = new Date(time);
+    const currentDate = new Date();
+
+    if (selectedDate.getTime() > currentDate.getTime()) {
+      return true;
+    } else if (selectedDate.getTime() === currentDate.getTime()) {
+      const selectedTime =
+        selectedDate.getHours() * 60 + selectedDate.getMinutes();
+      const currentTime =
+        currentDate.getHours() * 60 + currentDate.getMinutes();
+      return selectedTime >= currentTime;
+    } else {
+      return false;
+    }
+  };
+
+  const handleFileChange = (files, fieldName) => {
+    setFormData({
+      ...formData,
+      [fieldName]: Array.isArray(files) ? files : [files],
+    });
   };
 
   return (
@@ -576,10 +604,17 @@ const CreateEvent = () => {
                 fieldName={"event_images"}
                 handleChange={handleFileAttachment}
                 fileType="image/*"
+              // onChange={(e) => handleChange(e.target.files)}
               />
             </div>
 
-            <div className="flex justify-center mt-10 my-5">
+            <div className="flex justify-end mt-10 my-5 gap-3">
+              <button
+                className="bg-black text-white p-2 rounded-md  flex items-center gap-2 px-4"
+                onClick={() => navigate("/communication/events")}
+              >
+                <MdClose /> Cancel
+              </button>
               <button
                 style={{ background: themeColor }}
                 className="bg-black text-white p-2 rounded-md hover:bg-white  flex items-center gap-2 px-4"

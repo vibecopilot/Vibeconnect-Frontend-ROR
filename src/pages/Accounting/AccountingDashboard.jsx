@@ -1,480 +1,504 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { getOverdueInvoices, getSiteSummary } from "../../api/accounting";
+import { toast } from "react-hot-toast";
+import {
+  getAccountingDashboard,
+  getAccountingInvoices,
+  getAccountingPayments,
+  getJournalEntries,
+  getOverdueInvoices,
+  getBillingConfigurations,
+} from "../../api/accounting";
+import AccountingAnalyticsDashboard from "./AccountingAnalyticsDashboard";
 import Navbar from "../../components/Navbar";
-import AccountingNavbar from "../../components/navbars/AccountingNavbar";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const AccountingDashboard = () => {
-  const [selectedSite, setSelectedSite] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const userType = getItemInLocalStorage("USERTYPE");
+  const isAdmin = userType === "pms_admin";
+  const isAccountingUser = userType === "accounting_emp";
+  // pms_admin => full CRUD; pms_accounting => create only (edit/delete disabled)
   const [stats, setStats] = useState({
+    totalInvoices: 0,
+    totalPayments: 0,
+    overdueInvoices: 0,
     totalRevenue: 0,
     totalExpenses: 0,
-    outstandingInvoices: { count: 0, amount: 0 },
-    recentTransactions: [],
+    pendingAmount: 0,
+    recentInvoices: [],
+    recentPayments: [],
+    recentJournalEntries: [],
   });
-
-  const fetchDashboardData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const currentMonth = new Date();
-      const firstDay = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth(),
-        1
-      );
-      const lastDay = new Date(
-        currentMonth.getFullYear(),
-        currentMonth.getMonth() + 1,
-        0
-      );
-
-      const params = {
-        site_id: selectedSite,
-        date_from: firstDay.toISOString().split("T")[0],
-        date_to: lastDay.toISOString().split("T")[0],
-      };
-
-      const [summaryData, overdueData] = await Promise.all([
-        getSiteSummary(params),
-        getOverdueInvoices(),
-      ]);
-
-      setStats({
-        totalRevenue: summaryData.total_revenue || 0,
-        totalExpenses: summaryData.total_expenses || 0,
-        outstandingInvoices: {
-          count: overdueData.length || 0,
-          amount: overdueData.reduce(
-            (sum, inv) => sum + parseFloat(inv.balance_amount),
-            0
-          ),
-        },
-        recentTransactions: summaryData.recent_transactions || [],
-      });
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedSite]);
+  const [loading, setLoading] = useState(true);
+  const [societyMaintenancePercent, setSocietyMaintenancePercent] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [fetchDashboardData]);
+    fetchBillingConfig();
+  }, []);
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      minimumFractionDigits: 2,
-    }).format(amount);
+  const fetchBillingConfig = async () => {
+    try {
+      const res = await getBillingConfigurations();
+      const config = res?.data?.data || res?.data;
+      const configObj = Array.isArray(config) ? config[0] : config;
+      setSocietyMaintenancePercent(Number(configObj?.society_maintenance_percent || 0));
+    } catch (e) {
+      console.error("Failed to fetch billing config:", e);
+    }
   };
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const toArray = (value) => (Array.isArray(value) ? value : []);
+      const num = (...values) => {
+        for (const value of values) {
+          const parsed = Number(value);
+          if (Number.isFinite(parsed)) return parsed;
+        }
+        return 0;
+      };
+
+      const dashboardRes = await getAccountingDashboard();
+      const dashboardData = dashboardRes?.data?.data || dashboardRes?.data || {};
+      const summary = dashboardData.summary || dashboardData.stats || {};
+
+      let invoices = toArray(dashboardData.invoices);
+      let payments = toArray(dashboardData.payments);
+      let journalEntries = toArray(dashboardData.journal_entries || dashboardData.journalEntries);
+      let overdueInvoices = toArray(
+        dashboardData.overdue_invoices || dashboardData.overdueInvoices,
+      );
+
+      // Fallback to legacy endpoints if dashboard payload does not include full datasets.
+      if (!invoices.length || !payments.length || !journalEntries.length) {
+        const [invoicesRes, paymentsRes, journalRes, overdueRes] = await Promise.all([
+          invoices.length ? Promise.resolve({ data: invoices }) : getAccountingInvoices(),
+          payments.length ? Promise.resolve({ data: payments }) : getAccountingPayments(),
+          journalEntries.length ? Promise.resolve({ data: journalEntries }) : getJournalEntries(),
+          overdueInvoices.length ? Promise.resolve({ data: overdueInvoices }) : getOverdueInvoices(),
+        ]);
+
+        invoices = toArray(invoicesRes?.data?.data || invoicesRes?.data);
+        payments = toArray(paymentsRes?.data?.data || paymentsRes?.data);
+        journalEntries = toArray(journalRes?.data?.data || journalRes?.data);
+        overdueInvoices = toArray(overdueRes?.data?.data || overdueRes?.data);
+      }
+
+      const totalRevenue = payments.reduce(
+        (sum, payment) => sum + parseFloat(payment.amount || 0),
+        0
+      );
+      const totalExpenses = journalEntries
+        .filter((entry) => entry.status !== "cancelled")
+        .filter((entry) => {
+          const entryType = (entry.entry_type || "").toString().toLowerCase();
+          return (
+            entryType.includes("expense") ||
+            Boolean(entry.expense_month) ||
+            Boolean(entry.expense_year)
+          );
+        })
+        .reduce(
+          (sum, entry) =>
+            sum +
+            parseFloat(
+              entry.total_amount ??
+              entry.total_debit ??
+              entry.amount ??
+              0,
+            ),
+          0,
+        );
+
+      const pendingAmountFromRows = invoices
+        .filter((inv) => inv.status !== "paid")
+        .reduce((sum, inv) => sum + parseFloat(inv.total_amount || 0), 0);
+
+      setStats({
+        totalInvoices: num(summary.total_invoices, dashboardData.total_invoices, invoices.length),
+        totalPayments: num(summary.total_payments, dashboardData.total_payments, payments.length),
+        overdueInvoices: num(
+          summary.overdue_invoices,
+          dashboardData.overdue_invoices_count,
+          overdueInvoices.length,
+        ),
+        totalRevenue: num(
+          summary.total_revenue,
+          dashboardData.total_revenue,
+          totalRevenue,
+        ),
+        totalExpenses: num(
+          summary.total_expenses,
+          dashboardData.total_expenses,
+          totalExpenses,
+        ),
+        pendingAmount: num(
+          summary.pending_amount,
+          dashboardData.pending_amount,
+          pendingAmountFromRows,
+        ),
+        recentInvoices: toArray(dashboardData.recent_invoices).length
+          ? toArray(dashboardData.recent_invoices).slice(0, 5)
+          : invoices.slice(0, 5),
+        recentPayments: toArray(dashboardData.recent_payments).length
+          ? toArray(dashboardData.recent_payments).slice(0, 5)
+          : payments.slice(0, 5),
+        recentJournalEntries: toArray(dashboardData.recent_journal_entries).length
+          ? toArray(dashboardData.recent_journal_entries).slice(0, 5)
+          : journalEntries.slice(0, 5),
+      });
+    } catch (error) {
+      toast.error("Failed to fetch dashboard data");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const modules = [
+    {
+      name: "Account Groups",
+      path: "/accounting/account-groups",
+      icon: "📁",
+      color: "bg-blue-100 text-blue-600",
+    },
+    {
+      name: "Ledgers",
+      path: "/accounting/ledgers",
+      icon: "📒",
+      color: "bg-green-100 text-green-600",
+    },
+    {
+      name: "Tax Rates",
+      path: "/accounting/tax-rates",
+      icon: "💹",
+      color: "bg-purple-100 text-purple-600",
+    },
+    {
+      name: "Journal Entries",
+      path: "/accounting/journal-entries",
+      icon: "📝",
+      color: "bg-yellow-100 text-yellow-600",
+    },
+    {
+      name: "Invoices",
+      path: "/accounting/invoices",
+      icon: "🧾",
+      color: "bg-red-100 text-red-600",
+    },
+    {
+      name: "Payments",
+
+      path: "/accounting/payments",
+      icon: "💳",
+      color: "bg-indigo-100 text-indigo-600",
+    },
+    {
+      name: "Reports",
+      path: "/accounting/reports",
+      icon: "📊",
+      color: "bg-pink-100 text-pink-600",
+    },
+  ];
 
   if (loading) {
     return (
-      <section className="flex">
-        <Navbar />
-        <div className="w-full flex mx-3 flex-col overflow-hidden">
-          <AccountingNavbar />
-          <div className="flex items-center justify-center h-screen">
-            <div className="text-xl">Loading...</div>
-          </div>
-        </div>
-      </section>
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600"></div>
+      </div>
     );
   }
 
   return (
     <section className="flex">
       <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <AccountingNavbar />
-        <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Accounting Dashboard
-        </h1>
-        <div className="flex gap-4">
-          <select
-            value={selectedSite || ""}
-            onChange={(e) => setSelectedSite(e.target.value || null)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">All Sites</option>
-            {/* Add site options dynamically */}
-          </select>
-        </div>
-      </div>
+      <div className="w-full flex mx-3 mb-10 flex-col overflow-hidden p-6 bg-white/80 mt-2">
+        <h1 className="text-3xl font-bold mb-6">Accounting Dashboard</h1>
 
-      {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">Total Revenue</p>
-              <h3 className="text-2xl font-bold text-green-600 mt-2">
-                {formatCurrency(stats.totalRevenue)}
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">Current Month</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Total Invoices</p>
+                <p className="text-2xl font-bold">{stats.totalInvoices}</p>
+              </div>
+              <div className="text-4xl">🧾</div>
             </div>
-            <div className="bg-green-100 p-3 rounded-full">
-              <svg
-                className="w-8 h-8 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Total Revenue</p>
+                <p className="text-3xl font-bold text-green-600">
+                  ₹{parseFloat(stats.totalRevenue).toFixed(2)}
+                </p>
+              </div>
+              <div className="text-4xl">💰</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Pending Amount</p>
+                <p className="text-3xl font-bold text-orange-600">
+                  ₹{parseFloat(stats.pendingAmount).toFixed(2)}
+                </p>
+              </div>
+              <div className="text-4xl">⏳</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Total Expenses {societyMaintenancePercent > 0 && <span className="text-xs text-gray-400">(incl. {societyMaintenancePercent}% Mgmt Fees)</span>}</p>
+                <p className="text-3xl font-bold text-red-600">
+                  ₹{(parseFloat(stats.totalExpenses) * (1 + societyMaintenancePercent / 100)).toFixed(2)}
+                </p>
+                {/* {societyMaintenancePercent > 0 && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Base: ₹{parseFloat(stats.totalExpenses).toFixed(2)} + Mgmt: ₹{(parseFloat(stats.totalExpenses) * societyMaintenancePercent / 100).toFixed(2)}
+                </p>
+              )} */}
+              </div>
+              <div className="text-4xl">💸</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Overdue Invoices</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {stats.overdueInvoices}
+                </p>
+              </div>
+              <div className="text-4xl">⚠️</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">
-                Total Expenses
-              </p>
-              <h3 className="text-2xl font-bold text-red-600 mt-2">
-                {formatCurrency(stats.totalExpenses)}
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">Current Month</p>
-            </div>
-            <div className="bg-red-100 p-3 rounded-full">
-              <svg
-                className="w-8 h-8 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        {/* Quick Access Modules */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Quick Access</h2>
+            {/* Role Badge */}
+            {isAdmin && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                Admin — Full Access
+              </span>
+            )}
+            {isAccountingUser && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                <span className="w-2 h-2 rounded-full bg-amber-500 inline-block"></span>
+                Accounting — Create Only
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            {modules.map((module) => (
+              <Link
+                key={module.path}
+                to={module.path}
+                className={`${module.color} rounded-lg p-4 text-center hover:shadow-lg transition-shadow`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                />
-              </svg>
-            </div>
+                <div className="text-3xl mb-2">{module.icon}</div>
+                <p className="text-sm font-medium">{module.name}</p>
+              </Link>
+            ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">
-                Outstanding Invoices
-              </p>
-              <h3 className="text-2xl font-bold text-orange-600 mt-2">
-                {formatCurrency(stats.outstandingInvoices.amount)}
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">
-                {stats.outstandingInvoices.count} Invoices
-              </p>
-            </div>
-            <div className="bg-orange-100 p-3 rounded-full">
-              <svg
-                className="w-8 h-8 text-orange-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        {/* Recent Activities */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent Invoices */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Recent Invoices</h2>
+              <Link
+                to="/accounting/invoices"
+                className="text-blue-600 text-sm hover:underline"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+                View All
+              </Link>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-sm font-medium">Net Profit</p>
-              <h3
-                className={`text-2xl font-bold mt-2 ${
-                  stats.totalRevenue - stats.totalExpenses >= 0
-                    ? "text-blue-600"
-                    : "text-red-600"
-                }`}
-              >
-                {formatCurrency(stats.totalRevenue - stats.totalExpenses)}
-              </h3>
-              <p className="text-xs text-gray-400 mt-1">Current Month</p>
-            </div>
-            <div className="bg-blue-100 p-3 rounded-full">
-              <svg
-                className="w-8 h-8 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Link
-          to="/accounting/invoices"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Invoices</h3>
-            <div className="bg-purple-100 p-2 rounded-lg">
-              <svg
-                className="w-6 h-6 text-purple-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-          </div>
-          <p className="text-gray-600 text-sm">
-            Manage sales and purchase invoices
-          </p>
-        </Link>
-
-        <Link
-          to="/accounting/ledgers"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Ledgers & Accounts
-            </h3>
-            <div className="bg-green-100 p-2 rounded-lg">
-              <svg
-                className="w-6 h-6 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
-            </div>
-          </div>
-          <p className="text-gray-600 text-sm">
-            View and manage chart of accounts
-          </p>
-        </Link>
-
-        <Link
-          to="/accounting/journal-entries"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Journal Entries
-            </h3>
-            <div className="bg-indigo-100 p-2 rounded-lg">
-              <svg
-                className="w-6 h-6 text-indigo-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </div>
-          </div>
-          <p className="text-gray-600 text-sm">
-            Create and manage journal entries
-          </p>
-        </Link>
-
-        <Link
-          to="/accounting/reports"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Reports</h3>
-            <div className="bg-yellow-100 p-2 rounded-lg">
-              <svg
-                className="w-6 h-6 text-yellow-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-          </div>
-          <p className="text-gray-600 text-sm">
-            Financial reports and statements
-          </p>
-        </Link>
-
-        <Link
-          to="/accounting/payments"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Payments</h3>
-            <div className="bg-teal-100 p-2 rounded-lg">
-              <svg
-                className="w-6 h-6 text-teal-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
-            </div>
-          </div>
-          <p className="text-gray-600 text-sm">Record and track payments</p>
-        </Link>
-
-        <Link
-          to="/accounting/settings"
-          className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Settings</h3>
-            <div className="bg-gray-100 p-2 rounded-lg">
-              <svg
-                className="w-6 h-6 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </div>
-          </div>
-          <p className="text-gray-600 text-sm">Tax rates and configurations</p>
-        </Link>
-      </div>
-
-      {/* Recent Transactions */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Recent Transactions
-        </h3>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
-                  Date
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
-                  Description
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">
-                  Type
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-gray-600">
-                  Amount
-                </th>
-                <th className="text-center py-3 px-4 text-sm font-medium text-gray-600">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {stats.recentTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="text-center py-8 text-gray-500">
-                    No recent transactions
-                  </td>
-                </tr>
+            <div className="space-y-3">
+              {stats.recentInvoices.length === 0 ? (
+                <p className="text-gray-500 text-sm">No invoices yet</p>
               ) : (
-                stats.recentTransactions
-                  .slice(0, 10)
-                  .map((transaction, index) => (
-                    <tr
-                      key={index}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="py-3 px-4 text-sm text-gray-700">
-                        {transaction.date}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
-                        {transaction.description}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
-                        {transaction.type}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-right text-gray-700">
-                        {formatCurrency(transaction.amount)}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            transaction.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : transaction.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
+                stats.recentInvoices.map((invoice) => (
+                  <div
+                    key={invoice.id}
+                    className="flex justify-between items-center py-2 border-b"
+                  >
+                    <div>
+                      <p className="font-medium">{invoice.invoice_number}</p>
+                      <p className="text-sm text-gray-500">
+                        {invoice.customer_name}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        ₹{parseFloat(invoice.total_amount || 0).toFixed(2)}
+                      </p>
+                      <span
+                        className={`text-xs px-2 py-1 rounded ${invoice.status === "paid"
+                          ? "bg-green-100 text-green-800"
+                          : invoice.status === "overdue"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                           }`}
+                      >
+                        {invoice.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Recent Payments */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Recent Payments</h2>
+              <Link
+                to="/accounting/payments"
+                className="text-blue-600 text-sm hover:underline"
+              >
+                View All
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {stats.recentPayments.length === 0 ? (
+                <p className="text-gray-500 text-sm">No payments yet</p>
+              ) : (
+                stats.recentPayments.map((payment) => (
+                  <div
+                    key={payment.id}
+                    className="flex justify-between items-center py-2 border-b"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {payment.reference_number ||
+                          payment.reference ||
+                          payment.payment_number ||
+                          payment.accounting_invoice?.invoice_number ||
+                          payment.invoice_number ||
+                          "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-500 capitalize">
+                        {(payment.payment_mode || payment.payment_method || "N/A").replace("_", " ")}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-green-600">
+                        ₹{parseFloat(payment.amount || 0).toFixed(2)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {payment.payment_date
+                          ? new Date(payment.payment_date).toLocaleDateString()
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Journal Entries */}
+        <div className="bg-white rounded-lg shadow p-6 mt-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold">Recent Journal Entries</h2>
+            <Link
+              to="/accounting/journal-entries"
+              className="text-blue-600 text-sm hover:underline"
+            >
+              View All
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                    Reference
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                    Date
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                    Description
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                    Amount
+                  </th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {stats.recentJournalEntries.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-4 py-4 text-center text-gray-500">
+                      No journal entries yet
+                    </td>
+                  </tr>
+                ) : (
+                  stats.recentJournalEntries.map((entry) => (
+                    <tr key={entry.id}>
+                      <td className="px-4 py-3">{entry.reference || entry.entry_number || "-"}</td>
+                      <td className="px-4 py-3">
+                        {new Date(entry.entry_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">
+                        {entry.description || "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        ₹
+                        {(
+                          parseFloat(
+                            entry.total_amount ??
+                            entry.total_debit ??
+                            entry.amount ??
+                            entry.total_credit ??
+                            0,
+                          ) || 0
+                        ).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${entry.status === "posted"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                            }`}
                         >
-                          {transaction.status}
+                          {entry.status}
                         </span>
                       </td>
                     </tr>
                   ))
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+
+        {/* Analytics Dashboard */}
+        <div className="mt-6">
+          <h2 className="text-2xl font-bold mb-4">Accounting Analytics</h2>
+          <div className="bg-gray-900 p-5 rounded-lg shadow-custom-all-sides">
+            <AccountingAnalyticsDashboard />
+          </div>
         </div>
       </div>
     </section>

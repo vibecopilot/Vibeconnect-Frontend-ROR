@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Navbar from "../../components/Navbar";
 import { Link } from "react-router-dom";
 import { PiPlusCircle } from "react-icons/pi";
-import wave from "/wave.png";
+const wave = "/wave.png";
 import BirthdayWishModal from "../../containers/modals/BirthdayWishModal";
 import AddBirthdayModal from "../../containers/modals/AddBirthdayModal";
 

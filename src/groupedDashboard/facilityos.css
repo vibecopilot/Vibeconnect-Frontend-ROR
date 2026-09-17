@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --fos-bg:      #f3f4f6;
+  --fos-card:    #ffffff;
+  --fos-card2:   #f9fafb;
+  --fos-border:  rgba(0,0,0,0.08);
+  --fos-border2: rgba(0,0,0,0.15);
+  --fos-text:    #111827;
+  --fos-muted:   #4b5563;
+  --fos-dim:     #6b7280;
+  --fos-ok:      #059669;
+  --fos-warn:    #d97706;
+  --fos-crit:    #dc2626;
+  --fos-accent:  #4f46e5;
+}
+
+.fos-root {
+  font-family: 'Outfit', sans-serif;
+  background: var(--fos-bg);
+  color: var(--fos-text);
+  min-height: 100vh;
+  position: relative;
+}
+.fos-font-display { font-family: 'Bebas Neue', sans-serif; }
+.fos-font-mono    { font-family: 'IBM Plex Mono', monospace; }
+
+@keyframes fos-blink {
+  0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(5,150,105,.4)}
+  50%{opacity:.7;box-shadow:0 0 0 5px rgba(5,150,105,0)}
+}
+@keyframes fos-blink-red {
+  0%,100%{opacity:1} 50%{opacity:.4}
+}
+@keyframes fos-reveal {
+  from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)}
+}
+.fos-pulse-green { animation: fos-blink 1.4s infinite; }
+.fos-pulse-red   { animation: fos-blink-red .8s infinite; }
+.fos-reveal      { animation: fos-reveal .3s ease; }

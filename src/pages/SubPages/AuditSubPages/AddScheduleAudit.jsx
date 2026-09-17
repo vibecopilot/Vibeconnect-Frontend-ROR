@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { FaTrash } from "react-icons/fa";
 import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { getAssignedTo, getVendors } from "../../../api";
 
 const API_BASE = "https://admin.vibecopilot.ai";
 
@@ -19,6 +21,7 @@ const API_BASE = "https://admin.vibecopilot.ai";
  */
 const AddScheduleAudit = () => {
   const themeColor = useSelector((state) => state.theme.color);
+  const navigate = useNavigate();
 
   // UI toggles
   const [isOn, setIsOn] = useState(false); // "Create New" toggle (template selector)
@@ -33,6 +36,14 @@ const AddScheduleAudit = () => {
   const [errorText, setErrorText] = useState("");
   const [successText, setSuccessText] = useState("");
 
+  const [assetGroups, setAssetGroups] = useState([]);
+  const [subGroups, setSubGroups] = useState([]);
+
+  const [selectedGroup, setSelectedGroup] = useState("");
+  const [selectedSubGroup, setSelectedSubGroup] = useState("");
+
+  const [assignedUsers, setAssignedUsers] = useState([]);
+  const [vendors, setVendors] = useState([]);
   // You can keep token in env, or paste it here for now
   const API_TOKEN =
     import.meta?.env?.VITE_MYCITI_TOKEN ||
@@ -47,6 +58,78 @@ const AddScheduleAudit = () => {
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
     return `${yyyy}-${mm}-${dd}`;
+  }, []);
+
+  useEffect(() => {
+    const fetchAssetGroups = async () => {
+      try {
+        const res = await axios.get(
+          `${API_BASE}/asset_groups.json`,
+          {
+            params: {
+              token: API_TOKEN,
+              "q[group_for_eq]": "asset",
+            },
+          }
+        );
+
+        setAssetGroups(res?.data || []);
+      } catch (error) {
+        console.error("Asset group error:", error);
+      }
+    };
+
+    fetchAssetGroups();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedGroup) return;
+
+    const fetchSubGroups = async () => {
+      try {
+        const res = await axios.get(
+          `${API_BASE}/sub_groups.json`,
+          {
+            params: {
+              token: API_TOKEN,
+              "q[group_id_eq]": selectedGroup, // 🔥 important
+            },
+          }
+        );
+
+        setSubGroups(res?.data || []);
+      } catch (error) {
+        console.error("Sub group error:", error);
+      }
+    };
+
+    fetchSubGroups();
+  }, [selectedGroup]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await getAssignedTo();
+        setAssignedUsers(res?.data || []);
+      } catch (err) {
+        console.error("Assigned users fetch error:", err);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const res = await getVendors();
+        setVendors(res?.data || []);
+      } catch (err) {
+        console.error("Vendors fetch error:", err);
+      }
+    };
+
+    fetchVendors();
   }, []);
 
   const [formData, setFormData] = useState({
@@ -245,6 +328,7 @@ const AddScheduleAudit = () => {
       });
 
       setSuccessText("Audit created successfully ✅");
+      navigate("/admin/audit");
       // If you want reset:
       // setSections([]);
       // setFormData((p) => ({ ...p, activity_name: "", description: "" }));
@@ -541,34 +625,65 @@ const AddScheduleAudit = () => {
 
         {selection === "asset-group" && (
           <>
-            <div className="grid md:grid-cols-1 gap-5">
-              <div className="grid gap-2 items-center w-full">
-                <label className="font-semibold">Group:</label>
-                <input
-                  className="border border-gray-400 p-2 rounded-md w-full"
-                  placeholder="Enter Asset Group"
-                />
-              </div>
+            {/* Asset Group Dropdown */}
+            <div className="grid gap-2 items-center w-full">
+              <label className="font-semibold">Group:</label>
+              <select
+                value={selectedGroup}
+                onChange={(e) => {
+                  setSelectedGroup(e.target.value);
+                  setSelectedSubGroup(""); // reset sub group
+                }}
+                className="border border-gray-400 p-2 rounded-md w-full"
+              >
+                <option value="">Select Asset Group</option>
+                {assetGroups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
             </div>
+
+            {/* Sub Group Dropdown */}
             <div className="grid gap-2 items-center w-full">
               <label className="font-semibold">Sub Group:</label>
-              <input
+              <select
+                value={selectedSubGroup}
+                onChange={(e) => setSelectedSubGroup(e.target.value)}
                 className="border border-gray-400 p-2 rounded-md w-full"
-                placeholder="Enter Sub Group"
-              />
+                disabled={!selectedGroup}
+              >
+                <option value="">Select Sub Group</option>
+                {subGroups.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </>
         )}
 
         <div className="grid gap-2 items-center w-full">
-          <label className="font-semibold">Assign To (User ID):</label>
-          <input
+          <label className="font-semibold">Assign To :</label>
+          <select
             name="assign_to"
             value={formData.assign_to}
             onChange={handleChange}
             className="border border-gray-400 p-2 rounded-md"
-            placeholder="e.g. 12"
-          />
+          >
+            <option value="">Select User</option>
+            {assignedUsers.map((user) => {
+              const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
+
+              return (
+                <option key={user.id} value={user.id}>
+                  {fullName || `User ${user.id}`}
+                </option>
+              );
+            })}
+          </select>
         </div>
 
         <div className="grid gap-2 items-center w-full">
@@ -582,6 +697,7 @@ const AddScheduleAudit = () => {
             <option value="">Select Scan Type</option>
             <option value="qr">QR</option>
             <option value="nfc">NFC</option>
+            <option value="manual">Manual</option>
           </select>
         </div>
 
@@ -634,15 +750,25 @@ const AddScheduleAudit = () => {
 
         <div className="grid gap-2 items-center w-full">
           <label className="font-semibold">
-            Supervisors (IDs comma separated):
+            Supervisors:
           </label>
-          <input
-            name="supervisors"
-            value={formData.supervisors}
+          <select
+            name="assign_to"
+            value={formData.assign_to}
             onChange={handleChange}
             className="border border-gray-400 p-2 rounded-md"
-            placeholder="e.g. 5,6"
-          />
+          >
+            <option value="">Select Supervisors</option>
+            {assignedUsers.map((user) => {
+              const fullName = `${user.firstname || ""} ${user.lastname || ""}`.trim();
+
+              return (
+                <option key={user.id} value={user.id}>
+                  {fullName || `User ${user.id}`}
+                </option>
+              );
+            })}
+          </select>
         </div>
 
         <div className="grid gap-2 items-center w-full">
@@ -715,14 +841,28 @@ const AddScheduleAudit = () => {
         </div>
 
         <div className="grid gap-2 items-center w-full">
-          <label className="font-semibold">Select Supplier (ID):</label>
-          <input
+          <label className="font-semibold">Select Supplier :</label>
+          <select
             name="select_supplier"
             value={formData.select_supplier}
             onChange={handleChange}
             className="border border-gray-400 p-2 rounded-md"
-            placeholder="e.g. 3"
-          />
+          >
+            <option value="">Select Supplier</option>
+            {vendors.map((vendor) => {
+              const name =
+                vendor.name ||
+                vendor.company_name ||
+                vendor.vendor_name ||
+                `${vendor.firstname || ""} ${vendor.lastname || ""}`.trim();
+
+              return (
+                <option key={vendor.id} value={vendor.id}>
+                  {name || `Vendor ${vendor.id}`}
+                </option>
+              );
+            })}
+          </select>
         </div>
 
         <div className="grid gap-2 items-center w-full">
@@ -777,14 +917,12 @@ const AddScheduleAudit = () => {
                     />
                     <div
                       onClick={handleToggle}
-                      className={`w-10 h-4 rounded-full p-1 flex items-center ${
-                        isOn ? "bg-blue-500" : "bg-gray-300"
-                      } cursor-pointer`}
+                      className={`w-10 h-4 rounded-full p-1 flex items-center ${isOn ? "bg-blue-500" : "bg-gray-300"
+                        } cursor-pointer`}
                     >
                       <div
-                        className={`w-3 h-3 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
-                          isOn ? "translate-x-6" : "translate-x-0"
-                        }`}
+                        className={`w-3 h-3 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${isOn ? "translate-x-6" : "translate-x-0"
+                          }`}
                       />
                     </div>
 
@@ -810,14 +948,12 @@ const AddScheduleAudit = () => {
                     />
                     <div
                       onClick={handleToggle1}
-                      className={`w-10 h-4 rounded-full p-1 flex items-center ${
-                        isOnTask ? "bg-blue-500" : "bg-gray-300"
-                      } cursor-pointer`}
+                      className={`w-10 h-4 rounded-full p-1 flex items-center ${isOnTask ? "bg-blue-500" : "bg-gray-300"
+                        } cursor-pointer`}
                     >
                       <div
-                        className={`w-3 h-3 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
-                          isOnTask ? "translate-x-6" : "translate-x-0"
-                        }`}
+                        className={`w-3 h-3 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${isOnTask ? "translate-x-6" : "translate-x-0"
+                          }`}
                       />
                     </div>
                   </div>
@@ -835,14 +971,12 @@ const AddScheduleAudit = () => {
                     />
                     <div
                       onClick={handleToggle2}
-                      className={`w-10 h-4 rounded-full p-1 flex items-center ${
-                        isOnWeight ? "bg-blue-500" : "bg-gray-300"
-                      } cursor-pointer`}
+                      className={`w-10 h-4 rounded-full p-1 flex items-center ${isOnWeight ? "bg-blue-500" : "bg-gray-300"
+                        } cursor-pointer`}
                     >
                       <div
-                        className={`w-3 h-3 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
-                          isOnWeight ? "translate-x-6" : "translate-x-0"
-                        }`}
+                        className={`w-3 h-3 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${isOnWeight ? "translate-x-6" : "translate-x-0"
+                          }`}
                       />
                     </div>
                   </div>
@@ -893,9 +1027,8 @@ const AddScheduleAudit = () => {
                         ].map((t) => (
                           <p
                             key={t.key}
-                            className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${
-                              scheduleFor === t.key ? "bg-black text-white" : ""
-                            }`}
+                            className={`border-2 p-1 px-6 border-black font-medium rounded-full cursor-pointer ${scheduleFor === t.key ? "bg-black text-white" : ""
+                              }`}
                             onClick={() => setAuditFor(t.key)}
                           >
                             {t.label}
@@ -1002,19 +1135,26 @@ const AddScheduleAudit = () => {
             {/* submit */}
             <div className="sm:flex justify-center grid gap-2 my-5">
               <button
+                type="button"
+                onClick={() => navigate("/admin/audit")}
+                className="text-white p-2 px-6 rounded-md font-medium bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
                 type="submit"
                 disabled={loading}
-                className={`text-white p-2 px-6 rounded-md font-medium ${
-                  loading ? "bg-gray-400" : "bg-gray-600"
-                }`}
+                className={`text-white p-2 px-6 rounded-md font-medium ${loading ? "bg-gray-400" : "bg-gray-600"
+
+                  }`}
               >
                 {loading ? "Submitting..." : "Submit"}
               </button>
             </div>
 
-            <div className="text-xs text-gray-500 text-center">
+            {/* <div className="text-xs text-gray-500 text-center">
               Posting to: {API_BASE}/audits.json?token=***
-            </div>
+            </div> */}
           </div>
         </div>
       </form>

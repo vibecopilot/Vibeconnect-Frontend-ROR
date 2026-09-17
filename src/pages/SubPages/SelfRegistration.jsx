@@ -183,6 +183,8 @@ function SelfRegistration() {
   const token = getItemInLocalStorage("TOKEN");
   const { id } = useParams();
   const [records, setRecords] = useState([])
+  const [searchText, setSearchText] = useState("");
+  const [filteredRecords, setFilteredRecords] = useState([]);
   console.log(id);
   console.log(siteId);
 
@@ -205,13 +207,41 @@ function SelfRegistration() {
         const response = await getSelfRegistration();
         console.log("response", response);
         const selfRegistration = response.data
+        // setRecords(selfRegistration.data);
         setRecords(selfRegistration.data);
+        setFilteredRecords(selfRegistration.data);
       } catch (err) {
         console.log("Falied To fecth records:", err);
       }
     };
     postLogs()
   }, []);
+
+  const handleSearch = (e) => {
+    const value = e.target.value.toLowerCase();
+    setSearchText(e.target.value);
+
+    if (!value.trim()) {
+      setFilteredRecords(records);
+      return;
+    }
+
+    const filtered = records.filter((item) => {
+      const name = item.visitor_name?.toLowerCase() || "";
+      const host = item.hosts?.[0]?.hosts_name?.toLowerCase() || "";
+      const mobile = String(item.contact_no || "");
+      const purpose = item.purpose?.toLowerCase() || "";
+
+      return (
+        name.includes(value) ||
+        host.includes(value) ||
+        mobile.includes(value) ||
+        purpose.includes(value)
+      );
+    });
+
+    setFilteredRecords(filtered);
+  };
 
   const columns = [
     {
@@ -259,53 +289,24 @@ function SelfRegistration() {
       selector: (row) => row.coming_from,
       sortable: true,
     },
-    {
-      name: "Expected Date",
-      selector: (row) => row.expected_date,
-      sortable: true,
-    },
-    {
-      name: "Expected Time",
-      selector: (row) => row.expected_time,
-      sortable: true,
-    },
+    // {
+    //   name: "Expected Date",
+    //   selector: (row) =>
+    //     row.expected_date
+    //       ? new Date(row.expected_date).toLocaleDateString()
+    //       : "-",
+    //   sortable: true,
+    // },
+    // {
+    //   name: "Expected Time",
+    //   selector: (row) =>
+    //     row.expected_time
+    //       ? row.expected_time
+    //       : "-",
+    //   sortable: true,
+    // },
   ];
 
-  // const data = [
-  //   {
-  //     id: 1,
-  //     visit_type: "Business",
-  //     name: "Amit Sharma",
-  //     host: "Mr. Verma",
-  //     contact_no: "9876543210",
-  //     purpose: "Client Meeting",
-  //     coming_from: "Tata Consultancy Services",
-  //     expected_date: "2024-02-10",
-  //     expected_time: "10:30 AM",
-  //   },
-  //   {
-  //     id: 2,
-  //     visit_type: "Personal",
-  //     name: "Priya Mehta",
-  //     host: "Mrs. Kapoor",
-  //     contact_no: "9876543220",
-  //     purpose: "Family Visit",
-  //     coming_from: "Mumbai",
-  //     expected_date: "2024-02-11",
-  //     expected_time: "11:00 AM",
-  //   },
-  //   {
-  //     id: 3,
-  //     visit_type: "Delivery",
-  //     name: "Rajesh Kumar",
-  //     host: "Reception",
-  //     contact_no: "9876543230",
-  //     purpose: "Courier Delivery",
-  //     coming_from: "Blue Dart",
-  //     expected_date: "2024-02-12",
-  //     expected_time: "02:00 PM",
-  //   },
-  // ];
 
   return (
     <div className="flex flex-col w-full overflow-hidden">
@@ -314,6 +315,8 @@ function SelfRegistration() {
           type="text"
           className="border border-gray-300 p-2 rounded-md placeholder:text-sm"
           placeholder="Search using Visitor name, Host, vehicle number"
+          value={searchText}
+          onChange={handleSearch}
         />
         {/* <div className="border md:flex-row flex-col flex p-2 rounded-md text-center border-black">
                 <span
@@ -339,7 +342,7 @@ function SelfRegistration() {
               </div> */}
         <div className="flex justify-end">
           <Link
-            to={`/admin/passes/add-self-registration/${siteId}?token=${token}`}
+            to={`/add-self-registration/${siteId}?token=${token}`}
             style={{ background: themeColor }}
             className=" font-semibold  hover:text-white duration-150 transition-all p-2 rounded-md text-white cursor-pointer text-center flex items-center gap-2 justify-center"
           >
@@ -349,7 +352,8 @@ function SelfRegistration() {
         </div>
       </div>
       <div className="my-3">
-        <Table columns={columns} data={records} />
+        {/* <Table columns={columns} data={records} /> */}
+        <Table columns={columns} data={filteredRecords} />
       </div>
     </div>
   );

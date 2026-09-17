@@ -22,6 +22,8 @@ const CreateBroadcast = () => {
   const [selectedOwnership, setSelectedOwnership] = useState("");
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [members, setMembers] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [users, setUsers] = useState([]); // ✅ was missing
 
   const [formData, setFormData] = useState({
     site_id: siteId,
@@ -39,8 +41,6 @@ const CreateBroadcast = () => {
 
   const datePickerRef = useRef(null);
   const currentDate = new Date();
-
-  const [groups, setGroups] = useState([]);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -55,15 +55,23 @@ const CreateBroadcast = () => {
     setFormData((p) => ({ ...p, notice_discription: value }));
   };
 
+  // ✅ Fetch users + buildings once on mount
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getSetupUsers();
+        const [usersRes, unitsRes] = await Promise.all([
+          getSetupUsers(),
+          getBuildings(),
+        ]);
 
-        const employeesList = (response.data || []).map((emp) => ({
+        setUnits(unitsRes.data || []);
+
+        const activeUsers = (usersRes.data || []).filter(
+          (emp) => emp.user_status === true
+        );
+
+        const employeesList = activeUsers.map((emp) => ({
           id: emp.id,
-          firstname: emp.firstname,
-          lastname: emp.lastname,
           name: `${emp.firstname || ""} ${emp.lastname || ""}`.trim(),
           building_id: emp.building_id || emp.building?.id || null,
           userSites: emp.user_sites || [],
@@ -72,86 +80,97 @@ const CreateBroadcast = () => {
 
         setMembers(employeesList);
         setFilteredMembers(employeesList);
-      } catch (error) {
-        console.error("Error fetching setup users:", error);
-      }
-    };
 
-    const fetchGroups = async () => {
-      try {
-        const res = await getGroups();
-        const unitsRes = await getBuildings();
-
-        setUnits(unitsRes.data || []);
-
-        const transformedGroups = (res.data || []).map((group) => ({
-          value: group.id,
-          label: group.group_name,
+        // Also store as users format for "all" broadcast
+        const usersFormatted = activeUsers.map((emp) => ({
+          value: emp.id,
+          label: `${emp.firstname || ""} ${emp.lastname || ""}`.trim(),
         }));
-        setGroups(transformedGroups);
+        setUsers(usersFormatted);
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchUsers();
-    fetchGroups();
+    fetchData();
   }, []);
 
-  const handleSelectChange = (selectedOptions) => {
-    const selectedIds = selectedOptions
-      ? selectedOptions.map((option) => option.value)
-      : [];
-    const userIdsString = selectedIds.join(",");
+  // ✅ Fetch groups when share === "groups"
+  useEffect(() => {
+    if (share === "groups") {
+      fetchGroups();
+    }
+  }, [share]);
 
-    setFormData((p) => ({ ...p, user_ids: userIdsString }));
-    setSelectedMembers(selectedOptions || []);
+  const fetchGroups = async () => {
+    try {
+      const res = await getGroups();
+      const transformedGroups = (res.data || []).map((group) => ({
+        value: group.id,
+        label: group.group_name,
+      }));
+      setGroups(transformedGroups);
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+    }
   };
 
+  // ✅ Single, correct handleFilter using selectedUnit (singular) + selectedOwnership
   const handleFilter = () => {
     const filtered = members.filter((member) => {
-      const buildingId = Number(member.building_id ?? member.building?.id);
+      const buildingMatch =
+        !selectedUnit ||
+        Number(member.building_id) === Number(selectedUnit);
 
-      if (!selectedUnit && !selectedOwnership) return true;
-
-      if (selectedUnit && !selectedOwnership) {
-        return buildingId === Number(selectedUnit);
-      }
-
-      if (!selectedUnit && selectedOwnership) {
-        return (member.userSites || []).some(
+      const ownershipMatch =
+        !selectedOwnership ||
+        member.userSites.some(
           (site) =>
             site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
         );
-      }
 
-      if (buildingId !== Number(selectedUnit)) return false;
-
-      return (member.userSites || []).some(
-        (site) =>
-          site.ownership?.toLowerCase() === selectedOwnership.toLowerCase()
-      );
+      return buildingMatch && ownershipMatch;
     });
 
-    setFilteredMembers(filtered);
+    if (filtered.length === 0) {
+      toast.error("No users found with the selected filters");
+      return;
+    }
 
-    if (filtered.length === 0)
-      toast.error("No users found matching the selected filters");
-    else toast.success(`Filter applied - ${filtered.length} user(s) found`);
+    setFilteredMembers(filtered);
+    toast.success(`${filtered.length} users found`);
+  };
+
+  const handleSelectChange = (selectedOptions) => {
+    if (!selectedOptions) return;
+
+    if (selectedOptions.some((option) => option.value === "select_all")) {
+      const allFilteredOptions = filteredMembers.map((member) => ({
+        value: member.id,
+        label: member.name,
+      }));
+      setSelectedMembers(allFilteredOptions);
+      setFormData((p) => ({
+        ...p,
+        user_ids: allFilteredOptions.map((u) => u.value).join(","),
+      }));
+    } else {
+      setSelectedMembers(selectedOptions);
+      setFormData((p) => ({
+        ...p,
+        user_ids: selectedOptions.map((opt) => opt.value).join(","),
+      }));
+    }
   };
 
   const handleFileChange = (files, fieldName) => {
-    setFormData((p) => ({
-      ...p,
-      [fieldName]: files,
-    }));
+    setFormData((p) => ({ ...p, [fieldName]: files }));
   };
 
   const handleSelectGroupChange = (selectedOptions) => {
-    const selectedIds = selectedOptions
-      ? selectedOptions.map((option) => option.value)
-      : [];
-    const groupIdsString = selectedIds.join(",");
+    const groupIdsString = selectedOptions
+      ? selectedOptions.map((option) => option.value).join(",")
+      : "";
     setFormData((p) => ({ ...p, group_ids: groupIdsString }));
   };
 
@@ -161,7 +180,6 @@ const CreateBroadcast = () => {
     setFormData((p) => ({
       ...p,
       shared: value,
-      // clear opposite ids to avoid stale
       user_ids: value === "individual" ? p.user_ids : "",
       group_ids: value === "groups" ? p.group_ids : "",
     }));
@@ -176,50 +194,42 @@ const CreateBroadcast = () => {
       toast.loading("Creating Broadcast Please Wait!", { id: "broadcast" });
 
       const formDataSend = new FormData();
-
       formDataSend.append("notice[site_id]", formData.site_id);
       formDataSend.append("notice[notice_title]", formData.notice_title);
+      formDataSend.append("notice[notice_discription]", formData.notice_discription);
       formDataSend.append(
-        "notice[notice_discription]",
-        formData.notice_discription
-      );
-
-      const expiry =
+        "notice[expiry_date]",
         formData.expiry_date instanceof Date
           ? formData.expiry_date.toISOString()
-          : formData.expiry_date;
-      formDataSend.append("notice[expiry_date]", expiry);
-
-      formDataSend.append("notice[important]", formData.important ? "1" : "0");
-      formDataSend.append("notice[shared]", formData.shared);
-      formDataSend.append(
-        "notice[send_email]",
-        formData.send_email ? "1" : "0"
+          : formData.expiry_date
       );
+      formDataSend.append("notice[important]", formData.important ? "1" : "0");
+      formDataSend.append("notice[send_email]", formData.send_email ? "1" : "0");
 
-      // keep backend keys consistent (groups stored in notice[group_id] as comma-separated)
-      if (formData.shared === "individual") {
-        formDataSend.append("notice[user_ids]", formData.user_ids || "");
-        formDataSend.append("notice[group_id]", "");
-      } else if (formData.shared === "groups") {
-        formDataSend.append("notice[user_ids]", "");
-        formDataSend.append("notice[group_id]", formData.group_ids || "");
-      } else {
-        formDataSend.append("notice[user_ids]", "");
-        formDataSend.append("notice[group_id]", "");
+      if (share === "all") {
+        const allUserIds = users.map((user) => user.value).join(",");
+        formDataSend.append("notice[shared]", "all");
+        formDataSend.append("notice[user_ids]", allUserIds);
+      } else if (share === "individual") {
+        formDataSend.append("notice[shared]", "individual");
+        formDataSend.append("notice[user_ids]", formData.user_ids);
+      } else if (share === "groups") {
+        formDataSend.append("notice[shared]", "groups");
+        formDataSend.append("notice[group_id]", formData.group_ids);
       }
 
       (formData.notice_image || []).forEach((file) => {
-        formDataSend.append("attachfiles[]", file);
+        if (file instanceof File) {
+          formDataSend.append("attachfiles[]", file);
+        }
       });
 
       await postBroadCast(formDataSend);
-
       toast.success("Broadcast Created Successfully");
       toast.dismiss("broadcast");
       navigate("/communication/broadcast");
     } catch (error) {
-      console.log(error);
+      console.error(error);
       toast.dismiss("broadcast");
       toast.error("Failed to create broadcast");
     }
@@ -235,33 +245,28 @@ const CreateBroadcast = () => {
           <div className="md:mx-20 my-5 mb-10 md:border p-2 md:px-2 rounded-lg w-full">
             <h2
               style={{ background: themeColor }}
-              className="text-center text-xl font-bold p-2 mb-2  rounded-md text-white"
+              className="text-center text-xl font-bold p-2 mb-2 rounded-md text-white"
             >
               Create Broadcast
             </h2>
             <h2 className="border-b text-xl border-gray-400 mb-6 font-medium">
               Communication Info
             </h2>
-            <div className="flex flex-col gap-4 ">
+            <div className="flex flex-col gap-4">
               <div className="flex flex-col">
-                <label htmlFor="" className="font-semibold">
-                  Title :
-                </label>
+                <label className="font-semibold">Title :</label>
                 <input
                   type="text"
                   name="notice_title"
                   value={formData.notice_title}
                   onChange={handleChange}
                   placeholder="Enter Title"
-                  id=""
                   className="border p-2 rounded-md border-gray-400 placeholder:text-sm"
                 />
               </div>
 
               <div className="flex flex-col">
-                <label htmlFor="" className="font-semibold">
-                  Description :
-                </label>
+                <label className="font-semibold">Description :</label>
                 <ReactQuill
                   theme="snow"
                   value={formData.notice_discription}
@@ -290,14 +295,10 @@ const CreateBroadcast = () => {
                 <div className="flex gap-2 items-center">
                   <input
                     type="checkbox"
-                    name=""
                     id="imp"
                     checked={formData.important === true}
                     onChange={() =>
-                      setFormData((p) => ({
-                        ...p,
-                        important: !p.important,
-                      }))
+                      setFormData((p) => ({ ...p, important: !p.important }))
                     }
                   />
                   <label htmlFor="imp">Mark as Important</label>
@@ -306,53 +307,34 @@ const CreateBroadcast = () => {
                 <div className="flex gap-2 items-center">
                   <input
                     type="checkbox"
-                    name=""
                     id="email"
                     checked={formData.send_email === true}
                     onChange={() =>
-                      setFormData((p) => ({
-                        ...p,
-                        send_email: !p.send_email,
-                      }))
+                      setFormData((p) => ({ ...p, send_email: !p.send_email }))
                     }
                   />
                   <label htmlFor="email">Send Email</label>
                 </div>
               </div>
 
-              <div className="">
-                <h2 className="border-b t border-black my-5 text-lg font-semibold">
+              <div>
+                <h2 className="border-b border-black my-5 text-lg font-semibold">
                   Share With
                 </h2>
 
                 <div className="flex flex-col items-center justify-center">
-                  <div className="flex flex-row gap-2 w-full font-semibold p-2 ">
-                    <h2
-                      className={`p-1 ${
-                        share === "all" && "bg-black text-white"
-                      } rounded-full px-6 cursor-pointer border-2 border-black`}
-                      onClick={() => setShareTab("all")}
-                    >
-                      All
-                    </h2>
-
-                    <h2
-                      className={`p-1 ${
-                        share === "individual" && "bg-black text-white"
-                      } rounded-full px-4 cursor-pointer border-2 border-black`}
-                      onClick={() => setShareTab("individual")}
-                    >
-                      Individuals
-                    </h2>
-
-                    <h2
-                      className={`p-1 ${
-                        share === "groups" && "bg-black text-white"
-                      } rounded-full px-4 cursor-pointer border-2 border-black`}
-                      onClick={() => setShareTab("groups")}
-                    >
-                      Groups
-                    </h2>
+                  <div className="flex flex-row gap-2 w-full font-semibold p-2">
+                    {["all", "individual", "groups"].map((tab) => (
+                      <h2
+                        key={tab}
+                        className={`p-1 ${
+                          share === tab && "bg-black text-white"
+                        } rounded-full px-6 cursor-pointer border-2 border-black capitalize`}
+                        onClick={() => setShareTab(tab)}
+                      >
+                        {tab === "all" ? "All" : tab === "individual" ? "Individuals" : "Groups"}
+                      </h2>
+                    ))}
                   </div>
 
                   <div className="my-2 flex w-full">
@@ -379,9 +361,7 @@ const CreateBroadcast = () => {
                           <select
                             className="border p-3 border-gray-300 rounded-md flex-1"
                             value={selectedOwnership}
-                            onChange={(e) =>
-                              setSelectedOwnership(e.target.value)
-                            }
+                            onChange={(e) => setSelectedOwnership(e.target.value)}
                           >
                             <option value="">Select Ownership</option>
                             <option value="tenant">Tenant</option>
@@ -395,20 +375,36 @@ const CreateBroadcast = () => {
                           >
                             Filter
                           </button>
+
+                          <button
+                            style={{ background: themeColor }}
+                            onClick={() => {
+                              setSelectedUnit(null);
+                              setSelectedOwnership("");
+                              setFilteredMembers(members);
+                              setSelectedMembers([]);
+                              setFormData((p) => ({ ...p, user_ids: "" }));
+                            }}
+                            className="text-white px-4 py-2 rounded-md hover:opacity-90"
+                          >
+                            Cancel
+                          </button>
                         </div>
 
                         <div className="w-full mt-3 mb-3">
                           <Select
-                            options={filteredMembers.map((member) => ({
-                              value: member.id,
-                              label: member.name,
-                            }))}
-                            className="w-full"
-                            title="Select Members"
+                            options={[
+                              { value: "select_all", label: "Select All" },
+                              ...filteredMembers.map((member) => ({
+                                value: member.id,
+                                label: member.name,
+                              })),
+                            ]}
                             onChange={handleSelectChange}
                             value={selectedMembers}
                             isMulti
-                            placeholder="Select Members"
+                            closeMenuOnSelect={false}
+                            placeholder="Select members"
                           />
                         </div>
                       </div>
@@ -437,13 +433,10 @@ const CreateBroadcast = () => {
                   <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
                     Attachments
                   </h2>
-
                   <FileInputBox
                     fieldName={"notice_image"}
                     isMulti={true}
-                    handleChange={(files) =>
-                      handleFileChange(files, "notice_image")
-                    }
+                    handleChange={(files) => handleFileChange(files, "notice_image")}
                   />
                 </div>
               </div>
@@ -452,7 +445,7 @@ const CreateBroadcast = () => {
                 <button
                   style={{ background: themeColor }}
                   onClick={handleCreateBroadCast}
-                  className="px-4 text-white p-2 rounded-md  flex items-center gap-2"
+                  className="px-4 text-white p-2 rounded-md flex items-center gap-2"
                 >
                   <FaCheck /> Submit
                 </button>

@@ -386,28 +386,7 @@ const EditVisitor = () => {
     setPassStartDate(event.target.value);
   const handlePassEndDateChange = (event) => setPassEndDate(event.target.value);
 
-  // ✅ helper: upload docs AFTER update (MULTI)
-  const uploadDocsAfterUpdate = async () => {
-    // license
-    if (formData.license && licenseFiles.length > 0) {
-      const fd = new FormData();
-      fd.append("visitor_id", id);
-      licenseFiles.forEach((file) => {
-        fd.append("visitor_license[]", file, file.name);
-      });
-      await uploadVisitorLicense(fd);
-    }
-
-    // consignment
-    if (formData.consignment && consignmentFiles.length > 0) {
-      const fd = new FormData();
-      fd.append("visitor_id", id);
-      consignmentFiles.forEach((file) => {
-        fd.append("visitor_consignment[]", file, file.name);
-      });
-      await uploadVisitorConsignment(fd);
-    }
-  };
+  // (uploadDocsAfterUpdate removed — files are now appended directly to the main PUT FormData)
 
   const fetchVisitorDetails = async () => {
     try {
@@ -651,9 +630,22 @@ const EditVisitor = () => {
       }
     });
 
-    if (formData.goodsInward) {
-      postData.append("visitor[no_of_goods]", formData.noOfGoods || "");
-      postData.append("visitor[goods_description]", formData.goodsDescription || "");
+    // Goods fields inside visitor[] namespace as per API
+    postData.append("visitor[no_of_goods]", formData.goodsInward ? (formData.noOfGoods || "") : "");
+    postData.append("visitor[goods_description]", formData.goodsInward ? (formData.goodsDescription || "") : "");
+
+    // Append license files directly into the PUT request
+    if (licenseFiles.length > 0) {
+      licenseFiles.forEach((file) => {
+        postData.append("visitor_license[]", file, file.name);
+      });
+    }
+
+    // Append consignment files directly into the PUT request
+    if (consignmentFiles.length > 0) {
+      consignmentFiles.forEach((file) => {
+        postData.append("visitor_consignment[]", file, file.name);
+      });
     }
 
     if (imageFile) {
@@ -664,14 +656,6 @@ const EditVisitor = () => {
       toast.loading("Updating visitor details...", { id: "editVisitor" });
 
       const visitResp = await editVisitorDetails(id, postData);
-
-      // ✅ upload docs after update (MULTI)
-      try {
-        await uploadDocsAfterUpdate();
-      } catch (docErr) {
-        console.log("Doc Upload Error:", docErr?.response?.data || docErr);
-        toast.error("Visitor updated, but license/consignment upload failed.");
-      }
 
       toast.dismiss("editVisitor");
       toast.success("Visitor Edited Successfully");
@@ -1077,8 +1061,8 @@ const EditVisitor = () => {
                   {licenseFiles.length > 0
                     ? "Change File(s)"
                     : existingLicenseFileName
-                    ? "Replace License"
-                    : "Upload License"}
+                      ? "Replace License"
+                      : "Upload License"}
                 </button>
 
                 <input
@@ -1117,8 +1101,8 @@ const EditVisitor = () => {
                   {consignmentFiles.length > 0
                     ? "Change File(s)"
                     : existingConsignmentFileName
-                    ? "Replace Consignment"
-                    : "Upload Consignment"}
+                      ? "Replace Consignment"
+                      : "Upload Consignment"}
                 </button>
 
                 <input
@@ -1284,11 +1268,10 @@ const EditVisitor = () => {
                   {weekdaysMap.map((weekdayObj) => (
                     <button
                       key={weekdayObj.day}
-                      className={`rounded-md p-2 px-4 shadow-custom-all-sides font-medium ${
-                        selectedWeekdays?.includes(weekdayObj.day)
-                          ? "bg-green-400 text-white "
-                          : ""
-                      }`}
+                      className={`rounded-md p-2 px-4 shadow-custom-all-sides font-medium ${selectedWeekdays?.includes(weekdayObj.day)
+                        ? "bg-green-400 text-white "
+                        : ""
+                        }`}
                       onClick={(e) => {
                         e.preventDefault();
                         handleWeekdaySelection(weekdayObj.day);
@@ -1302,11 +1285,18 @@ const EditVisitor = () => {
               </div>
             )}
 
-            <div className="flex gap-5 justify-center items-center my-4 mb-10">
+            <div className="flex gap-5 justify-end items-center my-4 mb-10">
+              <button
+                onClick={() => navigate("/admin/passes/visitors")}
+                className="text-white bg-black font-semibold py-2 px-4 rounded"
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleEditVisitor}
-                className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+                className=" text-white font-semibold py-2 px-4 rounded"
                 type="button"
+                style={{ background: themeColor }}
               >
                 Save
               </button>
