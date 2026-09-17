@@ -50,6 +50,13 @@ const UserSetup = () => {
   const [toDate, setToDate] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // ✅ MANUAL PAGINATION — table only ever receives the current page's
+  // slice, so its built-in "select all" checkbox (which selects every row
+  // in whatever `data` it's given) can only ever select this page's rows,
+  // never every user across the whole filtered list.
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
   // ✅ BULK EMAIL SELECTION STATE
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [sendingBulkEmail, setSendingBulkEmail] = useState(false);
@@ -212,6 +219,18 @@ const UserSetup = () => {
       return true;
     });
   }, [tabFilteredUsers, fromDate, toDate]);
+
+  // ✅ Reset to page 1 whenever the filtered list itself changes (tab,
+  // search, date filter) so we never show a stale page past the end.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFilteredUsers]);
+
+  const pagedUsers = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+
+    return dateFilteredUsers.slice(start, start + rowsPerPage);
+  }, [dateFilteredUsers, currentPage, rowsPerPage]);
 
   /* ---------------- CLEAR FILTER ---------------- */
   const clearDateFilter = () => {
@@ -763,9 +782,18 @@ const UserSetup = () => {
             <div className="bg-white rounded-xl shadow-md p-4">
               <Table
                 columns={userColumn}
-                data={dateFilteredUsers}
+                data={pagedUsers}
                 selectableRow
                 onSelectedRows={setSelectedUsers}
+                paginationServer
+                paginationTotalRows={dateFilteredUsers.length}
+                currentPage={currentPage}
+                rowsPerPage={rowsPerPage}
+                onChangePage={setCurrentPage}
+                onChangeRowsPerPage={(newPerPage, page) => {
+                  setRowsPerPage(newPerPage);
+                  setCurrentPage(page);
+                }}
               />
             </div>
           </>
