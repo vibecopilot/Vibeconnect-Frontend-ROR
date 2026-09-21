@@ -1214,7 +1214,13 @@ const AddFB = () => {
           />
         </div>
 
-        <div className="sm:flex justify-center grid gap-2 my-5 ">
+        <div className="sm:flex justify-end grid gap-2 my-5 ">
+          <button
+            className="bg-black text-white p-2 px-4 rounded-md font-medium"
+            onClick={() => navigate("/admin/fb")}
+          >
+            Cancel
+          </button>
           <button
             className="bg-black text-white p-2 px-4 rounded-md font-medium"
             onClick={handleSubmit}

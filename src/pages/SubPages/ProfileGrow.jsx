@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import interview from "/01.jpg"
+import interview from "/01.jpg";
 import { AiFillCloseCircle } from "react-icons/ai";
 function ProfileGrow() {
     const connection = [

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { editInventory, getAssetSubGroups, getInventoryDetails, getStockGroupsList, postInventory } from "../../api";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 
 const EditStocks = () => {
   const { id } = useParams();
+  const navigate=useNavigate();
   const [groupList, setGroupList] = useState([]);
   const [subGroupList, setSubGroupList] = useState([]);
   const [formData, setFormData] = useState({
@@ -115,6 +116,7 @@ const EditStocks = () => {
       const editInvResp = await editInventory(dataToSend, id);
       console.log(editInvResp);
       toast.success("Inventory Edited Successfully");
+      navigate("/assets/stock-items")
     } catch (error) {
       console.log(error)
     }
@@ -252,12 +254,19 @@ const themeColor= useSelector((state)=>state.theme.color )
                 className="border p-1 px-4 border-gray-500 rounded-md"
               ></textarea>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-end gap-3 mt-4">
+               <button
+              className="bg-black text-white p-2 px-4 rounded-md font-medium"
+              onClick={() => navigate("/assets/stock-items")}
+            >
+              Cancel
+            </button>
               <button
-                className="bg-black text-white p-2 px-4 rounded-md font-medium"
+                className=" text-white p-2 px-4 rounded-md font-medium"
+                style={{background:themeColor}}
                 onClick={handleAddInventory}
               >
-                Save
+                Update Stock
               </button>
             </div>
           </div>

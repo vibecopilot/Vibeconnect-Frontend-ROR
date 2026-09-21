@@ -52,19 +52,26 @@ const FitOutSetupPage = () => {
   const [showPicker, setShowPicker] = useState(false);
   const [statuses, setStatuses] = useState([]);
   const [id, setId] = useState("");
+  
+  const fetchFitoutStatuses = async () => {
+    try {
+      const statusResp = await getFitoutStatusSetup();
+
+      console.log("Status API Response:", statusResp.data);
+
+      setStatuses(
+        Array.isArray(statusResp.data)
+          ? statusResp.data
+          : statusResp.data.fitout_statuses || []
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    const fetchTicketStatus = async () => {
-      try {
-        const statusResp = await getFitoutStatusSetup();
-        const statusArray = Object.values(statusResp.data);
-        setStatuses(statusArray);
-        console.log(statusArray);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchTicketStatus();
-  }, [statusAdded]);
+    fetchFitoutStatuses();
+  }, []);
 
   const handleColorChange = (newColor) => {
     setColor(newColor.hex);
@@ -226,6 +233,7 @@ const FitOutSetupPage = () => {
         fixedState: "",
         order: "",
       });
+      await fetchFitoutStatuses();
     } catch (error) {
       console.log(error);
       toast.error(error.response.data.error);
@@ -263,19 +271,17 @@ const FitOutSetupPage = () => {
         <div className="flex w-full">
           <div className=" flex gap-2 p-2 pb-0 border-b-2 border-gray-200 w-full">
             <h2
-              className={`p-1 ${
-                page === "Category Type" &&
+              className={`p-1 ${page === "Category Type" &&
                 `bg-white font-medium text-blue-500 shadow-custom-all-sides`
-              } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
+                } rounded-t-md px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
               onClick={() => setPage("Category Type")}
             >
               Category Type
             </h2>
             <h2
-              className={`p-1 ${
-                page === "Status" &&
+              className={`p-1 ${page === "Status" &&
                 "bg-white font-medium text-blue-500 shadow-custom-all-sides"
-              } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
+                } rounded-t-md px-4 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("Status")}
             >
               Status

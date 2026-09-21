@@ -131,13 +131,14 @@ useEffect(() => {
   }
 };
 
-  const handleFileChange = (files, fieldName) => {
-    setFormData((prev) => ({
-      ...prev,
-      [fieldName]: files,
-    }));
-    console.log(fieldName);
-  };
+const handleFileChange = (files, fieldName) => {
+  const actualFiles = files.map((f) => f.file || f);
+  
+  setFormData((prev) => ({
+    ...prev,
+    [fieldName]: actualFiles,
+  }));
+};
 
   const navigate = useNavigate();
   const handleAddService = async () => {
@@ -165,8 +166,11 @@ useEffect(() => {
         dataToSend.append("soft_service[unit_id][]", option.value);
       });
       dataToSend.append("soft_service[user_id]", formData.user_id);
-      (formData.attachments || []).forEach((file, index) => {
-        dataToSend.append(`attachfiles[]`, file);
+      (formData.attachments || []).forEach((fileObj) => {
+        const file = fileObj?.file || fileObj;
+        if (file instanceof File) {
+          dataToSend.append("attachfiles[]", file);
+        }
       });
       const serviceResponse = await postSoftServices(dataToSend);
       console.log(serviceResponse);

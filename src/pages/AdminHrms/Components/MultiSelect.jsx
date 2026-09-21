@@ -59,6 +59,7 @@ const MultiSelect = ({
       <label className="block font-semibold">{title}</label>
       <div className="mb-2  relative">
         <button
+          type="button"
           className={`w-full px-3 py-2 border flex items-center gap-2 justify-center border-gray-300 rounded-md ${
             disabled && "bg-gray-100"
           } `}

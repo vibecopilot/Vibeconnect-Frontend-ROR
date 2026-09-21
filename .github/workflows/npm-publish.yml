@@ -28,7 +28,8 @@ jobs:
             cd /var/www/html/react-Vibe/vibeconnect-frontend || exit 1
 
             echo "🚀 Pulling latest code"
-            git pull origin server || exit 1
+            git fetch origin
+            git reset --hard origin/server
 
             echo "📦 Installing dependencies"
             npm install || exit 1

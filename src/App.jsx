@@ -2,6 +2,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import "./App.css";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import AppDashboard from "./pages/AppDashboard.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import toast from "react-hot-toast";
 import Notification from "./pages/SubPages/Notification.jsx";
@@ -790,6 +791,8 @@ import EditTemplateSurvey from "./pages/SubPages/survey/EditTemplateSurvey.jsx";
 import SurveyDetails from "./pages/SubPages/survey/SurveyDetails.jsx";
 import AnalyzeResult from "./pages/SubPages/survey/AnalyzeResult.jsx";
 import PreviewSurvey from "./pages/SubPages/survey/PreviewSurvey.jsx";
+import TakeSurvey from "./pages/SubPages/survey/TakeSurvey.jsx";
+import SurveyThankYou from "./pages/SubPages/survey/SurveyThankYou.jsx";
 import FBMainPage from "./pages/Setup/FBMainPage.jsx";
 import EventPage from "./extra/EventPage.jsx";
 import ParkingConfigurationSetup from "./pages/Setup/ParkingSetupPages/ParkingConfigurationSetup.jsx";
@@ -810,7 +813,13 @@ import {
   JournalEntries,
   CreateJournalEntry,
   Reports,
-  AccountingSettings
+  AccountingSettings,
+  AccountGroups,
+  TaxRates,
+  AccountingPayments,
+  AccountingInvoices,
+  AccountingReports,
+  AccountingSetupTabs
 } from "./pages/Accounting";
 import TrialBalanceReport from "./pages/Accounting/Reports/TrialBalanceReport.jsx";
 // Visitor overstay alert polling
@@ -833,11 +842,30 @@ import UnitConfigurations from "./pages/OSR/UnitConfig.jsx";
 import AdminBookings from "./pages/OSR/OsrBookings.jsx";
 import MyBookings from "./pages/OSR/ResidentialBookings.jsx";
 import GroupedDashboardPage from "./groupedDashboard/GroupDashboard.jsx";
+import AssetDashboardPage from "./groupedDashboard/AssetDashboard.jsx";
 import Pets from "./pages/Setup/Pets/Pets";
 
 import PetsAdd from "./pages/Setup/Pets/PetsAdd";
 import PetsView from "./pages/Setup/Pets/PetsView";
 import PetsEdit from "./pages/Setup/Pets/PetsEdit";
+import BookingCalendar from "./pages/BookingCalendar";
+import RVehiclesView from "./pages/SubPages/RVehiclesView";
+import PantryDetails from "./pages/PantryDetails.jsx";
+import FitOutRequestDetails from "./pages/FitOut/FitOutRequestDetailsFixed.jsx";
+import FitOutRequestDetail from "./pages/FitOut/FitOutRequestDetail.jsx";
+import FitOutRequestEditPage from "./pages/FitOut/FitOutRequestEditPage.jsx";
+import FitOutChecklistView from "./pages/FitOut/FitOutChecklistView.jsx";
+import BannerManagement from "./pages/Setup/BannerManagement.jsx";
+import KonstructListPage from "./pages/KonstructUpdate/KonstructListPage.jsx";
+import KonstructFormPage from "./pages/KonstructUpdate/KonstructFormPage.jsx";
+import DirectorySetupPages from "./pages/Setup/DirectorySetupPages.jsx";
+import ParineePrivacyPolicy from "./pages/Setup/Abous/ParineePrivacyPolicy.jsx";
+import HappyHomesPrivacyPolicy from "./pages/Setup/Abous/HappyHomes.jsx";
+import SugeePrivacyPolicy from "./pages/Setup/Abous/SugeePrivacyPolicy.jsx";
+import LotusHRMSPrivacyPolicy from "./pages/Setup/Abous/LotusHrms.jsx";
+
+
+
 
 
 
@@ -926,7 +954,7 @@ function App() {
             const entry = v.visits_log.find((l) => l.check_in);
             if (entry) checkInTime = entry.check_in;
           }
-            // Fallback to expected date/time if actual check-in not available
+          // Fallback to expected date/time if actual check-in not available
           if (!checkInTime && v.expected_date && v.expected_time) {
             checkInTime = `${v.expected_date}T${v.expected_time}`;
           }
@@ -1063,6 +1091,17 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/" element={<Navigate to="/login" />} />
 
+        {/* Public survey (no login): shareable link for anyone to take survey */}
+        <Route path="/survey/:id" element={<TakeSurvey />} />
+        <Route path="/survey/:id/thank-you" element={<SurveyThankYou />} />
+
+        <Route
+          path="/apps/dashboard"
+          element={
+            <AppDashboard />
+          }
+        />
+
         <Route
           path="/dashboard"
           element={
@@ -1073,13 +1112,12 @@ function App() {
         />
         <Route
           path="/grouped-dashboard"
-          element={
-            // <ProtectedAdminRoutes>
-              <GroupedDashboardPage />
-            // </ProtectedAdminRoutes>
-          }
+          element={<GroupedDashboardPage />}
         />
-
+        <Route
+          path="/asset-dashboard"
+          element={<AssetDashboardPage />}
+        />
         <Route
           path="/settings"
           element={
@@ -1104,8 +1142,8 @@ function App() {
           path="/attendance"
           element={
             // <ProtectedAdminRoutes>
-              // {" "}
-              <Attendance />
+            // {" "}
+            <Attendance />
             // </ProtectedAdminRoutes>
           }
         />
@@ -1113,8 +1151,8 @@ function App() {
           path="/rmb-attendance"
           element={
             // <ProtectedAdminRoutes>
-              // {" "}
-              <RmbAttendance />
+            // {" "}
+            <RmbAttendance />
             // </ProtectedAdminRoutes>
           }
         />
@@ -1323,7 +1361,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        
+
         <Route
           path="/setup/users-details/:id"
           element={
@@ -1336,9 +1374,9 @@ function App() {
         <Route
           path="/setup/edit-user/:id"
           element={
-          <ProtectedAdminRoutes>
-          <EditUser />
-          </ProtectedAdminRoutes>
+            <ProtectedAdminRoutes>
+              <EditUser />
+            </ProtectedAdminRoutes>
           }
         />
 
@@ -1555,6 +1593,7 @@ function App() {
 
         {/* booking */}
         <Route path="/bookings" element={<Booking />} />
+        <Route path="/bookings/calendar" element={<BookingCalendar />} />
         <Route
           path="/bookings/new-facility-booking"
           element={<FacilityBooking />}
@@ -1564,13 +1603,13 @@ function App() {
           element={<BookingDetails />}
         />
         <Route
-            path="/setup/facility-details/:id"
-            element={<BookingFacilityDetails />}
-          />
+          path="/setup/facility-details/:id"
+          element={<BookingFacilityDetails />}
+        />
         <Route
-            path="/setup/facility-details/edit/:id"
-            element={<EditAmenitySetup />}
-          />
+          path="/setup/facility-details/edit/:id"
+          element={<EditAmenitySetup />}
+        />
         <Route
           path="/setup/facility"
           element={
@@ -1906,7 +1945,7 @@ function App() {
         />
         <Route
           path="/admin/parking-view-details/:id"
-          element={ 
+          element={
             <ProtectedAdminRoutes>
               <ParkingViewDetails />
             </ProtectedAdminRoutes>
@@ -1914,7 +1953,7 @@ function App() {
         />
         <Route
           path="/admin/parking/edit-parking/:id"
-          element={ 
+          element={
             <ProtectedAdminRoutes>
               <EditParking />
             </ProtectedAdminRoutes>
@@ -1931,23 +1970,23 @@ function App() {
           }
         />
 
-          <Route
-            path="/admin/modern-parking-config"
-            element={
-              <ProtectedAdminRoutes>
-                <ModernParkingConfig />
-              </ProtectedAdminRoutes>
-            }
-          />
+        <Route
+          path="/admin/modern-parking-config"
+          element={
+            <ProtectedAdminRoutes>
+              <ModernParkingConfig />
+            </ProtectedAdminRoutes>
+          }
+        />
 
-          <Route
-            path="/admin/Vehicle-setup"
-            element={
-              <ProtectedAdminRoutes>
-                <VehicleSetup />
-              </ProtectedAdminRoutes>
-            }
-          />
+        <Route
+          path="/admin/Vehicle-setup"
+          element={
+            <ProtectedAdminRoutes>
+              <VehicleSetup />
+            </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/admin/add-parking-config"
@@ -2255,7 +2294,7 @@ function App() {
           }
         />
 
-{/* 
+        {/* 
       <Route path="/soft-service" element={<Layout />}>
   <Route
     path="schedule-task-details/:id/:taskId"
@@ -2264,7 +2303,7 @@ function App() {
 </Route> */}
 
 
-<Route path="/soft-service/schedule-task-details/:id/:taskId" element={<ServiceTaskDetails />} />
+        <Route path="/soft-service/schedule-task-details/:id/:taskId" element={<ServiceTaskDetails />} />
 
         <Route
           path="/admin/copy-checklist/:id"
@@ -2709,7 +2748,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-        
+
         {/*
            <Route
             path="/employee/rvehiclesdetails/:id"
@@ -2803,6 +2842,40 @@ function App() {
           element={<Navigate to="/admin/passes/visitors" replace />}
         />
 
+        {/* Konstruct Update */}
+        <Route
+          path="/v1/konstruct_updates"
+          element={
+            // <ProtectedRoute>
+              <KonstructListPage />
+            // </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/v1/konstruct_updates/new"
+          element={
+            // <ProtectedRoute>
+              <KonstructFormPage />
+            // </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/v1/konstruct_updates/:id"
+          element={
+            // <ProtectedRoute>
+              <KonstructFormPage />
+            // </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/v1/konstruct_updates/:id/edit"
+          element={
+            // <ProtectedRoute>
+              <KonstructFormPage />
+            // </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/admin/passes/visitors"
           element={
@@ -2811,7 +2884,7 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
-                <Route
+        <Route
           path="/admin/passes/visitors/visitor-details/:id"
           element={
             <ProtectedAdminRoutes>
@@ -2834,6 +2907,10 @@ function App() {
               <RVehicles />
             </ProtectedAdminRoutes>
           }
+        />
+        <Route
+          path="/admin/rvehicles/view/:id"
+          element={<RVehiclesView />}
         />
         <Route
           path="/admin/passes/guest-vehicles"
@@ -3510,6 +3587,22 @@ function App() {
           }
         />
         <Route
+          path="/admin/add-pantry"
+          element={
+            <ProtectedAdminRoutes>
+              <AddPantry />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/pantry-details/:id"
+          element={
+            <ProtectedAdminRoutes>
+              <PantryDetails />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
           path="/fnb/status-setup/:id"
           element={
             <ProtectedAdminRoutes>
@@ -3789,6 +3882,25 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+
+        <Route
+          path="/admin/banner-setup"
+          element={
+            <ProtectedAdminRoutes>
+              <BannerManagement />
+            </ProtectedAdminRoutes>
+          }
+        />
+
+        <Route
+          path="/admin/directory-setup"
+          element={
+            <ProtectedAdminRoutes>
+              <DirectorySetupPages />
+            </ProtectedAdminRoutes>
+          }
+        />
+
         {/* SAC/HSN Setup */}
         <Route
           path="/admin/sac-hsn-setup"
@@ -4065,58 +4177,64 @@ function App() {
           }
         />
 
-{/*  Fit-Out OSR */ }
-          <Route
-            path="/fitout/list"
-            element={
-              <ProtectedRoute>
-                <FitOutList />
-              </ProtectedRoute>
-            }
-          />
+        {/*  Fit-Out OSR */}
+        <Route
+          path="/fitout/list"
+          element={
+            <ProtectedRoute>
+              <FitOutList />
+            </ProtectedRoute>
+          }
+        />
 
-             <Route path="/fitout/setup" element={<FitOutSetup />} />
-          <Route path="/fitout/setup/page" element={<FitOutSetupPage />} />
-          <Route
-            path="/fitout/request/create"
-            element={<FitOutRequestPage />}
-          />
-          <Route path="/fitout/request/list" element={<RequestListPage />} />
-          <Route
-            path="/fitout/checklist/create"
-            element={<FitOutChecklistPage />}
-          />
-          <Route
-            path="/fitout/checklist/form/:id"
-            element={<ChecklistForm />}
-          />
-          <Route
-            path="/fitout/checklist/answer-details/:id"
-            element={<SnagAnswerDetails />}
-          />
-          <Route
-            path="/fitout/snag-answer-details/:id"
-            element={<SnagAnswerDetails />}
-          />
+        <Route path="/fitout/setup" element={<FitOutSetup />} />
+        <Route path="/fitout/setup/page" element={<FitOutSetupPage />} />
+        <Route
+          path="/fitout/request/create"
+          element={<FitOutRequestPage />}
+        />
+        <Route path="/fitout/request/edit/:id" element={<FitOutRequestEditPage />} />
+        <Route path="/fitout/request/list" element={<RequestListPage />} />
+        <Route path="/fitout/request/details/:id" element={<FitOutRequestDetail />} />
+        <Route
+          path="/fitout/checklist/create"
+          element={<FitOutChecklistPage />}
+        />
+        <Route
+          path="/fitout/checklist/form/:id"
+          element={<ChecklistForm />}
+        />
+        <Route
+          path="/fitout/checklist/answer-details/:id"
+          element={<SnagAnswerDetails />}
+        />
+        <Route
+          path="/fitout/snag-answer-details/:id"
+          element={<SnagAnswerDetails />}
+        />
 
-          <Route
-            path="/fitout/checklist/list"
-            element={<FitoutChecklistList />}
-          />{/*  */}
+        <Route
+          path="/fitout/checklist/list"
+          element={<FitoutChecklistList />}
+        />
 
+        <Route
+          path="/fitout/checklist/view/:id"
+          element={<FitOutChecklistView />}
+        />
 
-          {/* OSR */}
+        {/* OSR */}
 
-         <Route path="/additional-service" element={<Osr />} />
-          <Route path="/ors-dashboard" element={<OSRDashboard />} />
-          <Route path="/ors-setups" element={<OrsSetup />} />
-           <Route path="/service-booking" element={<ServiceBooking />} />
-          <Route
-            path="/admin/unit-configurations"
-            element={<UnitConfigurations />}
-          />
-          <Route path="/admin/bookings" element={<AdminBookings />} />
-          <Route path="/residential/bookings" element={<MyBookings />} />
+        <Route path="/additional-service" element={<Osr />} />
+        <Route path="/ors-dashboard" element={<OSRDashboard />} />
+        <Route path="/ors-setups" element={<OrsSetup />} />
+        <Route path="/service-booking" element={<ServiceBooking />} />
+        <Route
+          path="/admin/unit-configurations"
+          element={<UnitConfigurations />}
+        />
+        <Route path="/admin/bookings" element={<AdminBookings />} />
+        <Route path="/residential/bookings" element={<MyBookings />} />
 
         {/* admin booking & req */}
         <Route
@@ -6964,6 +7082,12 @@ function App() {
           }
         />
         <Route path="/setup/privacy_policy" element={<PrivacyPolicy />} />
+        <Route path="/parinee/privacy_policy" element={<ParineePrivacyPolicy />} />
+        <Route path="/happy_homes/privacy_policy" element={<HappyHomesPrivacyPolicy />} />
+        <Route path="/sugee/privacy_policy" element={<SugeePrivacyPolicy />} />
+        <Route path="/lotus_hrms/privacy_policy" element={<LotusHRMSPrivacyPolicy />} />
+
+
         <Route
           path="/admin/skill-grow/create-course-details"
           element={
@@ -7038,8 +7162,12 @@ function App() {
           }
         />
         <Route
-          path="/admin/passes/add-self-registration/:id"
-          element={<AddSelfRegistration />}
+          path="/add-self-registration/:id"
+          element={
+            // <ProtectedAdminRoutes>
+            <AddSelfRegistration />
+            // </ProtectedAdminRoutes>
+          }
         />
         <Route
           path="/admin/passes/edit-self-registration/:id"
@@ -7052,6 +7180,16 @@ function App() {
         <Route
           path="/admin/passes/self-registration-details/:id"
           element={<SelfRegistrationDetails />}
+        />
+
+        <Route
+          path="/visitor_details/:id"
+          element={<SelfRegistrationDetails />}
+        />
+
+        <Route
+          path="/edit_visitor/:id"
+          element={<EditSelfRegistration />}
         />
         <Route
           path="/setup/visitor-setup"
@@ -7400,7 +7538,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/create-scratch-survey"
+          path="/admin/create-scratch-survey/:id?"
           element={
             <ProtectedAdminRoutes>
               <CreateScratchSurvey />
@@ -7416,7 +7554,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/copy-survey-view-page"
+          path="/admin/copy-survey-view-page/:id?"
           element={
             <ProtectedAdminRoutes>
               <CopySurveyViewPage />
@@ -7480,7 +7618,7 @@ function App() {
           }
         />
         <Route
-          path="/admin/preview-survey"
+          path="/admin/preview-survey/:id?"
           element={
             <ProtectedAdminRoutes>
               <PreviewSurvey />
@@ -7501,15 +7639,7 @@ function App() {
           path="/accounting/invoices"
           element={
             <ProtectedAdminRoutes>
-              <Invoices />
-            </ProtectedAdminRoutes>
-          }
-        />
-        <Route
-          path="/accounting/invoices/create"
-          element={
-            <ProtectedAdminRoutes>
-              <CreateInvoice />
+              <AccountingInvoices />
             </ProtectedAdminRoutes>
           }
         />
@@ -7518,6 +7648,30 @@ function App() {
           element={
             <ProtectedAdminRoutes>
               <Ledgers />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/account-groups"
+          element={
+            <ProtectedAdminRoutes>
+              <AccountGroups />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/tax-rates"
+          element={
+            <ProtectedAdminRoutes>
+              <TaxRates />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/accounting/payments"
+          element={
+            <ProtectedAdminRoutes>
+              <AccountingPayments />
             </ProtectedAdminRoutes>
           }
         />
@@ -7541,7 +7695,7 @@ function App() {
           path="/accounting/reports"
           element={
             <ProtectedAdminRoutes>
-              <Reports />
+              <AccountingReports />
             </ProtectedAdminRoutes>
           }
         />
@@ -7561,22 +7715,30 @@ function App() {
             </ProtectedAdminRoutes>
           }
         />
+        <Route
+          path="/setup/accounting"
+          element={
+            <ProtectedAdminRoutes>
+              <AccountingSetupTabs />
+            </ProtectedAdminRoutes>
+          }
+        />
 
         <Route
           path="/privacy-policy-adani-realty"
           element={<MycityPrivacy />}
         />
 
-      <Route
-        path="/admin/reading-dashboard"
-        element={
-          <ProtectedAdminRoutes>
-            <ReadingDashboard />
-          </ProtectedAdminRoutes>
-        }
-      />
+        <Route
+          path="/admin/reading-dashboard"
+          element={
+            <ProtectedAdminRoutes>
+              <ReadingDashboard />
+            </ProtectedAdminRoutes>
+          }
+        />
 
-      {/* <Route 
+        {/* <Route 
         path="/admin/ppm-calendar-dashboard"
         element={
           <ProtectedAdminRoutes>  
@@ -7585,33 +7747,32 @@ function App() {
         }
       /> */}
 
-      <Route 
-        path="/admin/visitors-dashboard"
-        element={
-          <ProtectedAdminRoutes>  
-            <VisitorsDashboard />
-          </ProtectedAdminRoutes>
-        }
-      />
-      <Route
-        path="/admin/visitors-analytics-dashboard"
-        element={
-          <ProtectedAdminRoutes>
-            <VisitorsAnalyticsDashboard />
-          </ProtectedAdminRoutes>
-        }
-      />
-      {/* <Route path="/setup/Pets" element={<Pets />} />
+        <Route
+          path="/admin/visitors-dashboard"
+          element={
+            <ProtectedAdminRoutes>
+              <VisitorsDashboard />
+            </ProtectedAdminRoutes>
+          }
+        />
+        <Route
+          path="/admin/visitors-analytics-dashboard"
+          element={
+            <ProtectedAdminRoutes>
+              <VisitorsAnalyticsDashboard />
+            </ProtectedAdminRoutes>
+          }
+        />
+        {/* <Route path="/setup/Pets" element={<Pets />} />
       
        <Route path="/pets/add" element={<PetsAdd />} /> */}
 
 
-     
-      <Route path="/setup/pets" element={<Pets />} />
-      <Route path="/setup/pets/add" element={<PetsAdd />} />
-      <Route path="/setup/pets/view/:id" element={<PetsView />} />
-      <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
-      <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
+
+        <Route path="/setup/pets" element={<Pets />} />
+        <Route path="/setup/pets/add" element={<PetsAdd />} />
+        <Route path="/setup/pets/view/:id" element={<PetsView />} />
+        <Route path="/setup/pets/edit/:id" element={<PetsEdit />} />
 
 
 

@@ -10,6 +10,7 @@ import {
   getVendors,
   postSiteAsset,
 } from "../../api";
+import { getSiteAssets } from "../../api";
 import { BiCross, BiPlus } from "react-icons/bi";
 import { IoAddCircle, IoAddCircleOutline, IoClose } from "react-icons/io5";
 import AddSuppliers from "../../containers/modals/AddSuppliersModal";
@@ -40,10 +41,27 @@ const AddAsset = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const fetchVendors = async () => {
     try {
-      const vendorResp = await getVendors();
-      setVendors(vendorResp.data);
+      const siteId = getItemInLocalStorage("SITEID");
+
+      if (!siteId) {
+        console.log("No Site ID Found");
+        return;
+      }
+
+      const vendorResp = await getVendors(siteId);
+
+      console.log("VENDOR RESPONSE:", vendorResp.data);
+
+      const vendorData =
+        vendorResp?.data?.vendors ||
+        vendorResp?.data?.site_vendors ||
+        vendorResp?.data?.data ||
+        vendorResp?.data ||
+        [];
+
+      setVendors(Array.isArray(vendorData) ? vendorData : []);
     } catch (error) {
-      console.log(error);
+      console.log("Vendor Error:", error);
     }
   };
   useEffect(() => {
@@ -57,6 +75,26 @@ const AddAsset = () => {
 
     fetchVendors();
     fetchAssetGroups();
+  }, []);
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        const siteId = getItemInLocalStorage("SITEID"); // 👈 yaha se lo
+
+        if (!siteId) {
+          console.error("Site ID not found in localStorage");
+          return;
+        }
+
+        const response = await getSiteAssets(siteId);
+        console.log("Site Assets:", response.data);
+      } catch (error) {
+        console.error("Error fetching site assets:", error);
+      }
+    };
+
+    fetchAssets();
   }, []);
 
   const handleChange = async (e) => {
@@ -88,7 +126,7 @@ const AddAsset = () => {
           subGroupResponse.map((item) => ({
             name: item.name,
             id: item.id,
-          }))
+          })),
         );
         console.log(subGroupResponse);
       } catch (error) {
@@ -156,14 +194,6 @@ const AddAsset = () => {
     setAddNonConsumptionFields(newFields);
   };
 
-  // const handleFileChange = (event, fieldName) => {
-  //   const files = Array.from(event.target.files);
-  //   setFormData({
-  //     ...formData,
-  //     [fieldName]: files,
-  //   });
-  // };
-
   const handleFileChange = (files, fieldName) => {
     setFormData({
       ...formData,
@@ -173,6 +203,9 @@ const AddAsset = () => {
   };
 
   const navigate = useNavigate();
+  const handleCancel = () => {
+    navigate("/assets/all-assets"); // या जहाँ वापस जाना है
+  };
 
   const handleSubmit = async () => {
     // if (formData.warranty_start >= formData.warranty_expiry) {
@@ -199,7 +232,7 @@ const AddAsset = () => {
     if (formData.asset_number === "") {
       return toast.error("Please Enter Asset Number");
     }
-    if (formData.equipment_id === "") {
+    if (formData.equipemnt_id === "") {
       return toast.error("Please Enter Equipment Id");
     }
     if (formData.purchase_cost === "") {
@@ -226,7 +259,7 @@ const AddAsset = () => {
       formData.warranty_start < formData.purchased_on
     ) {
       toast.error(
-        "Warranty Start Date and Commissioning Date must be after or equal to Purchase Date."
+        "Warranty Start Date and Commissioning Date must be after or equal to Purchase Date.",
       );
       return;
     }
@@ -241,10 +274,16 @@ const AddAsset = () => {
     }
 
     try {
-      toast.loading("Creating Asset Please Wait!");
-      const formDataSend = new FormData();
+      const toastId = toast.loading("Creating Asset Please Wait!");
+      const siteId = getItemInLocalStorage("SITEID");
 
-      formDataSend.append("site_asset[site_id]", formData.site_id);
+      if (!siteId) {
+        toast.dismiss(toastId);
+        toast.error("Site ID missing. Please login again.");
+        return;
+      }
+      const formDataSend = new FormData();
+      formDataSend.append("site_asset[site_id]", siteId);
       formDataSend.append("site_asset[building_id]", formData.building_id);
       formDataSend.append("site_asset[floor_id]", formData.floor_id);
       formDataSend.append("site_asset[unit_id]", formData.unit_id);
@@ -253,89 +292,144 @@ const AddAsset = () => {
       formDataSend.append("site_asset[latitude]", formData.latitude);
       formDataSend.append("site_asset[longitude]", formData.longitude);
       formDataSend.append("site_asset[asset_number]", formData.asset_number);
-      formDataSend.append("site_asset[equipemnt_id]", formData.equipment_id);
+      formDataSend.append("site_asset[equipemnt_id]", formData.equipemnt_id);
       formDataSend.append("site_asset[serial_number]", formData.serial_number);
       formDataSend.append("site_asset[model_number]", formData.model_number);
       formDataSend.append("site_asset[purchased_on]", formData.purchased_on);
       formDataSend.append("site_asset[purchase_cost]", formData.purchase_cost);
       formDataSend.append("site_asset[comprehensive]", formData.comprehensive);
+      //       formDataSend.append(
+      //   "site_asset[comprehensive]",
+      //   formData.comprehensive === "true"
+      // );
 
       formDataSend.append(
         "site_asset[asset_group_id]",
-        formData.asset_group_id
+        formData.asset_group_id,
       );
       formDataSend.append(
         "site_asset[asset_sub_group_id]",
-        formData.asset_sub_group_id
+        formData.asset_sub_group_id,
       );
       formDataSend.append(
         "site_asset[parent_asset_id]",
-        formData.parent_asset_id
+        formData.parent_asset_id,
       );
       formDataSend.append("site_asset[installation]", formData.installation);
       formDataSend.append(
         "site_asset[warranty_expiry]",
-        formData.warranty_expiry
+        formData.warranty_expiry,
       );
       // formDataSend.append("site_asset[user_id]", 2);
-      formDataSend.append("site_asset[critical]", formData.critical);
+      formDataSend.append(
+        "site_asset[critical]",
+        formData.critical ? "true" : "false",
+      );
       formDataSend.append("site_asset[capacity]", formData.capacity);
-      formDataSend.append("site_asset[breakdown]", formData.breakdown);
-      formDataSend.append("site_asset[is_meter]", formData.is_meter);
+      formDataSend.append(
+        "site_asset[breakdown]",
+        formData.breakdown ? "true" : "false",
+      );
+
+      formDataSend.append(
+        "site_asset[is_meter]",
+        formData.is_meter ? "true" : "false",
+      );
+
       formDataSend.append("site_asset[asset_type]", formData.asset_type);
       formDataSend.append("site_asset[vendor_id]", formData.vendor_id);
       consumptionData.forEach((item) => {
-        formDataSend.append("asset_params[][name]", item.name);
-        formDataSend.append("asset_params[][order]", item.order);
-        formDataSend.append("asset_params[][unit_type]", item.unit_type);
-        formDataSend.append("asset_params[][digit]", item.digit);
-        formDataSend.append("asset_params[][alert_below]", item.alert_below);
-        formDataSend.append("asset_params[][alert_above]", item.alert_above);
-        formDataSend.append("asset_params[][min_val]", item.min_val);
-        formDataSend.append("asset_params[][max_val]", item.max_val);
+        formDataSend.append("asset_params[][name]", item.name || "");
+        formDataSend.append("asset_params[][order]", item.order || "");
+        formDataSend.append("asset_params[][unit_type]", item.unit_type || "");
+        formDataSend.append("asset_params[][digit]", item.digit || "");
+        formDataSend.append(
+          "asset_params[][alert_below]",
+          item.alert_below || "",
+        );
+        formDataSend.append(
+          "asset_params[][alert_above]",
+          item.alert_above || "",
+        );
+        formDataSend.append("asset_params[][min_val]", item.min_val || "");
+        formDataSend.append("asset_params[][max_val]", item.max_val || "");
         formDataSend.append(
           "asset_params[][multiplier_factor]",
-          item.multiplier_factor
+          item.multiplier_factor || "",
         );
+
+        // ✅ Convert booleans to string (VERY IMPORTANT)
         formDataSend.append(
           "asset_params[][dashboard_view]",
-          item.dashboard_view
+          item.dashboard_view ? "true" : "false",
         );
+
         formDataSend.append(
           "asset_params[][consumption_view]",
-          item.consumption_view
+          item.consumption_view ? "true" : "false",
         );
-        formDataSend.append("asset_params[][check_prev]", item.check_prev);
+
+        formDataSend.append(
+          "asset_params[][check_prev]",
+          item.check_prev ? "true" : "false",
+        );
+      });
+      // Purchase Invoices
+      formData.invoice?.forEach((file) => {
+        const actualFile = file?.file || file;
+        formDataSend.append("purchase_invoices[]", actualFile);
+      });
+      // Insurance Files
+      formData.insurance?.forEach((file) => {
+        const actualFile = file?.file || file;
+        formDataSend.append("insurances[]", actualFile);
       });
 
-      formData.invoice.forEach((file, index) => {
-        formDataSend.append(`purchase_invoices[]`, file);
+      // Manuals
+      formData.manuals?.forEach((file) => {
+        const actualFile = file?.file || file;
+        formDataSend.append("manuals[]", actualFile);
       });
-      formData.insurance.forEach((file, index) => {
-        console.log("-----------------");
-        console.log(index);
-        console.log(file);
-        formDataSend.append(`insurances[]`, file);
-      });
-      formData.manuals.forEach((file, index) => {
-        formDataSend.append(`manuals[]`, file);
-      });
-      formData.others.forEach((file, index) => {
-        formDataSend.append(`other_files[]`, file);
+      // Other Files
+      formData.others?.forEach((file) => {
+        const actualFile = file?.file || file;
+        formDataSend.append("other_files[]", actualFile);
       });
 
       formDataSend.append("site_asset[uom]", formData.unit);
       formDataSend.append(
         "site_asset[warranty_start]",
-        formData.warranty_start
+        formData.warranty_start,
       );
       // formDataSend.append("site_asset[installation]", formData.installation);
       // console.log(formDataSend);
       const response = await postSiteAsset(formDataSend);
+
+      console.log("FULL RESPONSE:", response);
+      console.log("FULL RESPONSE DATA:", response.data);
+
+      // ❌ Backend validation error
+      // if (response?.data?.site) {
+      //   toast.dismiss(toastId);
+      //   toast.error(response.data.site.join(", "));
+      //   return;
+      // }
+
+      const assetId =
+        response?.data?.site_asset?.id ||
+        response?.data?.id ||
+        response?.site_asset?.id;
+
+      if (!assetId) {
+        toast.dismiss(toastId);
+        toast.error("Asset created but ID not returned");
+        return;
+      }
+
+      toast.dismiss(toastId);
       toast.success("Asset Created Successfully");
-      console.log("Response:", response.data);
-      toast.dismiss();
-      navigate(`/assets/asset-details/${response.data.id}`);
+
+      navigate(`/assets/asset-details/${assetId}`);
       window.scrollTo(0, 0);
     } catch (error) {
       toast.dismiss();
@@ -392,8 +486,8 @@ const AddAsset = () => {
       prev.map((item, i) =>
         i === index
           ? { ...item, [name]: type === "checkbox" ? checked : value }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -411,7 +505,13 @@ const AddAsset = () => {
         >
           Add Asset
         </h2>
-        <div className="md:mx-16 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+          className="md:mx-16 my-5 mb-10 sm:border border-gray-400 p-5 px-10 rounded-lg sm:shadow-xl"
+        >
           <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
             Location Details
           </h2>
@@ -444,7 +544,7 @@ const AddAsset = () => {
                 <select
                   className="border p-1 px-4 border-gray-500 rounded-md"
                   onChange={handleChange}
-                  value={formData.fl}
+                  value={formData.floor_id}
                   name="floor_name"
                 >
                   <option value="">Select Floor</option>
@@ -561,10 +661,10 @@ const AddAsset = () => {
                   </label>
                   <input
                     type="text"
-                    name="equipment_id"
+                    name="equipemnt_id"
                     id="equipment_id"
                     onChange={handleChange}
-                    value={formData.equipment_id}
+                    value={formData.equipemnt_id}
                     placeholder="Equipment Id"
                     className="border p-1 px-4 border-gray-500 rounded-md"
                   />
@@ -972,16 +1072,24 @@ const AddAsset = () => {
                   </label>
                   <select
                     className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                    value={formData.vendor_id}
+                    value={formData.vendor_id || ""}
                     onChange={handleChange}
                     name="vendor_id"
                   >
                     <option value="">Select Supplier</option>
-                    {vendors.map((vendor) => (
-                      <option value={vendor.id} key={vendor.id}>
-                        {vendor.vendor_name} - {vendor.company_name}
-                      </option>
-                    ))}
+
+                    {vendors && vendors.length > 0 ? (
+                      vendors.map((vendor) => (
+                        <option key={vendor.id} value={vendor.id}>
+                          {(vendor.vendor_name || vendor.name) +
+                            (vendor.company_name
+                              ? ` - ${vendor.company_name}`
+                              : "")}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>No Suppliers Available</option>
+                    )}
                   </select>
                 </div>
                 <button
@@ -998,128 +1106,6 @@ const AddAsset = () => {
                 )}
               </div>
             </div>
-            {/* <div className="my-5">
-              <p className="border-b border-black font-semibold">
-                Meter Category Type
-              </p>
-              <div className="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-5">
-                <div className="flex flex-col mt-4 w-full">
-                  <label className="block text-gray-700 mb-1">
-                    Select Meter Category Type
-                  </label>
-                  <select
-                    className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                    name="meter_category"
-                    onChange={handleMeterCategoryChange}
-                    value={meterCategory}
-                  >
-                    <option value="">Select Meter Category</option>
-                    <option value="Board">Board</option>
-                    <option value="DG">DG</option>
-                    <option value="Renewable">Renewable</option>
-                    <option value="FreshWater">Fresh Water</option>
-                    <option value="Recycled">Recycled</option>
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  {meterCategory === "Board" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1">Board</label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                      >
-                        <option value="">Select Sub Board</option>
-                        <option value="">HT</option>
-                        <option value="">VCB</option>
-                        <option value="">Transformer</option>
-                        <option value="">LT</option>
-                      </select>
-                    </div>
-                  )}
-                  {meterCategory === "DG" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1">
-                        Select Sub DG
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                      >
-                        <option value="">Select DG</option>
-                      </select>
-                    </div>
-                  )}
-                  {meterCategory === "Renewable" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1">
-                        Renewable
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                      >
-                        <option value="">Select Sub Renewable</option>
-                        <option value="">Solar</option>
-                        <option value="">Bio Methanol</option>
-                        <option value="">Wind</option>
-                      </select>
-                    </div>
-                  )}
-                  {meterCategory === "FreshWater" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1 ">
-                        Fresh Water
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                        onChange={handleSubMeterCategoryChange}
-                        value={subMeterCategory}
-                      >
-                        <option value="">SelectFresh Water</option>
-                        <option value="sourceInput">Source (Input)</option>
-                        <option value="">Destination (Output)</option>
-                      </select>
-                    </div>
-                  )}
-                  {meterCategory === "Recycled" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1">
-                        Recycled
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name="meter_category"
-                      >
-                        <option value="">Select Recycled</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col">
-                  {subMeterCategory === "sourceInput" && (
-                    <div className="mt-4 w-full">
-                      <label className="block text-gray-700 mb-1 ">
-                        Sub Fresh Water
-                      </label>
-                      <select
-                        className="border p-1 px-4 border-gray-500 rounded-md w-full"
-                        name=""
-                      >
-                        <option value="">Select Fresh Water</option>
-                        <option value="">Municipal Corporation</option>
-                        <option value="">Tanker</option>
-                        <option value="">Borewell</option>
-                        <option value="">Rainwater</option>
-                        <option value="">Jackwell</option>
-                        <option value="">Pump</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div> */}
           </div>
           <div className="my-5">
             <p className="border-b border-black font-semibold">
@@ -1612,27 +1598,23 @@ const AddAsset = () => {
               />
             </div>
           </div>
-          <div className="sm:flex justify-center grid gap-2 my-5 ">
+          <div className="sm:flex justify-center gap-4 grid my-5">
             <button
+              type="submit"
               className="bg-black text-white p-2 px-4 rounded-md font-medium"
-              onClick={handleSubmit}
             >
               Save & Show Details
             </button>
-            {/* <button className=" border-black border-2  p-2 px-4 rounded-md font-medium">
-              Save & Add PPM
-            </button>
-            <button className="border-black border-2 p-2 px-4 rounded-md font-medium">
-              Save & Add AMC
-            </button>
+
             <button
-              className=" border-black border-2  p-2 px-4 rounded-md font-medium"
-              onClick={handleSaveAndCreate}
+              type="button"
+              onClick={handleCancel}
+              className="border border-black p-2 px-4 rounded-md font-medium hover:bg-gray-100"
             >
-              Save & Create New Asset
-            </button> */}
+              Cancel
+            </button>
           </div>
-        </div>
+        </form>
       </div>
     </section>
   );
