@@ -456,6 +456,8 @@ const UserSetup = () => {
           userType = "Occupant";
         } else if (row.user_type === "security_guard") {
           userType = "Security Guard";
+        } else if (row.user_type === "valet_manager") {
+          userType = "Valet Manager";
         } else if (row.user_type === "employee") {
           userType = "Employee";
         } else if (
