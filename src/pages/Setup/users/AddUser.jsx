@@ -657,6 +657,7 @@ const AddUser = () => {
                   <option value="pms_admin">Admin</option>
                   <option value="pms_technician">Technician</option>
                   <option value="security_guard">Security Guard</option>
+                  <option value="valet_manager">Valet Manager</option>
                   <option value="employee">Employee</option>
                 </select>
               </div>
