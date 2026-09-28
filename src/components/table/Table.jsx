@@ -45,7 +45,7 @@ const Table = ({
         textTransform: "uppercase",
         paddingLeft: "16px",
         paddingRight: "16px",
-        width: "150px",
+        width: "200px",
         
       },
     },
