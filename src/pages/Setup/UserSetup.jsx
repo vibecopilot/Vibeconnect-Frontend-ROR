@@ -8,6 +8,7 @@ import {
   putSetupUser,
   updateUserAdminApproval,
   sendBulkWelcomeEmail,
+  UsersExport,
 } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
@@ -22,6 +23,8 @@ import {
   FaUsers,
   FaEnvelope,
   FaPaperclip,
+  FaAndroid,
+  FaApple,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { BiEdit, BiUserCheck } from "react-icons/bi";
@@ -31,6 +34,7 @@ import { useSelector } from "react-redux";
 import SiteHeader from "../../components/SiteHeader";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
+import { Download } from "lucide-react";
 
 const UserSetup = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -48,6 +52,10 @@ const UserSetup = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [filterFirstName, setFilterFirstName] = useState("");
+  const [filterLastName, setFilterLastName] = useState("");
+  const [filterEmail, setFilterEmail] = useState("");
+  const [filterMobile, setFilterMobile] = useState("");
   const [loading, setLoading] = useState(true);
 
   // ✅ MANUAL PAGINATION — table only ever receives the current page's
@@ -191,34 +199,121 @@ const UserSetup = () => {
     return filteredData;
   }, [filteredData, activeTab]);
 
+  const handleExportUsers = async () => {
+    try {
+      const response = await UsersExport();
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "users_export.xlsx";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Users exported successfully ✅");
+    } catch (error) {
+      console.error("Export users error:", error);
+      toast.error("Failed to export users ❌");
+    }
+  };
   /* ---------------- DATE FILTER ---------------- */
   const dateFilteredUsers = useMemo(() => {
     let data = [...tabFilteredUsers];
 
-    if (!fromDate && !toDate) return data;
+    const firstName = filterFirstName.trim().toLowerCase();
+    const lastName = filterLastName.trim().toLowerCase();
+    const email = filterEmail.trim().toLowerCase();
+    const mobile = filterMobile.trim().toLowerCase();
 
     return data.filter((user) => {
-      if (!user.created_at) return false;
-
-      const created = new Date(user.created_at);
-
-      if (fromDate) {
-        const from = new Date(fromDate);
-        from.setHours(0, 0, 0, 0);
-
-        if (created < from) return false;
+      /* ---------- FIRST NAME ---------- */
+      if (
+        firstName &&
+        !String(user.firstname || "")
+          .toLowerCase()
+          .includes(firstName)
+      ) {
+        return false;
       }
 
+      /* ---------- LAST NAME ---------- */
+      if (
+        lastName &&
+        !String(user.lastname || "")
+          .toLowerCase()
+          .includes(lastName)
+      ) {
+        return false;
+      }
+
+      /* ---------- EMAIL ---------- */
+      if (
+        email &&
+        !String(user.email || "")
+          .toLowerCase()
+          .includes(email)
+      ) {
+        return false;
+      }
+
+      /* ---------- MOBILE ---------- */
+      if (
+        mobile &&
+        !String(user.mobile || "")
+          .toLowerCase()
+          .includes(mobile)
+      ) {
+        return false;
+      }
+
+      /* ---------- FROM DATE ---------- */
+      if (fromDate) {
+        if (!user.created_at) return false;
+
+        const created = new Date(user.created_at);
+        const from = new Date(fromDate);
+
+        from.setHours(0, 0, 0, 0);
+
+        if (created < from) {
+          return false;
+        }
+      }
+
+      /* ---------- TO DATE ---------- */
       if (toDate) {
+        if (!user.created_at) return false;
+
+        const created = new Date(user.created_at);
         const to = new Date(toDate);
+
         to.setHours(23, 59, 59, 999);
 
-        if (created > to) return false;
+        if (created > to) {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [tabFilteredUsers, fromDate, toDate]);
+  }, [
+    tabFilteredUsers,
+    filterFirstName,
+    filterLastName,
+    filterEmail,
+    filterMobile,
+    fromDate,
+    toDate,
+  ]);
 
   // ✅ Reset to page 1 whenever the filtered list itself changes (tab,
   // search, date filter) so we never show a stale page past the end.
@@ -232,17 +327,35 @@ const UserSetup = () => {
     return dateFilteredUsers.slice(start, start + rowsPerPage);
   }, [dateFilteredUsers, currentPage, rowsPerPage]);
 
-  /* ---------------- CLEAR FILTER ---------------- */
-  const clearDateFilter = () => {
+  /* ---------------- CLEAR ALL FILTERS ---------------- */
+  const clearDateFilters = () => {
     setFromDate("");
     setToDate("");
+    setFilterFirstName("");
+    setFilterLastName("");
+    setFilterEmail("");
+    setFilterMobile("");
+    setFilterOpen(false);
   };
 
   /* ---------------- USER APPROVAL ---------------- */
   const handleUserApproval = async (id, isApproved) => {
     const token = localStorage.getItem("TOKEN");
 
+    // Optimistically update BOTH users and filteredData
     setUsers((prev) =>
+      prev.map((u) =>
+        u.id === id
+          ? {
+            ...u,
+            is_admin_approved: isApproved,
+            user_status: true,
+          }
+          : u
+      )
+    );
+
+    setFilteredData((prev) =>
       prev.map((u) =>
         u.id === id
           ? {
@@ -274,6 +387,7 @@ const UserSetup = () => {
 
       toast.error("Failed to update approval ❌");
 
+      // Restore latest data if API fails
       fetchUsers();
     }
   };
@@ -376,6 +490,28 @@ const UserSetup = () => {
       u.user_type !== "pms_admin"
   ).length;
 
+  // Owner count based on selected site's ownership
+  const ownerCount = users.filter((user) =>
+    Array.isArray(user.user_sites) &&
+    user.user_sites.some(
+      (site) =>
+        String(site.site_id) === String(activeSiteId) &&
+        String(site.ownership || "").toLowerCase() === "owner"
+    )
+  ).length;
+
+  // Tenant count based on selected site's ownership
+  const tenantCount = users.filter((user) =>
+    Array.isArray(user.user_sites) &&
+    user.user_sites.some(
+      (site) =>
+        String(site.site_id) === String(activeSiteId) &&
+        String(site.ownership || "").toLowerCase() === "tenant"
+    )
+  ).length;
+
+
+
   const totalUsersCount =
     approvedCount + pendingCount + rejectedCount;
 
@@ -430,9 +566,92 @@ const UserSetup = () => {
 
     {
       name: "App Downloaded",
-      selector: (row) =>
-        row.is_downloaded ? "Yes" : "No",
+      cell: (row) => {
+        if (!row.is_downloaded) {
+          return (
+            <span className="text-red-500 font-semibold">
+              No
+            </span>
+          );
+        }
+
+        const devices = Array.isArray(row.user_deives)
+          ? row.user_deives.filter(Boolean)
+          : [];
+
+        const latestDevice =
+          devices.length > 0
+            ? [...devices].sort(
+              (a, b) =>
+                new Date(b.created_at || 0) -
+                new Date(a.created_at || 0)
+            )[0]
+            : null;
+
+        const deviceType = String(
+          latestDevice?.device_type || ""
+        ).toLowerCase();
+
+        return (
+          <div className="flex items-center gap-2">
+            {deviceType === "android" && (
+              <FaAndroid
+                size={22}
+                className="text-green-600"
+                title={`Android - ${latestDevice?.device_name || ""}`}
+              />
+            )}
+
+            {deviceType === "ios" && (
+              <FaApple
+                size={22}
+                className="text-gray-800"
+                title={`iOS - ${latestDevice?.device_name || ""}`}
+              />
+            )}
+            <span className="text-green-600 font-semibold">
+              Yes
+            </span>
+          </div>
+        );
+      },
       sortable: true,
+      width: "180px",
+    },
+
+    {
+      name: "App Download Date & Time",
+      cell: (row) => {
+        const devices = Array.isArray(row.user_deives)
+          ? row.user_deives.filter(Boolean)
+          : [];
+
+        const latestDevice =
+          devices.length > 0
+            ? [...devices].sort(
+              (a, b) =>
+                new Date(b.created_at || 0) -
+                new Date(a.created_at || 0)
+            )[0]
+            : null;
+
+        if (!row.is_downloaded || !latestDevice?.created_at) {
+          return "-";
+        }
+
+        return new Intl.DateTimeFormat("en-IN", {
+          timeZone: "Asia/Kolkata",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }).format(new Date(latestDevice.created_at));
+      },
+      sortable: true,
+      width: "220px",
     },
 
     {
@@ -444,35 +663,34 @@ const UserSetup = () => {
     {
       name: "User Type",
       selector: (row) => {
+        const userTypeValue = String(row.user_type || "").toLowerCase();
+
         let userType = "User";
 
-        if (row.user_type === "pms_admin") {
+        if (userTypeValue === "pms_admin") {
           userType = "Admin";
-        } else if (row.user_type === "pms_occupant_admin") {
+        } else if (userTypeValue === "pms_occupant_admin") {
           userType = "Occupant Admin";
-        } else if (row.user_type === "pms_technician") {
+        } else if (userTypeValue === "pms_technician") {
           userType = "Technician";
-        } else if (row.user_type === "pms_occupant") {
+        } else if (userTypeValue === "pms_occupant") {
           userType = "Occupant";
-        } else if (row.user_type === "security_guard") {
+        } else if (userTypeValue === "security_guard") {
           userType = "Security Guard";
         } else if (row.user_type === "valet_manager") {
           userType = "Valet Manager";
         } else if (row.user_type === "employee") {
           userType = "Employee";
         } else if (
-          row.user_type === "unit_resident" ||
-          row.user_type === "user" ||
-          row.user_type === "unit_owner"
+          userTypeValue === "unit_resident" ||
+          userTypeValue === "user" ||
+          userTypeValue === "unit_owner"
         ) {
           userType = "Resident";
         }
 
-        const ownership =
-          row.user_sites?.[0]?.ownership;
-
-        const ownershipType =
-          row.user_sites?.[0]?.ownership_type;
+        const ownership = row.user_sites?.[0]?.ownership;
+        const ownershipType = row.user_sites?.[0]?.ownership_type;
 
         if (
           userType === "Resident" ||
@@ -569,11 +787,22 @@ const UserSetup = () => {
 
     {
       name: "Created At",
-      selector: (row) =>
-        new Date(row.created_at).toLocaleDateString(
-          "en-GB"
-        ),
+      selector: (row) => {
+        if (!row.created_at) return "NA";
+
+        return new Intl.DateTimeFormat("en-IN", {
+          timeZone: "Asia/Kolkata",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }).format(new Date(row.created_at));
+      },
       sortable: true,
+      // wrap: true,
     },
   ];
 
@@ -603,13 +832,13 @@ const UserSetup = () => {
     },
     {
       title: "Tenant Register",
-      value: count?.total_tenant_downloads || 0,
+      value: tenantCount || 0,
       icon: <MdApartment size={22} />,
       bg: "bg-orange-400 text-white",
     },
     {
       title: "Owner Register",
-      value: count?.total_owner_downloads || 0,
+      value: ownerCount || 0,
       icon: <BiUserCheck size={22} />,
       bg: "bg-pink-400 text-white",
     },
@@ -647,6 +876,10 @@ const UserSetup = () => {
             setSearchText("");
             setFromDate("");
             setToDate("");
+            setFilterFirstName("");
+            setFilterLastName("");
+            setFilterEmail("");
+            setFilterMobile("");
             setUsers([]);
           }}
         />
@@ -721,6 +954,15 @@ const UserSetup = () => {
                 )}
               </button>
             )}
+
+            <button
+              onClick={handleExportUsers}
+              style={{ background: themeColor }}
+              className="text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              <Download />
+              Export
+            </button>
 
             <button
               onClick={() => setFilterOpen(true)}
@@ -803,67 +1045,134 @@ const UserSetup = () => {
 
         {/* FILTER MODAL */}
         {filterOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-2xl shadow-xl w-[420px] p-6">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-[800px] p-6 max-h-[90vh] overflow-y-auto">
+
+              {/* HEADER */}
               <div className="flex justify-between items-center mb-5">
                 <h2 className="text-lg font-semibold">
-                  Filter Users By Date
+                  Filter Users
                 </h2>
 
                 <button
                   onClick={() => setFilterOpen(false)}
-                  className="text-gray-500 text-xl"
+                  className="text-gray-500 hover:text-gray-700 text-xl"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                {/* FIRST NAME */}
                 <div>
-                  <label className="text-sm font-medium">
+                  <label className="text-sm font-medium text-gray-700">
+                    First Name
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter First Name"
+                    value={filterFirstName}
+                    onChange={(e) => setFilterFirstName(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* LAST NAME */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Last Name
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter Last Name"
+                    value={filterLastName}
+                    onChange={(e) => setFilterLastName(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* EMAIL */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Email ID
+                  </label>
+
+                  <input
+                    type="email"
+                    placeholder="Enter Email ID"
+                    value={filterEmail}
+                    onChange={(e) => setFilterEmail(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* MOBILE */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Mobile
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter Mobile"
+                    value={filterMobile}
+                    onChange={(e) => setFilterMobile(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* FROM DATE */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
                     From Date
                   </label>
 
                   <input
                     type="date"
                     value={fromDate}
-                    onChange={(e) =>
-                      setFromDate(e.target.value)
-                    }
-                    className="w-full border rounded-lg p-2 mt-1"
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
+                {/* TO DATE */}
                 <div>
-                  <label className="text-sm font-medium">
+                  <label className="text-sm font-medium text-gray-700">
                     To Date
                   </label>
 
                   <input
                     type="date"
                     value={toDate}
-                    onChange={(e) =>
-                      setToDate(e.target.value)
-                    }
-                    className="w-full border rounded-lg p-2 mt-1"
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-4">
+                {/* BUTTONS */}
+                <div className="md:col-span-3 flex justify-end gap-3 pt-2">
                   <button
-                    onClick={clearDateFilter}
-                    className="px-4 py-2 rounded-lg border"
+                    onClick={clearDateFilters}
+                    className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100"
                   >
                     Clear
                   </button>
 
                   <button
-                    onClick={() => setFilterOpen(false)}
-                    className="px-5 py-2 bg-blue-600 text-white rounded-lg"
+                    onClick={() => {
+                      setCurrentPage(1);
+                      setFilterOpen(false);
+                    }}
+                    style={{ background: themeColor }}
+                    className="px-5 py-2 text-white rounded-lg"
                   >
                     Apply
                   </button>
                 </div>
+
               </div>
             </div>
           </div>

@@ -490,7 +490,7 @@ export const getHelpDeskCategoriesSetup = async (issueTypeId, siteId) => {
 
   return axiosInstance.get(`/pms/admin/helpdesk_categories.json`, { params });
 };
-  
+
 //FitOut Checklist
 export const postFitoutChecklist = async (data) =>
   axiosInstance.post(`/snag_checklists.json`, data, {
@@ -989,7 +989,7 @@ export const getAdminPerPageComplaints = async (page, perPage, search) =>
       token: token,
       per_page: perPage,
       page: page,
-    search: search,
+      search: search,
       // See merged (secondary) tickets too - this app has no way to reach one otherwise.
       include_merged: true,
     },
@@ -2107,7 +2107,7 @@ export const getHSNSetupDetails = async (id) =>
       token: token,
     },
   });
-  export const getHsns = async (page = 1, perPage = 10) =>
+export const getHsns = async (page = 1, perPage = 10) =>
   axiosInstance.get(`/hsns.json`, {
     params: {
       token: token,
@@ -2184,6 +2184,14 @@ export const getUserCount = async () =>
       Pragma: "no-cache",
       Expires: "0",
     },
+  });
+
+export const UsersExport = async () =>
+  axiosInstance.get("/users/export_users.xlsx", {
+    params: {
+      token: token,
+    },
+     responseType: "blob",
   });
 
 export const updateUserAdminApproval = async (id, payload, token) =>
@@ -12353,15 +12361,15 @@ export const postBanner = async (data) =>
     },
   });
 
-  // directory 
-  export const getDirectory = async () =>
+// directory 
+export const getDirectory = async () =>
   axiosInstance.get(`/directories.json`, {
     params: {
       token: token,
     },
   });
 
-   export const getDirectoryById = async (id) =>
+export const getDirectoryById = async (id) =>
   axiosInstance.get(`/directories/${id}.json`, {
     params: {
       token: token,

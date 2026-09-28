@@ -49,6 +49,7 @@ const UserEdit = () => {
     landlineNumber: "",
     evConnection: "",
     is_occupied: "",
+    is_admin_approved: null,
     user_status: true,
     profile_picture: null,
   });
@@ -67,38 +68,72 @@ const UserEdit = () => {
         }
 
         // Map API fields → our formData shape
+        const userSite = u.user_sites?.[0] || {};
+
         setFormData({
           title: u.title || "",
           firstname: u.firstname || "",
           lastname: u.lastname || "",
           email: u.email || "",
           mobile: u.mobile || "",
-          password: u.password || "",
+          password: "",
           status: u.status || "",
-          userType: u.user_type || "",
-          occupancy_type: u.user_sites?.[0]?.ownership || "",
-          birth_date: u.birth_date ? u.birth_date.slice(0, 10) : "",
+
+          // API: "user"
+          userType: String(u.user_type || "user").toLowerCase(),
+
+          // API: user_sites[0].ownership = "owner"
+          occupancy_type: userSite.ownership || "",
+
+          birth_date: u.birth_date
+            ? u.birth_date.slice(0, 10)
+            : "",
+
+          // API: false -> "false"
           lives_here:
             u.lives_here === true
               ? "true"
               : u.lives_here === false
                 ? "false"
                 : "",
-          membershipType: u.user_sites?.[0]?.ownership_type || "Primary",
+
+          // API: "primary" -> "Primary"
+          membershipType:
+            userSite.ownership_type === "primary"
+              ? "Primary"
+              : userSite.ownership_type === "secondary"
+                ? "Secondary"
+                : "",
+
           panCard: u.pan_number || "",
           gstin: u.gst_number || "",
           alternateAddress: u.user_address || "",
-          anniversary: u.anniversary ? u.anniversary.slice(0, 10) : "",
+
+          anniversary: u.anniversary
+            ? u.anniversary.slice(0, 10)
+            : "",
+
           alternateEmail: u.email_1 || "",
           intercomNumber: u.intercom_number || "",
           landlineNumber: u.landline_number || "",
           evConnection: u.ev_connection || "",
-          is_occupied: u.is_occupied || "",
+
+          // If API sends is_occupied, use it.
+          // Otherwise leave it blank.
+          is_occupied:
+            u.is_occupied === true
+              ? "Yes"
+              : u.is_occupied === false
+                ? "No"
+                : "",
+
           user_status: u.user_status ?? true,
+
+          // Approval comes from is_admin_approved
+          is_admin_approved: u.is_admin_approved,
+
           profile_picture: u.profile_picture || null,
         });
-        // Set existing building / floor / unit
-        const userSite = u.user_sites?.[0] || {};
 
         const buildId = userSite.build_id || "";
         const floorId = userSite.floor_id || "";
@@ -267,25 +302,25 @@ const UserEdit = () => {
       toast.success("User updated successfully!");
       navigate(`/setup/users-details/${id}`);
     } catch (err) {
-  console.error("Update failed:", err);
+      console.error("Update failed:", err);
 
-  const errorData = err?.response?.data;
+      const errorData = err?.response?.data;
 
-  // Handle array errors
-  if (Array.isArray(errorData?.errors)) {
-    toast.error(errorData.errors[0]);
-  }
+      // Handle array errors
+      if (Array.isArray(errorData?.errors)) {
+        toast.error(errorData.errors[0]);
+      }
 
-  // Handle single error message
-  else if (errorData?.error) {
-    toast.error(errorData.error);
-  }
+      // Handle single error message
+      else if (errorData?.error) {
+        toast.error(errorData.error);
+      }
 
-  // Default message
-  else {
-    toast.error("Failed to update user");
-  }
-}finally {
+      // Default message
+      else {
+        toast.error("Failed to update user");
+      }
+    } finally {
       setSaving(false);
     }
   };
@@ -612,21 +647,36 @@ const UserEdit = () => {
                 <label className="text-sm font-medium block mb-1">
                   Approval Status
                 </label>
+
                 <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
+                  name="is_admin_approved"
+                  value={
+                    formData.is_admin_approved === true
+                      ? "approved"
+                      : formData.is_admin_approved === false
+                        ? "rejected"
+                        : "pending"
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+
+                    setFormData((prev) => ({
+                      ...prev,
+                      is_admin_approved:
+                        value === "approved"
+                          ? true
+                          : value === "rejected"
+                            ? false
+                            : null,
+                    }));
+                  }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
-                  <option value="" disabled>
-                    Select Status
-                  </option>
                   <option value="pending">Pending</option>
-                  <option value="complete">Approved</option>
+                  <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
               </div>
-
               {/* Occupied */}
               <div>
                 <label className="text-sm font-medium block mb-1">
