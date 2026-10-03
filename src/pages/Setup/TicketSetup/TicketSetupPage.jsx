@@ -13,16 +13,90 @@ import {
   getIssueType,
   postIssueType,
   updateIssueType,
+  getOperationalHours,
+  postOperationalHours,
+  updateOperationalHours,
+  deleteOperationalHours,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 
+/* ---------------- OPERATIONAL HOURS HELPERS ---------------- */
+const DAYS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+const emptyDays = () =>
+  DAYS.reduce(
+    (acc, d) => ({ ...acc, [d]: { enabled: false, start: "", end: "" } }),
+    {}
+  );
+
+const pad = (n) => String(n ?? 0).padStart(2, "0");
+
+// UI state -> API payload
+const buildPayload = (days) => {
+  const operational_hours = {};
+  DAYS.forEach((day) => {
+    const v = days[day];
+    if (v.enabled) {
+      const [sh, sm] = v.start.split(":").map(Number);
+      const [eh, em] = v.end.split(":").map(Number);
+      operational_hours[day.toLowerCase()] = {
+        is_open: true,
+        start_hour: sh,
+        start_min: sm,
+        end_hour: eh,
+        end_min: em,
+      };
+    } else {
+      operational_hours[day.toLowerCase()] = {
+        is_open: false,
+        start_hour: 23,
+        start_min: 59,
+        end_hour: 23,
+        end_min: 59,
+      };
+    }
+  });
+  return { operational_hours };
+};
+
+// API response -> UI state
+const parseResponse = (data) => {
+  const src = data?.operational_hours || data || {};
+  const days = emptyDays();
+  let found = false;
+  DAYS.forEach((day) => {
+    const v = src[day.toLowerCase()];
+    if (v) {
+      found = true;
+      days[day] = {
+        enabled: !!v.is_open,
+        start: v.is_open ? `${pad(v.start_hour)}:${pad(v.start_min)}` : "",
+        end: v.is_open ? `${pad(v.end_hour)}:${pad(v.end_min)}` : "",
+      };
+    }
+  });
+  return { days, found };
+};
+
 const TicketSetupPage = ({ activeSiteId }) => {
   const themeColor = useSelector((state) => state.theme.color);
+
+  // adjust this key to match where your app stores the company id
+  const companyId = getItemInLocalStorage("COMPANYID");
 
   const [page, setPage] = useState("Related To");
   const [statuses, setStatuses] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editId, setEditId] = useState("");
+  const [operationalHoursId, setOperationalHoursId] = useState(null);
 
   // Related To (IssueType) state
   const [issueTypes, setIssueTypes] = useState([]);
@@ -37,15 +111,10 @@ const TicketSetupPage = ({ activeSiteId }) => {
     order: "",
   });
 
-  const [operationalDays, setOperationalDays] = useState({
-    Monday: { enabled: false, start: "", end: "" },
-    Tuesday: { enabled: false, start: "", end: "" },
-    Wednesday: { enabled: false, start: "", end: "" },
-    Thursday: { enabled: false, start: "", end: "" },
-    Friday: { enabled: false, start: "", end: "" },
-    Saturday: { enabled: false, start: "", end: "" },
-    Sunday: { enabled: false, start: "", end: "" },
-  });
+  // Operational days state
+  const [operationalDays, setOperationalDays] = useState(emptyDays());
+  const [hasOperationalHours, setHasOperationalHours] = useState(false); // true => edit mode
+  const [opLoading, setOpLoading] = useState(false);
 
   /* ---------------- FETCH ISSUE TYPES ---------------- */
   const fetchIssueTypes = async () => {
@@ -103,10 +172,25 @@ const TicketSetupPage = ({ activeSiteId }) => {
     }
   };
 
+  /* ---------------- FETCH OPERATIONAL HOURS ---------------- */
+  const fetchOperationalHours = async () => {
+    if (!companyId) return;
+    try {
+      const res = await getOperationalHours(companyId);
+      const { days, found } = parseResponse(res.data);
+      setOperationalDays(days);
+      setHasOperationalHours(found);
+    } catch (err) {
+      setOperationalDays(emptyDays());
+      setHasOperationalHours(false);
+    }
+  };
+
   useEffect(() => {
     fetchStatuses();
     fetchIssueTypes();
-  }, [activeSiteId]); // ✅ re-fetch when site changes
+    fetchOperationalHours();
+  }, [activeSiteId]); // re-fetch when site changes
 
   const handleReset = () => {
     setFormData({
@@ -127,7 +211,7 @@ const TicketSetupPage = ({ activeSiteId }) => {
       return toast.error("Please fill all fields");
     }
 
-    const siteID = activeSiteId; // ✅ use reactive prop from parent
+    const siteID = activeSiteId; // reactive prop from parent
 
     const payload = new FormData();
     payload.append("complaint_status[of_phase]", "pms");
@@ -151,11 +235,9 @@ const TicketSetupPage = ({ activeSiteId }) => {
 
       fetchStatuses(); // refresh table
     } catch (err) {
-  const message =
-    err?.response?.data?.error || "Failed to add status";
-
-  toast.error(message);
-}
+      const message = err?.response?.data?.error || "Failed to add status";
+      toast.error(message);
+    }
   };
 
   const updateDay = (day, field, value) => {
@@ -165,17 +247,108 @@ const TicketSetupPage = ({ activeSiteId }) => {
     }));
   };
 
-  const handleOperationalSubmit = () => {
-    const payload = Object.entries(operationalDays)
-      .filter(([_, v]) => v.enabled)
-      .map(([day, v]) => ({ day, ...v }));
+  /* ---------------- OPERATIONAL HOURS: CREATE / UPDATE ---------------- */
+  const handleOperationalSubmit = async () => {
+  if (!companyId) {
+    return toast.error("Company ID not found");
+  }
 
-    if (!payload.length) {
-      return toast.error("Select at least one operational day");
+  const enabled = Object.entries(operationalDays).filter(
+    ([_, v]) => v.enabled
+  );
+
+  if (!enabled.length) {
+    return toast.error("Select at least one operational day");
+  }
+
+  for (const [day, v] of enabled) {
+    if (!v.start || !v.end) {
+      return toast.error(`Set start and end time for ${day}`);
     }
 
-    console.log(payload);
-    toast.success("Operational days saved");
+    if (v.end <= v.start) {
+      return toast.error(
+        `End time must be after start time for ${day}`
+      );
+    }
+  }
+
+  setOpLoading(true);
+
+  try {
+    const payload = buildPayload(operationalDays);
+
+    console.log("Operational Hours ID:", operationalHoursId);
+    console.log("Operational Hours Payload:", payload);
+
+    if (hasOperationalHours && operationalHoursId) {
+      // UPDATE EXISTING RECORD BY ID
+      await updateOperationalHours(
+        companyId,
+        operationalHoursId,
+        payload
+      );
+
+      toast.success("Operational days updated successfully");
+    } else {
+      // CREATE NEW RECORD
+      const response = await postOperationalHours(
+        companyId,
+        payload
+      );
+
+      // Save newly-created record ID
+      const newId =
+        response?.data?.id ||
+        response?.data?.data?.id ||
+        response?.data?.operational_hours?.id ||
+        response?.data?.data?.operational_hours?.id ||
+        null;
+
+      if (newId) {
+        setOperationalHoursId(newId);
+      }
+
+      setHasOperationalHours(true);
+
+      toast.success("Operational days saved successfully");
+    }
+
+    await fetchOperationalHours();
+  } catch (err) {
+    console.error(
+      "Operational hours save/update error:",
+      err
+    );
+
+    toast.error(
+      err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "Failed to save operational days"
+    );
+  } finally {
+    setOpLoading(false);
+  }
+};
+
+  /* ---------------- OPERATIONAL HOURS: DELETE ---------------- */
+  const handleDeleteOperationalHours = async () => {
+    if (!companyId) return toast.error("Company ID not found");
+    if (!window.confirm("Delete all operational hours?")) return;
+
+    setOpLoading(true);
+    try {
+      await deleteOperationalHours(companyId);
+      toast.success("Operational days deleted");
+      setOperationalDays(emptyDays());
+      setHasOperationalHours(false);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.error || "Failed to delete operational days"
+      );
+    } finally {
+      setOpLoading(false);
+    }
   };
 
   /* ---------------- TABLE ---------------- */
@@ -211,15 +384,19 @@ const TicketSetupPage = ({ activeSiteId }) => {
     <div className="w-full my-2">
       {/* Tabs */}
       <div className="flex border-b">
-        {["Related To", "Category Type", "Status", "Operational Days"].map((tab) => (
-          <button
-            key={tab}
-            className={`px-4 py-2 ${page === tab ? "border-b-2 text-blue-500" : ""}`}
-            onClick={() => setPage(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+        {["Related To", "Category Type", "Status", "Operational Days"].map(
+          (tab) => (
+            <button
+              key={tab}
+              className={`px-4 py-2 ${
+                page === tab ? "border-b-2 text-blue-500" : ""
+              }`}
+              onClick={() => setPage(tab)}
+            >
+              {tab}
+            </button>
+          )
+        )}
       </div>
 
       {/* Related To (IssueType) */}
@@ -393,9 +570,7 @@ const TicketSetupPage = ({ activeSiteId }) => {
                       type="time"
                       disabled={!data.enabled}
                       value={data.start}
-                      onChange={(e) =>
-                        updateDay(day, "start", e.target.value)
-                      }
+                      onChange={(e) => updateDay(day, "start", e.target.value)}
                     />
                   </td>
 
@@ -404,9 +579,7 @@ const TicketSetupPage = ({ activeSiteId }) => {
                       type="time"
                       disabled={!data.enabled}
                       value={data.end}
-                      onChange={(e) =>
-                        updateDay(day, "end", e.target.value)
-                      }
+                      onChange={(e) => updateDay(day, "end", e.target.value)}
                     />
                   </td>
                 </tr>
@@ -414,14 +587,27 @@ const TicketSetupPage = ({ activeSiteId }) => {
             </tbody>
           </table>
 
-          <div className="text-center mt-6">
+          <div className="text-center mt-6 flex justify-center gap-3">
             <button
               onClick={handleOperationalSubmit}
-              className="px-8 py-2 text-white rounded"
+              disabled={opLoading}
+              className="px-8 py-2 text-white rounded disabled:opacity-60"
               style={{ background: themeColor }}
             >
-              Save Operational Days
+              {hasOperationalHours
+                ? "Update Operational Days"
+                : "Save Operational Days"}
             </button>
+
+            {/* {hasOperationalHours && (
+              <button
+                onClick={handleDeleteOperationalHours}
+                disabled={opLoading}
+                className="px-8 py-2 text-white rounded bg-red-500 disabled:opacity-60 flex items-center gap-1"
+              >
+                <BiTrash /> Delete
+              </button>
+            )} */}
           </div>
         </div>
       )}

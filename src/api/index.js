@@ -491,6 +491,36 @@ export const getHelpDeskCategoriesSetup = async (issueTypeId, siteId) => {
   return axiosInstance.get(`/pms/admin/helpdesk_categories.json`, { params });
 };
 
+
+// ---------- Operational Hours ----------
+export const getOperationalHours = async (companyId) =>
+  axiosInstance.get(`/api/v1/companies/${companyId}/operational_hours.json`, {
+    params: {
+      token: token,
+    },
+  });
+
+export const postOperationalHours = async (companyId, data) =>
+  axiosInstance.post(`/api/v1/companies/${companyId}/operational_hours.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const updateOperationalHours = async (companyId, data,id) =>
+  axiosInstance.put(`/api/v1/companies/${companyId}/operational_hours/${id}.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const deleteOperationalHours = async (companyId, id) =>
+  axiosInstance.delete(`/api/v1/companies/${companyId}/operational_hours.json`, {
+    params: {
+      token: token,
+    },
+  });
+
 //FitOut Checklist
 export const postFitoutChecklist = async (data) =>
   axiosInstance.post(`/snag_checklists.json`, data, {
