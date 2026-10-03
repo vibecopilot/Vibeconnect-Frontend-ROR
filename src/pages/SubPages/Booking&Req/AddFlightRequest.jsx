@@ -3,9 +3,10 @@ import { postFlightTicketRequest, getSetupUsers } from "../../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { FaCheck, FaTrash } from "react-icons/fa";
+import { FaCheck, FaCloudShowersHeavy, FaTrash } from "react-icons/fa";
 import { PiPlusCircleBold } from "react-icons/pi";
 import Select from "react-select";
+import { MdClose } from "react-icons/md";
 const AddFlightRequest = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -229,6 +230,8 @@ const AddFlightRequest = () => {
                 name="ticket_confirmation_number"
                 value={formData.ticket_confirmation_number}
                 onChange={handleChange}
+                maxLength={10}
+                minlength={10}
                 id="ticketConfirmationNumber"
                 className="border p-1 px-4 border-gray-500 rounded-md"
                 placeholder="Mobile Number"
@@ -440,12 +443,18 @@ const AddFlightRequest = () => {
               placeholder="Enter Passport Information"
             ></textarea>
           </div>
-          <div className="flex gap-5 justify-center items-center my-2">
+          <div className="flex gap-5 justify-end items-center my-2 gap-3">
             <button
               onClick={handleFlightRequest}
               className="bg-green-400 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"
             >
               <FaCheck /> Submit
+            </button>
+             <button
+              onClick={() => navigate("/admin/booking-request/flight-ticket-request")}
+              className="bg-red-500 text-white font-semibold py-2 px-4 rounded-md flex items-center gap-2"
+            >
+              <MdClose /> Cancel
             </button>
           </div>
         </div>

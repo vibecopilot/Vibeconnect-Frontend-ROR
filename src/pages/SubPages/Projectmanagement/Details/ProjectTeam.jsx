@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import profile1 from '/profile1.jpg';
-import profile2 from '/profile2.jpg';
-import profile3 from '/profile3.jpg';
-import profile4 from '/profile4.jpg';
-import profile5 from '/profile5.jpg';
+import profile1 from "/profile1.jpg";
+import profile2 from "/profile2.jpg";
+import profile3 from "/profile3.jpg";
+import profile4 from "/profile4.jpg";
+import profile5 from "/profile5.jpg";
 import { PiPhoneCallThin } from 'react-icons/pi';
 import { VscDeviceCameraVideo } from 'react-icons/vsc';
 import { RxDotsHorizontal } from 'react-icons/rx';

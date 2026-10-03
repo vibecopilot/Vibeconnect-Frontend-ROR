@@ -6,11 +6,14 @@ import { dateTimeFormat } from "../../utils/dateUtils";
 import { BiTrash } from "react-icons/bi";
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { useNavigate } from "react-router-dom";
 const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userData, setUserData] = useState(null);
+
+  const navigate = useNavigate();
 
   // Function to fetch comments from the API
   const fetchComments = async () => {
@@ -57,6 +60,12 @@ const ForumCommentsModal = ({ onclose, forumId, onCommentAdded }) => {
       await addComment(forumId, trimmedComment, userData.id);
       await fetchComments();
       if (onCommentAdded) onCommentAdded(forumId, comments.length + 1);
+        // ✅ Close modal (optional but recommended)
+    if (onclose) {
+      onclose();
+    }
+
+      navigate(`/communication/forum/`);
     } catch (error) {
       console.error("Error adding comment:", error);
       toast.error("Failed to add comment");

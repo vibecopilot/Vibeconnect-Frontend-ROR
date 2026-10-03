@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { useNavigate } from "react-router-dom";
-import wave from "/wave.png";
+const wave = "/wave.png";
 import {
   getEmployeeAssociatedSites,
   getHRMSEmployeeID,
   login,
   getAdminAccess,
   vibeBGImages, // newly imported API call
+  vibeLogin,
 } from "../../api";
 import { setItemInLocalStorage, getItemInLocalStorage } from "../../utils/localStorage";
 
@@ -100,21 +101,23 @@ const Login = () => {
 
       const featNames = features.map((feature) => feature.feature_name);
 
-      // (Optional) Vibe Login logic commented out
-      // if (selectedSiteId === 10) {
-      //   if (featNames.includes("project_task")) {
-      //     const vibeResponse = await vibeLogin({
-      //       email: formData.email,
-      //       password: formData.password,
-      //     });
-      //     const vibeToken = vibeResponse.data.token.access.token;
-      //     setItemInLocalStorage("VIBETOKEN", vibeToken);
-      //     const vibeUserId = vibeResponse.data.data.user_id;
-      //     setItemInLocalStorage("VIBEUSERID", vibeUserId);
-      //     const vibeOrganizationId = vibeResponse.data.data.organization_id;
-      //     setItemInLocalStorage("VIBEORGID", vibeOrganizationId);
-      //   }
-      // }
+      // Vibe Login - required for Calendar, Tasks, and other Vibe employee features
+      if (featNames.includes("project_task")) {
+        try {
+          const vibeResponse = await vibeLogin({
+            email: formData.email,
+            password: formData.password,
+          });
+          const vibeToken = vibeResponse.data.token.access.token;
+          setItemInLocalStorage("VIBETOKEN", vibeToken);
+          const vibeUserId = vibeResponse.data.data.user_id;
+          setItemInLocalStorage("VIBEUSERID", vibeUserId);
+          const vibeOrganizationId = vibeResponse.data.data.organization_id;
+          setItemInLocalStorage("VIBEORGID", vibeOrganizationId);
+        } catch (vibeError) {
+          console.warn("Vibe login skipped (calendar/tasks may not work):", vibeError);
+        }
+      }
 
       // If HRMS feature is available, get employee and associated site info.
       if (featNames.includes("hrms") && response.data.user.organization_id) {
@@ -140,6 +143,22 @@ const Login = () => {
       setItemInLocalStorage("categories", response.data.categories);
       const token = response.data.user.api_key;
       setItemInLocalStorage("TOKEN", token);
+      // Keys expected by grouped-dashboard redirect format:
+      setItemInLocalStorage("token", token);
+      setItemInLocalStorage("active_site", selectedSiteId);
+      setItemInLocalStorage("user_details", {
+        id: response.data?.user?.id,
+        firstname: response.data?.user?.firstname,
+        lastname: response.data?.user?.lastname,
+        email: response.data?.user?.email,
+        mobile: response.data?.user?.mobile,
+        user_type: response.data?.user?.user_type,
+        company_id: response.data?.user?.company_id,
+        organization_id: response.data?.user?.organization_id,
+        unit_id: response.data?.user?.unit_id,
+        selected_site_id: selectedSiteId,
+        site_name: response.data?.site?.name,
+      });
       setItemInLocalStorage("LASTNAME", response.data.user.lastname);
       const userType = response.data.user.user_type;
       setItemInLocalStorage("USERTYPE", userType);
@@ -306,8 +325,8 @@ const Login = () => {
           VIBE CONNECT
         </h1>
       </div>
-      <div className="flex justify-center h-[90vh] items-center">
-        <div className="bg-white border-2 border-white w-[30rem] rounded-xl max-h-full p-5 shadow-2xl">
+      <div className="flex justify-center h-[85vh] items-center">
+        <div className="bg-white border-2 border-white w-[28rem] rounded-xl max-h-full p-5 shadow-2xl mb-10">
           <h1 className="text-2xl font-semibold text-center">Login</h1>
           <form onSubmit={onSubmit} className="m-2 flex flex-col gap-4 w-full">
             <div className="flex flex-col gap-2 mx-5">

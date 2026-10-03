@@ -1,754 +1,36 @@
-// import React, { useState } from "react";
-// import SetupNavbar from "../../../components/navbars/SetupNavbar";
-// import { useSelector } from "react-redux";
-// import { FaCamera } from "react-icons/fa";
-// import { createPet } from "../../../api"; 
-
-// const PetsAdd = () => {
-//   const themeColor = useSelector((state) => state.theme.color);
-  
-
-
-//   const [formData, setFormData] = useState({
-//     pet_name: "",
-//     owner_mobile_no: "",
-//     pet_breed: "",
-//     gender: "",
-//     colour: "",
-//     age: "",
-//     dob: "",
-//     is_transferred: false,
-//     brought: false,
-//     stray_adopted: false,
-//     brought_from_city: false,
-//     born_to_owner: false,
-//     building: "",
-//     floor: "",
-//     unit: "",
-//     user: "",
-//     attachments: null,
-//   });
-
-//   const handleChange = (e) => {
-//     const { name, value, type, checked } = e.target;
-//     setFormData({
-//       ...formData,
-//       [name]: type === "checkbox" ? checked : value,
-//     });
-//   };
-
-//   const handleFileChange = (e) => {
-//     setFormData({
-//       ...formData,
-//       attachments: e.target.files,
-//     });
-//   };
-
-// //   const handleSubmit = (e) => {
-// //     e.preventDefault();
-// //     console.log("Form Data:", formData);
-// //   };
-// const handleSubmit = async (e) => {
-//   e.preventDefault();
-
-//   try {
-//     const response = await createPet(formData);
-
-//     console.log("Pet Created:", response.data);
-
-//     alert("Pet Created Successfully ✅");
-
-//     // optional redirect
-//     navigate("/setup/pets");
-
-//   } catch (error) {
-//     console.error("Create failed:", error);
-//     alert("Something went wrong ❌");
-//   }
-// };
-
-
-//   return (
-//     <div className="flex bg-gray-100 min-h-screen">
-//       <SetupNavbar />
-
-//       <div className="w-full p-8">
-//         <div className="bg-white rounded-2xl shadow-md p-6">
-
-//           {/* Header */}
-//           <div
-//             className="text-white text-center py-3 rounded-xl font-semibold text-lg mb-6"
-//             style={{ background: themeColor }}
-//           >
-//             Add Pet
-//           </div>
-
-//           <form onSubmit={handleSubmit}>
-
-//             {/* Top Section */}
-//             <div className="flex gap-6">
-
-//               {/* Profile Image */}
-//               <div className="flex flex-col items-center gap-3">
-//                 <div className="w-28 h-28 rounded-full border-4 border-purple-400 flex items-center justify-center bg-gray-200">
-//                   <div className="w-20 h-20 rounded-full bg-gray-300"></div>
-//                 </div>
-//                 <FaCamera className="text-gray-500 cursor-pointer" size={20} />
-//               </div>
-
-//               {/* Form Fields */}
-//               <div className="flex-1">
-
-//                 {/* Row 1 */}
-//                 <div className="grid grid-cols-3 gap-4 mb-4">
-//                   <Input label="Pet Name *" name="pet_name" value={formData.pet_name} onChange={handleChange} />
-//                   <Input label="Owner Mobile *" name="owner_mobile_no" value={formData.owner_mobile_no} onChange={handleChange} />
-//                   <Input label="Pet Breed" name="pet_breed" value={formData.pet_breed} onChange={handleChange} />
-//                 </div>
-
-//                 {/* Row 2 */}
-//                 <div className="grid grid-cols-3 gap-4 mb-4">
-//                   <Select label="Gender" name="gender" value={formData.gender} onChange={handleChange}>
-//                     <option value="">Select Gender</option>
-//                     <option>Male</option>
-//                     <option>Female</option>
-//                   </Select>
-
-//                   <Input label="Colour" name="colour" value={formData.colour} onChange={handleChange} />
-//                   <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange} placeholder="e.g., 1 year" />
-//                 </div>
-
-//                 {/* DOB */}
-//                 <div className="mb-6">
-//                   <Input label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleChange} />
-//                 </div>
-
-//               </div>
-//             </div>
-
-//             <hr className="my-6" />
-
-//             {/* Additional Info */}
-//             <h3 className="font-semibold mb-4">Additional Information</h3>
-
-//             <div className="grid grid-cols-3 gap-4 mb-6">
-//               <Checkbox label="Is Pet Transferred" name="is_transferred" checked={formData.is_transferred} onChange={handleChange} />
-//               <Checkbox label="Brought" name="brought" checked={formData.brought} onChange={handleChange} />
-//               <Checkbox label="Stray Pet Adopted" name="stray_adopted" checked={formData.stray_adopted} onChange={handleChange} />
-//               <Checkbox label="Brought from Current City" name="brought_from_city" checked={formData.brought_from_city} onChange={handleChange} />
-//               <Checkbox label="Pet Born to Owner's Dog" name="born_to_owner" checked={formData.born_to_owner} onChange={handleChange} />
-//             </div>
-
-//             {/* Dropdown Section */}
-//             <div className="grid grid-cols-4 gap-4 mb-6">
-//               <Select label="Select Building" name="building" value={formData.building} onChange={handleChange}>
-//                 <option>Select Building</option>
-//               </Select>
-//               <Select label="Select Floor" name="floor" value={formData.floor} onChange={handleChange}>
-//                 <option>Select Floor</option>
-//               </Select>
-//               <Select label="Select Unit" name="unit" value={formData.unit} onChange={handleChange}>
-//                 <option>Select Unit</option>
-//               </Select>
-//               <Select label="Select User" name="user" value={formData.user} onChange={handleChange}>
-//                 <option>Select User</option>
-//               </Select>
-//             </div>
-
-//             {/* Attachment */}
-//             <div className="mb-6">
-//               <label className="block font-medium mb-2">Pet Attachment</label>
-//               <input
-//                 type="file"
-//                 multiple
-//                 onChange={handleFileChange}
-//                 className="w-full border rounded-md p-2 bg-gray-50"
-//               />
-//             </div>
-
-//             {/* Buttons */}
-//             <div className="flex justify-end gap-4">
-//               <button
-//                 type="button"
-//                 className="px-6 py-2 bg-gray-200 rounded-lg"
-//               >
-//                 Cancel
-//               </button>
-
-//               <button
-//                 type="submit"
-//                 className="px-6 py-2 text-white rounded-lg"
-//                 style={{
-//                   background: "linear-gradient(90deg, #7b2ff7 0%, #9b4dff 100%)",
-//                 }}
-//               >
-//                 Create Pet
-//               </button>
-//             </div>
-
-//           </form>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// /* Reusable Components */
-
-// const Input = ({ label, ...props }) => (
-//   <div>
-//     <label className="text-sm font-medium">{label}</label>
-//     <input
-//       {...props}
-//       className="w-full mt-1 bg-gray-100 border rounded-md p-2"
-//     />
-//   </div>
-// );
-
-// const Select = ({ label, children, ...props }) => (
-//   <div>
-//     <label className="text-sm font-medium">{label}</label>
-//     <select
-//       {...props}
-//       className="w-full mt-1 bg-gray-100 border rounded-md p-2"
-//     >
-//       {children}
-//     </select>
-//   </div>
-// );
-
-// const Checkbox = ({ label, ...props }) => (
-//   <label className="flex items-center gap-2 text-sm">
-//     <input type="checkbox" {...props} />
-//     {label}
-//   </label>
-// );
-
-// export default PetsAdd;
-
-
-
-// import React, { useState } from "react";
-// import SetupNavbar from "../../../components/navbars/SetupNavbar";
-// import { useSelector } from "react-redux";
-// import { FaCamera } from "react-icons/fa";
-// import { useNavigate } from "react-router-dom";
-// import { createPet } from "../../../api";
-
-// const PetsAdd = () => {
-//   const themeColor = useSelector((state) => state.theme.color);
-//   const navigate = useNavigate();
-
-//   const [formData, setFormData] = useState({
-//     pet_name: "",
-//     owner_mobile_no: "",
-//     pet_breed: "",
-//     gender: "",
-//     colour: "",
-//     age: "",
-//     dob: "",
-//     is_transferred: false,
-//     brought: false,
-//     stray_adopted: false,
-//     brought_from_city: false,
-//     born_to_owner: false,
-//     building: "",
-//     floor: "",
-//     unit: "",
-//     user: "",
-//     attachments: null,
-//   });
-
-//   const handleChange = (e) => {
-//     const { name, value, type, checked } = e.target;
-//     setFormData({
-//       ...formData,
-//       [name]: type === "checkbox" ? checked : value,
-//     });
-//   };
-
-//   const handleFileChange = (e) => {
-//     setFormData({
-//       ...formData,
-//       attachments: e.target.files,
-//     });
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     try {
-//       const data = new FormData();
-
-//       Object.keys(formData).forEach((key) => {
-//         if (key !== "attachments") {
-//           data.append(`pet[${key}]`, formData[key]);
-//         }
-//       });
-
-//       if (formData.attachments) {
-//         for (let i = 0; i < formData.attachments.length; i++) {
-//           data.append("pet[pet_images][]", formData.attachments[i]);
-//         }
-//       }
-
-//       await createPet(data);
-
-//       alert("Pet Created Successfully ✅");
-
-//       navigate("/setup/pets");
-//     } catch (error) {
-//       console.error("Create failed:", error);
-//       alert("Something went wrong ❌");
-//     }
-//   };
-
-//   return (
-//     <div className="flex bg-gray-100 min-h-screen">
-//       <SetupNavbar />
-
-//       <div className="w-full p-8">
-//         <div className="bg-white rounded-2xl shadow-md p-6">
-
-//           {/* Header */}
-//           <div
-//             className="text-white text-center py-3 rounded-xl font-semibold text-lg mb-6"
-//             style={{ background: themeColor }}
-//           >
-//             Add Pet
-//           </div>
-
-//           <form onSubmit={handleSubmit}>
-
-//             {/* Top Section */}
-//             <div className="flex gap-6">
-
-//               {/* Profile Image */}
-//               <div className="flex flex-col items-center gap-3">
-//                 <div className="w-28 h-28 rounded-full border-4 border-purple-400 flex items-center justify-center bg-gray-200">
-//                   <div className="w-20 h-20 rounded-full bg-gray-300"></div>
-//                 </div>
-//                 <FaCamera className="text-gray-500 cursor-pointer" size={20} />
-//               </div>
-
-//               {/* Form Fields */}
-//               <div className="flex-1">
-
-//                 {/* Row 1 */}
-//                 <div className="grid grid-cols-3 gap-4 mb-4">
-//                   <Input label="Pet Name *" name="pet_name" value={formData.pet_name} onChange={handleChange} />
-//                   <Input label="Owner Mobile *" name="owner_mobile_no" value={formData.owner_mobile_no} onChange={handleChange} />
-//                   <Input label="Pet Breed" name="pet_breed" value={formData.pet_breed} onChange={handleChange} />
-//                 </div>
-
-//                 {/* Row 2 */}
-//                 <div className="grid grid-cols-3 gap-4 mb-4">
-//                   <Select label="Gender" name="gender" value={formData.gender} onChange={handleChange}>
-//                     <option value="">Select Gender</option>
-//                     <option value="Male">Male</option>
-//                     <option value="Female">Female</option>
-//                   </Select>
-
-//                   <Input label="Colour" name="colour" value={formData.colour} onChange={handleChange} />
-//                   <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange} placeholder="e.g., 1 year" />
-//                 </div>
-
-//                 {/* DOB */}
-//                 <div className="mb-6">
-//                   <Input label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleChange} />
-//                 </div>
-
-//               </div>
-//             </div>
-
-//             <hr className="my-6" />
-
-//             {/* Additional Info */}
-//             <h3 className="font-semibold mb-4">Additional Information</h3>
-
-//             <div className="grid grid-cols-3 gap-4 mb-6">
-//               <Checkbox label="Is Pet Transferred" name="is_transferred" checked={formData.is_transferred} onChange={handleChange} />
-//               <Checkbox label="Brought" name="brought" checked={formData.brought} onChange={handleChange} />
-//               <Checkbox label="Stray Pet Adopted" name="stray_adopted" checked={formData.stray_adopted} onChange={handleChange} />
-//               <Checkbox label="Brought from Current City" name="brought_from_city" checked={formData.brought_from_city} onChange={handleChange} />
-//               <Checkbox label="Pet Born to Owner's Dog" name="born_to_owner" checked={formData.born_to_owner} onChange={handleChange} />
-//             </div>
-
-//             {/* Dropdown Section */}
-//             <div className="grid grid-cols-4 gap-4 mb-6">
-//               <Select label="Select Building" name="building" value={formData.building} onChange={handleChange}>
-//                 <option value="">Select Building</option>
-//               </Select>
-//               <Select label="Select Floor" name="floor" value={formData.floor} onChange={handleChange}>
-//                 <option value="">Select Floor</option>
-//               </Select>
-//               <Select label="Select Unit" name="unit" value={formData.unit} onChange={handleChange}>
-//                 <option value="">Select Unit</option>
-//               </Select>
-//               <Select label="Select User" name="user" value={formData.user} onChange={handleChange}>
-//                 <option value="">Select User</option>
-//               </Select>
-//             </div>
-
-//             {/* Attachment */}
-//             <div className="mb-6">
-//               <label className="block font-medium mb-2">Pet Attachment</label>
-//               <input
-//                 type="file"
-//                 multiple
-//                 onChange={handleFileChange}
-//                 className="w-full border rounded-md p-2 bg-gray-50"
-//               />
-//             </div>
-
-//             {/* Buttons */}
-//             <div className="flex justify-end gap-4">
-//               <button
-//                 type="button"
-//                 onClick={() => navigate("/setup/pets")}
-//                 className="px-6 py-2 bg-gray-200 rounded-lg"
-//               >
-//                 Cancel
-//               </button>
-
-//               <button
-//                 type="submit"
-//                 className="px-6 py-2 text-white rounded-lg"
-//                 style={{
-//                   background: "linear-gradient(90deg, #7b2ff7 0%, #9b4dff 100%)",
-//                 }}
-//               >
-//                 Create Pet
-//               </button>
-//             </div>
-
-//           </form>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// /* Reusable Components */
-
-// const Input = ({ label, ...props }) => (
-//   <div>
-//     <label className="text-sm font-medium">{label}</label>
-//     <input
-//       {...props}
-//       className="w-full mt-1 bg-gray-100 border rounded-md p-2"
-//     />
-//   </div>
-// );
-
-// const Select = ({ label, children, ...props }) => (
-//   <div>
-//     <label className="text-sm font-medium">{label}</label>
-//     <select
-//       {...props}
-//       className="w-full mt-1 bg-gray-100 border rounded-md p-2"
-//     >
-//       {children}
-//     </select>
-//   </div>
-// );
-
-// const Checkbox = ({ label, ...props }) => (
-//   <label className="flex items-center gap-2 text-sm">
-//     <input type="checkbox" {...props} />
-//     {label}
-//   </label>
-// );
-
-// export default PetsAdd;
-
-
-
-
-
-
-// import React, { useState, useEffect } from "react";
-// import SetupNavbar from "../../../components/navbars/SetupNavbar";
-// import { useSelector } from "react-redux";
-// import { FaCamera } from "react-icons/fa";
-// import { useNavigate } from "react-router-dom";
-
-// import {
-//   postPet,
-//   getBuildings,
-//   getFloors,
-//   getUnits,
-//   getUsers,
-// } from "../../../api";
-
-// const PetsAdd = () => {
-//   const themeColor = useSelector((state) => state.theme.color);
-//   const navigate = useNavigate();
-
-//   // ================= STATE =================
-
-//   const [formData, setFormData] = useState({
-//     pet_name: "",
-//     owner_mobile_no: "",
-//     pet_breed: "",
-//     gender: "",
-//     colour: "",
-//     age: "",
-//     dob: "",
-//     is_pet_transfered: false,
-//     brought: false,
-//     stray_pet_adopted: false,
-//     whether_brought_from_current_city: false,
-//     pet_born_to_owner_dog: false,
-//     user_id: "",
-//     attachments: null,
-//   });
-
-//   const [buildings, setBuildings] = useState([]);
-//   const [floors, setFloors] = useState([]);
-//   const [units, setUnits] = useState([]);
-//   const [users, setUsers] = useState([]);
-
-//   const [selectedBuilding, setSelectedBuilding] = useState("");
-//   const [selectedFloor, setSelectedFloor] = useState("");
-
-//   // ================= LOAD INITIAL =================
-
-//   useEffect(() => {
-//     const loadData = async () => {
-//       try {
-//         const b = await getBuildings();
-//         const u = await getUsers();
-//         setBuildings(b.data);
-//         setUsers(u.data);
-//       } catch (err) {
-//         console.error(err);
-//       }
-//     };
-//     loadData();
-//   }, []);
-
-//   // ================= DEPENDENT DROPDOWNS =================
-
-//   useEffect(() => {
-//     if (selectedBuilding) {
-//       getFloors(selectedBuilding).then((res) => {
-//         setFloors(res.data);
-//         setUnits([]);
-//         setSelectedFloor("");
-//       });
-//     }
-//   }, [selectedBuilding]);
-
-//   useEffect(() => {
-//     if (selectedFloor) {
-//       getUnits(selectedFloor).then((res) => {
-//         setUnits(res.data);
-//       });
-//     }
-//   }, [selectedFloor]);
-
-//   // ================= HANDLERS =================
-
-//   const handleChange = (e) => {
-//     const { name, value, type, checked } = e.target;
-//     setFormData({
-//       ...formData,
-//       [name]: type === "checkbox" ? checked : value,
-//     });
-//   };
-
-//   const handleFileChange = (e) => {
-//     setFormData({
-//       ...formData,
-//       attachments: e.target.files,
-//     });
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     try {
-//       const data = new FormData();
-
-//       data.append("pet[pet_name]", formData.pet_name);
-//       data.append("pet[owner_mobile_no]", formData.owner_mobile_no);
-//       data.append("pet[pet_breed]", formData.pet_breed);
-//       data.append("pet[gender]", formData.gender);
-//       data.append("pet[colour]", formData.colour);
-//       data.append("pet[age]", formData.age);
-//       data.append("pet[dob]", formData.dob);
-//       data.append("pet[user_id]", formData.user_id);
-
-//       data.append("pet[is_pet_transfered]", formData.is_pet_transfered ? 1 : 0);
-//       data.append("pet[brought]", formData.brought ? 1 : 0);
-//       data.append("pet[stray_pet_adopted]", formData.stray_pet_adopted ? 1 : 0);
-//       data.append(
-//         "pet[whether_brought_from_current_city]",
-//         formData.whether_brought_from_current_city ? 1 : 0
-//       );
-//       data.append(
-//         "pet[pet_born_to_owner_dog]",
-//         formData.pet_born_to_owner_dog ? 1 : 0
-//       );
-
-//       if (formData.attachments) {
-//         for (let i = 0; i < formData.attachments.length; i++) {
-//           data.append("pet[pet_images][]", formData.attachments[i]);
-//         }
-//       }
-
-//       await postPet(data);
-
-//       alert("Pet Created Successfully ✅");
-//       navigate("/setup/pets");
-//     } catch (error) {
-//       console.error(error.response?.data || error);
-//       alert("Something went wrong ❌");
-//     }
-//   };
-
-//   // ================= UI =================
-
-//   return (
-//     <div className="flex bg-gray-100 min-h-screen">
-//       <SetupNavbar />
-
-//       <div className="w-full p-8">
-//         <div className="bg-white rounded-2xl shadow-md p-6">
-
-//           <div
-//             className="text-white text-center py-3 rounded-xl font-semibold text-lg mb-6"
-//             style={{ background: themeColor }}
-//           >
-//             Add Pet
-//           </div>
-
-//           <form onSubmit={handleSubmit}>
-
-//             {/* BASIC DETAILS */}
-//             <div className="grid grid-cols-3 gap-4 mb-4">
-//               <Input label="Pet Name *" name="pet_name" value={formData.pet_name} onChange={handleChange} />
-//               <Input label="Owner Mobile *" name="owner_mobile_no" value={formData.owner_mobile_no} onChange={handleChange} />
-//               <Input label="Pet Breed" name="pet_breed" value={formData.pet_breed} onChange={handleChange} />
-//             </div>
-
-//             <div className="grid grid-cols-3 gap-4 mb-4">
-//               <Select label="Gender" name="gender" value={formData.gender} onChange={handleChange}>
-//                 <option value="">Select Gender</option>
-//                 <option value="Male">Male</option>
-//                 <option value="Female">Female</option>
-//               </Select>
-//               <Input label="Colour" name="colour" value={formData.colour} onChange={handleChange} />
-//               <Input label="Age" name="age" type="number" value={formData.age} onChange={handleChange} />
-//             </div>
-
-//             <div className="mb-6">
-//               <Input label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleChange} />
-//             </div>
-
-//             {/* DROPDOWNS */}
-//             <div className="grid grid-cols-4 gap-4 mb-6">
-//               <Select label="Building" value={selectedBuilding} onChange={(e) => setSelectedBuilding(e.target.value)}>
-//                 <option value="">Select</option>
-//                 {buildings.map((b) => (
-//                   <option key={b.id} value={b.id}>{b.name}</option>
-//                 ))}
-//               </Select>
-
-//               <Select label="Floor" value={selectedFloor} onChange={(e) => setSelectedFloor(e.target.value)}>
-//                 <option value="">Select</option>
-//                 {floors.map((f) => (
-//                   <option key={f.id} value={f.id}>{f.name}</option>
-//                 ))}
-//               </Select>
-
-//               <Select label="Unit">
-//                 <option value="">Select</option>
-//                 {units.map((u) => (
-//                   <option key={u.id} value={u.id}>{u.name}</option>
-//                 ))}
-//               </Select>
-
-//               <Select label="User" name="user_id" value={formData.user_id} onChange={handleChange}>
-//                 <option value="">Select</option>
-//                 {users.map((u) => (
-//                   <option key={u.id} value={u.id}>{u.name}</option>
-//                 ))}
-//               </Select>
-//             </div>
-
-//             {/* FILE */}
-//             <div className="mb-6">
-//               <input type="file" multiple onChange={handleFileChange} />
-//             </div>
-
-//             <div className="flex justify-end gap-4">
-//               <button type="button" onClick={() => navigate("/setup/pets")} className="px-6 py-2 bg-gray-200 rounded-lg">
-//                 Cancel
-//               </button>
-//               <button type="submit" className="px-6 py-2 text-white rounded-lg" style={{ background: themeColor }}>
-//                 Create Pet
-//               </button>
-//             </div>
-
-//           </form>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// const Input = ({ label, ...props }) => (
-//   <div>
-//     <label className="text-sm font-medium">{label}</label>
-//     <input {...props} className="w-full mt-1 bg-gray-100 border rounded-md p-2" />
-//   </div>
-// );
-
-// const Select = ({ label, children, ...props }) => (
-//   <div>
-//     <label className="text-sm font-medium">{label}</label>
-//     <select {...props} className="w-full mt-1 bg-gray-100 border rounded-md p-2">
-//       {children}
-//     </select>
-//   </div>
-// );
-
-// export default PetsAdd;
-
-
-
-import React, { useState, useEffect, useRef } from "react";
-import SetupNavbar from "../../../components/navbars/SetupNavbar";
-import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaCamera } from "react-icons/fa";
-
 import {
-  postPet,
   getBuildings,
   getFloors,
   getUnits,
-  getUsers,
+  getSetupUsers,
+  postPet,
 } from "../../../api";
+import toast from "react-hot-toast";
+import { DNA } from "react-loader-spinner";
+import Navbar from "../../../components/Navbar";
+import SetupNavbar from "../../../components/navbars/SetupNavbar";
+import { useSelector } from "react-redux";
 
-const PetsAdd = () => {
-  const themeColor = useSelector((state) => state.theme.color);
+function PetsAdd() {
   const navigate = useNavigate();
-  const fileRef = useRef();
+    const themeColor = useSelector((state) => state.theme.color);
 
-  const [submitting, setSubmitting] = useState(false);
-  const [profileImage, setProfileImage] = useState(null);
-  const [profilePreview, setProfilePreview] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const [buildings, setBuildings] = useState([]);
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
   const [users, setUsers] = useState([]);
-  const [filteredUsers, setFilteredUsers] = useState([]);
+
+  const [selectedTower, setSelectedTower] = useState("");
+  const [selectedFloorId, setSelectedFloorId] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
 
   const [formData, setFormData] = useState({
+    user_id: "",
     pet_name: "",
     owner_mobile_no: "",
     pet_breed: "",
@@ -761,308 +43,555 @@ const PetsAdd = () => {
     stray_pet_adopted: false,
     whether_brought_from_current_city: false,
     pet_born_to_owner_dog: false,
-    building_id: "",
-    floor_id: "",
-    unit_id: "",
-    user_id: "",
-    attachments: null,
   });
 
-  // ================= LOAD DATA =================
+  const [profileImage, setProfileImage] = useState(null);
+  const [profilePreview, setProfilePreview] = useState(null);
+  const [petImages, setPetImages] = useState([]);
+  const [petImagesPreview, setPetImagesPreview] = useState([]);
+
+  // Load Buildings
   useEffect(() => {
-    const load = async () => {
-      const b = await getBuildings();
-      const u = await getUsers();
-      setBuildings(b.data);
-      setUsers(u.data);
+    const loadBuildings = async () => {
+      try {
+        const res = await getBuildings();
+        setBuildings(res.data || []);
+      } catch {
+        toast.error("Failed to load buildings");
+      }
     };
-    load();
+    loadBuildings();
   }, []);
 
-  // ================= BUILDING → FLOOR =================
+  // Fetch Users When Unit Selected
   useEffect(() => {
-    if (formData.building_id) {
-      getFloors(formData.building_id).then((res) => {
-        setFloors(res.data);
-        setUnits([]);
-        setFilteredUsers([]);
-        setFormData((prev) => ({
-          ...prev,
-          floor_id: "",
-          unit_id: "",
-          user_id: "",
-        }));
-      });
-    }
-  }, [formData.building_id]);
-
-  // ================= FLOOR → UNIT =================
-  useEffect(() => {
-    if (formData.floor_id) {
-      getUnits(formData.floor_id).then((res) => {
-        setUnits(res.data);
-        setFilteredUsers([]);
-        setFormData((prev) => ({
-          ...prev,
-          unit_id: "",
-          user_id: "",
-        }));
-      });
-    }
-  }, [formData.floor_id]);
-
-  // ================= UNIT → FILTER USERS =================
-  useEffect(() => {
-    if (formData.unit_id) {
-      const filtered = users.filter(
-        (u) => String(u.unit_id) === String(formData.unit_id)
-      );
-      setFilteredUsers(filtered);
+    if (selectedTower && selectedFloorId && selectedUnit) {
+      fetchUsersForUnit();
     } else {
-      setFilteredUsers([]);
+      setUsers([]);
+      setSelectedUserId("");
+      setFormData((prev) => ({
+        ...prev,
+        user_id: "",
+        owner_mobile_no: "",
+      }));
     }
-  }, [formData.unit_id, users]);
+  }, [selectedTower, selectedFloorId, selectedUnit]);
 
-  // ================= INPUT CHANGE =================
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+  const fetchUsersForUnit = async () => {
+    try {
+      const response = await getSetupUsers();
+      const allUsers = response.data || [];
+
+      const filteredUsers = allUsers.filter((user) =>
+        user.user_sites?.some(
+          (site) =>
+            site.build_id === Number(selectedTower) &&
+            site.floor_id === Number(selectedFloorId) &&
+            site.unit_id === Number(selectedUnit),
+        ),
+      );
+
+      setUsers(filteredUsers);
+    } catch {
+      toast.error("Failed to fetch users");
+    }
   };
 
-  // ================= USER SELECT =================
   const handleUserChange = (e) => {
     const userId = e.target.value;
+    setSelectedUserId(userId);
 
-    const selectedUser = filteredUsers.find(
-      (u) => String(u.id) === String(userId)
-    );
+    const selectedUser = users.find((u) => u.id === Number(userId));
 
-    setFormData((prev) => ({
-      ...prev,
-      user_id: userId,
-      owner_mobile_no:
-        selectedUser?.mobile ||
-        selectedUser?.mobile_no ||
-        selectedUser?.phone ||
-        selectedUser?.contact_number ||
-        "",
-    }));
+    if (selectedUser) {
+      setFormData((prev) => ({
+        ...prev,
+        user_id: userId,
+        owner_mobile_no: selectedUser.mobile || "",
+      }));
+    }
   };
 
-  // ================= PROFILE IMAGE =================
-  const handleProfileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "owner_mobile_no") {
+      const digits = value.replace(/\D/g, "");
+      return setFormData({
+        ...formData,
+        owner_mobile_no: digits.slice(0, 10),
+      });
+    }
+
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleProfileImageChange = (e) => {
+    if (e.target.files?.[0]) {
+      const file = e.target.files[0];
       setProfileImage(file);
       setProfilePreview(URL.createObjectURL(file));
     }
   };
 
-  const handleAttachmentChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      attachments: e.target.files,
-    }));
+  const handlePetImagesChange = (e) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setPetImages((prev) => [...prev, ...files]);
+
+      const previews = files.map((file) => URL.createObjectURL(file));
+      setPetImagesPreview((prev) => [...prev, ...previews]);
+    }
   };
 
-  // ================= SUBMIT =================
+  const removePetImage = (index) => {
+    setPetImages((prev) => prev.filter((_, i) => i !== index));
+    setPetImagesPreview((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.pet_name || !formData.owner_mobile_no) {
-      alert("Pet Name and Owner Mobile are required");
-      return;
+    if (!formData.pet_name || !formData.owner_mobile_no || !formData.pet_breed) {
+      return toast.error("Please enter pet name, owner mobile number, and pet breed");
+    }
+
+    if (formData.owner_mobile_no.length !== 10) {
+      return toast.error("Mobile number must be exactly 10 digits");
+    }
+
+    if (!selectedTower || !selectedFloorId || !selectedUnit) {
+      return toast.error("Please select Tower, Floor & Unit");
+    }
+
+    if (!formData.user_id) {
+      return toast.error("Please select a user");
     }
 
     try {
-      setSubmitting(true);
+      setLoading(true);
 
-      const data = new FormData();
+      const submitData = new FormData();
 
-      Object.keys(formData).forEach((key) => {
-        if (key !== "attachments") {
-          data.append(`pet[${key}]`, formData[key]);
-        }
+      submitData.append("pet[user_id]", formData.user_id);
+      submitData.append("pet[pet_name]", formData.pet_name);
+      submitData.append("pet[owner_mobile_no]", formData.owner_mobile_no);
+      submitData.append("pet[pet_breed]", formData.pet_breed || "");
+      submitData.append("pet[gender]", formData.gender || "");
+      submitData.append("pet[colour]", formData.colour || "");
+      if (formData.age) {
+        submitData.append("pet[age]", formData.age);
+      }
+      if (formData.dob) {
+        submitData.append("pet[dob]", formData.dob);
+      }
+      // BOOLEAN
+      submitData.append(
+        "pet[is_pet_transfered]",
+        formData.is_pet_transfered ? "true" : "false",
+      );
+      submitData.append("pet[brought]", formData.brought ? "true" : "false");
+      submitData.append(
+        "pet[stray_pet_adopted]",
+        formData.stray_pet_adopted ? "true" : "false",
+      );
+      submitData.append(
+        "pet[whether_brought_from_current_city]",
+        formData.whether_brought_from_current_city ? "true" : "false",
+      );
+      submitData.append(
+        "pet[pet_born_to_owner_dog]",
+        formData.pet_born_to_owner_dog ? "true" : "false",
+      );
+
+      // PROFILE IMAGE
+      if (profileImage) {
+        submitData.append("pet[pet_details][profile_image]", profileImage);
+      }
+
+      // MULTIPLE IMAGES
+      petImages.forEach((img) => {
+        submitData.append("pet[pet_details][pet_images][]", img);
       });
 
-      if (profileImage) {
-        data.append("pet[profile_image]", profileImage);
-      }
+      await postPet(submitData);
 
-      if (formData.attachments) {
-        for (let i = 0; i < formData.attachments.length; i++) {
-          data.append("pet[pet_images][]", formData.attachments[i]);
-        }
-      }
-
-      await postPet(data);
-
-      alert("Pet Created Successfully ✅");
+      toast.success("Pet added successfully!");
       navigate("/setup/pets");
     } catch (error) {
-      console.error(error.response?.data || error);
-      alert("Something went wrong ");
+      toast.error(error.response?.data?.error || "Failed to add pet");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex bg-gray-100 min-h-screen">
+    <section className="flex">
       <SetupNavbar />
-
-      <div className="w-full p-8">
-        <div className="bg-white rounded-2xl shadow-md p-6">
-
-          <div
-            className="text-white text-center py-3 rounded-xl font-semibold text-lg mb-6"
-            style={{ background: themeColor }}
+      <div className="w-full p-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-5 text-center py-2 rounded-lg text-white mx-2"
+          style={{background:themeColor}}
           >
             Add Pet
-          </div>
+          </h1>
+        </div>
 
-          <form onSubmit={handleSubmit}>
-
-            {/* PROFILE IMAGE */}
-            <div className="relative w-32 h-32 mb-6">
-              <div className="w-32 h-32 rounded-full border-4 border-purple-400 overflow-hidden bg-gray-200">
-                {profilePreview && (
-                  <img
-                    src={profilePreview}
-                    className="w-full h-full object-cover"
-                    alt="preview"
-                  />
-                )}
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white shadow-md rounded-2xl border p-8"
+        >
+          {/* Profile Image */}
+          <div className="flex flex-wrap items-start mb-6">
+            <div className="w-full sm:w-[150px] text-center mb-6 sm:mb-0">
+              <div className="w-[120px] h-[120px] bg-indigo-100 rounded-full mx-auto overflow-hidden border-4 border-indigo-400/50 shadow-md">
+                <img
+                  src={
+                    profilePreview ||
+                    "https://www.pngitem.com/pimgs/m/137-1370051_avatar-generic-avatar-hd-png-download.png"
+                  }
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <div
-                onClick={() => fileRef.current.click()}
-                className="absolute bottom-2 right-2 bg-purple-600 p-2 rounded-full cursor-pointer"
+
+              <button
+                type="button"
+                className="text-2xl mt-2 text-indigo-600"
+                onClick={() => document.getElementById("profileUpload").click()}
               >
-                <FaCamera size={14} className="text-white" />
-              </div>
+                📷
+              </button>
+
               <input
                 type="file"
-                ref={fileRef}
+                id="profileUpload"
                 accept="image/*"
-                onChange={handleProfileChange}
                 className="hidden"
+                onChange={handleProfileImageChange}
               />
             </div>
 
-            {/* BASIC FIELDS */}
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <Input label="Pet Name" name="pet_name" value={formData.pet_name} onChange={handleChange} />
-              <Input label="Owner Mobile" name="owner_mobile_no" value={formData.owner_mobile_no} onChange={handleChange} />
-              <Input label="Pet Breed" name="pet_breed" value={formData.pet_breed} onChange={handleChange} />
+            {/* Pet Fields */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ml-0 sm:ml-8">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Pet Name *
+                </label>
+                <input
+                  type="text"
+                  name="pet_name"
+                  value={formData.pet_name}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-2 rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Pet Breed *
+                </label>
+                <input
+                  type="text"
+                  name="pet_breed"
+                  value={formData.pet_breed}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-2 rounded"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Gender</label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-2 rounded"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Colour</label>
+                <input
+                  type="text"
+                  name="colour"
+                  value={formData.colour}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-2 rounded"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Age</label>
+                <input
+                  type="text"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-2 rounded"
+                  placeholder="e.g., 1 years"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  name="dob"
+                  value={formData.dob}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-2 rounded"
+                />
+              </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <Select label="Gender" name="gender" value={formData.gender} onChange={handleChange}>
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </Select>
-              <Input label="Colour" name="colour" value={formData.colour} onChange={handleChange} />
-              <Input label="Age" name="age" value={formData.age} onChange={handleChange} />
+          {/* Additional Pet Information */}
+          <div className="mt-6 border-t pt-4">
+            <h3 className="text-lg font-semibold mb-4">
+              Additional Information
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="is_pet_transfered"
+                  checked={formData.is_pet_transfered}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      is_pet_transfered: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4"
+                />
+                <label className="text-sm font-medium">
+                  Is Pet Transferred
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="brought"
+                  checked={formData.brought}
+                  onChange={(e) =>
+                    setFormData({ ...formData, brought: e.target.checked })
+                  }
+                  className="w-4 h-4"
+                />
+                <label className="text-sm font-medium">Brought</label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="stray_pet_adopted"
+                  checked={formData.stray_pet_adopted}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      stray_pet_adopted: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4"
+                />
+                <label className="text-sm font-medium">Stray Pet Adopted</label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="whether_brought_from_current_city"
+                  checked={formData.whether_brought_from_current_city}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      whether_brought_from_current_city: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4"
+                />
+                <label className="text-sm font-medium">
+                  Brought from Current City
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="pet_born_to_owner_dog"
+                  checked={formData.pet_born_to_owner_dog}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      pet_born_to_owner_dog: e.target.checked,
+                    })
+                  }
+                  className="w-4 h-4"
+                />
+                <label className="text-sm font-medium">
+                  Pet Born to Owner &apos;s Dog
+                </label>
+              </div>
             </div>
+          </div>
 
-            <Input label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleChange} />
+          {/* Tower / Floor / Unit / User */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 border-t pt-4 mt-6">
+            <select
+              value={selectedTower}
+              onChange={async (e) => {
+                const id = e.target.value;
+                setSelectedTower(id);
+                setSelectedFloorId("");
+                setSelectedUnit("");
+                setFloors([]);
+                setUnits([]);
+                if (id) {
+                  const res = await getFloors(id);
+                  setFloors(res.data || []);
+                }
+              }}
+              className="border p-2 rounded"
+            >
+              <option value="">Select Building</option>
+              {buildings.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
 
-            <hr className="my-6" />
+            <select
+              value={selectedFloorId}
+              onChange={async (e) => {
+                const id = e.target.value;
+                setSelectedFloorId(id);
+                setSelectedUnit("");
+                setUnits([]);
+                if (id) {
+                  const res = await getUnits(id);
+                  setUnits(res.data || []);
+                }
+              }}
+              disabled={!selectedTower}
+              className="border p-2 rounded"
+            >
+              <option value="">Select Floor</option>
+              {floors.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
 
-            {/* CHECKBOXES */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <Checkbox label="Is Pet Transferred" name="is_pet_transfered" checked={formData.is_pet_transfered} onChange={handleChange} />
-              <Checkbox label="Brought" name="brought" checked={formData.brought} onChange={handleChange} />
-              <Checkbox label="Stray Pet Adopted" name="stray_pet_adopted" checked={formData.stray_pet_adopted} onChange={handleChange} />
-              <Checkbox label="Brought from Current City" name="whether_brought_from_current_city" checked={formData.whether_brought_from_current_city} onChange={handleChange} />
-              <Checkbox label="Pet Born to Owner's Dog" name="pet_born_to_owner_dog" checked={formData.pet_born_to_owner_dog} onChange={handleChange} />
+            <select
+              value={selectedUnit}
+              onChange={(e) => setSelectedUnit(e.target.value)}
+              disabled={!selectedFloorId}
+              className="border p-2 rounded"
+            >
+              <option value="">Select Unit</option>
+              {units.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={selectedUserId}
+              onChange={handleUserChange}
+              disabled={users.length === 0}
+              className="border p-2 rounded"
+            >
+              <option value="">Select User</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.firstname} {user.lastname}
+                </option>
+              ))}
+            </select>
+                <div>
+                <label className="block text-sm font-medium mb-1">
+                  Owner Mobile *
+                </label>
+                <input
+                  type="text"
+                  name="owner_mobile_no"
+                  value={formData.owner_mobile_no}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 p-2 rounded"
+                  maxLength={10}
+                />
+              </div>
+          </div>
+
+          {/* Pet Images */}
+          <div className="mt-6 border-t pt-4">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Pet Attachment</h3>
+
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePetImagesChange}
+                className="w-full border p-2 rounded"
+              />
+
+              {petImagesPreview.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                  {petImagesPreview.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={preview}
+                        alt="pet"
+                        className="w-full h-32 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePetImage(index)}
+                        className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+          </div>
 
-            {/* BUILDING FLOW */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
-              <Select label="Building" name="building_id" value={formData.building_id} onChange={handleChange}>
-                <option value="">Select</option>
-                {buildings.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </Select>
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+            <button
+              type="button"
+              onClick={() => navigate("/setup/pets")}
+              className="bg-gray-200 px-6 py-2 rounded"
+            >
+              Cancel
+            </button>
 
-              <Select label="Floor" name="floor_id" value={formData.floor_id} onChange={handleChange}>
-                <option value="">Select</option>
-                {floors.map((f) => (
-                  <option key={f.id} value={f.id}>{f.name}</option>
-                ))}
-              </Select>
-
-              <Select label="Unit" name="unit_id" value={formData.unit_id} onChange={handleChange}>
-                <option value="">Select</option>
-                {units.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name}</option>
-                ))}
-              </Select>
-
-            <Select
-  label="User"
-  name="user_id"
-  value={formData.user_id}
-  onChange={handleUserChange}
->
-  <option value="">Select User</option>
-  {filteredUsers.map((u) => (
-    <option key={u.id} value={u.id}>
-      {`${u.firstname || ""} ${u.lastname || ""}`.trim()}
-    </option>
-  ))}
-</Select>
-
-            </div>
-
-            <div className="mb-6">
-              <label className="block font-medium mb-2">Attachments</label>
-              <input type="file" multiple onChange={handleAttachmentChange} />
-            </div>
-
-            <div className="flex justify-end gap-4">
-              <button type="button" onClick={() => navigate("/setup/pets")} className="px-6 py-2 bg-gray-200 rounded-lg">
-                Cancel
-              </button>
-              <button type="submit" disabled={submitting} className="px-6 py-2 text-white rounded-lg" style={{ background: themeColor }}>
-                {submitting ? "Creating..." : "Create Pet"}
-              </button>
-            </div>
-
-          </form>
-        </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-700 text-white px-6 py-2 rounded flex items-center gap-2"
+            >
+              {loading ? <DNA height={20} width={20} /> : "Create Pet"}
+            </button>
+          </div>
+        </form>
       </div>
-    </div>
+    </section>
   );
-};
-
-const Input = ({ label, ...props }) => (
-  <div>
-    <label className="text-sm font-medium">{label}</label>
-    <input {...props} className="w-full mt-1 bg-gray-100 border rounded-md p-2" />
-  </div>
-);
-
-const Select = ({ label, children, ...props }) => (
-  <div>
-    <label className="text-sm font-medium">{label}</label>
-    <select {...props} className="w-full mt-1 bg-gray-100 border rounded-md p-2">
-      {children}
-    </select>
-  </div>
-);
-
-const Checkbox = ({ label, ...props }) => (
-  <label className="flex items-center gap-2 text-sm">
-    <input type="checkbox" {...props} />
-    {label}
-  </label>
-);
+}
 
 export default PetsAdd;

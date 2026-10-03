@@ -1,14 +1,81 @@
-import React, { useEffect, useState } from "react";
-import Navbar from "../../components/Navbar";
+import React, { useEffect, useMemo, useState } from "react";
 import { IoMdAdd } from "react-icons/io";
-import Table from "../../components/table/Table";
-import { BiEdit } from "react-icons/bi";
 import { Link } from "react-router-dom";
-import { getMasterChecklist } from "../../api";
 import { BsEye } from "react-icons/bs";
+import { useSelector } from "react-redux";
+
+import Table from "../../components/table/Table";
+import Navbar from "../../components/Navbar";
+import SiteHeader from "../../components/SiteHeader";
+
+import { getMasterChecklist } from "../../api";
+import SetupNavbar from "../../components/navbars/SetupNavbar";
 
 function MasterCheckListSetup() {
+  const themeColor = useSelector((state) => state.theme.color);
+
   const [masterchecklists, setmasterChecklists] = useState([]);
+
+  // ✅ Site State
+  const [activeSiteId, setActiveSiteId] = useState("");
+
+  // ✅ Search States
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  // ✅ Fetch Checklists
+  useEffect(() => {
+    const fetchChecklist = async () => {
+      try {
+        const checklist = await getMasterChecklist(activeSiteId);
+
+        const sortedChecklists = (
+          checklist?.data?.checklists || []
+        ).sort(
+          (a, b) =>
+            new Date(b.created_at) - new Date(a.created_at)
+        );
+
+        setmasterChecklists(sortedChecklists);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    fetchChecklist();
+  }, [activeSiteId]);
+
+  // ✅ Debounce Search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchText]);
+
+  // ✅ Search Filter
+  const filteredChecklists = useMemo(() => {
+    if (!debouncedSearch.trim()) return masterchecklists;
+
+    return masterchecklists.filter((row) => {
+      const searchableText = [
+        row?.id,
+        row?.name,
+        row?.meterCategory,
+        row?.scheduledFor,
+        row?.site_name,
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(
+        debouncedSearch.toLowerCase()
+      );
+    });
+  }, [debouncedSearch, masterchecklists]);
+
+  // ✅ Table Columns
   const column = [
     {
       name: "Actions",
@@ -20,67 +87,88 @@ function MasterCheckListSetup() {
           </Link>
         </div>
       ),
+      width: "100px",
     },
-    { name: "Id", selector: (row) => row.id, sortable: true },
-    { name: "Activity Name", selector: (row) => row.name, sortable: true },
+
+    {
+      name: "ID",
+      selector: (row) => row.id,
+      sortable: true,
+    },
+
+    {
+      name: "Site",
+      selector: (row) => row.site_name || "-",
+      sortable: true,
+      wrap: true,
+    },
+
+    {
+      name: "Activity Name",
+      selector: (row) => row.name,
+      sortable: true,
+      wrap: true,
+    },
+
     {
       name: "Meter Category",
-      selector: (row) => row.meterCategory,
+      selector: (row) => row.meterCategory || "-",
       sortable: true,
+      wrap: true,
     },
-    // { name: "Number Of Questions", selector: (row) => row.questions.length, sortable: true },
+
     {
       name: "Scheduled For",
-      selector: (row) => row.scheduledFor,
+      selector: (row) => row.scheduledFor || "-",
       sortable: true,
+      wrap: true,
     },
   ];
-  useEffect(() => {
-    const fetchChecklist = async () => {
-      try {
-        const checklist = await getMasterChecklist();
-        const sortedChecklists = checklist.data.checklists.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
-        setmasterChecklists(sortedChecklists);
-        console.log(checklist.data.checklists);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchChecklist();
-  }, []);
-  const data = [
-    {
-      id: 1,
-      Id: "544",
-      activityName: "asdfgn",
-      meterCategory: "",
-      numberOfQuestions: "1",
-      scheduledFor: "Asset",
-    },
-  ];
+
   return (
     <section className="flex">
-      <Navbar />
+      <SetupNavbar />
+
       <div className="w-full flex mx-3 flex-col overflow-hidden">
+        {/* ✅ Site Header */}
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id);
+
+            // reset search on site change
+            setSearchText("");
+            setDebouncedSearch("");
+          }}
+        />
+        {/* ✅ Search + Add Button */}
         <div className="flex flex-col sm:flex-row md:justify-between gap-3 my-3">
           <input
             type="text"
-            placeholder="search"
-            className="border-2 p-2 w-70 border-gray-300 rounded-lg"
+            placeholder="Search by Activity Name, Site, Category..."
+            className="border-2 p-2 w-full border-gray-300 rounded-lg outline-none"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
           />
+
           <div className="flex gap-3 sm:flex-row flex-col">
             <Link
               to={`/admin/add-master-checklist-setup`}
-              className=" font-semibold border-2 border-black px-4 p-1 flex gap-2 items-center rounded-md"
+              style={{ background: themeColor }}
+              className="font-semibold px-4 py-2 flex gap-2 items-center rounded-md text-white whitespace-nowrap"
             >
-              <IoMdAdd /> Add
+              <IoMdAdd />
+              Add
             </Link>
           </div>
         </div>
+
+        {/* ✅ Table */}
         <div className="my-3">
-          <Table columns={column} data={masterchecklists} isPagination={true} />
+          <Table
+            columns={column}
+            data={filteredChecklists}
+            isPagination={true}
+          />
         </div>
       </div>
     </section>

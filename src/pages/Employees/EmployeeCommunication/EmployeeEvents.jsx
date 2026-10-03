@@ -37,7 +37,7 @@ const EmployeeEvents = () => {
     {
       name: "Action",
       cell: (row) => (
-        <Link to={`/communication/event/event-details/${row.id}`}>
+        <Link to={`/communication/events/details/${row.id}`}>
           <BsEye size={15} />
         </Link>
       ),

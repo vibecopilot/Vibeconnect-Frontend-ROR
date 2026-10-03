@@ -1,55 +1,93 @@
-import React, { useEffect, useState } from 'react'
-import { getServicesRoutineList, getSoftServiceStatus } from '../../api';
-import Table from '../../components/table/Table';
-import { Link } from 'react-router-dom';
-import { BiEdit } from 'react-icons/bi';
-import Services from '../Services';
-import Navbar from '../../components/Navbar';
+import React, { useEffect, useState } from "react";
+import {
+  getServicesRoutineList,
+  getSoftServiceStatus,
+} from "../../api";
+import Table from "../../components/table/Table";
+import { Link } from "react-router-dom";
+import { BsEye } from "react-icons/bs";
+import Services from "../Services";
+import Navbar from "../../components/Navbar";
 import * as XLSX from "xlsx";
-import { BsEye } from 'react-icons/bs';
-import { DNA } from 'react-loader-spinner';
-import { useSelector } from 'react-redux';
+import { DNA } from "react-loader-spinner";
+import { useSelector } from "react-redux";
 import { Pagination } from "antd";
+import SiteHeader from "../../components/SiteHeader";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ServicesTask = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [routines, setRoutines] = useState([])
-  const [filter, setFilter] = useState(false);
-  const [searchRoutineText, setSearchRoutineCheck] = useState("")
   const [filteredRoutineData, setFilteredRoutineData] = useState([]);
-  const [RoutineData, setRoutineData] = useState([]);
+  const [routines, setRoutines] = useState([]);
+
+  const [searchRoutineText, setSearchRoutineText] = useState("");
+
   const [pageNo, setPageNo] = useState(1);
   const [total, setTotal] = useState(0);
   const [perPage, setPerPage] = useState(10);
-  const today = new Date().toISOString().split("T")[0];
-  console.log("date", today);
-  const [startDate, setStartDate] = useState(today);
-  const [endDate, setEndDate] = useState("");
+
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  const formatDate = (date) => date.toISOString().split("T")[0];
+
+  const [startDate, setStartDate] = useState(formatDate(today));
+  const [endDate, setEndDate] = useState(formatDate(tomorrow));
+
+  const themeColor = useSelector((state) => state.theme.color);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
+
+  /* ================= DATE FORMAT ================= */
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
       day: "2-digit",
-      month: "short", // or 'long' for full month names
+      month: "short",
       year: "numeric",
-      // hour: "2-digit",
-      // minute: "2-digit",
-      // // second: '2-digit'
-      // hour12: true,
     });
-  }; ``
+  };
+  const [statusCounts, setStatusCounts] = useState({
+    all: 0,
+    pending: 0,
+    complete: 0,
+    overdue: 0,
+  });
 
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case "complete":
+        return selectedStatus === status
+          ? "border-green-600 bg-green-100 text-green-700"
+          : "border-green-300";
+
+      case "pending":
+        return selectedStatus === status
+          ? "border-yellow-500 bg-yellow-100 text-yellow-700"
+          : "border-yellow-300";
+
+      case "overdue":
+        return selectedStatus === status
+          ? "border-red-600 bg-red-100 text-red-700"
+          : "border-red-300";
+
+      default: // all
+        return selectedStatus === status
+          ? "border-blue-600 bg-blue-100 text-blue-700"
+          : "border-gray-300";
+    }
+  };
+  /* ================= TABLE ================= */
   const routineColumn = [
     {
       name: "Action",
       cell: (row) => (
-        <div className="flex items-center gap-4">
-          <Link to={`/service/checklist/${row.soft_service_id}/${row.id}`}>
-            <BsEye size={15} />
-          </Link>
-          {/* <Link to={`/services/edit-routine/${row.id}`}>
-                <BiEdit size={15} />
-              </Link> */}
-        </div>
+        <Link to={`/service/checklist/${row.soft_service_id}/${row.id}`}>
+          <BsEye size={15} />
+        </Link>
       ),
     },
     {
@@ -61,376 +99,340 @@ const ServicesTask = () => {
       name: "Checklist Name",
       selector: (row) => row.checklist_name,
       sortable: true,
-      width: "400px"
+      width: "400px",
     },
-
     {
       name: "Start Date",
       selector: (row) => dateFormat(row.start_time),
       sortable: true,
     },
-    // {
-    //   name: "End Time",
-    //   selector: (row) => row.end_time,
-    //   sortable: true,
-    // },
     {
       name: "Status",
       selector: (row) => row.status,
-      sortable: true,
     },
     {
       name: "Assigned To",
       selector: (row) => row.assigned_to_name,
-      sortable: true,
     },
-
   ];
-  const themeColor = useSelector((state) => state.theme.color)
 
-  useEffect(() => {
-    try {
-      const fetchServiceRoutine = async () => {
-        const ServiceRoutineResponse = await getServicesRoutineList(pageNo, perPage);
-        const filteredServiceTask = ServiceRoutineResponse.data.activities.filter(asset => asset.soft_service_name);
-        console.log("task data", filteredServiceTask)
-        console.log("task data resp", ServiceRoutineResponse)
-        setFilteredRoutineData(filteredServiceTask);
-        setTotal(ServiceRoutineResponse.data.total_pages);
-        setRoutineData(filteredServiceTask)
-        setRoutines(filteredServiceTask)
-      };
-      fetchServiceRoutine();
-    } catch (error) {
-      console.log(error);
-    }
-  }, [pageNo, perPage, startDate, endDate]);
-
-  const handlePageChange = (page, pageSize) => {
-    setPageNo(page);
-    setPerPage(pageSize)
-  };
-  const handleStatusChange = async (status) => {
-    setSelectedStatus(status);
-    if (status === "all") {
-      try {
-        const ServiceRoutineResponse = await getServicesRoutineList(pageNo, perPage, startDate, endDate);
-        const filteredServiceTask = ServiceRoutineResponse.data.activities.filter(asset => asset.soft_service_name);
-        setFilteredRoutineData(filteredServiceTask);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    } else {
-      try {
-        const respdata = await getSoftServiceStatus(status, startDate, endDate);
-        const filteredServiceTask = respdata.data.activities.filter(asset => asset.soft_service_name);
-        setFilteredRoutineData(filteredServiceTask);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    }
-  };
- const handleRoutineSearch = (event) => {
-  const searchValue = event.target.value;
-  setSearchRoutineCheck(searchValue);
-
-  if (searchValue.trim() === "") {
-    setFilteredRoutineData(routines);
-  } else {
-    const filteredResults = routines.filter((item) =>
-      item.soft_service_name &&
-      item.soft_service_name
-        .toLowerCase()
-        .includes(searchValue.toLowerCase())
-    );
-
-    setFilteredRoutineData(filteredResults);
-  }
-};
-
-
- const handleApplyDateFilter = async () => {
-  try {
-    setPageNo(1); // reset page
-
-    let response;
-
-    if (selectedStatus === "all") {
-      response = await getServicesRoutineList(1, perPage, startDate, endDate);
-    } else {
-      response = await getSoftServiceStatus(selectedStatus, startDate, endDate);
-    }
-
-    const filteredServiceTask = response.data.activities.filter(
-      asset => asset.soft_service_name
-    );
-
-    setFilteredRoutineData(filteredServiceTask);
-    setTotal(response.data.total_pages);
-    setRoutineData(filteredServiceTask);
-    setRoutines(filteredServiceTask);
-
-  } catch (error) {
-    console.error("Error applying date filter:", error);
-  }
-};
-
-  const handleClearDateFilter = async () => {
-    setStartDate("");
-    setEndDate("");
+  /* ================= FETCH DATA ================= */
+  const fetchData = async () => {
     try {
       let response;
+
+      const start = startDate ? `${startDate}T00:00:00` : "";
+      const end = endDate ? `${endDate}T23:59:59` : "";
+
       if (selectedStatus === "all") {
-        response = await getServicesRoutineList(pageNo, perPage);
+        response = await getServicesRoutineList(
+          pageNo,
+          perPage,
+          start,
+          end
+        );
+
+        const data = response.data.activities.filter(
+          (item) => item.soft_service_name
+        );
+
+        setFilteredRoutineData(data);
+        setRoutines(data);
+
+        // ✅ FIXED
+        setTotal(response.data.total_count || 0);
+
       } else {
-        response = await getSoftServiceStatus(selectedStatus);
+        response = await getSoftServiceStatus(
+          selectedStatus,
+          start,
+          end
+        );
+
+        const data = response.data.activities.filter(
+          (item) => item.soft_service_name
+        );
+
+        setRoutines(data);
+
+        // ✅ manual pagination
+        const startIndex = (pageNo - 1) * perPage;
+        const endIndex = startIndex + perPage;
+
+        setFilteredRoutineData(data.slice(startIndex, endIndex));
+
+        setTotal(data.length); // correct
       }
-      const filteredServiceTask = response.data.activities.filter(asset => asset.soft_service_name);
-      setFilteredRoutineData(filteredServiceTask);
-      setTotal(response.data.total_pages);
-      setRoutineData(filteredServiceTask);
-      setRoutines(filteredServiceTask);
     } catch (error) {
-      console.error("Error clearing date filter:", error);
+      console.error(error);
     }
   };
 
-  const exportToExcel = () => {
-    // Filter data to only include columns that are shown in the table
-    const exportData = filteredRoutineData.map(row => ({
-      "Service Name": row.soft_service_name,
-      "Checklist Name": row.checklist_name,
-      "Start Date": dateFormat(row.start_time),
-      "Status": row.status,
-      "Assigned To": row.assigned_to
-    }));
 
-    const fileType =
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
-    const fileName = "service Task Data.xlsx";
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: fileType });
-    const url = URL.createObjectURL(data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
+  const fetchStatusCounts = async () => {
+    try {
+      const start = startDate ? `${startDate}T00:00:00` : "";
+      const end = endDate ? `${endDate}T23:59:59` : "";
+
+      const res = await getServicesRoutineList(1, 10000, start, end);
+
+      const data = res.data.activities || [];
+
+      const counts = {
+        all: data.length,
+        pending: data.filter((i) => i.status === "pending").length,
+        complete: data.filter((i) => i.status === "complete").length,
+        overdue: data.filter((i) => i.status === "overdue").length,
+      };
+
+      setStatusCounts(counts);
+    } catch (err) {
+      console.log(err);
+    }
   };
-  return (
-    <section className="flex ">
-      <Navbar />
-      <div className="p-4 overflow-hidden w-full my-2 flex mx-3 flex-col">
 
+
+
+  useEffect(() => {
+    fetchData();
+    fetchStatusCounts();
+  }, [pageNo, perPage, selectedStatus, startDate, endDate, activeSiteId]); // ✅ re-fetch when site changes
+
+  /* ================= STATUS FILTER ================= */
+  const handleStatusChange = (status) => {
+    setSelectedStatus(status);
+    setPageNo(1);
+  };
+
+  /* ================= SEARCH ================= */
+  const handleRoutineSearch = (e) => {
+    const value = e.target.value.toLowerCase();
+    setSearchRoutineText(value);
+
+    if (!value) {
+      setFilteredRoutineData(routines);
+      return;
+    }
+
+    const filtered = routines.filter((item) =>
+      [
+        item.soft_service_name,
+        item.checklist_name,
+        item.status,
+        item.assigned_to_name,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(value)
+    );
+
+    setFilteredRoutineData(filtered);
+  };
+
+  /* ================= DATE FILTER ================= */
+  const handleApplyDateFilter = () => {
+    setPageNo(1);
+    fetchData();
+  };
+
+  const handleClearDateFilter = () => {
+    const today = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(today.getDate() + 1);
+
+    const formatDate = (date) => date.toISOString().split("T")[0];
+
+    setStartDate(formatDate(today));
+    setEndDate(formatDate(tomorrow));
+
+    setPageNo(1);
+  };
+
+  /* ================= EXPORT ================= */
+  const exportToExcel = async () => {
+    try {
+      const start = startDate ? `${startDate}T00:00:00` : "";
+      const end = endDate ? `${endDate}T23:59:59` : "";
+
+      let data = [];
+
+      if (selectedStatus === "all") {
+        // ✅ fetch ALL records (no pagination limit)
+        const res = await getServicesRoutineList(1, 10000, start, end);
+        data = res.data.activities || [];
+      } else {
+        // ✅ already returns full data
+        const res = await getSoftServiceStatus(
+          selectedStatus,
+          start,
+          end
+        );
+        data = res.data.activities || [];
+      }
+
+      // ✅ Apply same filter (remove null names)
+      data = data.filter((item) => item.soft_service_name);
+
+      // ✅ Apply SEARCH filter also
+      if (searchRoutineText) {
+        const value = searchRoutineText.toLowerCase();
+        data = data.filter((item) =>
+          [
+            item.soft_service_name,
+            item.checklist_name,
+            item.status,
+            item.assigned_to_name,
+          ]
+            .join(" ")
+            .toLowerCase()
+            .includes(value)
+        );
+      }
+
+      // ✅ Prepare export data
+      const exportData = data.map((row) => ({
+        "Service Name": row.soft_service_name,
+        "Checklist Name": row.checklist_name,
+        "Start Date": dateFormat(row.start_time),
+        Status: row.status,
+        "Assigned To": row.assigned_to_name,
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+      const buffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+
+      const blob = new Blob([buffer]);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Service_Task.xlsx";
+      link.click();
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  /* ================= PAGINATION ================= */
+  const handlePageChange = (page, pageSize) => {
+    setPageNo(page);
+    setPerPage(pageSize);
+  };
+
+  return (
+    <section className="flex">
+      <Navbar />
+
+      <div className="w-full mx-3 flex flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setPageNo(1);
+            setSelectedStatus("all");
+            setFilteredRoutineData([]);
+            setRoutines([]);
+          }}
+        />
         <Services />
 
-        {/* Date Filter Section */}
-        <div className="flex items-center justify-start gap-4 my-4 p-4 bg-gray-50 rounded-md border">
-          <div className="flex items-center gap-2">
-            <label htmlFor="startDate" className="font-medium text-sm">
-              Start:
-            </label>
+        {/* ================= STATUS CARDS ================= */}
+        <div className="grid grid-cols-4 gap-3 my-4">
+          {["all", "pending", "complete", "overdue"].map((status) => (
+            <div
+              key={status}
+              onClick={() => handleStatusChange(status)}
+              className={`cursor-pointer p-4 rounded-lg text-center border ${getStatusStyle(status)}`}
+            >
+              <p className="capitalize">{status}</p>
+
+              <p className="text-xl font-bold">
+                {statusCounts[status] || 0}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* ================= FILTER ================= */}
+        <div className="flex justify-between items-center my-3">
+
+          {/* 🔹 LEFT: Search */}
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchRoutineText}
+            onChange={handleRoutineSearch}
+            className="border p-2 rounded w-96"
+          />
+
+          {/* 🔹 RIGHT: Filters */}
+          <div className="flex gap-2 items-center">
             <input
               type="date"
-              id="startDate"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border p-2 rounded"
             />
-          </div>
 
-          <div className="flex items-center gap-2">
-            <label htmlFor="endDate" className="font-medium text-sm">
-              End:
-            </label>
             <input
               type="date"
-              id="endDate"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border p-2 rounded"
             />
-          </div>
 
-          <button
-            onClick={handleApplyDateFilter}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors"
-            style={{ background: themeColor }}
-          >
-            Apply
-          </button>
-
-          <button
-            onClick={handleClearDateFilter}
-            className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors"
-          >
-            Clear
-          </button>
-
-          <button
-            onClick={exportToExcel}
-            className="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-md text-sm transition-colors"
-          >
-            Export ({filteredRoutineData.length})
-          </button>
-        </div>
-
-        {filter && (
-          <div className="flex items-center justify-center gap-2">
-            <div>
-              <label htmlFor="" className="font-medium">
-                Service Name:{" "}
-              </label>
-              <input
-                type="text"
-                name=""
-                id=""
-                placeholder="Enter Service Name"
-                className="border p-1 placeholder:text-sm px-4 border-gray-500 rounded-md"
-              />
-            </div>
-
-            <select className="border p-1 px-4 border-gray-500 rounded-md">
-              <option value="">Select Area</option>
-              <option value="unit1">Area 1</option>
-              <option value="unit2">Area 2</option>
-              <option value="unit2">Area 3</option>
-            </select>
-
-            <select className="border p-1 px-4 border-gray-500 rounded-md">
-              <option value="">Select Building</option>
-              <option value="unit1">Building 1</option>
-              <option value="unit2">Building 2</option>
-              <option value="unit2">Building 3</option>
-            </select>
-            <button className="bg-black p-1 px-4 text-white rounded-md">
+            <button
+              onClick={handleApplyDateFilter}
+              style={{ background: themeColor }}
+              className="text-white p-2 rounded"
+            >
               Apply
             </button>
-          </div>
-        )}
-        <div className="flex sm:flex-row flex-col justify-between gap-2 my-5">
-          <div className="md:flex justify-between grid grid-cols-2 items-center  gap-2 border border-gray-300 rounded-md px-3 p-2 w-auto">
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="all"
-                name="status"
-                checked={selectedStatus === "all"}
-                onChange={() => handleStatusChange("all")}
-              />
-              <label htmlFor="all" className="text-sm">
-                All
-              </label>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="pending"
-                name="status"
-                checked={selectedStatus === "pending"}
-                onChange={() => handleStatusChange("pending")}
-              />
-              <label htmlFor="pending" className="text-sm">
-                Pending
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="completed"
-                name="status"
-                checked={selectedStatus === "complete"}
-                onChange={() => handleStatusChange("complete")}
-              />
-              <label htmlFor="completed" className="text-sm">
-                Completed
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="radio"
-                id="completed"
-                name="status"
-                checked={selectedStatus === "overdue"}
-                onChange={() => handleStatusChange("overdue")}
-              />
-              <label htmlFor="overdue" className="text-sm">
-                Overdue
-              </label>
-            </div>
-          </div>
-          <div className="flex lg:flex-row flex-col gap-2">
-            <input
-              type="text"
-              placeholder="Search By name"
-              className="border border-gray-400 md:w-96 placeholder:text-xs rounded-lg p-2"
-              value={searchRoutineText}
-              onChange={handleRoutineSearch}
-            /></div>
-        </div>
-        <div className="flex flex-wrap justify-between items-center  ">
-          {/* <input
-          type="text"
-          placeholder="Search By name"
-          className="border-2 p-2 w-96 border-gray-300 rounded-lg "
-          value={searchRoutineText}
-          onChange={handleRoutineSearch}
-        /> */}
-          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={handleClearDateFilter}
+              className="bg-red-500 text-white p-2 rounded"
+            >
+              Clear
+            </button>
 
-            {/* <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={exportToExcel}
-style={{background: themeColor}}
-          >
-            Export
-          </button> */}
-            {/* <button
-    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-    onClick={handleDownloadQRCode}
-    disabled={selectedRows.length === 0}
-  >
-    Download QR Code
-  </button> */}
+            <button
+              onClick={exportToExcel}
+              className="bg-green-500 text-white p-2 rounded"
+            >
+              Export ({total})
+            </button>
           </div>
         </div>
-        {routines.length !== 0 ? (
+
+        {/* ================= TABLE ================= */}
+        {filteredRoutineData.length > 0 ? (
           <>
-            <Table selectableRows columns={routineColumn} data={filteredRoutineData} fixedHeader
-              pagination={false} />
-            <div className="bg-white mb-10 p-2 flex justify-end">
+            <Table
+              columns={routineColumn}
+              data={filteredRoutineData}
+              pagination={false}
+            />
+
+            <div className="flex justify-end mt-3 mb-6">
               <Pagination
                 current={pageNo}
-                total={total}
+                total={total}   // ✅ now correct (66)
                 pageSize={perPage}
                 onChange={handlePageChange}
-                responsive
                 showSizeChanger
-                onShowSizeChange={handlePageChange}
-
-
+                showTotal={(total, range) =>
+                  `${range[0]}-${range[1]} of ${total}`
+                }
               />
             </div>
           </>
         ) : (
-          <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
-            />
+          <div className="flex justify-center items-center h-40 text-gray-500">
+            No Data Found
           </div>
         )}
-
-
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default ServicesTask
+export default ServicesTask;

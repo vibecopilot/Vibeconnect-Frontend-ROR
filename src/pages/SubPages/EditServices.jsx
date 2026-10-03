@@ -48,7 +48,7 @@ const EditService = () => {
       }));
       setSelectedOption(selectedUnits);
     };
-  
+
     const fetchFloor = async (floorID) => {
       try {
         const build = await getFloors(floorID);
@@ -125,20 +125,20 @@ const EditService = () => {
     }
   };
   const handleFileChange = (files, fieldName) => {
+    const actualFiles = files.map((f) => f.file || f);
 
-    setFormData({
-      ...formData,
-      [fieldName]: files,
-    });
-    console.log(fieldName);
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: actualFiles,
+    }));
   };
 
   const handleEditService = async () => {
     if (
       !formData.name ||
       !formData.building_id ||
-      !formData.floor_id 
-      
+      !formData.floor_id
+
     ) {
       return toast.error("All fields are required.");
     }
@@ -154,8 +154,12 @@ const EditService = () => {
         dataToSend.append("soft_service[unit_id][]", option.value);
       });
       dataToSend.append("soft_service[user_id]", formData.user_id);
-      (formData.attachments || []).forEach((file, index) => {
-        dataToSend.append(`attachments[]`, file);
+      (formData.attachments || []).forEach((fileObj) => {
+        const file = fileObj?.file || fileObj; // handle both cases
+
+        if (file instanceof File) {
+          dataToSend.append("attachfiles[]", file);
+        }
       });
       const serviceResponse = await EditSoftServices(dataToSend, id);
       console.log(serviceResponse);
@@ -176,32 +180,32 @@ const EditService = () => {
   };
 
   return (
-    <section className="flex "> 
-    <Navbar /> 
-   <div className="p-4 overflow-hidden w-full  flex  flex-col">
-      <div className="">
-        <div className="md:mx-20 my-5 md:mb-10 sm:border border-gray-400 p-5  rounded-lg ">
-        <h2
-          style={{ background: themeColor }}
-          className="text-center text-xl font-bold p-2 bg-black rounded-md text-white"
-        >
-          Edit Service
-        </h2>
-          <div className="grid md:grid-cols-3 gap-4 my-5">
-            <div className="flex flex-col ">
-              <label htmlFor="" className="font-semibold">
-                Service Name:
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter Service Name"
-                className="border p-1 px-4 border-gray-500 rounded-md placeholder:text-sm"
-              />
-            </div>
-            {/* <div className="flex flex-col">
+    <section className="flex ">
+      <Navbar />
+      <div className="p-4 overflow-hidden w-full  flex  flex-col">
+        <div className="">
+          <div className="md:mx-20 my-5 md:mb-10 sm:border border-gray-400 p-5  rounded-lg ">
+            <h2
+              style={{ background: themeColor }}
+              className="text-center text-xl font-bold p-2 bg-black rounded-md text-white"
+            >
+              Edit Service
+            </h2>
+            <div className="grid md:grid-cols-3 gap-4 my-5">
+              <div className="flex flex-col ">
+                <label htmlFor="" className="font-semibold">
+                  Service Name:
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter Service Name"
+                  className="border p-1 px-4 border-gray-500 rounded-md placeholder:text-sm"
+                />
+              </div>
+              {/* <div className="flex flex-col">
               <label htmlFor="" className="font-semibold">
                 Select Site:
               </label>
@@ -217,82 +221,88 @@ const EditService = () => {
                 <option value="unit2">Site 3</option>
               </select>
             </div> */}
-            <div className="flex flex-col ">
-              <label htmlFor="" className="font-semibold">
-                Select Building:
-              </label>
-              <select
-                className="border p-1 px-4 border-gray-500 rounded-md"
-                value={formData.building_id}
-                onChange={handleChange}
-                name="building_id"
-              >
-                <option value="">Select Building</option>
-                {buildings?.map((building) => (
-                  <option value={building.id} key={building.id}>
-                    {building.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-           
-            <div className="flex flex-col">
-              <label htmlFor="" className="font-semibold">
-                Select Floor:
-              </label>
-              <select
-                className="border p-1 px-4 border-gray-500 rounded-md"
-                value={formData.floor_id}
-                onChange={handleChange}
-                name="floor_name"
-              >
-                <option value="">Select Floor</option>
-                {floors?.map((floor) => (
-                  <option value={floor.id} key={floor.id}>
-                    {floor.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col">
-              <label htmlFor="" className="font-semibold">
-                Select Units:
-              </label>
-            
-              <Select
-              value={selectedOption}
-               closeMenuOnSelect={false}
-              isMulti
-              onChange={handleChangeSelect}
-              options={units}
-              noOptionsMessage={() => "No Units Available"}
-              //   maxMenuHeight={90}
-              placeholder="Select Units"
-            />
-            </div>
+              <div className="flex flex-col ">
+                <label htmlFor="" className="font-semibold">
+                  Select Building:
+                </label>
+                <select
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  value={formData.building_id}
+                  onChange={handleChange}
+                  name="building_id"
+                >
+                  <option value="">Select Building</option>
+                  {buildings?.map((building) => (
+                    <option value={building.id} key={building.id}>
+                      {building.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-           
-          </div>
-          <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
-            Attachments
-          </h2>
-          <FileInputBox
-            handleChange={(files) => handleFileChange(files, "attachments")}
-            fieldName={"attachments"}
-            isMulti={true}
-          />
-          <div className="flex my-5 justify-center">
-            <button
-              style={{ background: themeColor }}
-              className="bg-black text-white p-1 px-4 rounded-md font-medium"
-              onClick={handleEditService}
-            >
-              Save & Show Details
-            </button>
-            
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
+                  Select Floor:
+                </label>
+                <select
+                  className="border p-1 px-4 border-gray-500 rounded-md"
+                  value={formData.floor_id}
+                  onChange={handleChange}
+                  name="floor_name"
+                >
+                  <option value="">Select Floor</option>
+                  {floors?.map((floor) => (
+                    <option value={floor.id} key={floor.id}>
+                      {floor.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
+                  Select Units:
+                </label>
+
+                <Select
+                  value={selectedOption}
+                  closeMenuOnSelect={false}
+                  isMulti
+                  onChange={handleChangeSelect}
+                  options={units}
+                  noOptionsMessage={() => "No Units Available"}
+                  //   maxMenuHeight={90}
+                  placeholder="Select Units"
+                />
+              </div>
+
+
+            </div>
+            <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
+              Attachments
+            </h2>
+            <FileInputBox
+              handleChange={(files) => handleFileChange(files, "attachments")}
+              fieldName={"attachments"}
+              isMulti={true}
+            />
+            <div className="flex my-5 justify-end gap-3">
+              <button
+                className="bg-black text-white p-1 px-4 rounded-md font-medium"
+                onClick={() => navigate("/services/soft-service")}
+              >
+                Cancel
+              </button>
+              <button
+                style={{ background: themeColor }}
+                className="bg-black text-white p-1 px-4 rounded-md font-medium"
+                onClick={handleEditService}
+              >
+                Save & Show Details
+              </button>
+
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </section>
   );

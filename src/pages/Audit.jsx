@@ -77,20 +77,18 @@ const Audit = () => {
         <div className="flex justify-center w-full">
           <div className="sm:flex grid grid-cols-2 sm:flex-row gap-5 font-medium p-1 sm:rounded-full rounded-md bg-gray-200">
             <h2
-              className={`p-1 ${
-                page === "operational" &&
+              className={`p-1 ${page === "operational" &&
                 "bg-white text-blue-500 shadow-custom-all-sides"
-              } rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
+                } rounded-full px-4 cursor-pointer text-center transition-all duration-300 ease-linear`}
               onClick={() => setPage("operational")}
             >
               Operational
             </h2>
 
             <h2
-              className={`p-1 ${
-                page === "vendor" &&
+              className={`p-1 ${page === "vendor" &&
                 "bg-white text-blue-500 shadow-custom-all-sides"
-              } rounded-full px-4 cursor-pointer transition-all duration-300 ease-linear`}
+                } rounded-full px-4 cursor-pointer transition-all duration-300 ease-linear`}
               onClick={() => setPage("vendor")}
             >
               Vendor

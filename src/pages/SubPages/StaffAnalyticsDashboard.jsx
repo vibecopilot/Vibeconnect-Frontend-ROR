@@ -1,0 +1,799 @@
+/* eslint-disable react/prop-types */
+import { useEffect, useMemo, useRef, useState } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
+import { getStaffDashboard } from "../../api";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import DetailPopup from "../../components/DetailPopup";
+import { FaSpinner, FaChevronDown, FaFileExcel, FaFilePdf, FaDownload } from "react-icons/fa";
+import toast from "react-hot-toast";
+import { RiPieChartFill } from "react-icons/ri";
+import {
+  AiOutlineAreaChart,
+  AiOutlineBarChart,
+  AiOutlineLineChart,
+} from "react-icons/ai";
+import { PiChartBarHorizontal } from "react-icons/pi";
+
+/* ── Palette ────────────────────────────────────────────────────────────── */
+const PALETTE = [
+  "#1D4ED8", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6",
+  "#06B6D4", "#EC4899", "#84CC16", "#F97316", "#14B8A6",
+  "#0EA5E9", "#6366F1",
+];
+
+const STAT_CONFIG = [
+  { key: "total", title: "Total Staff", accent: PALETTE[0] },
+  { key: "active", title: "Active", accent: PALETTE[1] },
+  { key: "inactive", title: "Inactive", accent: PALETTE[6] },
+  { key: "approved", title: "Approved", accent: PALETTE[4] },
+  { key: "pending", title: "Pending", accent: PALETTE[2] },
+  // { key: "in_date_range", title: "In Date Range",   accent: PALETTE[5]  },
+  { key: "today_in", title: "Today In", accent: PALETTE[9] },
+  { key: "today_out", title: "Today Out", accent: PALETTE[7] },
+  { key: "total_in", title: "Total In", accent: PALETTE[10] },
+  { key: "total_out", title: "Total Out", accent: PALETTE[3] },
+];
+
+/* ── Tab icon map ───────────────────────────────────────────────────────── */
+const TAB_ICONS = {
+  by_work_type: "🔧",
+  by_vendor: "🏢",
+  by_status_type: "📋",
+  by_in_out: "🔄",
+  by_attendance_today: "📅",
+  by_created_by: "👤",
+  hourly: "📈",
+  monthly: "📆",
+};
+
+/* ── Helpers ────────────────────────────────────────────────────────────── */
+const formatDateForApi = (isoDate) => {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split("-");
+  if (!y || !m || !d) return null;
+  return `${d}/${m}/${y}`;
+};
+
+const formatByLabel = (key) => {
+  if (key === "hourly") return "Hourly Trend";
+  if (key === "monthly") return "Monthly Trend";
+  return key
+    .replace(/^by_/, "")
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+};
+
+const byKeyToCountType = (key) => key.replace(/^by_/, "");
+
+const toSortedEntries = (obj = {}, order = "desc") =>
+  Object.entries(obj).sort((a, b) =>
+    order === "asc"
+      ? (Number(a[1]) || 0) - (Number(b[1]) || 0)
+      : (Number(b[1]) || 0) - (Number(a[1]) || 0)
+  );
+
+const normalizeBreakdownPoints = (dataMap = {}) =>
+  Object.entries(dataMap).map(([label, rawValue]) => ({
+    label,
+    value:
+      Number(
+        rawValue && typeof rawValue === "object"
+          ? rawValue.count ?? rawValue.value ?? rawValue.registrations ?? 0
+          : rawValue
+      ) || 0,
+    drillValue: label,
+  }));
+
+const normalizeTrendPoints = (data = []) => {
+  const rows = Array.isArray(data)
+    ? data
+    : Object.entries(data || {}).map(([key, value]) => ({
+      ...(value && typeof value === "object" ? value : {}),
+      key,
+    }));
+
+  return rows
+    .map((row) => {
+      const rawKey = row?.hour ?? row?.month ?? row?.key ?? row?.label ?? "";
+      const label = row?.label ?? String(rawKey);
+      const value =
+        Number(
+          row?.registrations ??
+          row?.punch_ins ??
+          row?.punch_outs ??
+          row?.count ??
+          row?.value ??
+          0
+        ) || 0;
+
+      return {
+        label,
+        value,
+        drillValue: rawKey,
+      };
+    })
+    .filter((point) => point.label !== "");
+};
+
+const sortTrendPoints = (points = []) =>
+  [...points].sort((a, b) => {
+    const aNum = Number(a.drillValue);
+    const bNum = Number(b.drillValue);
+    if (Number.isFinite(aNum) && Number.isFinite(bNum)) return aNum - bNum;
+    return String(a.drillValue).localeCompare(String(b.drillValue));
+  });
+
+/* ── Mini components ────────────────────────────────────────────────────── */
+const baseNoSelect = {
+  states: { inactive: { opacity: 1 }, hover: { enabled: true }, select: { enabled: false } },
+};
+
+const chartIcon = (type) => {
+  switch (type) {
+    case "pie": return <RiPieChartFill className="w-4 h-4" />;
+    case "bar": return <PiChartBarHorizontal className="w-4 h-4" />;
+    case "column": return <AiOutlineBarChart className="w-4 h-4" />;
+    case "line": return <AiOutlineLineChart className="w-4 h-4" />;
+    case "area": return <AiOutlineAreaChart className="w-4 h-4" />;
+    default: return <RiPieChartFill className="w-4 h-4" />;
+  }
+};
+
+const ChartTypeMenu = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  const items = [
+    { key: "pie", label: "Pie" },
+    { key: "column", label: "Column" },
+    { key: "bar", label: "Bar" },
+    { key: "line", label: "Line" },
+    { key: "area", label: "Area" },
+  ];
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((s) => !s)}
+        className="h-9 w-10 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 relative grid place-items-center"
+        title="Change chart type"
+      >
+        {chartIcon(value)}
+        <FaChevronDown className="absolute right-1 bottom-1 text-[10px] opacity-70" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-44 rounded-xl border border-gray-100 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.12)] overflow-hidden z-20">
+          {items.map((it) => (
+            <button
+              key={it.key}
+              type="button"
+              onClick={() => { onChange(it.key); setOpen(false); }}
+              className={[
+                "w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-gray-50",
+                value === it.key ? "bg-gray-50 font-semibold text-gray-900" : "text-gray-700",
+              ].join(" ")}
+            >
+              <span className="text-gray-600">{chartIcon(it.key)}</span>
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const Card = ({ title, subtitle, right, children }) => (
+  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5 overflow-hidden">
+    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-base sm:text-[18px] font-bold text-gray-900 break-words">{title}</p>
+        {subtitle ? <p className="text-sm text-gray-500 mt-1">{subtitle}</p> : null}
+      </div>
+      {right ? <div className="shrink-0 flex justify-start sm:justify-end">{right}</div> : null}
+    </div>
+    <div className="mt-4">{children}</div>
+  </div>
+);
+
+const StatCard = ({ title, value, accent, onClick }) => (
+  <div
+    onClick={onClick}
+    className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5 cursor-pointer hover:shadow-lg transition active:scale-[0.98]"
+  >
+    <div className="h-1 w-full rounded-full mb-3" style={{ backgroundColor: accent, opacity: 0.9 }} />
+    <p className="text-sm sm:text-[15px] font-bold text-gray-900 line-clamp-2">{title}</p>
+    <div className="mt-3 text-2xl sm:text-3xl font-extrabold text-gray-900">{Number(value) || 0}</div>
+  </div>
+);
+
+const SkeletonCard = () => (
+  <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5 animate-pulse">
+    <div className="h-1 w-full rounded-full bg-gray-200 mb-4" />
+    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+    <div className="h-8 bg-gray-200 rounded w-1/3 mt-4" />
+  </div>
+);
+
+/* ── Chart builders ─────────────────────────────────────────────────────── */
+const buildPieOptions = ({ title, points }) => ({
+  chart: { type: "pie", backgroundColor: "transparent", height: window.innerWidth < 640 ? 260 : 320 },
+  title: { text: null },
+  tooltip: {
+    backgroundColor: "#FFFFFF", borderColor: "#E5E7EB", borderRadius: 10, shadow: false,
+    pointFormat: "{point.name}: <b>{point.y}</b> ({point.percentage:.1f}%)",
+  },
+  plotOptions: {
+    series: { ...baseNoSelect },
+    pie: {
+      ...baseNoSelect,
+      innerSize: "55%", borderWidth: 0, allowPointSelect: false, cursor: "pointer",
+      dataLabels: {
+        enabled: window.innerWidth >= 480,
+        formatter: function () { return `<b>${this.point.name}</b>: ${this.point.y}`; },
+        style: { color: "#111827", textOutline: "none", fontSize: "12px" },
+      },
+    },
+  },
+  series: [{
+    name: title,
+    colorByPoint: true,
+    data: (points || []).map((point, i) => ({
+      name: point.label,
+      y: Number(point.value) || 0,
+      color: PALETTE[i % PALETTE.length],
+      custom: { drillValue: point.drillValue ?? point.label },
+    })),
+  }],
+  legend: { enabled: false },
+  credits: { enabled: false },
+  exporting: { enabled: false },
+});
+
+const buildXYOptions = ({ title, type, points, colorByPoint = false }) => {
+  const hcType = type === "line" ? "spline" : type === "area" ? "areaspline" : type;
+  const seriesColor = PALETTE[0];
+  const areaFill = type === "area"
+    ? {
+      linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+      stops: [
+        [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+        [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+      ],
+    }
+    : undefined;
+
+  return {
+    chart: { type: hcType, backgroundColor: "transparent", height: window.innerWidth < 640 ? 260 : 320, spacing: [8, 8, 8, 8] },
+    title: { text: null },
+    credits: { enabled: false },
+    exporting: { enabled: false },
+    legend: { enabled: false },
+    xAxis: {
+      categories: (points || []).map((point) => point.label),
+      lineColor: "#E5E7EB", tickColor: "#E5E7EB",
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
+      title: { text: null },
+    },
+    yAxis: {
+      min: 0, title: { text: null }, gridLineColor: "#E5E7EB", gridLineDashStyle: "Dash",
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
+    },
+    tooltip: { backgroundColor: "#FFFFFF", borderColor: "#E5E7EB", borderRadius: 10, shadow: false, pointFormat: "<b>{point.y}</b>" },
+    plotOptions: {
+      series: { ...baseNoSelect, animation: true, lineWidth: 3, marker: type === "line" || type === "area" ? { enabled: true, radius: 4, lineWidth: 2, lineColor: seriesColor, fillColor: "#FFFFFF" } : { enabled: false } },
+      column: { borderRadius: 10, pointPadding: 0.12, groupPadding: 0.22 },
+      bar: { borderRadius: 10, pointPadding: 0.12, groupPadding: 0.22 },
+    },
+    series: [{
+      name: title,
+      color: seriesColor,
+      colorByPoint,
+      data: (points || []).map((point, i) => {
+        const basePoint = {
+          y: Number(point.value) || 0,
+          custom: { drillValue: point.drillValue ?? point.label },
+        };
+
+        return colorByPoint
+          ? { ...basePoint, color: PALETTE[i % PALETTE.length] }
+          : basePoint;
+      }),
+      fillColor: areaFill,
+    }],
+  };
+};
+
+/* ── Staff detail columns ───────────────────────────────────────────────── */
+const STAFF_COLUMNS = [
+  { key: "name", label: "Name", accessor: (r) => `${r.firstname ?? ""} ${r.lastname ?? ""}`.trim() || r.name || "—" },
+  { key: "mobile_no", label: "Contact", accessor: (r) => r.mobile_no ?? r.contact_number ?? "—" },
+  { key: "vendor_name", label: "Vendor", accessor: (r) => r.vendor ?? r.vendor?.name ?? "—" },
+  { key: "work_type", label: "Work Type", accessor: (r) => r.work_type ?? "—" },
+  { key: "status_type", label: "Status", accessor: (r) => r.status_type ?? "—" },
+  { key: "punched_in", label: "Punched In", accessor: (r) => r.last_punched_in ?? "—" },
+  { key: "punched_out", label: "Punched Out", accessor: (r) => r.last_punched_out ?? "—" },
+  { key: "created_at", label: "Created", accessor: (r) => r.created_at ?? "—" },
+];
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Main component
+══════════════════════════════════════════════════════════════════════════ */
+const StaffAnalyticsDashboard = () => {
+  const siteId = getItemInLocalStorage("SITEID");
+
+  const [loading, setLoading] = useState(true);
+  const [rawStats, setRawStats] = useState({});
+  const [byData, setByData] = useState({});
+  const [hourlyData, setHourlyData] = useState({});
+  const [monthlyData, setMonthlyData] = useState({});
+  const [selectedChart, setSelectedChart] = useState("");
+  const [chartType, setChartType] = useState("pie");
+
+  const chartRef = useRef(null);
+
+  const downloadSingleChartPdf = async (fileName) => {
+    const toastId = toast.loading("Generating chart PDF...");
+    try {
+      if (!chartRef?.current) { toast.error("Chart not found"); return; }
+      const canvas = await html2canvas(chartRef.current, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const width = 190;
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(imgData, "PNG", 10, 15, width, height);
+      pdf.save(`${fileName}.pdf`);
+      toast.dismiss(toastId);
+      toast.success("Chart PDF downloaded");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error("Chart PDF download failed");
+    }
+  };
+
+  const exportCurrentChartCsv = () => {
+    const entries =
+      selectedChart === "hourly"
+        ? sortTrendPoints(normalizeTrendPoints(hourlyData))
+        : selectedChart === "monthly"
+          ? sortTrendPoints(normalizeTrendPoints(monthlyData))
+          : normalizeBreakdownPoints(byData[selectedChart] || {});
+
+    if (!entries.length) { toast.error("No data to export"); return; }
+
+    const rows = [["Category", "Count"], ...entries.map((point) => [point.label, Number(point.value) || 0])];
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${selectedChart || "staff_chart"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Data exported as CSV");
+  };
+
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [tempFromDate, setTempFromDate] = useState("");
+  const [tempToDate, setTempToDate] = useState("");
+
+  const [detailPopup, setDetailPopup] = useState({ open: false, title: "", records: [], loading: false });
+  const [detailPage, setDetailPage] = useState(1);
+  const [detailTotalPages, setDetailTotalPages] = useState(1);
+  // type: "stat" = opened from a stat card; "chart" = opened from a chart point
+  const [detailFilter, setDetailFilter] = useState({ byKey: "", countValue: "", title: "", type: "chart", statCfg: null });
+
+  useEffect(() => {
+    fetchDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromDate, toDate, siteId]);
+
+  const fetchDashboard = async () => {
+    setLoading(true);
+    try {
+      const rangeFrom = formatDateForApi(fromDate);
+      const rangeTo = formatDateForApi(toDate);
+      const resp = await getStaffDashboard(siteId, null, null, 1, rangeFrom, rangeTo);
+      const apiData = resp?.data || {};
+
+      setRawStats(apiData);
+
+      /* Extract all by_* keys */
+      const newByData = {};
+      Object.keys(apiData).forEach((k) => {
+        if (k.startsWith("by_") && apiData[k] && typeof apiData[k] === "object") {
+          const flat = {};
+          Object.entries(apiData[k]).forEach(([name, val]) => {
+            flat[name] = typeof val === "object" && val !== null ? (val.count ?? 0) : Number(val) || 0;
+          });
+          newByData[k] = flat;
+        }
+      });
+      setByData(newByData);
+      setHourlyData(apiData.hourly_visits ?? apiData.hourly_trend ?? {});
+      setMonthlyData(apiData.monthly_visits ?? apiData.monthly_trend ?? {});
+
+      /* Auto-select first tab */
+      setSelectedChart((prev) => {
+        if (prev && (newByData[prev] || prev === "hourly" || prev === "monthly")) return prev;
+        return Object.keys(newByData)[0] || prev;
+      });
+    } catch (err) {
+      console.error("Staff dashboard error:", err);
+      toast.error("Failed to load staff analytics");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ── Stat card drill-down ── */
+  const handleStatCardClick = async (cfg, page = 1) => {
+    const countType = cfg.key;
+    const countValue = cfg.key;
+    const title = cfg.title;
+    const rangeFrom = formatDateForApi(fromDate);
+    const rangeTo = formatDateForApi(toDate);
+
+    // ✅ Store type="stat" + original cfg so pagination re-calls this handler
+    setDetailFilter({ byKey: countType, countValue, title, type: "stat", statCfg: cfg });
+    setDetailPage(page);
+    setDetailPopup({ open: true, title, records: [], loading: true });
+
+    try {
+      const res = await getStaffDashboard(siteId, countType, countValue, page, rangeFrom, rangeTo);
+      console.log("[StaffAnalytics] stat card drill response:", res?.data);
+
+      const data = res?.data ?? {};
+      let bucket = null;
+
+      // Strategy 1: data[countValue] is an object with records
+      if (data[countValue] && typeof data[countValue] === "object") {
+        bucket = data[countValue];
+      }
+      // Strategy 2: data has 'records' directly
+      else if (Array.isArray(data.records)) {
+        bucket = data;
+      }
+      // Strategy 3: scan all keys for one that has a records array
+      else {
+        const matchKey = Object.keys(data).find(
+          (k) => data[k] && typeof data[k] === "object" && Array.isArray(data[k].records)
+        );
+        if (matchKey) bucket = data[matchKey];
+        else bucket = data;
+      }
+
+      const records = Array.isArray(bucket?.records)
+        ? bucket.records
+        : Array.isArray(bucket)
+          ? bucket
+          : [];
+
+      const total = bucket?.total_pages
+        ? Number(bucket.total_pages)
+        : bucket?.per_page && (bucket?.count ?? bucket?.total)
+          ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
+          : 1;
+
+      setDetailTotalPages(total);
+      setDetailPopup({ open: true, title, records, loading: false });
+    } catch (err) {
+      console.error("[StaffAnalytics] stat card drill error:", err);
+      toast.error("Failed to load staff details.");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  /* ── Chart point drill-down ── */
+  const handleChartPointClick = async (byKey, countValue, page = 1) => {
+    if (!byKey || countValue === undefined || countValue === null || countValue === "") return;
+    const countType = byKeyToCountType(byKey);
+    const title = `${formatByLabel(byKey)}: ${countValue}`;
+    const rangeFrom = formatDateForApi(fromDate);
+    const rangeTo = formatDateForApi(toDate);
+
+    // ✅ Store type="chart" so pagination re-calls this handler
+    setDetailFilter({ byKey, countValue, title, type: "chart", statCfg: null });
+    setDetailPage(page);
+    setDetailPopup({ open: true, title, records: [], loading: true });
+
+    try {
+      const res = await getStaffDashboard(siteId, countType, countValue, page, rangeFrom, rangeTo);
+      const responseData = res?.data ?? {};
+      const bucket = responseData?.[byKey]?.[countValue] ?? responseData?.[byKey] ?? responseData?.[countValue] ?? responseData;
+      const records = Array.isArray(bucket?.records) ? bucket.records : Array.isArray(bucket) ? bucket : [];
+      const totalPages = bucket?.total_pages
+        ? Number(bucket.total_pages)
+        : bucket?.per_page && (bucket?.count ?? bucket?.total)
+          ? Math.ceil((bucket.count ?? bucket.total) / bucket.per_page)
+          : 1;
+
+      setDetailTotalPages(totalPages);
+      setDetailPopup({ open: true, title, records, loading: false });
+    } catch (err) {
+      console.error("Staff drill error:", err);
+      toast.error("Failed to load staff details.");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  // ✅ FIXED: route pagination to the correct handler based on popup source
+  const onDetailPageChange = (nextPage) => {
+    if (nextPage < 1 || nextPage > detailTotalPages) return;
+    if (detailFilter.type === "stat" && detailFilter.statCfg) {
+      // Stat card pagination: re-call handleStatCardClick with the stored cfg
+      handleStatCardClick(detailFilter.statCfg, nextPage);
+    } else {
+      // Chart point pagination
+      handleChartPointClick(detailFilter.byKey, detailFilter.countValue, nextPage);
+    }
+  };
+
+  /* ── Chart options ── */
+  const selectedChartPoints = useMemo(() => {
+    if (selectedChart === "hourly") return sortTrendPoints(normalizeTrendPoints(hourlyData));
+    if (selectedChart === "monthly") return sortTrendPoints(normalizeTrendPoints(monthlyData));
+
+    return toSortedEntries(byData[selectedChart] || {}, "desc").map(([label, rawValue]) => ({
+      label,
+      value:
+        Number(
+          rawValue && typeof rawValue === "object"
+            ? rawValue.count ?? rawValue.value ?? rawValue.registrations ?? 0
+            : rawValue
+        ) || 0,
+      drillValue: label,
+    }));
+  }, [selectedChart, byData, hourlyData, monthlyData]);
+
+  const selectedChartOptions = useMemo(() => {
+    const chartTitle = selectedChart ? formatByLabel(selectedChart) : "";
+
+    const addClickEvents = (options) => {
+      if (!options?.plotOptions) return options;
+      const clickHandler = function () {
+        const itemName =
+          this.options?.custom?.drillValue ??
+          this.name ??
+          this.category ??
+          String(this.x ?? "");
+        handleChartPointClick(selectedChart, itemName);
+      };
+      const evt = { events: { click: clickHandler } };
+      return {
+        ...options,
+        plotOptions: {
+          ...options.plotOptions,
+          series: { ...(options.plotOptions.series || {}), point: { ...(options.plotOptions.series?.point || {}), ...evt } },
+          pie: { ...(options.plotOptions.pie || {}), point: { ...(options.plotOptions.pie?.point || {}), ...evt } },
+        },
+      };
+    };
+
+    let opts;
+    if (chartType === "pie") {
+      opts = buildPieOptions({
+        title: chartTitle,
+        points: selectedChart === "hourly" || selectedChart === "monthly"
+          ? selectedChartPoints.filter((point) => point.value > 0)
+          : selectedChartPoints,
+      });
+    } else {
+      opts = buildXYOptions({
+        title: chartTitle,
+        type: chartType,
+        points: selectedChartPoints,
+        colorByPoint: chartType === "column" || chartType === "bar",
+      });
+    }
+    return addClickEvents(opts);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChart, chartType, selectedChartPoints]);
+
+  /* ── Chart buttons ── */
+  const chartButtons = useMemo(
+    () => [
+      ...Object.keys(byData).map((key) => ({
+        id: key, label: formatByLabel(key), icon: TAB_ICONS[key] ?? "📋",
+      })),
+      { id: "hourly", label: "Hourly Trend", icon: "📈" },
+      { id: "monthly", label: "Monthly Trend", icon: "📆" },
+    ],
+    [byData]
+  );
+
+  /* ── Visible stat cards ── */
+  const visibleCards = useMemo(
+    () => STAT_CONFIG.filter((cfg) => rawStats[cfg.key] !== undefined).map((cfg) => ({ ...cfg, value: rawStats[cfg.key] })),
+    [rawStats]
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <FaSpinner className="animate-spin text-gray-700 text-4xl" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full px-2 sm:px-4 lg:px-6 pb-4 space-y-4 sm:space-y-6 overflow-x-hidden">
+      {/* ── Top bar ── */}
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => { setTempFromDate(fromDate); setTempToDate(toDate); setFilterOpen(true); }}
+          className="h-10 w-full sm:w-auto px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+        >
+          Filter by Date
+        </button>
+        <button
+          type="button"
+          onClick={() => { setFromDate(""); setToDate(""); }}
+          className="h-10 w-full sm:w-auto px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
+        >
+          Clear Filter
+        </button>
+      </div>
+
+      {/* ── Date filter modal ── */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-4 sm:p-5">
+            <h3 className="text-lg font-semibold text-gray-900">Filter Staff by Date</h3>
+            <p className="text-sm text-gray-500 mt-1">Choose start and end date to refresh dashboard.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
+                <input type="date" value={tempFromDate} onChange={(e) => setTempFromDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
+                <input type="date" value={tempToDate} onChange={(e) => setTempToDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:justify-end">
+              <button type="button" onClick={() => setFilterOpen(false)}
+                className="h-10 w-full sm:w-auto px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!tempFromDate || !tempToDate) { toast.error("Please select both dates."); return; }
+                  setFromDate(tempFromDate);
+                  setToDate(tempToDate);
+                  setFilterOpen(false);
+                }}
+                className="h-10 w-full sm:w-auto px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition"
+              >
+                Apply Filter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Stat cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {visibleCards.length > 0
+          ? visibleCards.map((cfg) => (
+            <StatCard
+              key={cfg.key}
+              title={cfg.title}
+              value={cfg.value}
+              accent={cfg.accent}
+              onClick={() => handleStatCardClick(cfg, 1)}
+            />
+          ))
+          : Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+        }
+      </div>
+
+      {/* ── Chart type selector + tab buttons ── */}
+      <Card
+        title="Staff Analytics"
+        subtitle="Select a breakdown type and chart style"
+        right={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <ChartTypeMenu value={chartType} onChange={setChartType} />
+            <button
+              type="button"
+              title="Refresh"
+              onClick={() => fetchDashboard()}
+              className="h-9 w-10 rounded-lg bg-gray-100 hover:bg-gray-200 transition grid place-items-center text-gray-700"
+            >
+              ↻
+            </button>
+          </div>
+        }
+      >
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mt-1">
+          {chartButtons.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setSelectedChart(opt.id)}
+              className={[
+                "whitespace-nowrap flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition",
+                selectedChart === opt.id
+                  ? "bg-gray-900 text-white shadow"
+                  : "bg-gray-100 text-gray-800 hover:bg-gray-200",
+              ].join(" ")}
+            >
+              <span className="text-base leading-none">{opt.icon}</span>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {/* ── Chart ── */}
+      {selectedChart && (
+        <Card
+          title={formatByLabel(selectedChart)}
+          subtitle={`Chart type: ${chartType}`}
+          right={
+            <div className="flex items-center gap-2">
+              {/* <button
+                type="button"
+                title="Export in Excel"
+                onClick={exportCurrentChartCsv}
+                className="h-9 w-10 grid place-items-center rounded-lg bg-green-50 text-green-700 hover:bg-green-100"
+              >
+                <FaFileExcel className="text-sm" />
+              </button> */}
+              <button
+                type="button"
+                title="Export in Chart"
+                onClick={() => downloadSingleChartPdf(selectedChart || "Staff_Chart")}
+                className="h-10 min-w-[44px] px-3 bg-gray-100 text-gray-800 hover:bg-gray-200 rounded-lg flex items-center gap-2 hover:opacity-90 transition"
+              >
+                <FaDownload className="text-sm" />
+              </button>
+            </div>
+          }
+        >
+          <div ref={chartRef} className="overflow-x-auto">
+            <div className="min-w-[280px]">
+              <HighchartsReact highcharts={Highcharts} options={selectedChartOptions} />
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* ── Detail popup ── */}
+      <DetailPopup
+        isOpen={detailPopup.open}
+        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        title={detailPopup.title}
+        subtitle={`${detailPopup.records.length} record(s)`}
+        records={detailPopup.records}
+        loading={detailPopup.loading}
+        columns={STAFF_COLUMNS}
+        page={detailPage}
+        totalPages={detailTotalPages}
+        onPageChange={onDetailPageChange}
+      />
+    </div>
+  );
+};
+
+export default StaffAnalyticsDashboard;

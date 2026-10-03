@@ -4,12 +4,14 @@ import { useDispatch } from "react-redux";
 import { addGroup } from "../../features/group/groupSlice";
 import { postAssetGroups } from "../../api";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import toast from "react-hot-toast";
 
 const AssetGroupModal = ({ onclose }) => {
   const [groupName, setGroupName] = useState("");
   const [description, setDescription] = useState("");
   const [groupFor, setGroupFor] = useState("asset");
   const companyId = getItemInLocalStorage("COMPANYID");
+
   const dispatch = useDispatch();
   const createGroup = async () => {
     try {
@@ -19,11 +21,14 @@ const AssetGroupModal = ({ onclose }) => {
         company_id: companyId,
         group_for: "asset",
       });
-      console.log(addGroup);
+      // console.log(addGroup);
       onclose();
       window.location.reload();
+         toast.success("Asset group created successfully");
+
     } catch (error) {
       console.log(error);
+          toast.error("Failed to create asset group");
     }
   };
   const createStockGroup = async () => {
@@ -37,8 +42,11 @@ const AssetGroupModal = ({ onclose }) => {
       console.log(addStockGroup);
       onclose();
       window.location.reload();
+      toast.success("Stock group created successfully");
+
     } catch (error) {
       console.log(error);
+          toast.error("Failed to create stock group");
     }
   };
 

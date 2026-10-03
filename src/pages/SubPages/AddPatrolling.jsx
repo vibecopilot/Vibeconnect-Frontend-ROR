@@ -355,9 +355,17 @@ const navigate = useNavigate()
 
         <div className="flex gap-5 justify-center items-center mt-4">
           <button
+            type="button"
+            onClick={() => navigate(`/admin/passes/patrolling`)}
+            className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-1 px-4 rounded transition-all duration-300"
+          >
+            Cancel
+          </button>
+          <button
             type="submit"
             onClick={handlePatrollingSubmit}
-            className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-1 px-4 rounded transition-all duration-300"
+            className="text-white border-2 border-black font-semibold py-1 px-4 rounded transition-all duration-300"
+            style={{background:themeColor}}
           >
             Submit
           </button>

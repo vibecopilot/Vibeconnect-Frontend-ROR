@@ -1,291 +1,227 @@
-// import React, { useEffect, useState } from "react";
-// import { useSelector } from "react-redux";
-// import { Link } from "react-router-dom";
-// import Navbar from "../../components/Navbar";
-// import Communication from "../Communication";
-// import { getPolls } from "../../api";
-// import { PiPlusCircleBold } from "react-icons/pi";
-
-// function Polls() {
-//   const themeColor = useSelector((state) => state.theme.color);
-//   const [pollsData, setPollsData] = useState([]);
-
-//   useEffect(() => {
-//     const fetchPolls = async () => {
-//       try {
-//         const response = await getPolls();
-//         const poll = response.data.sort((a, b) => {
-//           return new Date(b.created_at) - new Date(a.created_at);
-//         });
-//         console.log("response from api", response);
-
-//         setPollsData(poll);
-//       } catch (err) {
-//         console.error("Failed to fetch polls data:", err);
-//       }
-//     };
-
-//     fetchPolls(); // Call the API
-//   }, []);
-
-//   return (
-//     <div className="flex">
-//       <Navbar />
-//       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-//         <Communication />
-//         <div className="flex justify-between md:flex-row flex-col my-2 gap-2">
-//           <input
-//             type="text"
-//             placeholder="Search by title"
-//             className="border p-2 w-full border-gray-300 rounded-lg"
-//           />
-//           <Link
-//             to={`/admin/create-polls`}
-//             style={{ background: themeColor }}
-//             className="font-semibold text-white px-4 py-1 flex gap-2 items-center rounded-md"
-//           >
-//             <PiPlusCircleBold size={20} /> Create
-//           </Link>
-//         </div>
-//         <div className="md:grid grid-cols-2">
-//           {pollsData.length > 0 ? (
-//             pollsData.map((poll) => {
-//               // Calculate total votes for the current poll
-//               const totalVotes = poll.poll_options.reduce(
-//                 (sum, option) => sum + option.votes,
-//                 0
-//               );
-
-//               // Calculate remaining days (end_date - start_date)
-//               const startDate = new Date(poll.start_date);
-//               const endDate = new Date(poll.end_date);
-//               const currentDate = new Date();
-//               const timeDiff = endDate - currentDate; // Time difference in milliseconds
-//               const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)); // Convert to days
-
-//               return (
-//                 <div className="flex w-full p-2 ">
-//                   <div className="max-w-2xl w-full ">
-//                     <div className="bg-white shadow-custom-all-sides rounded-lg p-6 h-full">
-//                       <div key={poll.id}>
-//                         <h2 className="text-xl font-semibold mb-4">
-//                           {poll.title}
-//                         </h2>
-//                         <div className="flex justify-between my-3">
-//                           <span className="text-gray-500 text-sm">
-//                             1/20 responded
-//                           </span>
-//                           <span className="text-gray-500 text-sm">
-//                             {poll.visibility}
-//                           </span>
-//                         </div>
-
-//                         {/* Loop through poll options */}
-//                         <div className="space-y-4 border-t border-b border-gray-200 py-4">
-//                           {poll.poll_options.map((option) => (
-//                             <div
-//                               key={option.id}
-//                               className="flex justify-between items-center p-2 bg-gray-50 rounded-md"
-//                             >
-//                               <span>{option.content}</span>
-//                               <span className="text-blue-600 font-semibold">
-//                                 {option.votes} votes
-//                               </span>
-//                             </div>
-//                           ))}
-//                         </div>
-
-//                         {/* Display total votes and days left */}
-//                         <div className="mt-6 text-gray-500 text-sm">
-//                           <p>
-//                             {totalVotes} votes •{" "}
-//                             {daysLeft > 0 ? `${daysLeft}d left` : "Poll closed"}
-//                           </p>
-//                         </div>
-//                       </div>
-//                     </div>
-//                   </div>
-//                 </div>
-//               );
-//             })
-//           ) : (
-//             <p>No polls available</p>
-//           )}
-//         </div>
-
-//         {/* <div>
-//       <h1>Polls Data</h1>
-//       <ul>
-//         {pollsData.length > 0 ? (
-//           pollsData.map((poll) => (
-//             <li key={poll.id}>
-//               <h2>{poll.title}</h2>
-//               <p>{poll.description}</p>
-//               <p>Start Date: {poll.start_date}</p>
-//               <p>End Date: {poll.end_date}</p>
-             
-//             </li>
-//           ))
-//         ) : (
-//           <p>No polls available</p>
-//         )}
-//       </ul>
-//     </div> */}
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default Polls;
-
-
-
-
-
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import Communication from "../Communication";
+import { getPolls, getSearchPolls } from "../../api";
 import { PiPlusCircleBold } from "react-icons/pi";
-import toast from "react-hot-toast";
+import { DNA } from "react-loader-spinner";
+import SiteHeader from "../../components/SiteHeader";
 
 function Polls() {
   const themeColor = useSelector((state) => state.theme.color);
 
   const [pollsData, setPollsData] = useState([]);
-  const [searchText, setSearchText] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // 🔹 Fetch polls (with optional search)
-  const fetchPolls = async (query = "") => {
+  // Debounce Search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Fetch Polls
+  useEffect(() => {
+    fetchPolls();
+  }, [debouncedSearch]);
+
+  const fetchPolls = async () => {
+    setLoading(true);
+
     try {
-      const rawToken = localStorage.getItem("TOKEN");
-      const token = rawToken ? rawToken.replace(/"/g, "") : null;
+      let response;
 
-      if (!token) {
-        toast.error("Session expired. Please login again.");
-        return;
+      const trimmedSearch = debouncedSearch.trim();
+
+      setIsSearching(trimmedSearch.length > 0);
+
+      // Search API
+      if (trimmedSearch.length > 0) {
+        response = await getSearchPolls(trimmedSearch);
+      } else {
+        // Get All Polls
+        response = await getPolls();
       }
 
-      const url = query
-        ? `https://admin.vibecopilot.ai/polls.json?token=${token}&q[title_cont]=${encodeURIComponent(query)}`
-        : `https://admin.vibecopilot.ai/polls.json?token=${token}`;
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [];
 
-      const response = await fetch(url);
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error("Failed to fetch polls");
-        return;
-      }
-
-      const sortedPolls = data.sort(
-        (a, b) => new Date(b.created_at) - new Date(a.created_at)
-      );
+      const sortedPolls = data.sort((a, b) => {
+        return (
+          new Date(b.created_at) -
+          new Date(a.created_at)
+        );
+      });
 
       setPollsData(sortedPolls);
     } catch (err) {
-      console.error("Error fetching polls:", err);
-      toast.error("Search failed ❌");
+      console.error("Failed to fetch polls data:", err);
+      setPollsData([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🔹 Initial Load
-  useEffect(() => {
-    fetchPolls();
-  }, []);
-
-  // 🔥 DEBOUNCE EFFECT
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchPolls(searchText);
-    }, 500); // 500ms delay
-
-    return () => clearTimeout(timer); // clear previous timer
-  }, [searchText]);
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setDebouncedSearch("");
+  };
 
   return (
     <div className="flex">
       <Navbar />
-      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+
+      <div className="p-2 w-full flex md:mx-2 overflow-hidden flex-col">
+        {/* Site Header */}
+        <SiteHeader onSiteChange={fetchPolls} />
+
         <Communication />
 
-        {/* SEARCH BOX */}
-        <div className="flex justify-between md:flex-row flex-col my-2 gap-2">
-          <input
-            type="text"
-            placeholder="Search by title"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)} // ❌ removed direct API call
-            className="border p-2 w-full border-gray-300 rounded-lg"
-          />
+        <div className="grid grid-cols-12 my-2 gap-2">
+          {/* Search */}
+          <div className="relative col-span-10">
+            <input
+              type="text"
+              placeholder="Search polls by title..."
+              className="border p-2 pr-20 w-full border-gray-300 rounded-lg"
+              value={searchTerm}
+              onChange={(e) =>
+                setSearchTerm(e.target.value)
+              }
+            />
 
+            {searchTerm && (
+              <button
+                onClick={handleClearSearch}
+                className="absolute right-3 top-2 text-sm text-gray-500"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Create Button */}
           <Link
             to={`/admin/create-polls`}
             style={{ background: themeColor }}
-            className="font-semibold text-white px-4 py-1 flex gap-2 items-center rounded-md"
+            className="font-semibold text-white px-4 py-2 flex gap-2 justify-center items-center rounded-md whitespace-nowrap col-span-2"
           >
-            <PiPlusCircleBold size={20} /> Create
+            <PiPlusCircleBold size={20} />
+            Create
           </Link>
         </div>
 
-        {/* POLL LIST */}
-        <div className="md:grid grid-cols-2 gap-4">
-          {pollsData && pollsData.length > 0 ? (
-            pollsData.map((poll) => {
-              const totalVotes = poll.poll_options.reduce(
-                (sum, option) => sum + option.votes,
-                0
-              );
+        {/* Loader */}
+        {loading ? (
+          <div className="flex justify-center items-center mt-10 h-60">
+            <DNA
+              visible={true}
+              height={120}
+              width={130}
+            />
+          </div>
+        ) : (
+          <div className="md:grid grid-cols-2 gap-2">
+            {pollsData.length > 0 ? (
+              pollsData.map((poll) => {
+                // Total votes
+                const totalVotes =
+                  poll.poll_options?.reduce(
+                    (sum, option) =>
+                      sum + option.votes,
+                    0
+                  ) || 0;
 
-              const endDate = new Date(poll.end_date);
-              const currentDate = new Date();
-              const timeDiff = endDate - currentDate;
-              const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                // Days left
+                const endDate = new Date(
+                  poll.end_date
+                );
 
-              return (
-                <div key={poll.id} className="flex w-full p-2">
-                  <div className="max-w-2xl w-full">
-                    <div className="bg-white shadow-custom-all-sides rounded-lg p-6 h-full">
-                      <h2 className="text-xl font-semibold mb-4">
-                        {poll.title}
-                      </h2>
+                const currentDate = new Date();
 
-                      <div className="flex justify-between my-3">
-                        <span className="text-gray-500 text-sm">
-                          {poll.visibility}
-                        </span>
-                      </div>
+                const timeDiff =
+                  endDate - currentDate;
 
-                      <div className="space-y-4 border-t border-b border-gray-200 py-4">
-                        {poll.poll_options.map((option) => (
-                          <div
-                            key={option.id}
-                            className="flex justify-between items-center p-2 bg-gray-50 rounded-md"
-                          >
-                            <span>{option.content}</span>
-                            <span className="text-blue-600 font-semibold">
-                              {option.votes} votes
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                const daysLeft = Math.ceil(
+                  timeDiff /
+                  (1000 * 60 * 60 * 24)
+                );
 
-                      <div className="mt-6 text-gray-500 text-sm">
-                        <p>
-                          {totalVotes} votes •{" "}
-                          {daysLeft > 0 ? `${daysLeft}d left` : "Poll closed"}
-                        </p>
+                return (
+                  <div
+                    key={poll.id}
+                    className="flex w-full p-2"
+                  >
+                    <div className="max-w-2xl w-full">
+                      <div className="bg-white shadow-custom-all-sides rounded-lg p-6 h-full">
+                        {/* Poll Title */}
+                        <h2 className="text-xl font-semibold mb-4">
+                          {poll.title}
+                        </h2>
+
+                        {/* Header */}
+                        <div className="flex justify-between my-3">
+                          <span className="text-gray-500 text-sm">
+                            {totalVotes} Responded
+                          </span>
+
+                          <span className="text-gray-500 text-sm uppercase">
+                            {poll.visibility}
+                          </span>
+                        </div>
+
+                        {/* Poll Options */}
+                        <div className="space-y-4 border-t border-b border-gray-200 py-4">
+                          {poll.poll_options?.map(
+                            (option) => (
+                              <div
+                                key={option.id}
+                                className="flex justify-between items-center p-2 bg-gray-50 rounded-md"
+                              >
+                                <span>
+                                  {option.content}
+                                </span>
+
+                                <span className="text-blue-600 font-semibold">
+                                  {option.votes} votes
+                                </span>
+                              </div>
+                            )
+                          )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="mt-6 text-gray-500 text-sm">
+                          <p>
+                            {totalVotes} votes •{" "}
+                            {daysLeft > 0
+                              ? `${daysLeft}d left`
+                              : "Poll closed"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          ) : (
-            <p>No polls available</p>
-          )}
-        </div>
+                );
+              })
+            ) : (
+              <div className="col-span-2 flex justify-center items-center h-40">
+                <p className="text-gray-500 text-center">
+                  {isSearching
+                    ? "No polls match your search. Try different keywords."
+                    : "No polls available"}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

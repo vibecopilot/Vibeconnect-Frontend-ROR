@@ -79,8 +79,8 @@ const EventDetails = () => {
   const attachments = Array.isArray(attachmentsRaw)
     ? attachmentsRaw
     : attachmentsRaw
-    ? [attachmentsRaw]
-    : [];
+      ? [attachmentsRaw]
+      : [];
 
   const firstAttachment = attachments?.[0] || null;
 
@@ -92,8 +92,7 @@ const EventDetails = () => {
     firstAttachment?.path ||
     (typeof firstAttachment === "string" ? firstAttachment : "");
 
-  const isAbsoluteUrl = (s) =>
-    typeof s === "string" && /^https?:\/\//i.test(s);
+  const isAbsoluteUrl = (s) => typeof s === "string" && /^https?:\/\//i.test(s);
 
   const firstDocUrl = firstDocPath
     ? isAbsoluteUrl(firstDocPath)
@@ -126,7 +125,7 @@ const EventDetails = () => {
             eventDetails?.event_user_ids ||
             eventDetails?.shared_user_ids ||
             eventDetails?.event?.user_ids ||
-            []
+            [],
         );
 
         if (ids.length === 0) {
@@ -187,7 +186,7 @@ const EventDetails = () => {
             eventDetails?.group_id ||
             eventDetails?.event?.group_ids ||
             eventDetails?.event?.group_id ||
-            []
+            [],
         );
 
         if (ids.length === 0) {
@@ -281,7 +280,9 @@ const EventDetails = () => {
                     <p className="flex gap-1 items-center font-medium">
                       <HiLocationMarker /> Location:
                     </p>
-                    <p className="text-black">{showValue(eventDetails?.venue)}</p>
+                    <p className="text-black">
+                      {showValue(eventDetails?.venue)}
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2">
@@ -303,9 +304,9 @@ const EventDetails = () => {
                   </div>
 
                   <>
-                    <p className="flex gap-1 items-center font-medium">
+                    {/* <p className="flex gap-1 items-center font-medium">
                       <BiLike /> Coming :
-                    </p>
+                    </p> */}
 
                     <div className="grid grid-cols-2 gap-2">
                       <p className="font-bold">RSVP :</p>
@@ -324,43 +325,75 @@ const EventDetails = () => {
                 </div>
               </div>
             </div>
+            {/* Event Images */}
+            <div className="col-span-4 flex flex-col">
+              <h2 className="text-lg font-semibold mb-2 mx-28">Event Images</h2>
 
-            {eventDetails?.qr_code ? (
-              <div className="col-span-2 flex ml-4 flex-col items-center justify-center">
-                <h2 className="text-lg font-semibold mb-2">QR Code</h2>
-                <div className="border-dotted border-2 rounded-md border-gray-400 p-2">
+              <div className="flex flex-wrap gap-3">
+                {Array.isArray(eventDetails?.event_images) &&
+                eventDetails?.event_images.length > 0 ? (
+                  eventDetails?.event_images
+                    .filter(
+                      (img) =>
+                        img && typeof img === "object" && img.document_url,
+                    )
+                    .map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={ img.document_url}
+                        alt={`attachment-${idx}`}
+                        className="w-96 h-52 object-cover rounded border cursor-pointer hover:scale-105 transition mx-6"
+                        onClick={() =>
+                          window.open( img.document_url, "_blank")
+                        }
+                      />
+                    ))
+                ) : (
+                  <span className="text-gray-500">No images available</span>
+                )}
+              </div>
+            </div>
+
+            {/* QR Code */}
+            <div className="col-span-2 flex flex-col items-center justify-start">
+              <h2 className="text-lg font-semibold mb-2 mr-14">QR Code</h2>
+
+              {eventDetails?.qr_code ? (
+                <div className="border-dotted border-2 rounded-md border-gray-400 mr-11">
                   <img
-                    src={domainPrefix + eventDetails.qr_code}
+                    src={ eventDetails.qr_code}
                     alt="Event QR Code"
-                    className="w-42 h-42 cursor-pointer"
+                    className="w-96 h-52 cursor-pointer mr-32"
                     onClick={() =>
-                      window.open(domainPrefix + eventDetails.qr_code, "_blank")
+                      window.open( eventDetails.qr_code, "_blank")
                     }
                   />
                 </div>
-              </div>
-            ) : (
-              <div className="col-span-2 flex ml-4 flex-col items-center justify-center">
-                <h2 className="text-lg font-semibold mb-2">QR Code</h2>
-                <div className="border-dotted border-2 rounded-md border-gray-400 p-2 w-42 h-42 flex items-center justify-center text-black">
+              ) : (
+                <div className="border-dotted border-2 rounded-md border-gray-400 w-40 h-40 flex items-center justify-center text-black">
                   No QR
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-4 mx-10 m-5">
             <div className="flex flex-col gap-2">
               <p className="font-medium">Description:</p>
-              <p className="border-dotted border-2 rounded-md border-gray-400 p-2 text-black">
-                {showValue(eventDetails?.discription)}
-              </p>
+              <div
+                className="border-dotted border-2 rounded-md border-gray-400 p-3 text-left w-full break-words whitespace-pre-line"
+                dangerouslySetInnerHTML={{
+                  __html: eventDetails.discription || "",
+                }}
+              />
             </div>
 
             <div>
               {resolvedMembers?.length > 0 ? (
                 <div className="mb-4">
-                  <h1 className="text-xl font-semibold">Shared With (Member)</h1>
+                  <h1 className="text-xl font-semibold">
+                    Shared With (Member)
+                  </h1>
                   <div className="border-dotted border-2 rounded-md border-gray-400 p-2 flex flex-wrap gap-2">
                     {resolvedMembers.map((user, index) => (
                       <div
@@ -374,7 +407,9 @@ const EventDetails = () => {
                 </div>
               ) : (
                 <div className="mb-4">
-                  <h1 className="text-xl font-semibold">Shared With (Member)</h1>
+                  <h1 className="text-xl font-semibold">
+                    Shared With (Member)
+                  </h1>
                   <div className="border-dotted border-2 rounded-md border-gray-400 p-2 text-black">
                     —
                   </div>
@@ -405,12 +440,27 @@ const EventDetails = () => {
               )}
             </div>
 
-            <div>
-              <h1 className="text-xl font-semibold">Feedback</h1>
-              <div className="border-dotted border-2 rounded-md border-gray-400 p-2 text-black">
-                {showValue(eventDetails?.feedback || eventDetails?.event_feedback)}
-              </div>
-            </div>
+           <div>
+  <h1 className="text-xl font-semibold">Feedback</h1>
+  <div className="border-dotted border-2 rounded-md border-gray-400 p-2 text-black">
+    {showValue(
+      eventDetails?.feedback ||
+      eventDetails?.event_feedback ||
+      eventDetails?.event?.feedback ||
+      eventDetails?.event?.event_feedback ||
+      (eventDetails?.event_feedbacks?.length > 0
+        ? eventDetails.event_feedbacks
+            .map((f) => f.comment || f.feedback)
+            .join(", ")
+        : null) ||
+      (eventDetails?.event?.event_feedbacks?.length > 0
+        ? eventDetails.event.event_feedbacks
+            .map((f) => f.comment || f.feedback)
+            .join(", ")
+        : null)
+    )}
+  </div>
+</div>
           </div>
         </div>
       </div>

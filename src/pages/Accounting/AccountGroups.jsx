@@ -1,0 +1,289 @@
+import React, { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import {
+  getAccountGroups,
+  createAccountGroup,
+  updateAccountGroup,
+  deleteAccountGroup,
+  seedDefaultAccountGroups,
+} from "../../api/accounting";
+import AccountGroupModal from "./AccountGroupModal";
+import Navbar from "../../components/Navbar";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+
+const AccountGroups = () => {
+  const userType = getItemInLocalStorage("USERTYPE");
+  const isAdmin = userType === "pms_admin";
+  const isAccountingUser = userType === "accounting_emp";
+  const canCreate = isAdmin || isAccountingUser;
+  const canEditDelete = isAdmin; // only pms_admin can edit/delete
+  const [accountGroups, setAccountGroups] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    fetchAccountGroups();
+  }, []);
+
+  const fetchAccountGroups = async () => {
+    setLoading(true);
+    try {
+      const response = await getAccountGroups();
+      setAccountGroups(response.data.data || response.data);
+    } catch (error) {
+      toast.error("Failed to fetch account groups");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = () => {
+    setSelectedGroup(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (group) => {
+    setSelectedGroup(group);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (
+      !window.confirm("Are you sure you want to delete this account group?")
+    ) {
+      return;
+    }
+
+    try {
+      const res = await deleteAccountGroup(id);
+      console.log("Delete response:", res);
+
+      toast.success("Account group deleted successfully");
+
+      // Optimistic UI update (recommended)
+      setAccountGroups((prev) => prev.filter((g) => g.id !== id));
+    } catch (error) {
+      console.error("Delete error:", error?.response?.data || error);
+      toast.error(
+        error?.response?.data?.message || "Failed to delete account group",
+      );
+    }
+  };
+
+  const handleSave = async (data) => {
+    try {
+      if (selectedGroup) {
+        await updateAccountGroup(selectedGroup.id, data);
+        toast.success("Account group updated successfully");
+      } else {
+        await createAccountGroup(data);
+        toast.success("Account group created successfully");
+      }
+      await fetchAccountGroups();
+      setIsModalOpen(false);
+    } catch (error) {
+      toast.error("Failed to save account group");
+      console.error(error);
+    }
+  };
+
+  const handleSeedDefaults = async () => {
+    if (!window.confirm("This will seed default account groups. Continue?"))
+      return;
+
+    try {
+      await seedDefaultAccountGroups();
+      toast.success("Default account groups seeded successfully");
+      fetchAccountGroups();
+    } catch (error) {
+      toast.error("Failed to seed default account groups");
+      console.error(error);
+    }
+  };
+
+  const filteredGroups = accountGroups.filter((group) =>
+    (group.name || "").toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  return (
+    <section className="flex">
+      <Navbar />
+      <div className="w-full flex mx-3 mb-10 flex-col overflow-hidden p-6 bg-white/80 mt-2">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Account Groups</h1>
+            {isAdmin && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                Full Access
+              </span>
+            )}
+            {isAccountingUser && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                Create Only
+              </span>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={canEditDelete ? handleSeedDefaults : undefined}
+              disabled={!canEditDelete}
+              title={!canEditDelete ? "Only Admin can seed defaults" : ""}
+              className={`px-4 py-2 rounded text-white ${canEditDelete
+                  ? "bg-gray-500 hover:bg-gray-600 cursor-pointer"
+                  : "bg-gray-300 cursor-not-allowed opacity-60"
+                }`}
+            >
+              Seed Defaults
+            </button>
+            {canCreate && (
+              <button
+                onClick={handleCreate}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                + Add Account Group
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search account groups..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full max-w-md px-4 py-2 border rounded"
+          />
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Group / Sub-Group
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Code
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Level
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Description
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredGroups.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      No account groups found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredGroups.map((group) => (
+                    <React.Fragment key={group.id}>
+                      <tr
+                        className={
+                          group.parent_id
+                            ? "bg-blue-50 hover:bg-blue-100"
+                            : "hover:bg-gray-50"
+                        }
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">
+                          {group.parent_id ? (
+                            <span className="text-blue-600 pl-6">
+                              ↳ {group.name}
+                            </span>
+                          ) : (
+                            <span className="text-gray-900 font-bold text-lg">
+                              {group.name}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {group.code}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 rounded text-xs bg-gray-100">
+                            {group.group_type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {group.parent_id ? (
+                            <span className="text-blue-600">Sub-Group</span>
+                          ) : (
+                            <span className="font-semibold text-gray-700">
+                              Primary
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {group.description || "-"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => canEditDelete ? handleEdit(group) : undefined}
+                            disabled={!canEditDelete}
+                            title={!canEditDelete ? "Only Admin can edit" : "Edit"}
+                            className={canEditDelete
+                              ? "text-blue-600 hover:text-blue-900 mr-3"
+                              : "text-gray-300 cursor-not-allowed mr-3"
+                            }
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => canEditDelete ? handleDelete(group.id) : undefined}
+                            disabled={!canEditDelete}
+                            title={!canEditDelete ? "Only Admin can delete" : "Delete"}
+                            className={canEditDelete
+                              ? "text-red-600 hover:text-red-900"
+                              : "text-gray-300 cursor-not-allowed"
+                            }
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {isModalOpen && (
+          <AccountGroupModal
+            group={selectedGroup}
+            allGroups={accountGroups}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleSave}
+          />
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default AccountGroups;

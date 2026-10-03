@@ -6,7 +6,7 @@ import { PiPlusCircleBold } from "react-icons/pi";
 import { postInjurydata, getInjured } from "../../api";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-const IncidentInjuryModal = ({ onclose ,onsave }) => {
+const IncidentInjuryModal = ({ onclose, onsave }) => {
   const { id } = useParams();
 
   const [incident, setIncident] = useState([{ name: "", mobile: "" }]);
@@ -175,6 +175,8 @@ const IncidentInjuryModal = ({ onclose ,onsave }) => {
                       name="mobile"
                       id="mobile"
                       placeholder="Mobile"
+                      maxLength={10}
+                      minLength={10}
                       value={incident1.mobile}
                       onChange={(event) => handleInputChange(index, event)}
                       className="border rounded-md border-gray-400 p-2"

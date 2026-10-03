@@ -76,11 +76,18 @@ import { FcMoneyTransfer, FcSurvey } from "react-icons/fc";
 import { GrCertificate, GrDashboard } from "react-icons/gr";
 import { persistor } from "../store/store";
 import { LiaMoneyBillWaveAltSolid } from "react-icons/lia";
+import { ConstructionIcon } from "lucide-react";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState("");
   const [feat, setFeat] = useState("");
+  const [siteIdState, setSiteIdState] = useState(
+    getItemInLocalStorage("SITEID"),
+  );
+  const [userEmail, setUserEmail] = useState(
+    getItemInLocalStorage("USEREMAIL") || "",
+  );
   const navigate = useNavigate();
   const themeColor = useSelector((state) => state.theme.color);
   const fontSize = useSelector((state) => state.fontSize);
@@ -88,9 +95,6 @@ const Navbar = () => {
   const handleMouseEnter = () => {
     setOpen(true);
   };
-
-
-  
 
   const handleMouseLeave = () => {
     setOpen(false);
@@ -102,6 +106,28 @@ const Navbar = () => {
     const userType = getItemInLocalStorage("USERTYPE");
     setUser(userType);
     getAllowedFeatures();
+  }, []);
+
+  useEffect(() => {
+    const syncLocalStorage = () => {
+      setSiteIdState(getItemInLocalStorage("SITEID"));
+      setUserEmail(getItemInLocalStorage("USEREMAIL") || "");
+    };
+
+    syncLocalStorage();
+    const handleStorage = (event) => {
+      if (!event || event.key === "SITEID" || event.key === "USEREMAIL") {
+        syncLocalStorage();
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("site-change", syncLocalStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("site-change", syncLocalStorage);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -134,6 +160,21 @@ const Navbar = () => {
     navigate("/login");
   };
   const siteId = getItemInLocalStorage("SITEID");
+  const userID = getItemInLocalStorage("UserId");
+  const groupedDashboardEmails = [
+    "mitesh.garg@hiparks.com",
+    "nikhil.navalkar@hiparks.com",
+    "prashant.govekar@hiparks.com",
+  ];
+  const groupedDashboardSiteIds = ["74", "78"];
+  const groupedDashboardUserIds = ["1960", "1666", "1859", "1807"];
+
+  const showGroupedDashboard =
+    groupedDashboardSiteIds.includes(String(siteIdState)) ||
+    groupedDashboardUserIds.includes(String(userID)) ||
+    groupedDashboardEmails.includes(String(userEmail).toLowerCase());
+
+  const showAssetDashboard = feat.includes("asset_dashboard");
 
   const getAllowedFeatures = () => {
     const storedFeatures = getItemInLocalStorage("FEATURES");
@@ -211,7 +252,7 @@ const Navbar = () => {
                   {firstName} {lastName}
                 </h2>
               </NavLink>
-              {(siteId == "74" || siteId == "78") && (
+              {showGroupedDashboard && (
                 <NavLink
                   to={"/grouped-dashboard"}
                   className={({ isActive }) =>
@@ -221,9 +262,7 @@ const Navbar = () => {
                     }`
                   }
                 >
-                  <div>
-                    {React.createElement(GrDashboard, { size: "20" })}
-                  </div>
+                  <div>{React.createElement(GrDashboard, { size: "20" })}</div>
                   <h2
                     className={`whitespace-pre duration-300 ${!open && "opacity-0 translate-x-28 overflow-hidden"
                       }`}
@@ -238,6 +277,33 @@ const Navbar = () => {
                   </h2>
                 </NavLink>
               )}
+              {showAssetDashboard && (
+                  <NavLink
+                    to={"/asset-dashboard"}
+                    className={({ isActive }) =>
+                      ` ${isActive
+                        ? `text-black bg-white flex p-2  gap-3.5 rounded-md group items-center  font-medium text-sm`
+                        : ` group flex items-center  gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md text-sm`
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(GrDashboard, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${!open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                    >
+                      Asset Dashboard
+                    </h2>
+                    <h2
+                      className={`${open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Asset Dashboard
+                    </h2>
+                  </NavLink>
+                )}
               <NavLink
                 to={"/dashboard"}
                 className={({ isActive }) =>
@@ -511,6 +577,10 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
+
+
+
+
                 {feat.includes("communication") && (
                   <NavLink
                     to={"/communication/events"}
@@ -538,6 +608,7 @@ const Navbar = () => {
                     </h2>
                   </NavLink>
                 )}
+
                 {feat.includes("meeting") && (
                   <NavLink
                     to={"/meetings"}
@@ -729,8 +800,8 @@ const Navbar = () => {
                       className={`${open && "hidden"
                         } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                     >
-                      Insurance
-                      clear                    </h2>
+                      Insurance clear{" "}
+                    </h2>
                   </NavLink>
                 )}
                 {feat.includes("additional-service-OSR") && (
@@ -897,6 +968,34 @@ const Navbar = () => {
                         } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
                     >
                       Contact Book
+                    </h2>
+                  </NavLink>
+                )}
+
+                {feat.includes("contacts") && (
+                  <NavLink
+                    to={"/v1/konstruct_updates"}
+                    className={({ isActive }) =>
+                      ` ${isActive
+                        ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
+                        : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
+                      }`
+                    }
+                  >
+                    <div>
+                      {React.createElement(ConstructionIcon, { size: "20" })}
+                    </div>
+                    <h2
+                      className={`whitespace-pre duration-300 ${!open && "opacity-0 translate-x-28 overflow-hidden"
+                        }`}
+                    >
+                      Construction Updates
+                    </h2>
+                    <h2
+                      className={`${open && "hidden"
+                        } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
+                    >
+                      Construction Updates
                     </h2>
                   </NavLink>
                 )}
@@ -1781,7 +1880,9 @@ const Navbar = () => {
               )}
               {feat.includes("face_recognition") && (
                 <NavLink
-                  to={siteId === 68 ? "/rmb-attendance" : "/employee-attendance"}
+                  to={
+                    siteId === 68 ? "/rmb-attendance" : "/employee-attendance"
+                  }
                   className={({ isActive }) =>
                     ` ${isActive
                       ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
@@ -1993,33 +2094,7 @@ const Navbar = () => {
                   </h2>
                 </NavLink>
               )}
-              {feat.includes("document_pro") && (
-                <NavLink
-                  to={"/insurance"}
-                  className={({ isActive }) =>
-                    ` ${isActive
-                      ? "text-black bg-white flex p-2  gap-3.5 rounded-md group items-center text-sm font-medium"
-                      : " group flex items-center text-sm gap-3.5 font-medium p-2 hover:bg-gray-800 rounded-md "
-                    }`
-                  }
-                >
-                  <div>
-                    {React.createElement(MdOutlinePolicy, { size: "20" })}
-                  </div>
-                  <h2
-                    className={`whitespace-pre duration-300 ${!open && "opacity-0 translate-x-28 overflow-hidden"
-                      }`}
-                  >
-                    Insurance
-                  </h2>
-                  <h2
-                    className={`${open && "hidden"
-                      } absolute left-48 bg-white font-semibold whitespace-pre text-gray-900 rounded-md drop-shadow-lg px-0 py-0 w-0 overflow-hidden group-hover:px-2 group-hover:py-1 group-hover:left-14 group-hover:duration-300 group-hover:w-fit  `}
-                  >
-                    Insurance
-                  </h2>
-                </NavLink>
-              )}
+
               {/* {feat.includes("document_pro") && ( */}
               <NavLink
                 to={"/employee/documents"}

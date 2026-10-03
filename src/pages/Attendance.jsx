@@ -16,18 +16,38 @@ const Attendance = () => {
 
   const orgId = getItemInLocalStorage("HRMSORGID");
 
-  useEffect(() => {
-    const fetchAttendance = async () => {
-      try {
-        const attendanceResponse = await getAttendance(orgId);
-        console.log(attendanceResponse.data);
-        setAttendanceData(attendanceResponse.data);
-      } catch (error) {
-        console.log(error);
+useEffect(() => {
+  const fetchAttendance = async () => {
+    try {
+      let allUsers = [];
+      let page = 1;
+      while (true) {
+        const response = await getAttendance(orgId, page);
+        allUsers.push(...response.data.results);
+        if (!response.data.next) break;
+        page++;
       }
-    };
+      const formattedData = allUsers.flatMap((user) =>
+        user.attendance_records.map((record) => ({
+          name: `${user.first_name} ${user.last_name}`,
+          first_name: user.first_name, // for table
+          date: record.date,
+          status: record.is_present ? "Present" : "Absent",
+          // fallback since API doesn't provide these
+          punched_in_at: null,
+          punched_out_at: null,
+        }))
+      );
+      setAttendanceData(formattedData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  if (orgId) {
     fetchAttendance();
-  }, []);
+  }
+}, [orgId]);
 
   const timeFormat = (dateString) => {
     const date = new Date(dateString);
@@ -54,7 +74,6 @@ const Attendance = () => {
     const diffHrs = diffMs / (1000 * 60 * 60);
     return diffHrs.toFixed(2);
   };
-  console.log(TotalHours)
   const column = [
     // {
     //   name: "Actions",
@@ -62,51 +81,59 @@ const Attendance = () => {
     //   selector: (row) => row.action,
     // },
 
-    { name: "Name", selector: (row) => row.attendance_of_name, sortable: true },
-    {
-      name: "Date",
-      selector: (row) => dateFormat(row.created_at),
-      sortable: true,
-    },
-    {
-      name: "Punch In",
-      selector: (row) => timeFormat(row.punched_in_at),
-      sortable: true,
-    },
-    {
-      name: "Punch Out",
-      selector: (row) =>
-        row.punched_out_at ? timeFormat(row.punched_out_at) : "",
-      sortable: true,
-    },
-    {
-      name: "Total Hours Worked",
-      selector: (row) => {
-        if (row.punched_in_at && row.punched_out_at) {
-          return TotalHours(row.punched_in_at, row.punched_out_at);
-        } else {
-          return "";
-        }
-      },
-      sortable: true,
-    },
+{
+  name: "Name",
+  selector: (row) => row.name,
+  sortable: true,
+},
+  {
+    name: "Date",
+    selector: (row) => row.date,
+    sortable: true,
+  },
+  {
+    name: "Status",
+    selector: (row) => row.status,
+    sortable: true,
+  },
+   {
+  name: "Punch In",
+  selector: (row) =>
+    row.punched_in_at ? timeFormat(row.punched_in_at) : "-",
+},
+{
+  name: "Punch Out",
+  selector: (row) =>
+    row.punched_out_at ? timeFormat(row.punched_out_at) : "-",
+},
+{
+  name: "Total Hours Worked",
+  selector: (row) =>
+    row.punched_in_at && row.punched_out_at
+      ? TotalHours(row.punched_in_at, row.punched_out_at)
+      : "-",
+},
   ];
 
   document.title = `Attendance - Vibe Connect`;
   const themeColor = useSelector((state) => state.theme.color);
 
   const exportAllToExcel = async () => {
-    const mappedData = attendanceData.map((attend) => ({
-      Name: attend.attendance_of_name,
-      Date: dateFormat(attend.created_at),
-      "Punch In": timeFormat(attend.punched_in_at),
-      "Punch Out": attend.punched_out_at
-        ? timeFormat(attend.punched_out_at)
-        : "-",
-      "Total Hours Worked": attend.punched_out_at
-        ? TotalHours(attend.punched_in_at, attend.punched_out_at)
-        : "-",
-    }));
+   const mappedData = attendanceData.map((attend) => ({
+  Name: attend.name,
+  Date: dateFormat(attend.date),
+  Status: attend.status,
+  "Punch In": attend.punched_in_at
+    ? timeFormat(attend.punched_in_at)
+    : "-",
+  "Punch Out": attend.punched_out_at
+    ? timeFormat(attend.punched_out_at)
+    : "-",
+  "Total Hours Worked":
+    attend.punched_in_at && attend.punched_out_at
+      ? TotalHours(attend.punched_in_at, attend.punched_out_at)
+      : "-",
+}));
     const fileType =
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
     const fileName = "attendance_data.xlsx";

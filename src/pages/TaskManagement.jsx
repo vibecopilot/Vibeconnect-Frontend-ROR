@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import Navbar from "../components/Navbar";
 import { useSelector } from "react-redux";
-import profile from "/wave.png";
+const profile = "/wave.png";
 import {
   FaArrowLeft,
   FaCheck,

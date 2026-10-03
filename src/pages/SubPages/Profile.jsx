@@ -14,7 +14,7 @@ import image from "/profile.png";
 import ProfileGrow from './ProfileGrow';
 import ProfileCatchUp from './ProfileCatchup';
 import { getItemInLocalStorage } from '../../utils/localStorage';
-import image2 from "/profile4.jpg"
+import image2 from "/profile4.jpg";
 function Profile() {
     const [page, setPage] = useState("grow");
     const employee = {

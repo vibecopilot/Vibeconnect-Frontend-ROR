@@ -1,0 +1,310 @@
+import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import {
+  getAccountingPayments,
+  createAccountingPayment,
+  updateAccountingPayment,
+  deleteAccountingPayment,
+  getPaymentsByInvoice,
+  getAccountingPaymentById,
+} from "../../api/accounting";
+import PaymentModal from "./PaymentModal";
+import Navbar from "../../components/Navbar";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+
+const AccountingPayments = () => {
+  const userType = getItemInLocalStorage("USERTYPE");
+  const isAdmin = userType === "pms_admin";
+  const isAccountingUser = userType === "accounting_emp";
+  const canCreate = isAdmin || isAccountingUser;
+  const canEditDelete = isAdmin;
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filterInvoiceId, setFilterInvoiceId] = useState("");
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  // -----------------------------
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const fetchPayments = async () => {
+    setLoading(true);
+    try {
+      const response = await getAccountingPayments();
+      setPayments(response.data.data || response.data);
+    } catch (error) {
+      toast.error("Failed to fetch payments");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //  const handleFilterByInvoice = async (invoiceId) => {
+  //     setFilterInvoiceId(invoiceId);
+
+  //     if (!invoiceId) {
+  //       fetchPayments();
+  //       return;
+  //     }
+
+  //     setLoading(true);
+  //     try {
+  //       const response = await getPaymentsByInvoice(invoiceId);
+  //       setPayments(response.data.data || response.data);
+  //     } catch (error) {
+  //       toast.error("Failed to filter payments");
+  //       console.error(error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  const handleCreate = () => {
+    setSelectedPayment(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = async (payment) => {
+    try {
+      setLoading(true);
+
+      // Fetch full payment details by ID
+      const response = await getAccountingPaymentById(payment.id);
+
+      const fullPayment =
+        response.data.data || response.data;
+
+      setSelectedPayment(fullPayment);
+      setIsModalOpen(true);
+    } catch (error) {
+      toast.error("Failed to fetch payment details");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this payment?"))
+      return;
+
+    try {
+      await deleteAccountingPayment(id);
+      toast.success("Payment deleted successfully");
+      fetchPayments();
+    } catch (error) {
+      toast.error("Failed to delete payment");
+      console.error(error);
+    }
+  };
+
+  const handleSave = async (data) => {
+    try {
+      if (selectedPayment) {
+        await updateAccountingPayment(selectedPayment.id, data);
+        toast.success("Payment updated successfully");
+      } else {
+        await createAccountingPayment(data);
+        toast.success("Payment created successfully");
+      }
+
+      setIsModalOpen(false);
+      fetchPayments();
+    } catch (error) {
+      console.log("SERVER ERROR:", error.response?.data);
+      toast.error("Failed to save payment");
+      console.error(error);
+    }
+  };
+
+  const filteredPayments = payments.filter((payment) => {
+    const reference = (payment.reference_number || "").toLowerCase();
+
+    const invoiceNumber =
+      (
+        payment.accounting_invoice?.invoice_number ||
+        payment.invoice_number ||
+        ""
+      ).toLowerCase();
+
+    const search = debouncedSearch.toLowerCase();
+
+    return reference.includes(search) || invoiceNumber.includes(search);
+  });
+
+  return (
+    <section className="flex">
+      <Navbar />
+      <div className="w-full flex mx-3 mb-10 flex-col overflow-hidden p-6 bg-white/80 mt-2">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Accounting Payments</h1>
+            {isAdmin && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                Full Access
+              </span>
+            )}
+            {isAccountingUser && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                Create Only
+              </span>
+            )}
+          </div>
+          {canCreate && (
+            <button
+              onClick={handleCreate}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              + Add Payment
+            </button>
+          )}
+        </div>
+
+        <div className="mb-4 flex gap-4">
+          <input
+            type="text"
+            placeholder="Search by reference or invoice number"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1  px-4 py-2 border rounded-lg w-[10px]"
+          />
+
+          {/* <input
+            type="text"
+            placeholder="Filter by Invoice ID"
+            value={filterInvoiceId}
+            onChange={(e) => handleFilterByInvoice(e.target.value)}
+            className="px-4 py-2 border rounded"
+          /> */}
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Payment Date
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Reference
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Invoice
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Payment Method
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredPayments.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      className="px-6 py-4 text-center text-gray-500"
+                    >
+                      No payments found
+                    </td>
+                  </tr>
+                ) : (
+                  filteredPayments.map((payment) => (
+                    <tr key={payment.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {new Date(payment.payment_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap font-medium">
+                        {payment.reference_number || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {payment.accounting_invoice?.invoice_number || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        ₹{parseFloat(payment.amount || 0).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap capitalize">
+                        {payment.payment_mode?.replace("_", " ")}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${payment.payment_type === "completed"
+                              ? "bg-green-100 text-green-800"
+                              : payment.payment_type === "failed"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                        >
+                          {payment.payment_type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => canEditDelete ? handleEdit(payment) : undefined}
+                          disabled={!canEditDelete}
+                          title={!canEditDelete ? "Only Admin can edit" : "Edit"}
+                          className={canEditDelete
+                            ? "text-blue-600 hover:text-blue-900 mr-3"
+                            : "text-gray-300 cursor-not-allowed mr-3"
+                          }
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => canEditDelete ? handleDelete(payment.id) : undefined}
+                          disabled={!canEditDelete}
+                          title={!canEditDelete ? "Only Admin can delete" : "Delete"}
+                          className={canEditDelete
+                            ? "text-red-600 hover:text-red-900"
+                            : "text-gray-300 cursor-not-allowed"
+                          }
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {isModalOpen && (
+          <PaymentModal
+            payment={selectedPayment}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleSave}
+          />
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default AccountingPayments;

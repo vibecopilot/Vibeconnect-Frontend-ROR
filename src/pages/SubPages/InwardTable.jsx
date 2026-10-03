@@ -51,7 +51,7 @@ const InwardsTable = () => {
 
     {
       name: "Person Name",
-      selector: (row) => row.person_name?.name,
+      selector: (row) => row.person_name,
       sortable: true,
     },
 
@@ -80,19 +80,18 @@ const InwardsTable = () => {
   console.log(goodsIn);
   const [searchText, setSearchText] = useState("");
   const handleSearch = (e) => {
-    const searchValue = e.target.value;
+    const searchValue = e.target.value.toLowerCase();
     setSearchText(searchValue);
-    if (searchValue.trim === "") {
+
+    if (searchValue.trim() === "") {
       setFilteredData(goodsIn);
     } else {
-      const filteredResult = goodsIn.filter(
-        (item) =>
-          item.person_name && 
-        item.person_name.name &&
-        item.person_name.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.vehicle_no &&
-            item.vehicle_no.toLowerCase().includes(searchValue.toLowerCase()))
-      );
+      const filteredResult = goodsIn.filter((item) => {
+        const personName = item.person_name ? item.person_name.toLowerCase() : "";
+        const vehicleNo = item.vehicle_no ? item.vehicle_no.toLowerCase() : "";
+
+        return personName.includes(searchValue) || vehicleNo.includes(searchValue);
+      });
       setFilteredData(filteredResult);
     }
   };

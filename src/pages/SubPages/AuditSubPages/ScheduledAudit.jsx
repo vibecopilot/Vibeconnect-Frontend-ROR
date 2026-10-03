@@ -1,12 +1,51 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Table from "../../../components/table/Table";
 import { BsEye } from "react-icons/bs";
 import { PiPlusCircle } from "react-icons/pi";
+import { getAudits } from "../../../api";
+// ✅ use API file
 
-const ScheduledAudit = ({ audits = [] }) => {
+const ScheduledAudit = () => {
+  const [audits, setAudits] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [priority, setPriority] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // ✅ fetch on mount + priority change
+  useEffect(() => {
+    fetchAudits();
+  }, [priority]);
+
+  const fetchAudits = async () => {
+    try {
+      setLoading(true);
+
+      const params = {
+        page: 1,
+        per_page: 10,
+      };
+
+      // ✅ VERY IMPORTANT FIX
+      if (priority) {
+        params["q[priority_eq]"] = priority;
+      }
+
+      const res = await getAudits(params);
+
+      const data = res?.data;
+
+      const list =
+        data?.audits || data?.data || data?.results || data || [];
+
+      setAudits(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setAudits([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     {
@@ -19,156 +58,118 @@ const ScheduledAudit = ({ audits = [] }) => {
         </div>
       ),
     },
-    {
-      name: "ID",
-      selector: (row) => row.id,
-      sortable: true,
-    },
-    {
-      name: "Activity",
-      selector: (row) => row.activity_name,
-      sortable: true,
-    },
-    {
-      name: "Audit For",
-      selector: (row) => row.audit_for,
-      sortable: true,
-    },
-    {
-      name: "Frequency",
-      selector: (row) => row.frequency,
-      sortable: true,
-    },
-    {
-      name: "Priority",
-      selector: (row) => row.priority,
-      sortable: true,
-    },
+    { name: "ID", selector: (row) => row.id, sortable: true },
+    { name: "Activity", selector: (row) => row.activity_name, sortable: true },
+    { name: "Audit For", selector: (row) => row.audit_for, sortable: true },
+    { name: "Frequency", selector: (row) => row.frequency, sortable: true },
+    { name: "Priority", selector: (row) => row.priority, sortable: true },
     {
       name: "Start Date",
-      selector: (row) => new Date(row.start_from).toLocaleDateString(),
-      sortable: true,
+      selector: (row) =>
+        row.start_from ? new Date(row.start_from).toLocaleDateString() : "-",
     },
     {
       name: "End Date",
-      selector: (row) => new Date(row.end_at).toLocaleDateString(),
-      sortable: true,
+      selector: (row) =>
+        row.end_at ? new Date(row.end_at).toLocaleDateString() : "-",
     },
   ];
 
+  // ✅ search only (priority handled by API)
   const filteredData = useMemo(() => {
-    return audits.filter((audit) => {
-      const matchesSearch =
-        audit.activity_name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        audit.audit_for?.toLowerCase().includes(searchText.toLowerCase()) ||
-        audit.description?.toLowerCase().includes(searchText.toLowerCase());
+    const text = searchText.toLowerCase();
 
-      return matchesSearch;
+    return audits.filter((audit) => {
+      return (
+        audit.activity_name?.toLowerCase().includes(text) ||
+        audit.audit_for?.toLowerCase().includes(text) ||
+        audit.description?.toLowerCase().includes(text)
+      );
     });
   }, [audits, searchText]);
-
-  const handleExport = () => {
-    const csv = [
-      ["ID", "Activity", "Audit For", "Frequency", "Priority", "Start Date", "End Date"],
-      ...filteredData.map((audit) => [
-        audit.id,
-        audit.activity_name,
-        audit.audit_for,
-        audit.frequency,
-        audit.priority,
-        new Date(audit.start_from).toLocaleDateString(),
-        new Date(audit.end_at).toLocaleDateString(),
-      ]),
-    ]
-      .map((row) => row.join(","))
-      .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "scheduled_audits.csv";
-    a.click();
-  };
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex md:flex-row md:justify-between flex-col gap-10 my-2">
-        <div className="sm:flex grid grid-cols-2 items-center justify-center  gap-4 border border-gray-300 rounded-md px-3 p-2 w-auto">
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="all"
-              name="status"
-              checked={statusFilter === "all"}
-              onChange={() => setStatusFilter("all")}
-            />
-            <label htmlFor="all" className="text-sm">
-              All
+
+        {/* ✅ Priority Filter */}
+        <div className="border border-gray-300 rounded-md px-3 p-2">
+          <div className="flex gap-4">
+            <label>
+              <input
+                type="radio"
+                name="priority"
+                value=""
+                checked={priority === ""}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+              &nbsp;All
             </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="high"
-              name="status"
-              checked={statusFilter === "high"}
-              onChange={() => setStatusFilter("high")}
-            />
-            <label htmlFor="high" className="text-sm">
-              High Priority
+
+            <label>
+              <input
+                type="radio"
+                name="priority"
+                value="high"
+                checked={priority === "high"}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+              &nbsp;High
             </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="medium"
-              name="status"
-              checked={statusFilter === "medium"}
-              onChange={() => setStatusFilter("medium")}
-            />
-            <label htmlFor="medium" className="text-sm">
-              Medium
+
+            <label>
+              <input
+                type="radio"
+                name="priority"
+                value="medium"
+                checked={priority === "medium"}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+              &nbsp;Medium
             </label>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="radio"
-              id="low"
-              name="status"
-              checked={statusFilter === "low"}
-              onChange={() => setStatusFilter("low")}
-            />
-            <label htmlFor="low" className="text-sm">
-              Low
+
+            <label>
+              <input
+                type="radio"
+                name="priority"
+                value="low"
+                checked={priority === "low"}
+                onChange={(e) => setPriority(e.target.value)}
+              />
+              &nbsp;Low
             </label>
           </div>
         </div>
 
+        {/* Actions */}
         <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="border border-gray-400 w-96 rounded-lg p-2"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
           <Link
             to={"/admin/audit/schedule-audit"}
-            className="border-2 font-semibold hover:bg-black hover:text-white duration-300 transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
+            className="border-2 font-semibold hover:bg-black hover:text-white duration-300 border-black p-2 rounded-md flex items-center gap-2"
           >
             <PiPlusCircle size={20} />
             Add
           </Link>
-          <input
-            type="text"
-            placeholder="Search..."
-            className="border border-gray-400 w-96 placeholder:text-xs rounded-lg p-2"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <button
-            onClick={handleExport}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Export
-          </button>
+
+
         </div>
       </div>
-      <Table columns={columns} data={filteredData} isPagination={true} />
+
+      {/* Table */}
+      {loading ? (
+        <div className="text-center py-10 text-gray-500">
+          Loading audits...
+        </div>
+      ) : (
+        <Table columns={columns} data={filteredData} isPagination />
+      )}
     </div>
   );
 };

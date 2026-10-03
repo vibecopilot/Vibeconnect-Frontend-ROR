@@ -82,7 +82,8 @@ const AddPPMActivity = () => {
   const [addNewQuestion, setAddNewQuestion] = useState([
     {
       name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
-      question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],weightage:"",rating:false
+      question_mandatory: false, reading: false, help_text: "", showHelpText: false, image_for_question: [], weightage: "", rating: false,
+      field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
     },
   ]);
   
@@ -91,7 +92,8 @@ const AddPPMActivity = () => {
       ...addNewQuestion,
       {
         name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
-        question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],weightage:"",rating:false
+        question_mandatory: false, reading: false, help_text: "", showHelpText: false, image_for_question: [], weightage: "", rating: false,
+      field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
       },
     ]);
   };
@@ -131,7 +133,8 @@ const AddPPMActivity = () => {
     questions: [
       {
         name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
-        question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],weightage:"",rating:false
+        question_mandatory: false, reading: false, help_text: "", showHelpText: false, image_for_question: [], weightage: "", rating: false,
+      field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
       }
     ],
   },]);
@@ -139,8 +142,9 @@ const AddPPMActivity = () => {
   const addSection = () => {
     setSections([...sections, { group: '', questions: [{
       name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
-      question_mandatory: false, reading: false, help_text: "", showHelpText: false,image_for_question:[],
-      weightage:"",rating:false
+      question_mandatory: false, reading: false, help_text: "", showHelpText: false, image_for_question: [],
+      weightage: "", rating: false,
+      field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
     }] }]);
   };
 
@@ -155,7 +159,8 @@ const AddPPMActivity = () => {
     updatedSections[sectionIndex].questions.push({
       name: "", type: "", options: ["", "", "", ""], value_types: ["", "", "", ""],
       question_mandatory: false, reading: false, help_text: "", showHelpText: false,
-      image_for_question:[],weightage:"",rating:false
+      image_for_question: [], weightage: "", rating: false,
+      field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
     });
     setSections(updatedSections);
   };
@@ -189,8 +194,24 @@ const AddPPMActivity = () => {
       const updatedValueTypes = [...updatedQuestion.value_types];
       updatedValueTypes[optionIndex] = value;
       updatedQuestion.value_types = updatedValueTypes;
-    } else if (field === "question_mandatory" || field === "reading" || field === "showHelpText" || field === "rating") {
+    } else if (field === "question_mandatory" || field === "showHelpText" || field === "rating") {
       updatedQuestion[field] = value;
+    } else if (field === "reading") {
+      updatedQuestion.reading = value;
+      if (value === true) {
+        updatedQuestion.field_type = "meter";
+        updatedQuestion.type = "Numeric";
+      } else {
+        if (updatedQuestion.field_type === "meter") updatedQuestion.field_type = "";
+      }
+    } else if (field === "field_type") {
+      updatedQuestion.field_type = value;
+      if (value === "meter") {
+        updatedQuestion.reading = true;
+        updatedQuestion.type = "Numeric";
+      } else if (updatedQuestion.reading && value !== "meter") {
+        updatedQuestion.reading = false;
+      }
     } else if (field === "help_text") {
       updatedQuestion.help_text = value;
     } else if (field === "image_for_question") {
@@ -218,6 +239,9 @@ const AddPPMActivity = () => {
 
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
+  const showAssetDashboard = (getItemInLocalStorage("FEATURES") || []).some(
+    (f) => f.feature_name === "asset_dashboard"
+  );
   const navigate = useNavigate()
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -230,13 +254,22 @@ const AddPPMActivity = () => {
     if (startDate >= endDate) {
       return toast.error("Start date must be before End date");
     }
-  
+
+    if (weightage && totalWeightage) {
+      const allQuestions = sections.flatMap(s => s.questions);
+      const questionSum = allQuestions.reduce((sum, q) => sum + (parseFloat(q.weightage) || 0), 0);
+      if (Math.round(questionSum * 100) !== Math.round(parseFloat(totalWeightage) * 100)) {
+        return toast.error(`Question weightage sum (${questionSum}) must equal checklist total weightage (${totalWeightage})`);
+      }
+    }
+
     // Prepare FormData for file uploads
     const formData = new FormData();
   
     // Add checklist data
     formData.append("checklist[site_id]", siteId);
     formData.append("checklist[weightage_enabled]", weightage);
+    formData.append("checklist[total_weightage]", totalWeightage || "");
     formData.append("checklist[occurs]", "");
     formData.append("checklist[name]", name);
     formData.append("checklist[start_date]", startDate);
@@ -274,6 +307,13 @@ const AddPPMActivity = () => {
         formData.append(`groups[][questions][][help_text]`, q.help_text || "");
         formData.append(`groups[][questions][][weightage]`, q.weightage);
         formData.append(`groups[][questions][][rating]`, q.rating);
+        formData.append(`groups[][questions][][field_type]`, q.field_type || "");
+        formData.append(`groups[][questions][][kpi_key]`, q.kpi_key || "");
+        formData.append(`groups[][questions][][aggregation_type]`, q.aggregation_type || "last");
+        formData.append(`groups[][questions][][category_tag]`, q.category_tag || "");
+        formData.append(`groups[][questions][][unit_label]`, q.unit_label || "");
+        formData.append(`groups[][questions][][min_value]`, q.min_value || "");
+        formData.append(`groups[][questions][][max_value]`, q.max_value || "");
   
         // Add options and value types
         q.options.forEach((option, optionIndex) => {
@@ -372,6 +412,7 @@ const AddPPMActivity = () => {
   const [createNew, setCreateNew] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
+  const [totalWeightage, setTotalWeightage] = useState("");
 
   const handleToggle = (type) => {
     switch (type) {
@@ -460,7 +501,7 @@ const AddPPMActivity = () => {
         
 
         {/* Weightage Toggle */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="mr-2">Weightage</span>
           <div
             onClick={() => handleToggle('weightage')}
@@ -474,6 +515,29 @@ const AddPPMActivity = () => {
               }`}
             />
           </div>
+          {weightage && (
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 whitespace-nowrap">Total Weightage:</label>
+              <input
+                type="number"
+                min="0"
+                className="border rounded px-2 py-1 text-sm w-24"
+                placeholder="e.g. 100"
+                value={totalWeightage}
+                onChange={(e) => setTotalWeightage(e.target.value)}
+              />
+              {totalWeightage && (() => {
+                const allQ = sections.flatMap(s => s.questions);
+                const qsum = allQ.reduce((s, q) => s + (parseFloat(q.weightage) || 0), 0);
+                const ok = Math.round(qsum * 100) === Math.round(parseFloat(totalWeightage) * 100);
+                return (
+                  <span className={`text-xs font-medium ${ok ? "text-green-600" : "text-red-500"}`}>
+                    Sum: {qsum} / {totalWeightage} {ok ? "✓" : "✗"}
+                  </span>
+                );
+              })()}
+            </div>
+          )}
         </div>
 
         {/* Show Weightage and Rating Fields if Weightage is on */}
@@ -872,9 +936,94 @@ const AddPPMActivity = () => {
                 />
                 <label htmlFor="rating"> Rating</label>
               </div>
-           
+
           </div>
         )}
+            {/* Additional Inputs */}
+            <div className={`mt-2 border border-indigo-200 rounded-md p-3 ${showAssetDashboard ? "" : "hidden"}`}>
+              <div className="text-sm font-semibold text-indigo-700 mb-2">Additional Inputs</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Measurement Type</label>
+                  <select
+                    className="w-full border rounded p-1 text-sm"
+                    value={question.field_type || ""}
+                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "field_type", e.target.value)}
+                  >
+                    <option value="">None</option>
+                    <option value="meter">Meter Reading</option>
+                    <option value="gauge">Gauge</option>
+                    <option value="counter">Counter</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Aggregation</label>
+                  <select
+                    className="w-full border rounded p-1 text-sm"
+                    value={question.aggregation_type || "last"}
+                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "aggregation_type", e.target.value)}
+                  >
+                    <option value="last">Last Value</option>
+                    <option value="average">Average</option>
+                    <option value="sum_mtd">Sum MTD</option>
+                    <option value="count_mtd">Count MTD</option>
+                    <option value="text">Text</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">KPI Name</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded p-1 text-sm"
+                    placeholder="e.g. fuel_pct"
+                    value={question.kpi_key || ""}
+                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "kpi_key", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Category</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded p-1 text-sm"
+                    placeholder="e.g. dg, hvac"
+                    value={question.category_tag || ""}
+                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "category_tag", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Unit</label>
+                  <input
+                    type="text"
+                    className="w-full border rounded p-1 text-sm"
+                    placeholder="e.g. %, V, hrs"
+                    value={question.unit_label || ""}
+                    onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "unit_label", e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-600 mb-1">Min</label>
+                    <input
+                      type="number"
+                      className="w-full border rounded p-1 text-sm"
+                      placeholder="Min"
+                      value={question.min_value || ""}
+                      onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "min_value", e.target.value)}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-600 mb-1">Max</label>
+                    <input
+                      type="number"
+                      className="w-full border rounded p-1 text-sm"
+                      placeholder="Max"
+                      value={question.max_value || ""}
+                      onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "max_value", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
             <div className="flex justify-end ">
               <button
                                         className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "

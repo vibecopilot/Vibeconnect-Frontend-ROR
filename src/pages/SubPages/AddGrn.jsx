@@ -101,23 +101,27 @@ const AddGrn = () => {
   }, []);
 
   /** ---------------- masters (inventory dropdown) ---------------- */
+  /** ---------------- inventory dropdown ---------------- */
   useEffect(() => {
     const fetchInventory = async () => {
       try {
         const invResp = await getMasters();
 
-        // ✅ your previous mapping (kept)
-        const sortedInvData = Array.isArray(invResp?.data)
-          ? invResp.data.map((host) => ({
-              id: host.id,
-              name: host.name,
-              type: host.inventory_type,
-              criticality: host.criticality,
-            }))
+        // FIX: API returns inventories array
+        const inventoryList = Array.isArray(invResp?.data?.inventories)
+          ? invResp.data.inventories
           : [];
 
+        const sortedInvData = inventoryList.map((item) => ({
+          id: item.id,
+          name: item.name,
+          inventory_type: item.inventory_type,
+          criticality: item.criticality,
+        }));
+
         setinvent(sortedInvData);
-        console.log("Fetched Inventory Masters:", sortedInvData);
+
+        console.log("Fetched Inventories:", sortedInvData);
       } catch (error) {
         console.error("Error fetching inventory:", error);
         setinvent([]);
@@ -213,8 +217,14 @@ const AddGrn = () => {
     formDataSend.append("grn_detail[invoice_date]", formData.invoice_date);
     formDataSend.append("grn_detail[posting_date]", formData.posting_date);
     formDataSend.append("grn_detail[other_expenses]", formData.other_expenses);
-    formDataSend.append("grn_detail[loading_expenses]", formData.loading_expenses);
-    formDataSend.append("grn_detail[adjustment_amount]", formData.adjustment_amount);
+    formDataSend.append(
+      "grn_detail[loading_expenses]",
+      formData.loading_expenses,
+    );
+    formDataSend.append(
+      "grn_detail[adjustment_amount]",
+      formData.adjustment_amount,
+    );
     formDataSend.append("grn_detail[notes]", formData.notes);
 
     // ✅ IMPORTANT: index-based keys so backend receives proper inventory_details array
@@ -227,7 +237,10 @@ const AddGrn = () => {
 
       // batches
       (inventory.batches || []).forEach((batch) => {
-        formDataSend.append(`inventory_details[${i}][batches][]`, batch?.value ?? "");
+        formDataSend.append(
+          `inventory_details[${i}][batches][]`,
+          batch?.value ?? "",
+        );
       });
     });
 
@@ -472,7 +485,6 @@ const AddGrn = () => {
                   <div className="flex flex-col">
                     <label className="font-semibold">Inventory</label>
 
-                    {/* ✅ FIX: name=item_id, value=item_id */}
                     <select
                       name="item_id"
                       value={inventory.item_id || ""}
@@ -480,11 +492,12 @@ const AddGrn = () => {
                       onChange={(e) => handleInventoryChange(invIndex, e)}
                     >
                       <option value="">Select Inventory</option>
-                      {invent.map((m) => (
-                        <option value={m.id} key={m.id}>
-                          {m.name}
-                        </option>
-                      ))}
+                      {invent?.length > 0 &&
+                        invent.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
                     </select>
                   </div>
 
@@ -714,6 +727,16 @@ const AddGrn = () => {
             >
               Add Inventory
             </button>
+
+               <div className="my-3 mx-5 text-end">
+            <button
+              type="button"
+              className="bg-black text-white p-2 text-small rounded-md"
+              style={{ background: themeColor }}
+            >
+              Total Amount: ₹ {calculateTotalAmount()}
+            </button>
+          </div>
           </div>
 
           {/* Attachments */}
@@ -724,17 +747,15 @@ const AddGrn = () => {
             <FileInputBox />
           </div>
 
-          <div className="my-3 mx-5 text-end">
-            <button
-              type="button"
-              className="bg-black text-white p-2 text-small rounded-md"
-              style={{ background: themeColor }}
-            >
-              Total Amount: ₹ {calculateTotalAmount()}
-            </button>
-          </div>
+       
 
-          <div className="my-10 mx-5 text-center">
+          <div className="flex justify-end gap-3 mt-9">
+              <button
+              className="bg-black text-white p-2 px-4 rounded-md font-medium"
+              onClick={() => navigate("/assets/stock-items")}
+            >
+              Cancel
+            </button>
             <button
               onClick={handleSubmit}
               className="bg-black text-white px-8 py-2 text-small rounded-md"

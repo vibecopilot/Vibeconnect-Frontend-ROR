@@ -1,50 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import { Link } from "react-router-dom";
 import { RxArrowRight } from "react-icons/rx";
 import { IoIosCloseCircleOutline, IoMdStar } from "react-icons/io";
 import { FaCheck } from "react-icons/fa";
+import toast from "react-hot-toast";
+import { getSurvey, createSurvey } from "../../../api";
+
 function CopySurveyViewPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [isFavorites, setIsFavorites] = useState(false);
-  const question = [
-    {
-      id: 1,
-      questionName:
-        "Is this the first time you are using our Products and services?",
-      questType: "radioButton",
-      option: ["Yes", "No"],
-    },
-    {
-      id: 2,
-      questionName: " Would you recommend it to your friends and colleagues? ",
-      questType: "radioButton",
-      option: ["True", "False"],
-    },
-    {
-      id: 3,
-      questionName:
-        "Do you have any suggestions to improve our product and service? ",
-      questType: "textArea",
-    },
-    {
-      id: 4,
-      questionName: " How satisfied are you with our company overall? ",
-      questType: "checkBox",
-      option: [
-        "Very satisfied",
-        "Satisfied",
-        "undecided",
-        "unsatisfied",
-        "Very unsatisfied",
-      ],
-    },
-    {
-      id: 5,
-      questionName: "How do you prefer to be contacted?",
-      questType: "select",
-      option: ["Email", "Phone", "SMS", "None"],
-    },
-  ];
+  const [survey, setSurvey] = useState(null);
+  const [loading, setLoading] = useState(!!id);
+  const [copying, setCopying] = useState(false);
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    getSurvey(id)
+      .then((res) => setSurvey(res.data))
+      .catch(() => setSurvey(null))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  const question = (survey?.survey_questions || []).map((q, idx) => ({
+    id: q.id || idx + 1,
+    questionName: q.q_title || "",
+    questType:
+      q.question_type === "single_choice"
+        ? "radioButton"
+        : q.question_type === "multiple_choice"
+        ? "checkBox"
+        : q.question_type === "text"
+        ? "textArea"
+        : "select",
+    option: (q.options || []).map((o) => o.label || o).filter(Boolean),
+  }));
 
   const [responses, setResponses] = useState({});
 
@@ -72,6 +67,74 @@ function CopySurveyViewPage() {
     setResponses((prev) => ({ ...prev, [questionId]: value }));
   };
 
+  const handleCopySurvey = async () => {
+    if (!survey) return;
+    setCopying(true);
+    try {
+      const survey_questions = (survey.survey_questions || []).map((q, i) => ({
+        q_title: q.q_title,
+        question_type: q.question_type,
+        position: i + 1,
+        required: q.required || false,
+        min_value: q.min_value,
+        max_value: q.max_value,
+        options: (q.options || []).map((o, j) => ({ label: o.label, position: j + 1 })),
+      }));
+      const payload = {
+        survey: {
+          survey_title: `Copy of ${survey.survey_title || "Untitled"}`,
+          description: survey.description,
+          start_date: survey.start_date,
+          end_date: survey.end_date,
+          status: "draft",
+          survey_questions,
+        },
+      };
+      const res = await createSurvey(payload);
+      const newId = res.data?.id;
+      toast.success("Survey copied successfully.");
+      if (newId) navigate(`/admin/survey-details/${newId}`);
+      else navigate("/admin/survey");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to copy survey.");
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  const formatDate = (d) => (d ? new Date(d).toLocaleDateString() : "");
+
+  if (loading) {
+    return (
+      <section className="flex">
+        <Navbar />
+        <div className="w-full flex items-center justify-center min-h-[200px]">Loading…</div>
+      </section>
+    );
+  }
+  if (id && !survey) {
+    return (
+      <section className="flex">
+        <Navbar />
+        <div className="w-full flex mx-3 flex-col overflow-hidden p-5">
+          <p>Survey not found.</p>
+          <Link to="/admin/copy-survey" className="text-blue-600 underline mt-2">Back to copy survey</Link>
+        </div>
+      </section>
+    );
+  }
+  if (!id) {
+    return (
+      <section className="flex">
+        <Navbar />
+        <div className="w-full flex mx-3 flex-col overflow-hidden p-5">
+          <p>Select a survey from the list to preview or copy.</p>
+          <Link to="/admin/copy-survey" className="text-blue-600 underline mt-2">Go to copy survey</Link>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="flex">
       <Navbar />
@@ -87,11 +150,10 @@ function CopySurveyViewPage() {
             <div className="border-b border-inherit"></div>
             <div className="h-screen overflow-y-auto">
               <h2 className="text-2xl text-green-600 px-10 mt-5">
-                Customer Feedback Survey
+                {survey?.survey_title || "Survey"}
               </h2>
               <p className="text-xl text-gray-600 px-10 mt-3 mb-10">
-                Please let us know about your experience with our product and
-                service.
+                {survey?.description || "Preview — answers are not saved."}
               </p>
               <div className="space-y-10 px-10">
                 {question.map((q) => (
@@ -101,7 +163,7 @@ function CopySurveyViewPage() {
                     </h2>
                     {q.questType === "radioButton" && (
                       <div className="grid grid-cols-1 gap-2">
-                        {q.option.map((option, index) => (
+                        {(q.option || []).map((option, index) => (
                           <label
                             key={index}
                             className={`flex items-center gap-2 p-2 rounded-md border ${
@@ -139,7 +201,7 @@ function CopySurveyViewPage() {
 
                     {q.questType === "checkBox" && (
                       <div className="grid grid-cols-1 gap-2 mt-2">
-                        {q.option.map((option) => (
+                        {(q.option || []).map((option) => (
                           <label
                             key={option}
                             className={`flex items-center gap-2 p-2 rounded-md border ${
@@ -204,7 +266,7 @@ function CopySurveyViewPage() {
                           <option value="" disabled>
                             Select an option
                           </option>
-                          {q.option.map((option) => (
+                          {(q.option || []).map((option) => (
                             <option key={option} value={option}>
                               {option}
                             </option>
@@ -228,8 +290,8 @@ function CopySurveyViewPage() {
           <div className="col-span-3 border-l pt-5 pb-10 flex flex-col justify-between h-full">
             <div className="space-y-5 px-8">
               <div>
-                <h2 className="text-2xl">Untitled</h2>
-                <p className="text-xs font-normal ">Modified: 2/28/2025</p>
+                <h2 className="text-2xl">{survey?.survey_title || "Untitled"}</h2>
+                <p className="text-xs font-normal ">Modified: {formatDate(survey?.updated_at)}</p>
               </div>
               <button
                 className="hover:bg-gray-100 p-2 rounded"
@@ -251,11 +313,11 @@ function CopySurveyViewPage() {
               <p className="font-sans">You can always edit the survey later.</p>
               <div className="space-y-1">
                 <h2 className="text-sm font-medium text-gray-500">Questions</h2>
-                <p className="text-2xl font-light">5</p>
+                <p className="text-2xl font-light">{question.length}</p>
               </div>
               <div className="space-y-1">
                 <h2 className="text-sm font-medium text-gray-500">Responses</h2>
-                <p className="text-2xl font-light">0</p>
+                <p className="text-2xl font-light">{survey?.survey_responses?.length ?? 0}</p>
               </div>
               <div className="space-y-1">
                 <h2 className="text-sm font-medium text-gray-500">
@@ -274,15 +336,17 @@ function CopySurveyViewPage() {
             {/* Push this section to the bottom */}
             <div className="border-t mt-auto p-5 mb-5 space-y-5">
               <div className="w-full">
-                <Link
-                  to={`/admin/copy-survey-question`}
-                  className="bg-yellow-500 rounded-md w-full py-2 px-6 flex justify-center items-center gap-8"
+                <button
+                  type="button"
+                  onClick={handleCopySurvey}
+                  disabled={copying}
+                  className="bg-yellow-500 rounded-md w-full py-2 px-6 flex justify-center items-center gap-8 disabled:opacity-50"
                 >
-                  <h2> Copy This Survey</h2>
+                  <h2>{copying ? "Copying…" : "Copy This Survey"}</h2>
                   <span>
                     <RxArrowRight size={20} />
                   </span>
-                </Link>
+                </button>
               </div>
             </div>
           </div>
