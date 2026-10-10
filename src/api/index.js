@@ -4064,6 +4064,26 @@ export const getBuildings = async (page = 1, perpage = 10) =>
     },
   });
 
+export const getBuildingsList = async () =>
+  axiosInstance.get("/buildings.json", {
+    params: { token: token },
+  });
+
+export const getFloorsByBuilding = async (buildingId) =>
+  axiosInstance.get("/floors.json", {
+    params: { token: token, "q[building_id_eq]": buildingId },
+  });
+
+export const getUnitsByFloor = async (floorId) =>
+  axiosInstance.get("/units.json", {
+    params: { token: token, "q[floor_id_eq]": floorId },
+  });
+
+export const getUsersByUnit = async (unitId) =>
+  axiosInstance.get("/users.json", {
+    params: { token: token, "q[unit_id]": unitId },
+  });
+
 export const postBuilding = async (formData) =>
   axiosInstance.post(`/buildings.json?token=${token}`, formData, {
     headers: {
