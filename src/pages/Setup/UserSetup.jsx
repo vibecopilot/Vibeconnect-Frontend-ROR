@@ -9,6 +9,9 @@ import {
   updateUserAdminApproval,
   sendBulkWelcomeEmail,
   UsersExport,
+  getBuildings,
+  getAllFloors,
+  getAllUnits,
 } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
@@ -57,11 +60,14 @@ const UserSetup = () => {
   const [filterEmail, setFilterEmail] = useState("");
   const [filterMobile, setFilterMobile] = useState("");
   const [loading, setLoading] = useState(true);
+  const [filterAppDownloaded, setFilterAppDownloaded] = useState("");
+  const [filterBuilding, setFilterBuilding] = useState("");
+  const [filterFloor, setFilterFloor] = useState("");
+  const [filterUnit, setFilterUnit] = useState("");
+  const [buildings, setBuildings] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [units, setUnits] = useState([]);
 
-  // ✅ MANUAL PAGINATION — table only ever receives the current page's
-  // slice, so its built-in "select all" checkbox (which selects every row
-  // in whatever `data` it's given) can only ever select this page's rows,
-  // never every user across the whole filtered list.
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -225,6 +231,207 @@ const UserSetup = () => {
       toast.error("Failed to export users ❌");
     }
   };
+
+  const matchesTextFilter = (values, filterValue) => {
+    const search = String(filterValue || "").trim().toLowerCase();
+
+    if (!search) return true;
+
+    return values.some((value) =>
+      String(value ?? "").toLowerCase().includes(search)
+    );
+  };
+
+  const getFilterValues = (user, type) => {
+    const values = [];
+
+    const add = (...items) => {
+      items.forEach((item) => {
+        if (item !== null && item !== undefined && item !== "") {
+          values.push(String(item).trim().toLowerCase());
+        }
+      });
+    };
+
+    // Read the nested objects in your API response.
+    if (type === "building") {
+      add(
+        user.building?.name,
+        user.building?.id,
+        user.building_name,
+        user.build_id,
+        user.building_id
+      );
+    }
+
+    if (type === "floor") {
+      add(
+        user.floor?.name,
+        user.floor?.id,
+        user.floor_name,
+        user.floor_id,
+        user.unit?.floor_id
+      );
+    }
+
+    if (type === "unit") {
+      add(
+        user.unit?.name,
+        user.unit?.id,
+        user.unit_name,
+        user.unit_id,
+        user.full_unit_name
+      );
+    }
+
+    // Read site-specific location details.
+    if (Array.isArray(user.user_sites)) {
+      user.user_sites.forEach((site) => {
+        if (type === "building") {
+          add(
+            site.building?.name,
+            site.building?.id,
+            site.building_name,
+            site.build_id,
+            site.building_id
+          );
+        }
+
+        if (type === "floor") {
+          add(
+            site.floor?.name,
+            site.floor?.id,
+            site.floor_name,
+            site.floor_id
+          );
+        }
+
+        if (type === "unit") {
+          add(
+            site.unit?.name,
+            site.unit?.id,
+            site.unit_name,
+            site.unit_id,
+            site.full_unit_name,
+            site.hierarchy
+          );
+        }
+      });
+    }
+
+    return values;
+  };
+
+  const matchesLocationFilter = (user, type, selectedId) => {
+  if (!selectedId) return true;
+
+  const idFields = {
+    building: ["build_id", "building_id"],
+    floor: ["floor_id"],
+    unit: ["unit_id"],
+  };
+
+  const ids = [];
+  const nested = user[type];
+
+  if (nested?.id != null) {
+    ids.push(String(nested.id));
+  }
+
+  idFields[type].forEach((field) => {
+    if (user[field] != null) {
+      ids.push(String(user[field]));
+    }
+  });
+
+  if (Array.isArray(user.user_sites)) {
+    user.user_sites.forEach((site) => {
+      idFields[type].forEach((field) => {
+        if (site[field] != null) {
+          ids.push(String(site[field]));
+        }
+      });
+
+      if (site[type]?.id != null) {
+        ids.push(String(site[type].id));
+      }
+    });
+  }
+
+  return ids.includes(String(selectedId));
+};
+
+
+useEffect(() => {
+  const fetchLocationOptions = async () => {
+    if (!activeSiteId) {
+      setBuildings([]);
+      setFloors([]);
+      setUnits([]);
+      return;
+    }
+
+    try {
+      const token = getItemInLocalStorage("TOKEN");
+
+      const params = {
+        token: token || "",
+        site_id: activeSiteId,
+      };
+
+      const [buildingResponse, floorResponse, unitResponse] =
+        await Promise.all([
+          getBuildings({
+            ...params,
+            Page: 1,
+            Per_Page: 1000,
+          }),
+          getAllFloors(params),
+          getAllUnits(params),
+        ]);
+
+      const getList = (response, keys) => {
+        const data = response?.data ?? response;
+
+        if (Array.isArray(data)) {
+          return data;
+        }
+
+        for (const key of keys) {
+          if (Array.isArray(data?.[key])) {
+            return data[key];
+          }
+        }
+
+        return [];
+      };
+
+      setBuildings(
+        getList(buildingResponse, ["buildings", "data"])
+      );
+
+      setFloors(
+        getList(floorResponse, ["floors", "data"])
+      );
+
+      setUnits(
+        getList(unitResponse, ["units", "data"])
+      );
+    } catch (error) {
+      console.error("Location options error:", error);
+
+      setBuildings([]);
+      setFloors([]);
+      setUnits([]);
+
+      toast.error("Failed to load location options");
+    }
+  };
+
+  fetchLocationOptions();
+}, [activeSiteId]);
+
+
   /* ---------------- DATE FILTER ---------------- */
   const dateFilteredUsers = useMemo(() => {
     let data = [...tabFilteredUsers];
@@ -233,6 +440,9 @@ const UserSetup = () => {
     const lastName = filterLastName.trim().toLowerCase();
     const email = filterEmail.trim().toLowerCase();
     const mobile = filterMobile.trim().toLowerCase();
+    const building = filterBuilding.trim().toLowerCase();
+    const floor = filterFloor.trim().toLowerCase();
+    const unit = filterUnit.trim().toLowerCase();
 
     return data.filter((user) => {
       /* ---------- FIRST NAME ---------- */
@@ -303,6 +513,51 @@ const UserSetup = () => {
         }
       }
 
+      // APP DOWNLOADED FILTER
+      if (filterAppDownloaded !== "") {
+        const downloaded =
+          user.is_downloaded === true ||
+          String(user.is_downloaded).toLowerCase() === "true" ||
+          String(user.is_downloaded) === "1";
+
+        if (filterAppDownloaded === "yes" && !downloaded) {
+          return false;
+        }
+
+        if (filterAppDownloaded === "no" && downloaded) {
+          return false;
+        }
+      }
+if (
+  !matchesLocationFilter(
+    user,
+    "building",
+    filterBuilding
+  )
+) {
+  return false;
+}
+
+if (
+  !matchesLocationFilter(
+    user,
+    "floor",
+    filterFloor
+  )
+) {
+  return false;
+}
+
+if (
+  !matchesLocationFilter(
+    user,
+    "unit",
+    filterUnit
+  )
+) {
+  return false;
+}
+
       return true;
     });
   }, [
@@ -313,6 +568,10 @@ const UserSetup = () => {
     filterMobile,
     fromDate,
     toDate,
+    filterAppDownloaded,
+    filterBuilding,
+    filterFloor,
+    filterUnit,
   ]);
 
   // ✅ Reset to page 1 whenever the filtered list itself changes (tab,
@@ -335,7 +594,17 @@ const UserSetup = () => {
     setFilterLastName("");
     setFilterEmail("");
     setFilterMobile("");
+    setFilterAppDownloaded("");
+    setFilterBuilding("");
+    setFilterFloor("");
+    setFilterUnit("");
+    setSearchText("");
+    setFilteredData(users);
+    setCurrentPage(1);
     setFilterOpen(false);
+    setFilterBuilding("");
+setFilterFloor("");
+setFilterUnit("");
   };
 
   /* ---------------- USER APPROVAL ---------------- */
@@ -537,19 +806,21 @@ const UserSetup = () => {
           </Link>
         </div>
       ),
-      width: "200px",
+      width: "100px",
     },
 
     {
       name: "First Name",
       selector: (row) => row.firstname,
       sortable: true,
+      width: "100px",
     },
 
     {
       name: "Last Name",
       selector: (row) => row.lastname,
       sortable: true,
+      width: "100px",
     },
 
     {
@@ -562,6 +833,7 @@ const UserSetup = () => {
       name: "Mobile",
       selector: (row) => row.mobile || "NA",
       sortable: true,
+      width: "150px",
     },
 
     {
@@ -616,7 +888,7 @@ const UserSetup = () => {
         );
       },
       sortable: true,
-      width: "180px",
+      width: "160px",
     },
 
     {
@@ -744,6 +1016,7 @@ const UserSetup = () => {
         </label>
       ),
       sortable: true,
+      width: "120px"
     },
 
     {
@@ -783,6 +1056,7 @@ const UserSetup = () => {
           </span>
         ),
       sortable: true,
+      width: "150px"
     },
 
     {
@@ -824,12 +1098,12 @@ const UserSetup = () => {
       icon: <FaDownload size={22} />,
       bg: "bg-green-400 text-white",
     },
-    {
-      title: "Device Registered",
-      value: count?.total_user_downloads || 0,
-      icon: <MdDevices size={22} />,
-      bg: "bg-purple-400 text-white",
-    },
+    // {
+    //   title: "Device Registered",
+    //   value: count?.total_user_downloads || 0,
+    //   icon: <MdDevices size={22} />,
+    //   bg: "bg-purple-400 text-white",
+    // },
     {
       title: "Tenant Register",
       value: tenantCount || 0,
@@ -997,13 +1271,13 @@ const UserSetup = () => {
         ) : (
           <>
             {/* DASHBOARD */}
-            <div className="grid lg:grid-cols-8 md:grid-cols-5 grid-cols-1 gap-8">
+            <div className="grid lg:grid-cols-7 md:grid-cols-5 grid-cols-1 gap-4">
               {dashboardCards.map((card, index) => (
                 <div
                   key={index}
                   className={`bg-gradient-to-r ${card.bg} rounded-xl p-3 shadow-lg hover:scale-90 transform transition duration-300`}
                 >
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center h-[70px]">
                     <div>
                       <h3 className="text-sm font-medium opacity-90">
                         {card.title}
@@ -1023,7 +1297,7 @@ const UserSetup = () => {
             </div>
 
             {/* TABLE */}
-            <div className="bg-white rounded-xl shadow-md p-4">
+            <div className="bg-white rounded-xl shadow-md p-3">
               <Table
                 columns={userColumn}
                 data={pagedUsers}
@@ -1123,6 +1397,125 @@ const UserSetup = () => {
                     className="w-full border border-gray-300 rounded-lg p-2.5 mt-1 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
+
+
+                {/* APP DOWNLOADED */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    App Downloaded
+                  </label>
+                  <select
+                    value={filterAppDownloaded}
+                    onChange={(e) => setFilterAppDownloaded(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1"
+                  >
+                    <option value="">All</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </div>
+
+
+                {/* BUILDING DROPDOWN */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Building
+                  </label>
+
+                  <select
+                    value={filterBuilding}
+                    onChange={(e) => {
+                      setFilterBuilding(e.target.value);
+                      setFilterFloor("");
+                      setFilterUnit("");
+                    }}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1"
+                  >
+                    <option value="">All Buildings</option>
+
+                    {buildings.map((building) => (
+                      <option key={building.id} value={String(building.id)}>
+                        {building.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* FLOOR DROPDOWN */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Floor
+                  </label>
+
+                  <select
+                    value={filterFloor}
+                    onChange={(e) => {
+                      setFilterFloor(e.target.value);
+                      setFilterUnit("");
+                    }}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1"
+                  >
+                    <option value="">All Floors</option>
+
+                    {floors
+                      .filter((floor) => {
+                        if (!filterBuilding) return true;
+
+                        return String(
+                          floor.building_id ??
+                          floor.build_id ??
+                          floor.building?.id ??
+                          ""
+                        ) === filterBuilding;
+                      })
+                      .map((floor) => (
+                        <option key={floor.id} value={String(floor.id)}>
+                          {floor.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                {/* UNIT DROPDOWN */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Unit
+                  </label>
+
+                  <select
+                    value={filterUnit}
+                    onChange={(e) => setFilterUnit(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2.5 mt-1"
+                  >
+                    <option value="">All Units</option>
+
+                    {units
+                      .filter((unit) => {
+                        if (filterFloor) {
+                          return String(
+                            unit.floor_id ?? unit.floor?.id ?? ""
+                          ) === filterFloor;
+                        }
+
+                        if (filterBuilding) {
+                          return String(
+                            unit.building_id ??
+                            unit.build_id ??
+                            unit.building?.id ??
+                            ""
+                          ) === filterBuilding;
+                        }
+
+                        return true;
+                      })
+                      .map((unit) => (
+                        <option key={unit.id} value={String(unit.id)}>
+                          {unit.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
 
                 {/* FROM DATE */}
                 <div>

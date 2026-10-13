@@ -142,7 +142,7 @@ const Broadcast = () => {
 
     {
       name: "Created By",
-      selector: (row) => row.CreatedBy,
+      selector: (row) => row.created_by,
       sortable: true,
     },
 
