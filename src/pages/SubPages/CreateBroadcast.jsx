@@ -20,6 +20,7 @@ const CreateBroadcast = () => {
   const [share, setShare] = useState("all");
   const themeColor = useSelector((state) => state.theme.color);
   const siteId = getItemInLocalStorage("SITEID");
+  const userId = getItemInLocalStorage("UserId");
 
   const [units, setUnits] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
@@ -439,6 +440,11 @@ const CreateBroadcast = () => {
       formDataSend.append(
         "notice[site_id]",
         formData.site_id
+      );
+
+      formDataSend.append(
+        "notice[notice[created_by_id]",
+        formData.userId
       );
 
       formDataSend.append(

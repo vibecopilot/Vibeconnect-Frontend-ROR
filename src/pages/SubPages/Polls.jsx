@@ -128,7 +128,7 @@ function Polls() {
             />
           </div>
         ) : (
-          <div className="md:grid grid-cols-2 gap-2">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {pollsData.length > 0 ? (
               pollsData.map((poll) => {
                 // Total votes
