@@ -2,13 +2,38 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import SetupNavbar from "../../../components/navbars/SetupNavbar";
-import { getSetupUsers, addUserToAnotherFlat, putSetupUser } from "../../../api";
+import {
+  getSetupUsers,
+  addUserToAnotherFlat,
+  putSetupUser,
+  updateUserAdminApproval,
+} from "../../../api";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
 
 const UserSetupDetails = () => {
   const { siteId, id } = useParams();
   const [user, setUser] = useState(null);
   const [showAddFlatModal, setShowAddFlatModal] = useState(false);
   const navigate = useNavigate();
+  const token = getItemInLocalStorage("TOKEN");
+
+  const handleAdminApproval = async (status) => {
+    try {
+      const payload = {
+        user_status: true,
+        is_admin_approved: status,
+      };
+
+      await updateUserAdminApproval(id, payload, token);
+
+      toast.success(status ? "User Approved Successfully" : "User Rejected");
+
+      fetchUserDetails(); // refresh user data
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update approval");
+    }
+  };
 
   const [profilePreview, setProfilePreview] = useState(null);
 
@@ -135,8 +160,7 @@ const UserSetupDetails = () => {
           <SetupNavbar />
         </aside>
 
-        <main
-          className="flex-1 flex items-center justify-center">
+        <main className="flex-1 flex items-center justify-center">
           <p className="text-lg text-white font-semibold">
             Loading user details...
           </p>
@@ -147,9 +171,7 @@ const UserSetupDetails = () => {
 
   return (
     <>
-      <section
-        className="flex flex-col md:flex-row min-h-screen"
-      >
+      <section className="flex flex-col md:flex-row min-h-screen">
         <SetupNavbar />
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 overflow-auto">
@@ -226,6 +248,7 @@ const UserSetupDetails = () => {
                 <InfoBox label="Last Name" value={user.lastname} />
                 <InfoBox label="Email" value={user.email} />
                 <InfoBox label="Mobile" value={user.mobile} />
+                <InfoBox label="lives_here" value={user.lives_here ? "Yes" : "No"} />
 
                 <div className="bg-[#F9FAFB] p-4 rounded-lg shadow-sm">
                   <strong>Status:</strong>
@@ -256,6 +279,40 @@ const UserSetupDetails = () => {
                       Inactive
                     </button>
                   </div>
+                </div>
+                <div className="bg-[#F9FAFB] p-4 rounded-lg shadow-sm">
+                  <strong>Approvals:</strong>
+
+                  {/* Show Approve / Reject buttons only if admin approval is pending */}
+                  {user.is_admin_approved === null ? (
+                    <div className="mt-2 flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleAdminApproval(true)}
+                        className="px-3 py-1.5 text-sm rounded-lg border font-medium bg-green-600 text-white border-green-700 hover:bg-green-700"
+                      >
+                        Approve
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAdminApproval(false)}
+                        className="px-3 py-1.5 text-sm rounded-lg border font-medium bg-red-600 text-white border-red-700 hover:bg-red-700"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <p
+                      className={`mt-2 font-medium ${
+                        user.is_admin_approved
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
+                      {user.is_admin_approved ? "Approved" : "Rejected"}
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
@@ -374,7 +431,7 @@ const UserSetupDetails = () => {
                   [
                     { value: "", label: "Select" },
                     { value: "VC Tower", label: "VC Tower" },
-                  ]
+                  ],
                 )}
 
                 {renderInputOrSelect(
@@ -389,7 +446,7 @@ const UserSetupDetails = () => {
                     { value: "2", label: "2" },
                     { value: "3", label: "3" },
                   ],
-                  addFlatForm.tower === ""
+                  addFlatForm.tower === "",
                 )}
 
                 {renderInputOrSelect(
@@ -405,7 +462,7 @@ const UserSetupDetails = () => {
                     { value: "201", label: "201" },
                     { value: "202", label: "202" },
                   ],
-                  addFlatForm.floor === ""
+                  addFlatForm.floor === "",
                 )}
 
                 {renderInputOrSelect(
@@ -419,7 +476,7 @@ const UserSetupDetails = () => {
                     { value: "Owner", label: "Owner" },
                     { value: "Tenant", label: "Tenant" },
                     { value: "Builder", label: "Builder" },
-                  ]
+                  ],
                 )}
 
                 {renderInputOrSelect(
@@ -432,7 +489,7 @@ const UserSetupDetails = () => {
                     { value: "", label: "Select" },
                     { value: "Yes", label: "Yes" },
                     { value: "No", label: "No" },
-                  ]
+                  ],
                 )}
 
                 {renderInputOrSelect(
@@ -446,7 +503,7 @@ const UserSetupDetails = () => {
                     { value: "Approved", label: "Approved" },
                     { value: "Pending", label: "Pending" },
                     { value: "Rejected", label: "Rejected" },
-                  ]
+                  ],
                 )}
 
                 {renderInputOrSelect(
@@ -458,7 +515,7 @@ const UserSetupDetails = () => {
                   [
                     { value: "Primary", label: "Primary" },
                     { value: "Secondary", label: "Secondary" },
-                  ]
+                  ],
                 )}
 
                 {renderInputOrSelect(
@@ -466,14 +523,14 @@ const UserSetupDetails = () => {
                   "gstNumber",
                   "text",
                   addFlatForm,
-                  handleFormChange
+                  handleFormChange,
                 )}
                 {renderInputOrSelect(
                   "PAN Number",
                   "panNumber",
                   "text",
                   addFlatForm,
-                  handleFormChange
+                  handleFormChange,
                 )}
               </div>
 
@@ -515,7 +572,7 @@ const renderInputOrSelect = (
   form,
   onChange,
   options = [],
-  disabled = false
+  disabled = false,
 ) => {
   return (
     <div>
@@ -552,15 +609,3 @@ const renderInputOrSelect = (
 };
 
 export default UserSetupDetails;
-
-
-
-
-// import React, { useState } from "react";
-
-// import Navbar from "../../../components/Navbar";
-// import TicketSetupPage from "./TicketSetupPage";
-// import TicketEscalationSetup from "./TicketEscalationSetup";
-// import TicketCostApprovalSetup from "./TicketCostApprovalSetup";  
-// const TicketSetup = () => {
-//     const [page, setPage] = useState("Setup");

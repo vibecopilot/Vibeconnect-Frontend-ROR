@@ -130,36 +130,61 @@ const FitoutDocs = ({ handleToggleCategoryPage1, setCAtAdded }) => {
     fetchCategory();
   }, []);
 
-  console.log("catgory", categories);
+  // console.log("catgory", categories);
+
   const uploadDocuments = async () => {
+
+    // Validation
+    if (!inputValue.trim()) {
+      toast.error("Please enter document name");
+      return;
+    }
+
+    if (!formData.fitout_docs || formData.fitout_docs.length === 0) {
+      toast.error("Please upload at least one document");
+      return;
+    }
 
     const sendData = new FormData();
 
     sendData.append("fitout_document[name]", inputValue);
-    // sendData.append("fit_out_setup_category[tat]", formData.minTat);
 
-    // sendData.append(
-    //   "fit_out_setup_category[assigned_id]",
-    //   formData.assigned_id
-    // );
-    (formData.fitout_docs || []).forEach((file, index) => {
+    (formData.fitout_docs || []).forEach((file) => {
       sendData.append("fitout_docs[]", file);
-      // console.log(documents)
     });
+
     try {
       const resp = await postFitoutDocsUpload(sendData);
+
       console.log("resp", resp);
-      setFormData({ ...formData, category: "", minTat: "", engineer: [] });
-      toast.success("Docs Uploaded Sucessfully!");
+
+      toast.success("Docs Uploaded Successfully!");
+
+      // reset form
+      setInputValue("");
+
+      setFormData({
+        fitout_request_id: "",
+        name: "",
+        fitout_docs: [],
+      });
+
+      // close popup
+      setIsModalOpen1(false);
+
+      // close add document page
+      handleToggleCategoryPage1();
+
+      // refresh list
+      if (setCAtAdded) {
+        setCAtAdded((prev) => !prev);
+      }
+
     } catch (error) {
       console.log(error);
-    } finally {
-      setTimeout(() => {
-        setIsModalOpen1(false);
-      }, 500);
+      toast.error("Failed to upload documents");
     }
   };
-
   const [inputValue, setInputValue] = useState("");
 
   const handleBHKPriceChange = (bhkType, value) => {

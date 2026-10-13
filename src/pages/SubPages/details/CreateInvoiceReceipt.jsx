@@ -100,21 +100,29 @@ function CreateInvoiceReceipt() {
   //     fetchAddressSetup(); // Call the API
   //   }, []);
 
-  useEffect(() => {
-    const fetchCamBilling = async () => {
-      try {
-        const response = await getCamBillingDataDetails(id);
-        setInvoiceNumber(response.data);
-        setFormData({
-          ...formData,
-          invoiceNumber: response.data.invoice_number,
-        }); // Ensure response.data is structured as expected
-      } catch (err) {
-        console.error("Failed to fetch Address Setup data:", err);
-      }
-    };
-    fetchCamBilling(); // Call the API
-  }, [id]);
+useEffect(() => {
+  const fetchCamBilling = async () => {
+    try {
+      const response = await getCamBillingDataDetails(id);
+
+      console.log("API Response:", response.data);
+
+      setInvoiceNumber(response.data);
+
+      setFormData((prev) => ({
+        ...prev,
+        invoiceNumber: response?.data?.invoice_number || "",
+      }));
+
+    } catch (err) {
+      console.error("Failed to fetch CAM Billing data:", err);
+    }
+  };
+
+  if (id) {
+    fetchCamBilling();
+  }
+}, [id]);
   return (
     <section className="flex">
       <div className="hidden md:block">
@@ -340,7 +348,13 @@ function CreateInvoiceReceipt() {
                 />
               </div>
             </div>
-            <div className="flex justify-center my-5">
+            <div className="flex justify-end my-5 gap-3">
+                 <button
+                className="p-1 px-4 border-2 rounded-md text-black font-medium bg-gray-300"
+                onClick={() => navigate(`/cam_bill/details/${id}`)}
+              >
+                Cancel
+              </button>
               <button
                 className="p-1 px-4 border-2 rounded-md text-white font-medium"
                 style={{ background: themeColor }}

@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
-import { getFacitilitySetupId } from "../../api";
+import { domainPrefix, getFacitilitySetupId } from "../../api";
 import { useParams } from "react-router-dom";
 import { formatTime } from "../../utils/dateUtils";
+import { useSelector } from "react-redux";
 
 const FacilityDetails = () => {
   const { id } = useParams(); // The ID from URL params
   const [facilityData, setFacilityData] = useState(null); // Set initial state as null, to track loading properly
   const [error, setError] = useState(null); // Error state
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true);
+  const themeColor = useSelector((state) => state.theme.color);
 
   // Fetch the facility details for the specific ID
   const fetchFacilityBooking = async () => {
@@ -16,12 +18,11 @@ const FacilityDetails = () => {
       const response = await getFacitilitySetupId(id); // API call
       console.log("Amenitis", response.data); // Check the raw response
 
-      // Filter the specific facility by ID (assuming 'id' is unique in the response)
-      const facility = response.data.id === parseInt(id)
-      console.log("facility ", facility);
-
-      if (facility) {
-        setFacilityData(response.data); // Set only the matching facility
+      if (response.data && response.data.id && Number(response.data.id) === Number(id)) {
+        setFacilityData(response.data);
+      } else if (response.data && !response.data.id) {
+        // Some endpoints may return a single object without id in payload
+        setFacilityData(response.data);
       } else {
         setError("Facility not found.");
       }
@@ -33,9 +34,19 @@ const FacilityDetails = () => {
     }
   };
 
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
   console.log("AMENITIes", facilityData);
 
-  const domainPrefix = "https://admin.vibecopilot.ai";
+  // const domainPrefix = "https://admin.vibecopilot.ai";
   // const domainPrefix = "http://localhost:3002";
 
   useEffect(() => {
@@ -54,30 +65,26 @@ const FacilityDetails = () => {
     return <p>No data found for this facility.</p>;
   }
 
-  const handlePaymentCheckbox = (e) => {
-    const { name, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
-  };
   return (
     <section className="flex">
       <Navbar />
       <div className="w-full p-4 mb-5">
         <h1
-          style={{ background: "rgb(17, 24, 39)" }}
-          className="bg-black text-white font-semibold rounded-md text-center p-2"
+          style={{ background: themeColor }}
+          className=" text-white font-semibold rounded-md text-center p-2"
         >
           Facility Details
         </h1>
 
         {/* Facility Info */}
         <div className="my-4">
-          <h2 className="border-b border-black text-lg font-medium mb-2">
-            Facility Information
-          </h2>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div>
+            <h2 className="border-b border-black text-lg font-medium mb-2">
+              Facility Information
+            </h2>
+
+          </div>
+          <div className="grid md:grid-cols-4 gap-4">
             <div>
               <p className="font-medium">Facility Name:</p>
               <p>{facilityData.fac_name || "N/A"}</p>
@@ -94,6 +101,10 @@ const FacilityDetails = () => {
               <p className="font-medium">Active:</p>
               <p>{facilityData.active ? "Yes" : "No"}</p>
             </div>
+            <div>
+              <p className="font-medium">Type of Facility:</p>
+              <p>{facilityData.type_of_facility || "-"}</p>
+            </div>
           </div>
         </div>
 
@@ -102,28 +113,41 @@ const FacilityDetails = () => {
           <h2 className="border-b border-black text-lg font-medium mb-2">
             Fee Details
           </h2>
-          <div className="border shadow-md rounded-lg bg-blue-50 p-4">
-            {/* {["member", "guest", "tenant"].map((type) => ( */}
-            {["member", "guest"].map((type) => (
-              <div key={type} className="my-2">
-                <p className="font-medium capitalize">{type}:</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p>Adult Fee:</p>
-                    <p>{facilityData[`${type}_price_adult`] || "0"}</p>
-                  </div>
-                  {/* <div>
-                    <p>Child Fee:</p>
-                    <p>{facilityData[`${type}_price_child`] || "0"}</p>
-                  </div> */}
-                </div>
-              </div>
-            ))}
-            <div className="border p-2 rounded-md">
-              <p className="font-medium text-bold capitalize gap-5">
-                Fixed Price: {facilityData?.fixed_amount || "0"}
-              </p>
+          <div className="grid md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 p-4 rounded">
+              <p className="font-medium">Member</p>
+              <p>Adult: ₹{facilityData.member_price_adult || 0}</p>
+              <p>Child: ₹{facilityData.member_price_child || 0}</p>
             </div>
+
+            <div className="bg-yellow-50 p-4 rounded">
+              <p className="font-medium"> Non Member</p>
+              <p>Adult: ₹{facilityData.non_member_price_adult || 0}</p>
+              <p>Child: ₹{facilityData.non_member_price_child || 0}</p>
+            </div>
+
+            <div className="bg-green-50 p-4 rounded">
+              <p className="font-medium">Guest</p>
+              <p>Adult: ₹{facilityData.guest_price_adult || 0}</p>
+              <p>Child: ₹{facilityData.guest_price_child || 0}</p>
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded">
+              <p className="font-medium">Tenant</p>
+              <p>Adult: ₹{facilityData.tenant_price_adult || 0}</p>
+              <p>Child: ₹{facilityData.tenant_price_child || 0}</p>
+            </div>
+          </div>
+
+          <div className="mt-4 bg-yellow-50 p-3 rounded">
+            <p>
+              Fixed Price: ₹
+              {facilityData.fixed_amount &&
+                facilityData.fixed_amount !== "null"
+                ? facilityData.fixed_amount
+                : 0}
+            </p>
+            <p>GST: {facilityData.gst || 0}%</p>
           </div>
           <div className="border-b border-black">
             <div className="grid grid-cols-3 p-4 gap-4">
@@ -204,6 +228,95 @@ const FacilityDetails = () => {
           )}
         </div>
 
+        {/* Booking Rules */}
+        <div className="my-4">
+          <h2 className="border-b border-black text-lg font-medium mb-2">
+            Booking Rules
+          </h2>
+          {facilityData.amenity_rules?.length > 0 ? (
+            facilityData.amenity_rules.map((rule, index) => (
+              <div key={index} className="border rounded-lg bg-white p-4 mb-2">
+                <p className="font-medium">Rule {index + 1}:</p>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <p>Enumerator:</p>
+                    <p>{rule.enumerator ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Duration:</p>
+                    <p>{rule.duration ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Level:</p>
+                    <p>{rule.level ?? "N/A"}</p>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-3 gap-4 mt-2">
+                  <div>
+                    <p>Times per day:</p>
+                    <p>{rule.times_per_day ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Period type:</p>
+                    <p>{rule.period_type ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <p>Active:</p>
+                    <p>{rule.active ? "Yes" : "No"}</p>
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <p className="font-medium">Prime Times:</p>
+                  {rule.prime_time?.length > 0 ? (
+                    rule.prime_time.map((pt, idx) => (
+                      <p key={idx}>
+                        {pt.start_time || "N/A"} - {pt.end_time || "N/A"}
+                      </p>
+                    ))
+                  ) : (
+                    <p>No prime times configured.</p>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No booking rules configured.</p>
+          )}
+        </div>
+
+        {/* Operational Days */}
+        <div className="my-4">
+          <h2 className="border-b border-black text-lg font-medium mb-2">
+            Operational Days
+          </h2>
+          {facilityData.operational_days?.length > 0 ? (
+            facilityData.operational_days.map((day, index) => (
+              <div key={index} className="border rounded-lg bg-white p-4 mb-2">
+                <div className="grid md:grid-cols-4 gap-4">
+                  <div>
+                    <p>Day of week:</p>
+                    <p> {days[day.day_of_week] || " "}</p>
+                  </div>
+                  <div>
+                    <p>Start time:</p>
+                    <p>{day.start_time || "-"}</p>
+                  </div>
+                  <div>
+                    <p>End time:</p>
+                    <p>{day.end_time || "-"}</p>
+                  </div>
+                  <div>
+                    <p>Is active:</p>
+                    <p>{day.is_active ? "Yes" : "No"}</p>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No operational days configured.</p>
+          )}
+        </div>
+
         {/* Images Section */}
         <div className="my-4">
           <h2 className="border-b border-black text-lg font-medium mb-2">
@@ -221,7 +334,7 @@ const FacilityDetails = () => {
                       className="rounded-lg border overflow-hidden"
                     >
                       <img
-                        src={domainPrefix + image_url.image_url}
+                        src={image_url.image_url}
                         alt={`Cover ${index + 1}`}
                         className="object-cover rounded-md w-full h-40 transition-transform transform hover:scale-110"
                       />
@@ -245,14 +358,14 @@ const FacilityDetails = () => {
               <h2 className="font-medium text-lg mb-2">Attachments</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {facilityData.attachments &&
-                facilityData.attachments.length > 0 ? (
+                  facilityData.attachments.length > 0 ? (
                   facilityData.attachments.map((doc, index) => (
                     <div
                       key={index}
                       className="rounded-lg border overflow-hidden"
                     >
                       <img
-                        src={domainPrefix + doc.image_url}
+                        src={doc.image_url}
                         alt={`Attachment`}
                         className="object-cover rounded-md w-full h-40 transition-transform transform hover:scale-110"
                       />
@@ -266,6 +379,23 @@ const FacilityDetails = () => {
           </div>
         </div>
 
+        {/* Sub Facilities */}
+        {facilityData.sub_facilities && facilityData.sub_facilities.length > 0 && (
+          <div className="mt-6 p-4 bg-white rounded-lg shadow-md border">
+            <h2 className="font-semibold text-lg mb-3">Sub Facilities</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {facilityData.sub_facilities.map((sf, index) => (
+                <div key={index} className="border rounded-lg p-3 flex justify-between items-center">
+                  <span className="font-medium text-gray-700">{sf.name}</span>
+                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${sf.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
+                    {sf.status || "N/A"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Description */}
         <div className="mt-6 p-4 bg-blue-50 rounded-lg shadow-md border">
           <div className="mb-4">
@@ -273,9 +403,8 @@ const FacilityDetails = () => {
               Description:
             </h3>
             <p
-              className={`text-gray-600 ${
-                facilityData.description ? "" : "italic text-gray-400"
-              }`}
+              className={`text-gray-600 ${facilityData.description ? "" : "italic text-gray-400"
+                }`}
             >
               {facilityData.description || "NA"}
             </p>
@@ -285,9 +414,8 @@ const FacilityDetails = () => {
               Terms and Conditions:
             </h3>
             <p
-              className={`text-gray-600 ${
-                facilityData.terms ? "" : "italic text-gray-400"
-              }`}
+              className={`text-gray-600 ${facilityData.terms ? "" : "italic text-gray-400"
+                }`}
             >
               {facilityData.terms || "NA"}
             </p>
@@ -297,9 +425,8 @@ const FacilityDetails = () => {
               Terms and Conditions:
             </h3>
             <p
-              className={`text-gray-600 ${
-                facilityData.cancellation_policy ? "" : "italic text-gray-400"
-              }`}
+              className={`text-gray-600 ${facilityData.cancellation_policy ? "" : "italic text-gray-400"
+                }`}
             >
               {facilityData.cancellation_policy || "NA"}
             </p>

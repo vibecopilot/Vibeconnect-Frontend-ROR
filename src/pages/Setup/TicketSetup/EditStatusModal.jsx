@@ -3,14 +3,12 @@ import ModalWrapper from "../../../containers/modals/ModalWrapper";
 import { BiEditAlt } from "react-icons/bi";
 import { useSelector } from "react-redux";
 import { ColorPicker } from "antd";
-import {
-  editHelpDeskStatusDetailsSetup,
-  getHelpDeskStatusDetailsSetup,
-} from "../../../api";
+import { getHelpDeskStatusDetailsSetup, updateHelpDeskStatus } from "../../../api";
+import axiosInstance from "../../../api/axiosInstance";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import toast from "react-hot-toast";
 
-const EditStatusModal = ({ onClose, id, setStatusAdded }) => {
+const EditStatusModal = ({ onClose, id, onUpdated }) => {
   const themeColor = useSelector((state) => state.theme.color);
 
   const [formData, setFormData] = useState({
@@ -32,8 +30,11 @@ const EditStatusModal = ({ onClose, id, setStatusAdded }) => {
   };
 
   // Color picker handler
-  const handleColorChange = (_, hex) => {
-    setFormData((prev) => ({ ...prev, color: hex }));
+  const handleColorChange = (color) => {
+    setFormData((prev) => ({
+      ...prev,
+      color: color.toHexString(),
+    }));
   };
 
   useEffect(() => {
@@ -60,57 +61,62 @@ const EditStatusModal = ({ onClose, id, setStatusAdded }) => {
   }, [id]);
 
   const handleEditStatus = async () => {
-    console.log("Save clicked", { id, formData, siteID }); // Enhanced debug
-
     if (!id) {
       toast.error("Invalid Status ID");
       return;
     }
 
-    if (!formData.status.trim()) {
-      toast.error("Status name is required");
-      return;
-    }
-
     setLoading(true);
 
-    const payload = {
-      complaint_status: {
-        of_phase: "pms",
-        society_id: siteID,
-        name: formData.status,
-        fixed_state: formData.fixedState,
-        color_code: formData.color,
-        position: parseInt(formData.order) || 0, // Ensure number
-      },
-    };
-
     try {
-      const res = await editHelpDeskStatusDetailsSetup(id, payload);
-      console.log("Update success:", res);
+      const payload = new FormData();
+
+      payload.append("complaint_status[name]", formData.status);
+      payload.append(
+        "complaint_status[fixed_state]",
+        formData.fixedState
+      );
+
+      // remove extra quotes if any
+      payload.append(
+        "complaint_status[color_code]",
+        formData.color.replace(/"/g, "")
+      );
+
+      payload.append(
+        "complaint_status[position]",
+        String(formData.order)
+      );
+
+      payload.append("complaint_status[of_phase]", "pms");
+
+      payload.append(
+        "complaint_status[society_id]",
+        String(siteID)
+      );
+
+      const response = await updateHelpDeskStatus(id, payload);
+
+      console.log("Update Success:", response.data);
 
       toast.success("Status updated successfully");
-      setStatusAdded(true);
+
+      if (onUpdated) {
+        onUpdated();
+      }
+
       onClose();
     } catch (error) {
-      console.error("Update Error Details:", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
-      });
+      console.error("UPDATE ERROR:", error?.response || error);
 
-      const errorMsg = error.response?.data?.errors 
-        ? JSON.stringify(error.response.data.errors)
-        : error.response?.status === 404 
-          ? "Status not found or update endpoint unavailable"
-          : "Update failed";
-
-      toast.error(errorMsg);
+      toast.error(
+        error?.response?.data?.message || "Update failed"
+      );
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <ModalWrapper onclose={onClose}>

@@ -250,7 +250,7 @@ function CAMBillingDetails() {
     },
     {
       name: "Amount",
-      selector: (row) => row.total_amount,
+      selector: (row) => row.paid_amount,
       sortable: true,
     },
     {
@@ -369,30 +369,26 @@ function CAMBillingDetails() {
         <div className="flex justify-end mx-5">
           <div className="md:flex grid grid-cols-2 sm:flex-row flex-col gap-2">
             <button
-              className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
-              style={{ background: themeColor }}
+              className="font-semibold text-white  bg-blue-700 px-4 p-1 flex gap-2 items-center justify-center rounded-md"
               onClick={() => setRecallModal(true)}
             >
               Recall
             </button>
             <Link
               to={`/cam_bill/create-invoice-receipt/${id}`}
-              style={{ background: themeColor }}
-              className="px-4 py-2  font-medium text-white rounded-md flex gap-2 items-center justify-center"
+              className="px-4 py-2  font-medium text-white  bg-blue-700 rounded-md flex gap-2 items-center justify-center"
             >
               Create Invoice Receipt
             </Link>
             <button
-              className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
-              style={{ background: themeColor }}
+              className="font-semibold text-white px-4 p-1 bg-blue-700  flex gap-2 items-center justify-center rounded-md"
               onClick={() => setReceivePayment(true)}
             >
               Receive Payment
             </button>
             <button
               onClick={handleDownload}
-              className="font-semibold text-white px-4 p-1 flex gap-2 items-center justify-center rounded-md"
-              style={{ background: themeColor }}
+              className="font-semibold text-white px-4 p-1  bg-blue-700 flex gap-2 items-center justify-center rounded-md"
             >
               <FaDownload />
               Download Invoice
@@ -520,7 +516,7 @@ function CAMBillingDetails() {
           <div className="overflow-x-auto rounded-md">
             <table className="min-w-full border-collapse border border-gray-300">
               <thead>
-                <tr style={{ background: themeColor }}>
+                <tr className="text-white" style={{ background: themeColor }}>
                   {columns.map((column, index) => (
                     <th
                       key={index}
@@ -538,6 +534,7 @@ function CAMBillingDetails() {
                       <td
                         key={colIndex}
                         className="border border-gray-300 px-4 py-2 text-sm text-black"
+
                       >
                         {row[column.key]}
                       </td>

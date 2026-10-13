@@ -6,6 +6,7 @@ import {
   getAssignedTo,
   getChecklistDetails,
   getChecklistGroupReading,
+  getChecklistGroups,
   getHostList,
   getMasterChecklist,
   getSiteAsset,
@@ -34,6 +35,8 @@ const AddChecklist = () => {
   const [selectedOptionssupervisior, setSelectedOptionssupervisior] = useState(
     []
   );
+  const [checklistGroups, setChecklistGroups] = useState([]);
+  const [checklistGroup, setChecklistGroup] = useState("");
   const [optionssupervisior, setOptionssupervisior] = useState([]);
   const month = String(toDay.getMonth() + 1).padStart(2, "0");
   const day = String(toDay.getDate()).padStart(2, "0");
@@ -86,6 +89,19 @@ const AddChecklist = () => {
     };
     fetchSiteOwners();
   }, []);
+  useEffect(() => {
+    const fetchChecklistGroups = async () => {
+      try {
+        const resp = await getChecklistGroups();
+        setChecklistGroups(resp.data);
+        console.log("Checklist Groups:", resp.data);
+      } catch (error) {
+        console.log("Error fetching checklist groups:", error);
+      }
+    };
+
+    fetchChecklistGroups();
+  }, []);
   const [addNewQuestion, setAddNewQuestion] = useState([
     {
       name: "",
@@ -121,6 +137,7 @@ const AddChecklist = () => {
     ]);
   };
   useEffect(() => {
+    if (!masterid) return;
     const fetchServicesChecklistDetails = async () => {
       const checklistDetailsResponse = await getChecklistDetails(masterid);
       const data = checklistDetailsResponse.data;
@@ -173,6 +190,7 @@ const AddChecklist = () => {
           image_for_question: [],
           weightage: "",
           rating: false,
+          field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
         },
       ],
     },
@@ -196,6 +214,7 @@ const AddChecklist = () => {
             image_for_question: [],
             weightage: "",
             rating: false,
+            field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
           },
         ],
       },
@@ -222,6 +241,7 @@ const AddChecklist = () => {
       image_for_question: [],
       weightage: "",
       rating: false,
+      field_type: "", kpi_key: "", aggregation_type: "last", category_tag: "", unit_label: "", min_value: "", max_value: "", showIntelligence: false
     });
     setSections(updatedSections);
   };
@@ -251,8 +271,13 @@ const AddChecklist = () => {
     // Deep copy the specific question being modified
     const updatedQuestion = { ...updatedQuestions[questionIndex] };
 
-    if (field === "name" || field === "type") {
+    if (field === "name") {
       updatedQuestion[field] = value;
+    } else if (field === "type") {
+      updatedQuestion.type = value;
+      if (value === "Numeric" && !updatedQuestion.field_type) {
+        updatedQuestion.field_type = "numeric";
+      }
     } else if (field === "option") {
       const updatedOptions = [...updatedQuestion.options];
       updatedOptions[optionIndex] = value;
@@ -268,12 +293,30 @@ const AddChecklist = () => {
       field === "rating"
     ) {
       updatedQuestion[field] = value;
+      if (field === "reading") {
+        if (value === true) {
+          updatedQuestion.field_type = "meter";
+          updatedQuestion.type = "Numeric";
+        } else {
+          if (updatedQuestion.field_type === "meter") updatedQuestion.field_type = "";
+        }
+      }
+    } else if (field === "field_type") {
+      updatedQuestion.field_type = value;
+      if (value === "meter") {
+        updatedQuestion.reading = true;
+        updatedQuestion.type = "Numeric";
+      } else if (updatedQuestion.reading && value !== "meter") {
+        updatedQuestion.reading = false;
+      }
     } else if (field === "help_text") {
       updatedQuestion.help_text = value;
     } else if (field === "image_for_question") {
-      updatedQuestion.image_for_question = [...value]; // Ensure it's a new array
+      updatedQuestion.image_for_question = [...value];
     } else if (field === "weightage") {
       updatedQuestion.weightage = value;
+    } else {
+      updatedQuestion[field] = value;
     }
 
     // Update the questions array with the modified question
@@ -292,6 +335,9 @@ const AddChecklist = () => {
 
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
+  const showAssetDashboard = (getItemInLocalStorage("FEATURES") || []).some(
+    (f) => f.feature_name === "asset_dashboard"
+  );
   const navigate = useNavigate();
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -305,12 +351,21 @@ const AddChecklist = () => {
       return toast.error("Start date must be before End date");
     }
 
+    if (weightage && totalWeightage) {
+      const allQuestions = sections.flatMap(s => s.questions);
+      const questionSum = allQuestions.reduce((sum, q) => sum + (parseFloat(q.weightage) || 0), 0);
+      if (Math.round(questionSum * 100) !== Math.round(parseFloat(totalWeightage) * 100)) {
+        return toast.error(`Question weightage sum (${questionSum}) must equal checklist total weightage (${totalWeightage})`);
+      }
+    }
+
     // Prepare FormData for file uploads
     const formData = new FormData();
 
     // Add checklist data
     formData.append("checklist[site_id]", siteId);
     formData.append("checklist[weightage_enabled]", weightage);
+    formData.append("checklist[total_weightage]", totalWeightage || "");
     formData.append("checklist[occurs]", "");
     formData.append("checklist[name]", name);
     formData.append("checklist[start_date]", startDate);
@@ -325,6 +380,7 @@ const AddChecklist = () => {
     formData.append("checklist[ticket_enabled]", createTicket);
     formData.append("checklist[ticket_level_type]", ticketType);
     formData.append("checklist[category_id]", catid);
+    formData.append("checklist[group_id]", checklistGroup || "");
     formData.append("assigned_to", assignid);
 
     // Add supervisor IDs
@@ -354,6 +410,13 @@ const AddChecklist = () => {
         formData.append(`groups[][questions][][help_text]`, q.help_text || "");
         formData.append(`groups[][questions][][weightage]`, q.weightage);
         formData.append(`groups[][questions][][rating]`, q.rating);
+        formData.append(`groups[][questions][][field_type]`, q.field_type || "");
+        formData.append(`groups[][questions][][kpi_key]`, q.kpi_key || "");
+        formData.append(`groups[][questions][][aggregation_type]`, q.aggregation_type || "last");
+        formData.append(`groups[][questions][][category_tag]`, q.category_tag || "");
+        formData.append(`groups[][questions][][unit_label]`, q.unit_label || "");
+        formData.append(`groups[][questions][][min_value]`, q.min_value || "");
+        formData.append(`groups[][questions][][max_value]`, q.max_value || "");
 
         // Add options and value types
         q.options.forEach((option, optionIndex) => {
@@ -368,8 +431,7 @@ const AddChecklist = () => {
         if (q.image_for_question && q.image_for_question.length > 0) {
           q.image_for_question.forEach((file) => {
             formData.append(
-              `groups[][questions][][image_for_question_${
-                questionIndex + 1
+              `groups[][questions][][image_for_question_${questionIndex + 1
               }][]`,
               file
             );
@@ -440,7 +502,7 @@ const AddChecklist = () => {
         setMasters(mastershow);
       } catch (error) {
         console.error("Error fetching suppliers:", error);
-        toast.error("Failed to load suppliers");
+        toast.error("Failed to load Master checklist suppliers");
       }
     };
 
@@ -450,6 +512,7 @@ const AddChecklist = () => {
   const [createNew, setCreateNew] = useState(false);
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
+  const [totalWeightage, setTotalWeightage] = useState("");
 
   const handleToggle = (type) => {
     switch (type) {
@@ -504,14 +567,12 @@ const AddChecklist = () => {
                 <span className="mr-2">Create New</span>
                 <div
                   onClick={() => handleToggle("createNew")}
-                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
-                    createNew ? "bg-green-500" : ""
-                  }`}
+                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${createNew ? "bg-green-500" : ""
+                    }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
-                      createNew ? "translate-x-6" : ""
-                    }`}
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${createNew ? "translate-x-6" : ""
+                      }`}
                   />
                 </div>
               </div>
@@ -521,33 +582,52 @@ const AddChecklist = () => {
                 <span className="mr-2">Create Ticket</span>
                 <div
                   onClick={() => handleToggle("createTicket")}
-                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
-                    createTicket ? "bg-green-500" : ""
-                  }`}
+                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${createTicket ? "bg-green-500" : ""
+                    }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
-                      createTicket ? "translate-x-6" : ""
-                    }`}
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${createTicket ? "translate-x-6" : ""
+                      }`}
                   />
                 </div>
               </div>
 
               {/* Weightage Toggle */}
-              <div className="flex items-center">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="mr-2">Weightage</span>
                 <div
                   onClick={() => handleToggle("weightage")}
-                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${
-                    weightage ? "bg-green-500" : ""
-                  }`}
+                  className={`w-10 h-4 flex items-center bg-gray-300 rounded-full  cursor-pointer ${weightage ? "bg-green-500" : ""
+                    }`}
                 >
                   <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${
-                      weightage ? "translate-x-6" : ""
-                    }`}
+                    className={`bg-white w-4 h-4 rounded-full shadow-md transform ${weightage ? "translate-x-6" : ""
+                      }`}
                   />
                 </div>
+                {weightage && (
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600 whitespace-nowrap">Total Weightage:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="border rounded px-2 py-1 text-sm w-24"
+                      placeholder="e.g. 100"
+                      value={totalWeightage}
+                      onChange={(e) => setTotalWeightage(e.target.value)}
+                    />
+                    {totalWeightage && (() => {
+                      const allQ = sections.flatMap(s => s.questions);
+                      const qsum = allQ.reduce((s, q) => s + (parseFloat(q.weightage) || 0), 0);
+                      const ok = Math.round(qsum * 100) === Math.round(parseFloat(totalWeightage) * 100);
+                      return (
+                        <span className={`text-xs font-medium ${ok ? "text-green-600" : "text-red-500"}`}>
+                          Sum: {qsum} / {totalWeightage} {ok ? "✓" : "✗"}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
 
               {/* Show Weightage and Rating Fields if Weightage is on */}
@@ -676,6 +756,23 @@ const AddChecklist = () => {
                   <option value="quarterly">Quarterly</option>
                   <option value="half yearly">Half yearly</option>
                   <option value="yearly">Yearly</option>
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label htmlFor="" className="font-semibold">
+                  Checklist Category :
+                </label>
+                <select
+                  value={checklistGroup}
+                  onChange={(e) => setChecklistGroup(e.target.value)}
+                  className="p-1 px-4 border w-full border-gray-500 rounded-md"
+                >
+                  <option value="">Select Group</option>
+                  {checklistGroups.map((group) => (
+                    <option value={group.id} key={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="flex flex-col">
@@ -818,13 +915,12 @@ const AddChecklist = () => {
                                   <select
                                     name={`value_type1_${questionIndex}`}
                                     id={`value_type1_${questionIndex}`}
-                                    className={`border p-1 border-gray-500 rounded-md ${
-                                      question.value_types[0] === "P"
-                                        ? "bg-green-400"
-                                        : question.value_types[0] === "N"
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[0] === "P"
+                                      ? "bg-green-400"
+                                      : question.value_types[0] === "N"
                                         ? "bg-red-400"
                                         : ""
-                                    }`}
+                                      }`}
                                     value={question.value_types[0]}
                                     onChange={(e) =>
                                       handleQuestionChange(
@@ -862,13 +958,12 @@ const AddChecklist = () => {
                                   <select
                                     name={`value_type2_${questionIndex}`}
                                     id={`value_type2_${questionIndex}`}
-                                    className={`border p-1 border-gray-500 rounded-md ${
-                                      question.value_types[1] === "P"
-                                        ? "bg-green-400"
-                                        : question.value_types[1] === "N"
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[1] === "P"
+                                      ? "bg-green-400"
+                                      : question.value_types[1] === "N"
                                         ? "bg-red-400"
                                         : ""
-                                    }`}
+                                      }`}
                                     value={question.value_types[1]}
                                     onChange={(e) =>
                                       handleQuestionChange(
@@ -907,13 +1002,12 @@ const AddChecklist = () => {
                                   <select
                                     name={`value_type3_${questionIndex}`}
                                     id={`value_type3_${questionIndex}`}
-                                    className={`border p-1 border-gray-500 rounded-md ${
-                                      question.value_types[2] === "P"
-                                        ? "bg-green-400"
-                                        : question.value_types[2] === "N"
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[2] === "P"
+                                      ? "bg-green-400"
+                                      : question.value_types[2] === "N"
                                         ? "bg-red-400"
                                         : ""
-                                    }`}
+                                      }`}
                                     value={question.value_types[2]}
                                     onChange={(e) =>
                                       handleQuestionChange(
@@ -951,13 +1045,12 @@ const AddChecklist = () => {
                                   <select
                                     name={`value_type4_${questionIndex}`}
                                     id={`value_type4_${questionIndex}`}
-                                    className={`border p-1 border-gray-500 rounded-md ${
-                                      question.value_types[3] === "P"
-                                        ? "bg-green-400"
-                                        : question.value_types[3] === "N"
+                                    className={`border p-1 border-gray-500 rounded-md ${question.value_types[3] === "P"
+                                      ? "bg-green-400"
+                                      : question.value_types[3] === "N"
                                         ? "bg-red-400"
                                         : ""
-                                    }`}
+                                      }`}
                                     value={question.value_types[3]}
                                     onChange={(e) =>
                                       handleQuestionChange(
@@ -1063,9 +1156,8 @@ const AddChecklist = () => {
                                   files
                                 )
                               }
-                              fieldName={`image_for_question_${
-                                questionIndex + 1
-                              }`}
+                              fieldName={`image_for_question_${questionIndex + 1
+                                }`}
                               isMulti={true}
                             />
                           </div>
@@ -1110,6 +1202,111 @@ const AddChecklist = () => {
                             </div>
                           </div>
                         )}
+                        {/* Additional Inputs — only shown when asset_dashboard feature is enabled for this company */}
+                        <div className={`mt-2 border border-indigo-200 rounded-md ${showAssetDashboard ? "" : "hidden"}`}>
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-t-md hover:bg-indigo-100"
+                            onClick={() => handleQuestionChange(sectionIndex, questionIndex, "showIntelligence", !question.showIntelligence)}
+                          >
+                            <span>Additional Inputs {question.field_type ? `— ${question.field_type}${question.kpi_key ? ` / ${question.kpi_key}` : ""}` : "(not set)"}</span>
+                            <span>{question.showIntelligence ? "▲" : "▼"}</span>
+                          </button>
+                          {question.showIntelligence && (
+                            <div className="p-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">Measurement Type</label>
+                                <select
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.field_type}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "field_type", e.target.value)}
+                                >
+                                  <option value="">— select type —</option>
+                                  <option value="numeric">Numeric</option>
+                                  <option value="meter">Meter Reading</option>
+                                  <option value="remaining_life">Remaining Life</option>
+                                  <option value="pass_fail">Pass / Fail</option>
+                                  <option value="condition">Condition</option>
+                                  <option value="severity">Severity</option>
+                                  <option value="scored">Custom Score</option>
+                                </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">KPI Name</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. fuel_level"
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.kpi_key}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "kpi_key", e.target.value)}
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">Aggregation</label>
+                                <select
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.aggregation_type}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "aggregation_type", e.target.value)}
+                                >
+                                  <option value="last">Last Value</option>
+                                  <option value="average">Average</option>
+                                  <option value="sum_mtd">Sum (Month)</option>
+                                  <option value="count_mtd">Count (Month)</option>
+                                  <option value="text">Text</option>
+                                </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">Category</label>
+                                <select
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.category_tag}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "category_tag", e.target.value)}
+                                >
+                                  <option value="">— none —</option>
+                                  <option value="mechanical">Mechanical</option>
+                                  <option value="electrical">Electrical</option>
+                                  <option value="performance">Performance</option>
+                                  <option value="safety">Safety</option>
+                                </select>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-xs font-semibold text-gray-600">Unit</label>
+                                <input
+                                  type="text"
+                                  placeholder="e.g. %, °C, kWh"
+                                  className="border p-1 text-sm border-gray-400 rounded"
+                                  value={question.unit_label}
+                                  onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "unit_label", e.target.value)}
+                                />
+                              </div>
+                              {["numeric","meter","remaining_life"].includes(question.field_type) && (
+                                <>
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-semibold text-gray-600">Min Value</label>
+                                    <input
+                                      type="number"
+                                      placeholder="Min"
+                                      className="border p-1 text-sm border-gray-400 rounded"
+                                      value={question.min_value}
+                                      onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "min_value", e.target.value)}
+                                    />
+                                  </div>
+                                  <div className="flex flex-col gap-1">
+                                    <label className="text-xs font-semibold text-gray-600">Max Value</label>
+                                    <input
+                                      type="number"
+                                      placeholder="Max"
+                                      className="border p-1 text-sm border-gray-400 rounded"
+                                      value={question.max_value}
+                                      onChange={(e) => handleQuestionChange(sectionIndex, questionIndex, "max_value", e.target.value)}
+                                    />
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         <div className="flex justify-end ">
                           <button
                             className="p-1 border-2 border-red-500 text-white hover:bg-white hover:text-red-500 bg-red-500 px-4 transition-all duration-300 rounded-md "
@@ -1241,7 +1438,7 @@ const AddChecklist = () => {
                     <option value="">Select Supplier</option>
                     {suppliers.map((supplier) => (
                       <option value={supplier.id} key={supplier.id}>
-                        {supplier.company_name}
+                        {supplier.company_name || supplier.vendor_name}
                       </option>
                     ))}
                   </select>
@@ -1254,12 +1451,19 @@ const AddChecklist = () => {
             <div className="my-2 border-2 border-dashed flex items-center p-2 rounded-md border-gray-300">
               <Cron value={cronExpression} setValue={handleCronChange} />
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => navigate("/assets/checklist")}
+                className="border-2 border-gray-500 text-white p-2 px-4 rounded-md font-medium bg-gray-500"
+              >
+                Cancel
+              </button>
               <button
                 onClick={handleSubmit}
                 className="bg-black text-white p-2 px-4 rounded-md font-medium"
+                style={{ background: themeColor }}
               >
-                Save
+                Submit
               </button>
             </div>
           </div>

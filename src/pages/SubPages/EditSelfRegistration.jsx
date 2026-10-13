@@ -1,173 +1,532 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import image from "/profile.png";
 import { useSelector } from "react-redux";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
+import axios from "axios";
+import { FaTrash } from "react-icons/fa";
+import { getVisitorById, updateVisitor } from "../../api";
+import toast from "react-hot-toast";
+
 const EditSelfRegistration = () => {
-  const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
+
+  const themeColor = useSelector((state) => state.theme.color);
+
+  const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  const token = searchParams.get("token") || "";
+
+
+  const webcamRef = useRef(null);
+
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
-  const handleOpenCamera = () => {
-    setShowWebcam(true);
-  };
+  const [hosts, setHosts] = useState([]);
 
-  const handleCloseCamera = () => {
-    setShowWebcam(false);
-  };
+  const [formData, setFormData] = useState({
+    visitor_type: "Guest",
+    visiting_frequency: "Once",
+    name: "",
+    contact_no: "",
+    host_id: "",
+    pass_number: "",
+    coming_from: "",
+    vehicle_no: "",
+    expected_date: "",
+    expected_time: "",
+    purpose: "",
+    skip_host_approval: false,
+    goods_inwards: false,
+    additional_visitors: []
+  });
 
-  const handleVisitorTypeChange = (e) => {
-    setSelectedVisitorType(e.target.value);
-  };
-  const themeColor = useSelector((state) => state.theme.color);
-  const webcamRef = useRef(null);
+  useEffect(() => {
+
+    if (!id) return;
+
+    const fetchVisitor = async () => {
+      try {
+
+        const res = await getVisitorById(id);
+
+        const data = res.data?.visitor || res.data;
+
+        setFormData(prev => ({
+          ...prev,
+          visitor_type: data.visit_type || data.visitor_type || "Guest",
+          visiting_frequency: data.visiting_frequency || "Once",
+          name: data.name || "",
+          contact_no: data.contact_no || "",
+          host_id: data.host_id || "",
+          pass_number: data.pass_number || "",
+          coming_from: data.coming_from || "",
+          vehicle_no: data.vehicle_no || "",
+          expected_date: data.expected_date || "",
+          expected_time: data.expected_time || "",
+          purpose: data.purpose || "",
+          skip_host_approval: data.skip_host_approval || false,
+          goods_inwards: data.goods_inward ?? data.goods_inwards ?? false,
+          additional_visitors: data.extra_visitors || []
+        }));
+
+        if (data.profile_picture) {
+          setCapturedImage(
+            "https://admin.vibecopilot.ai" + data.profile_picture
+          );
+        }
+
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchVisitor();
+
+  }, [id]);
+
   const capture = useCallback(() => {
+
     const imageSrc = webcamRef.current.getScreenshot();
-    console.log(imageSrc);
-    setShowWebcam(false);
     setCapturedImage(imageSrc);
+    setShowWebcam(false);
+
   }, [webcamRef]);
 
+  const handleChange = (e) => {
+
+    const { name, value, type, checked } = e.target;
+
+    setFormData({
+      ...formData,
+      [name]: type === "checkbox" ? checked : value
+    });
+
+  };
+
+  const addVisitor = () => {
+
+    setFormData({
+      ...formData,
+      additional_visitors: [
+        ...formData.additional_visitors,
+        { name: "", mobile: "" }
+      ]
+    });
+
+  };
+
+  const removeVisitor = (index) => {
+
+    const updated = [...formData.additional_visitors];
+    updated.splice(index, 1);
+
+    setFormData({
+      ...formData,
+      additional_visitors: updated
+    });
+
+  };
+
+  const handleAdditionalChange = (index, field, value) => {
+
+    const updated = [...formData.additional_visitors];
+    updated[index][field] = value;
+
+    setFormData({
+      ...formData,
+      additional_visitors: updated
+    });
+
+  };
+
+  const handleSave = async () => {
+    try {
+
+      const form = new FormData();
+
+      form.append("visitor[name]", formData.name);
+      form.append("visitor[contact_no]", formData.contact_no);
+      form.append("visitor[visitor_type]", formData.visitor_type);
+      form.append("visitor[visiting_frequency]", formData.visiting_frequency);
+      form.append("visitor[coming_from]", formData.coming_from);
+      form.append("visitor[vehicle_no]", formData.vehicle_no);
+      form.append("visitor[expected_date]", formData.expected_date);
+      form.append("visitor[expected_time]", formData.expected_time);
+      form.append("visitor[purpose]", formData.purpose);
+      form.append("visitor[host_id]", formData.host_id);
+
+// ✅ Proper Rails nested params format
+formData.additional_visitors.forEach((visitor, index) => {
+  if (visitor.name || visitor.mobile) {
+
+    // ✅ Send ID if exists (for update)
+    if (visitor.id) {
+      form.append(
+        `visitor[extra_visitors_attributes][${index}][id]`,
+        visitor.id
+      );
+    }
+
+    form.append(
+      `visitor[extra_visitors_attributes][${index}][name]`,
+      visitor.name || ""
+    );
+
+    form.append(
+      `visitor[extra_visitors_attributes][${index}][contact_no]`,
+      visitor.mobile || visitor.contact_no || ""
+    );
+  }
+  if (visitor._destroy) {
+  form.append(
+    `visitor[extra_visitors_attributes][${index}][_destroy]`,
+    1
+  );
+}
+});
+      await updateVisitor(id, form, token);
+
+      toast.success("Visitor updated successfully");
+
+      // redirect to main page
+
+      window.history.back();
+      navigate("/visitor", { state: { tab: "self-registration", token } });
+
+
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
-    <div className="flex justify-center items-center  w-full p-4">
-      <div className="md:border border-gray-300 rounded-lg md:p-4 w-full md:mx-4 ">
+
+    <div className="w-full p-3">
+
+      <div className="border border-gray-300 rounded-lg p-6 w-full">
+
         <h2
           style={{ background: themeColor }}
-          className="text-center md:text-xl font-bold p-2 bg-black rounded-full text-white"
+          className="text-center text-lg md:text-xl font-bold p-2 rounded-full text-white"
         >
-          Edit Self Registration
+          Edit Visitor
         </h2>
-        <br />
-        <div className="flex justify-center">
+
+        {/* Profile */}
+
+        <div className="flex justify-center mt-4">
+
           {!showWebcam ? (
-            <button onClick={handleOpenCamera}>
+
+            <button onClick={() => setShowWebcam(true)}>
+
               <img
                 src={capturedImage || image}
-                alt="Uploaded"
-                className="border-4 border-gray-300 rounded-full w-40 h-40 object-cover"
+                alt="visitor"
+                className="border-4 border-gray-300 rounded-full w-32 h-32 md:w-40 md:h-40 object-cover"
               />
+
             </button>
+
           ) : (
-            <div>
-              <div className="rounded-full">
-                <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  className="rounded-full w-60 h-60 object-cover"
-                />
-              </div>
-              <div className="flex gap-2 justify-center my-2 items-center">
+
+            <div className="text-center">
+
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                className="rounded-full w-60 h-60"
+              />
+
+              <div className="flex justify-center gap-3 mt-2">
+
                 <button
                   onClick={capture}
-                  className="bg-green-400 rounded-md text-white p-1 px-4"
+                  className="bg-green-500 text-white px-3 py-1 rounded"
                 >
                   Capture
                 </button>
+
                 <button
-                  onClick={handleCloseCamera}
-                  className="bg-red-400 rounded-md text-white p-1 px-4"
+                  onClick={() => setShowWebcam(false)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
                 >
                   Close
                 </button>
+
               </div>
+
             </div>
+
           )}
+
         </div>
 
-        <div className="flex md:flex-row flex-col  my-5 gap-10">
-          <div className="flex gap-2 flex-col">
-            <h2 className="font-semibold">Visitor Type :</h2>
-            <div className="flex items-center gap-5">
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="Guest"
-                  name="attendance"
-                  value="Guest"
-                  checked={selectedVisitorType === "Guest"}
-                  onChange={handleVisitorTypeChange}
-                />
-                <label htmlFor="Guest" className="font-semibold ">
-                  Guest
-                </label>
-              </div>
-            </div>
+        {/* Visitor Type */}
+
+        <div className="flex flex-col md:flex-row gap-6 md:gap-10 mt-4">
+
+          <div>
+
+            <p className="font-semibold">Visitor Type</p>
+
+            <label className="mr-4">
+              <input type="radio" name="visitor_type" value="Guest"
+                checked={formData.visitor_type === "Guest"}
+                onChange={handleChange}
+              /> Guest
+            </label>
+
+            <label>
+              <input type="radio" name="visitor_type" value="Support Staff"
+                checked={formData.visitor_type === "Support Staff"}
+                onChange={handleChange}
+              /> Support Staff
+            </label>
+
           </div>
+
+          <div>
+
+            <p className="font-semibold">Visiting Frequency</p>
+
+            <label className="mr-4">
+              <input type="radio" name="visiting_frequency" value="Once"
+                checked={formData.visiting_frequency === "Once"}
+                onChange={handleChange}
+              /> Once
+            </label>
+
+            <label>
+              <input type="radio" name="visiting_frequency" value="Frequently"
+                checked={formData.visiting_frequency === "Frequently"}
+                onChange={handleChange}
+              /> Frequently
+            </label>
+
+          </div>
+
         </div>
 
-        <div className="grid md:grid-cols-3 gap-5">
-          <div className="grid gap-2 items-center w-full">
-            <label htmlFor="visitorName" className="font-semibold">
-              Visitor Name:
-            </label>
+        {/* Fields */}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+
+          <div>
+            <label className="text-sm font-medium">Visitor Name :</label>
             <input
-              type="text"
-              name="visitorName"
-              id="visitorName"
-              className="border border-gray-400 p-2 rounded-md"
-              placeholder="Enter Visitor Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
             />
           </div>
-          <div className="grid gap-2 items-center w-full">
-            <label htmlFor="mobileNumber" className="font-semibold">
-              Mobile Number :
-            </label>
+
+          <div>
+            <label className="text-sm font-medium">Mobile Number :</label>
             <input
-              type="number"
-              name="mobile"
-              id="mobileNumber"
-              className="border border-gray-400 p-2 rounded-md"
-              placeholder="Enter Mobile Number"
+              name="contact_no"
+              value={formData.contact_no}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+              maxLength={10}
+              minLength={10}
             />
           </div>
-          <div className="grid gap-2 items-center w-full">
-            <label htmlFor="" className="font-medium">
-              Host :
-            </label>
+
+          <div>
+            <label className="text-sm font-medium">Host :</label>
             <select
-              className="border border-gray-400 p-2 rounded-md"
-              name="host"
+              name="host_id"
+              value={formData.host_id}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
             >
-              <option value="">Select Person to meet</option>
+              <option>Select Person to meet</option>
+              {hosts.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.full_name}
+                </option>
+              ))}
             </select>
           </div>
-          <div className="grid gap-2 items-center w-full">
-            <label htmlFor="comingFrom" className="font-semibold">
-              Coming from:
-            </label>
+
+          <div>
+            <label className="text-sm font-medium">Pass Number :</label>
             <input
-              type="text"
-              id="comingFrom"
-              className="border border-gray-400 p-2 rounded-md"
-              placeholder="Enter Origin"
-              name="comingFrom"
+              name="pass_number"
+              value={formData.pass_number}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+              placeholder="Enter Pass number"
             />
           </div>
-          <div className="grid gap-2 items-center w-full">
-            <label htmlFor="purpose" className="font-semibold">
-              Visit Purpose:
-            </label>
+
+          <div>
+            <label className="text-sm font-medium">Coming from :</label>
+            <input
+              name="coming_from"
+              value={formData.coming_from}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Vehicle Number :</label>
+            <input
+              name="vehicle_no"
+              value={formData.vehicle_no}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+              placeholder="Enter Vehicle Number"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Expected Date :</label>
+            <input
+              type="date"
+              name="expected_date"
+              value={formData.expected_date}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Expected Time :</label>
+            <input
+              type="time"
+              name="expected_time"
+              value={formData.expected_time}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Visit Purpose :</label>
             <select
-              id="purpose"
               name="purpose"
-              className="border border-gray-400 p-2 rounded-md"
+              value={formData.purpose}
+              onChange={handleChange}
+              className="border p-2 rounded w-full"
             >
               <option value="">Select Purpose</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Delivery">Delivery</option>
-              <option value="Personal">Personal</option>
-              <option value="Fitout Staff">Fitout Staff</option>
-              <option value="Other">Other</option>
+              <option>Meeting</option>
+              <option>Delivery</option>
+              <option>Personal</option>
+              <option>Fitout Staff</option>
+              <option>Other</option>
             </select>
           </div>
+
         </div>
-        <div className="flex gap-5 justify-center items-center my-4 mb-10">
-          <button className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded">
-            Edit
+
+        {/* Checkboxes */}
+
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
+
+          <label>
+            <input type="checkbox" name="skip_host_approval"
+              checked={formData.skip_host_approval}
+              onChange={handleChange}
+            /> Skip Host Approval
+          </label>
+
+          <label>
+            <input type="checkbox" name="goods_inwards"
+              checked={formData.goods_inwards}
+              onChange={handleChange}
+            /> Goods Inwards
+          </label>
+
+        </div>
+
+        {/* Additional Visitors */}
+
+        <div className="mt-5">
+
+          <p className="font-semibold mb-1">
+            Additional Visitor
+          </p>
+
+          <div className="border-t border-gray-300 mb-3"></div>
+
+          <button
+            onClick={addVisitor}
+            className="bg-black text-white px-4 py-1 rounded"
+          >
+            Add Additional Visitor
           </button>
+
+          {formData.additional_visitors.map((visitor, index) => (
+
+            <div
+              key={index}
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-3 items-center"
+            >
+
+              <input
+                placeholder="Visitor Name"
+                value={visitor.name}
+                onChange={(e) =>
+                  handleAdditionalChange(index, "name", e.target.value)
+                }
+                className="border p-2 rounded"
+              />
+
+              <input
+                placeholder="Mobile Number"
+                value={visitor.mobile}
+                onChange={(e) =>
+                  handleAdditionalChange(index, "mobile", e.target.value)
+                }
+                className="border p-2 rounded"
+                maxLength={10}
+                minLength={10}
+              />
+
+              <button
+                onClick={() => removeVisitor(index)}
+                className="text-red-500 text-lg"
+              >
+                <FaTrash />
+              </button>
+
+            </div>
+
+          ))}
+
         </div>
+
+        <div className="flex justify-end mt-5 gap-3">
+          <button
+            className="bg-black text-white px-8 py-2 rounded"
+            onClick={() => navigate("/admin/passes/visitors")}
+          >
+            Cacel
+          </button>
+          <button
+            onClick={handleSave}
+            className=" text-white px-8 py-2 rounded"
+            style={{ background: themeColor }}
+          >
+            Update
+          </button>
+
+        </div>
+
       </div>
+
     </div>
+
   );
+
 };
 
 export default EditSelfRegistration;

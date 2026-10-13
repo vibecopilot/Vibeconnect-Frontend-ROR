@@ -12,6 +12,7 @@ import {
   Building2,
   Tag,
 } from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -28,13 +29,16 @@ import {
   Grid,
   FormHelperText,
   Paper,
+  CircularProgress,
 } from "@mui/material";
-import { 
-  getSnagChecklistByCategory, 
+
+import {
+  getSnagChecklistByCategory,
   postSnagAnswer,
   getFitoutCategoriesSetupDetails,
   getSiteDetails,
 } from "../../api";
+
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import toast from "react-hot-toast";
 import PropTypes from "prop-types";
@@ -49,75 +53,128 @@ const ChecklistForm = ({
   onSubmissionComplete,
 }) => {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [checklistData, setChecklistData] = useState(null);
-  const [loading, setLoading] = useState(true);
+
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
   const [searchParams] = useSearchParams();
+
   const [siteName, setSiteName] = useState("");
   const [categoryName, setCategoryName] = useState("");
 
   const { id } = useParams();
-  const searchChecklistId = searchParams.get("checklist_id");
-  const resourceId = propResourceId || searchParams.get("resource_id");
-  const checklistId = propChecklistId || searchChecklistId || id;
 
-  console.log("URL id", id);
+  const searchChecklistId = searchParams.get("checklist_id");
+
+  const resourceId =
+    propResourceId || searchParams.get("resource_id");
+
+  const checklistId =
+    propChecklistId || searchChecklistId || id;
+
   console.log("resourceId", resourceId);
   console.log("checklistId", checklistId);
 
   useEffect(() => {
-    const fetchSNAGQ = async (categoryId) => {
+    const fetchChecklist = async () => {
       try {
         setLoading(true);
-        const response = await getSnagChecklistByCategory(categoryId);
-        console.log(
-          "Fetched via Ransack (Category ID):",
-          categoryId,
-          response.data
+
+        // API CALL
+        const response = await getSnagChecklistByCategory(
+          resourceId
         );
-        
-        // Extract the first checklist object from the array
-        if (Array.isArray(response.data) && response.data.length > 0) {
-          const checklist = response.data[0];
-          setChecklistData(checklist);
-          console.log("Using first checklist:", checklist);
-          
-          // Fetch site name using site_id from checklist
-          if (checklist.site_id) {
-            try {
-              const siteResponse = await getSiteDetails(checklist.site_id);
-              if (siteResponse && siteResponse.data) {
-                setSiteName(siteResponse.data.name || "Unknown Site");
-                console.log("Site name fetched:", siteResponse.data.name);
-              }
-            } catch (siteError) {
-              console.error("Error fetching site details:", siteError);
-              setSiteName("Site Not Found");
-            }
-          }
-          
-          // Fetch category name using category_id from checklist
-          if (categoryId) {
-            try {
-              const categoryResponse = await getFitoutCategoriesSetupDetails(categoryId);
-              if (categoryResponse && categoryResponse.data) {
-                setCategoryName(categoryResponse.data.name || "Unknown Category");
-                console.log("Category name fetched:", categoryResponse.data.name);
-              }
-            } catch (categoryError) {
-              console.error("Error fetching category details:", categoryError);
-              setCategoryName("Category Not Found");
-            }
-          }
-        } else {
-          console.error("No checklist found in response array");
+
+        console.log("Checklist API Response:", response);
+
+        // HANDLE DIFFERENT RESPONSE STRUCTURES
+        let checklist = null;
+
+        // Case 1: response.data is array
+        if (
+          Array.isArray(response?.data) &&
+          response.data.length > 0
+        ) {
+          checklist = response.data[0];
+        }
+
+        // Case 2: response.data.checklists
+        else if (
+          Array.isArray(response?.data?.checklists) &&
+          response.data.checklists.length > 0
+        ) {
+          checklist = response.data.checklists[0];
+        }
+
+        // Case 3: single object
+        else if (
+          response?.data &&
+          typeof response.data === "object"
+        ) {
+          checklist = response.data;
+        }
+
+        console.log("Final Checklist:", checklist);
+
+        // NO DATA
+        if (!checklist || !checklist.id) {
           setChecklistData(null);
-          toast.error("No checklist found for this category");
+          toast.error("Checklist not found");
+          return;
+        }
+
+        // SET CHECKLIST
+        setChecklistData(checklist);
+
+        // FETCH SITE NAME
+        if (checklist.site_id) {
+          try {
+            const siteResponse = await getSiteDetails(
+              checklist.site_id
+            );
+
+            console.log("Site Response:", siteResponse);
+
+            setSiteName(
+              siteResponse?.data?.name || "Unknown Site"
+            );
+          } catch (error) {
+            console.log(error);
+            setSiteName("Unknown Site");
+          }
+        }
+
+        // FETCH CATEGORY NAME
+        if (checklist.snag_audit_category_id) {
+          try {
+            const categoryResponse =
+              await getFitoutCategoriesSetupDetails(
+                checklist.snag_audit_category_id
+              );
+
+            console.log(
+              "Category Response:",
+              categoryResponse
+            );
+
+            setCategoryName(
+              categoryResponse?.data?.name ||
+                "Unknown Category"
+            );
+          } catch (error) {
+            console.log(error);
+            setCategoryName("Unknown Category");
+          }
         }
       } catch (error) {
-        console.error("Error fetching Snag Checklists:", error);
+        console.log("Checklist Fetch Error:", error);
+
+        toast.error("Failed to load checklist");
+
         setChecklistData(null);
       } finally {
         setLoading(false);
@@ -125,185 +182,43 @@ const ChecklistForm = ({
     };
 
     if (resourceId) {
-      console.log("Fetching by resourceId (category):", resourceId);
-      fetchSNAGQ(resourceId);
+      fetchChecklist();
+    } else {
+      setLoading(false);
     }
   }, [resourceId]);
 
-  // Populate form with submitted data when in view mode
+  // VIEW MODE DATA
   useEffect(() => {
-    if (isViewMode && submittedData && checklistData) {
-      const populatedFormData = {};
+    if (
+      isViewMode &&
+      submittedData &&
+      checklistData
+    ) {
+      const populatedData = {};
 
       if (Array.isArray(submittedData)) {
         submittedData.forEach((answer) => {
           if (answer.question_id) {
-            const fieldName = `question_${answer.question_id}`;
-            populatedFormData[fieldName] =
-              answer.ans_descr || answer.comments || "";
+            populatedData[`question_${answer.question_id}`] =
+              answer.ans_descr ||
+              answer.comments ||
+              "";
           }
         });
       }
 
-      setFormData(populatedFormData);
-      console.log("Populated form data:", populatedFormData);
+      setFormData(populatedData);
     }
   }, [isViewMode, submittedData, checklistData]);
 
-  const handleSubmit = async () => {
-    // Prevent submission in view mode
-    if (isViewMode) {
-      toast.warning("Form is in view mode. Cannot submit.");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-
-      // Get user data from localStorage
-      const userId =
-        getItemInLocalStorage("UserId") || getItemInLocalStorage("VIBEUSERID");
-      const companyId = getItemInLocalStorage("COMPANYID");
-
-      if (!userId || !companyId) {
-        toast.error(
-          "Missing user or company information. Please log in again."
-        );
-        return;
-      }
-
-      if (!resourceId) {
-        toast.error(
-          "Missing resource information. Please navigate from the request details page."
-        );
-        return;
-      }
-
-      if (!checklistId) {
-        toast.error("Missing checklist information. Please try again.");
-        return;
-      }
-
-      // Prepare answers for submission
-      const answers = [];
-
-      checklistData.questions?.forEach((question) => {
-        const fieldName = `question_${question.id}`;
-        const fieldValue = formData[fieldName];
-
-        if (fieldValue && fieldValue.trim() !== "") {
-          let answerData = {
-            question_id: question.id,
-            user_id: userId,
-            company_id: companyId,
-            checklist_id: checklistData.id,
-            answer_type: question.qtype,
-            answer_mode: "form", // Could be "form" or "draft"
-            comments: fieldValue,
-            resource_id: resourceId || "", // Use FitoutRequestCategory ID from URL
-            resource_type: "FitoutRequestCategory",
-          };
-
-          // Handle different question types
-          if (question.qtype === "Multiple Choice") {
-            // Find the option that matches the selected value
-            const selectedOption = question.options?.find(
-              (opt) => opt.qname === fieldValue
-            );
-            if (selectedOption) {
-              answerData.quest_option_id = selectedOption.id;
-              answerData.ans_descr = selectedOption.qname;
-            }
-          } else if (question.qtype === "Yes/No") {
-            answerData.ans_descr = fieldValue;
-          } else {
-            // Text type
-            answerData.ans_descr = fieldValue;
-          }
-
-          answers.push(answerData);
-        }
-      });
-
-      if (answers.length === 0) {
-        toast.warning("Please answer at least one question before submitting.");
-        return;
-      }
-
-      // Submit answers one by one (or adjust based on API requirements)
-      for (const answer of answers) {
-        await postSnagAnswer({ snag_answer: answer });
-      }
-
-      toast.success(
-        `Form submitted successfully for Category ID: ${resourceId}!`
-      );
-
-      // Call the submission complete callback to mark as submitted
-      if (onSubmissionComplete) {
-        onSubmissionComplete();
-      }
-
-      if (isModal && onClose) {
-        // Close modal if in modal mode
-        setTimeout(() => {
-          onClose();
-        }, 1500); // Give user time to see success message
-      } else {
-        // Navigate back if not in modal mode
-        navigate("/fitout/request/list");
-      }
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      toast.error("Error submitting form. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const getQuestionTypeIcon = (qtype) => {
-    switch (qtype) {
-      case "Yes/No":
-        return <CheckCircle2 size={16} />;
-      case "Text":
-        return <FileText size={16} />;
-      case "Multiple Choice":
-        return <HelpCircle size={16} />;
-      default:
-        return <HelpCircle size={16} />;
-    }
-  };
-
-  const getQuestionTypeBadgeColor = (qtype) => {
-    switch (qtype) {
-      case "Yes/No":
-        return "success";
-      case "Text":
-        return "primary";
-      case "Multiple Choice":
-        return "secondary";
-      default:
-        return "default";
-    }
-  };
-
+  // INPUT CHANGE
   const handleInputChange = (fieldName, value) => {
     setFormData((prev) => ({
       ...prev,
       [fieldName]: value,
     }));
 
-    // Clear error when user starts typing
     if (errors[fieldName]) {
       setErrors((prev) => ({
         ...prev,
@@ -312,88 +227,240 @@ const ChecklistForm = ({
     }
   };
 
+  // VALIDATION
   const validateForm = () => {
     const newErrors = {};
 
-    checklistData.questions?.forEach((question) => {
+    checklistData?.questions?.forEach((question) => {
       const fieldName = `question_${question.id}`;
+
       if (
         question.quest_mandatory &&
-        (!formData[fieldName] || formData[fieldName].trim() === "")
+        (!formData[fieldName] ||
+          formData[fieldName].trim() === "")
       ) {
-        newErrors[fieldName] = "This field is required";
+        newErrors[fieldName] =
+          "This field is required";
       }
     });
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 
+  // SUBMIT
+  const handleSubmit = async () => {
+    if (isViewMode) return;
+
+    try {
+      setSubmitting(true);
+
+      const userId =
+        getItemInLocalStorage("UserId") ||
+        getItemInLocalStorage("VIBEUSERID");
+
+      const companyId =
+        getItemInLocalStorage("COMPANYID");
+
+      const answers = [];
+
+      checklistData.questions?.forEach((question) => {
+        const fieldName = `question_${question.id}`;
+
+        const value = formData[fieldName];
+
+        if (value && value.trim() !== "") {
+          let answerData = {
+            question_id: question.id,
+            user_id: userId,
+            company_id: companyId,
+            checklist_id: checklistData.id,
+            answer_type: question.qtype,
+            answer_mode: "form",
+            comments: value,
+            ans_descr: value,
+            resource_id: resourceId,
+            resource_type: "FitoutRequestCategory",
+          };
+
+          if (question.qtype === "Multiple Choice") {
+            const selectedOption =
+              question.options?.find(
+                (opt) => opt.qname === value
+              );
+
+            if (selectedOption) {
+              answerData.quest_option_id =
+                selectedOption.id;
+            }
+          }
+
+          answers.push(answerData);
+        }
+      });
+
+      if (answers.length === 0) {
+        toast.error(
+          "Please answer at least one question"
+        );
+        return;
+      }
+
+      for (const answer of answers) {
+        await postSnagAnswer({
+          snag_answer: answer,
+        });
+      }
+
+      toast.success("Checklist submitted successfully");
+
+      if (onSubmissionComplete) {
+        onSubmissionComplete();
+      }
+
+      if (isModal && onClose) {
+        onClose();
+      } else {
+        navigate("/fitout/request/list");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to submit checklist");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // FORM SUBMIT
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+    if (validateForm()) {
+      await handleSubmit();
+    }
+  };
+
+  // FORMAT DATE
+  const formatDate = (dateString) => {
+    if (!dateString) return "NA";
+
+    return new Date(dateString).toLocaleString();
+  };
+
+  // QUESTION TYPE ICON
+  const getQuestionTypeIcon = (qtype) => {
+    switch (qtype) {
+      case "Yes/No":
+        return <CheckCircle2 size={16} />;
+
+      case "Text":
+        return <FileText size={16} />;
+
+      default:
+        return <HelpCircle size={16} />;
+    }
+  };
+
+  // QUESTION COLOR
+  const getQuestionTypeBadgeColor = (qtype) => {
+    switch (qtype) {
+      case "Yes/No":
+        return "success";
+
+      case "Text":
+        return "primary";
+
+      case "Multiple Choice":
+        return "secondary";
+
+      default:
+        return "default";
+    }
+  };
+
+  // INPUT RENDER
   const renderQuestionInput = (question) => {
     const fieldName = `question_${question.id}`;
-    const fieldValue = formData[fieldName] || "";
+
+    const value = formData[fieldName] || "";
 
     switch (question.qtype) {
       case "Multiple Choice":
         return (
-          <FormControl fullWidth error={!!errors[fieldName]} sx={{ mt: 2 }}>
+          <FormControl
+            fullWidth
+            error={!!errors[fieldName]}
+            sx={{ mt: 2 }}
+          >
             <InputLabel>
-              {question.descr} {question.quest_mandatory && "*"}
+              {question.descr}
             </InputLabel>
+
             <Select
-              value={fieldValue}
-              onChange={(e) => handleInputChange(fieldName, e.target.value)}
-              label={`${question.descr} ${question.quest_mandatory ? "*" : ""}`}
+              value={value}
+              label={question.descr}
               disabled={isViewMode}
+              onChange={(e) =>
+                handleInputChange(
+                  fieldName,
+                  e.target.value
+                )
+              }
             >
               {question.options?.map((option) => (
-                <MenuItem key={option.id} value={option.qname}>
+                <MenuItem
+                  key={option.id}
+                  value={option.qname}
+                >
                   {option.qname}
                 </MenuItem>
               ))}
             </Select>
+
             {errors[fieldName] && (
-              <FormHelperText>{errors[fieldName]}</FormHelperText>
+              <FormHelperText>
+                {errors[fieldName]}
+              </FormHelperText>
             )}
           </FormControl>
         );
 
-      case "Text":
-        return (
-          <TextField
-            fullWidth
-            multiline
-            rows={4}
-            label={`${question.descr} ${question.quest_mandatory ? "*" : ""}`}
-            placeholder="Enter your response..."
-            value={fieldValue}
-            onChange={(e) => handleInputChange(fieldName, e.target.value)}
-            error={!!errors[fieldName]}
-            helperText={errors[fieldName]}
-            sx={{ mt: 2 }}
-            InputProps={{
-              readOnly: isViewMode,
-            }}
-          />
-        );
-
       case "Yes/No":
         return (
-          <FormControl fullWidth error={!!errors[fieldName]} sx={{ mt: 2 }}>
+          <FormControl
+            fullWidth
+            error={!!errors[fieldName]}
+            sx={{ mt: 2 }}
+          >
             <InputLabel>
-              {question.descr} {question.quest_mandatory && "*"}
+              {question.descr}
             </InputLabel>
+
             <Select
-              value={fieldValue}
-              onChange={(e) => handleInputChange(fieldName, e.target.value)}
-              label={`${question.descr} ${question.quest_mandatory ? "*" : ""}`}
+              value={value}
+              label={question.descr}
               disabled={isViewMode}
+              onChange={(e) =>
+                handleInputChange(
+                  fieldName,
+                  e.target.value
+                )
+              }
             >
-              <MenuItem value="yes">Yes</MenuItem>
-              <MenuItem value="no">No</MenuItem>
+              <MenuItem value="yes">
+                Yes
+              </MenuItem>
+
+              <MenuItem value="no">
+                No
+              </MenuItem>
             </Select>
+
             {errors[fieldName] && (
-              <FormHelperText>{errors[fieldName]}</FormHelperText>
+              <FormHelperText>
+                {errors[fieldName]}
+              </FormHelperText>
             )}
           </FormControl>
         );
@@ -402,457 +469,269 @@ const ChecklistForm = ({
         return (
           <TextField
             fullWidth
-            label={`${question.descr} ${question.quest_mandatory ? "*" : ""}`}
-            placeholder="Enter your response..."
-            value={fieldValue}
-            onChange={(e) => handleInputChange(fieldName, e.target.value)}
-            error={!!errors[fieldName]}
-            helperText={errors[fieldName]}
-            sx={{ mt: 2 }}
+            multiline
+            rows={4}
+            label={question.descr}
+            value={value}
             InputProps={{
               readOnly: isViewMode,
             }}
+            onChange={(e) =>
+              handleInputChange(
+                fieldName,
+                e.target.value
+              )
+            }
+            error={!!errors[fieldName]}
+            helperText={errors[fieldName]}
+            sx={{ mt: 2 }}
           />
         );
     }
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  // LOADING
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="flex flex-col items-center gap-3">
+          <CircularProgress />
+          <p className="text-gray-600 text-lg">
+            Loading Checklist...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-    if (validateForm()) {
-      console.log("Form validated, submitting...");
-      await handleSubmit();
-    }
-  };
+  // NO CHECKLIST
+  if (!loading && !checklistData) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <FileX
+            size={50}
+            className="mx-auto text-gray-400"
+          />
+
+          <h2 className="text-xl font-semibold mt-3">
+            Checklist Not Found
+          </h2>
+
+          <p className="text-gray-500 mt-2">
+            No checklist available for this category.
+          </p>
+
+          <Button
+            variant="contained"
+            sx={{ mt: 3 }}
+            onClick={() =>
+              navigate("/fitout/request/list")
+            }
+          >
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <Box
-        sx={{
-          minHeight: isModal ? "auto" : "100vh",
-          bgcolor: isModal ? "transparent" : "grey.50",
-          p: isModal ? 2 : 3,
-        }}
-      >
-        <Box sx={{ maxWidth: "4xl", mx: "auto" }}>
-          {/* Header */}
-          <Box sx={{ mb: 3 }}>
-            {!isModal && (
-              <Button
-                variant="text"
-                onClick={() => navigate("/fitout/request/list")}
-                startIcon={<ArrowLeft size={16} />}
-                sx={{ mb: 2, color: "text.secondary" }}
-              >
-                Back to Dashboard
-              </Button>
-            )}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "#f5f5f5",
+        p: 3,
+      }}
+    >
+      <Box sx={{ maxWidth: "1000px", mx: "auto" }}>
+        {/* HEADER */}
+        <Box sx={{ mb: 3 }}>
+          {!isModal && (
+            <Button
+              variant="text"
+              startIcon={<ArrowLeft size={16} />}
+              onClick={() =>
+                navigate("/fitout/request/list")
+              }
+            >
+              Back
+            </Button>
+          )}
 
-            {loading ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  minHeight: "200px",
-                }}
-              >
-                <Typography variant="h6">Loading checklist...</Typography>
-              </Box>
-            ) : !checklistData ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  minHeight: "200px",
-                }}
-              >
-                <Typography variant="h6" color="error">
-                  Checklist not found
-                </Typography>
-              </Box>
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="h3"
-                      component="h1"
-                      fontWeight="bold"
-                      color="text.primary"
-                      sx={{ mb: 1 }}
-                    >
-                      {checklistData.name}
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      Checklist ID: #{checklistData.id} •{" "}
-                      {checklistData.total_questions} Questions
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-                      {categoryName && (
-                        <Chip
-                          icon={<Tag size={14} />}
-                          label={categoryName}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      )}
-                      {/* {siteName && (
-                        <Chip
-                          icon={<Building2 size={14} />}
-                          label={siteName}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
-                      )} */}
-                      {/* {resourceId && (
-                        <Chip
-                          label={`Category ID: ${resourceId}`}
-                          size="small"
-                          color="default"
-                          variant="outlined"
-                        />
-                      )} */}
-                    </Box>
-                  </Box>
-                  {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Chip
-                      label={checklistData.active ? "Active" : "Inactive"}
-                      color={checklistData.active ? "success" : "default"}
-                      variant={checklistData.active ? "filled" : "outlined"}
-                    />
-                  </Box> */}
-                </Box>
-              </>
-            )}
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            sx={{ mt: 2 }}
+          >
+            {checklistData?.name}
+          </Typography>
+
+          <Typography
+            variant="body2"
+            color="text.secondary"
+          >
+            Checklist ID : #{checklistData?.id}
+          </Typography>
+
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              mt: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <Chip
+              icon={<Tag size={14} />}
+              label={categoryName || "Category"}
+              color="primary"
+              variant="outlined"
+            />
+
+            <Chip
+              icon={<Building2 size={14} />}
+              label={siteName || "Site"}
+              color="secondary"
+              variant="outlined"
+            />
           </Box>
-
-          {!loading && !checklistData && (
-            <Card>
-              <CardContent sx={{ textAlign: "center", py: 4 }}>
-                <FileX size={48} color="#757575" style={{ marginBottom: 16 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Checklist Found
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  No checklist is available for this category.
-                </Typography>
-              </CardContent>
-            </Card>
-          )}
-
-          {!loading && checklistData && (
-            <>
-              {/* Checklist Overview */}
-              <Card sx={{ mb: 3 }}>
-                <CardHeader>
-                  <Typography
-                    variant="h6"
-                    component="div"
-                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                  >
-                    <FileText size={20} color="#d32f2f" />
-                    Checklist Overview
-                  </Typography>
-                </CardHeader>
-                <CardContent>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={6}>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight="semibold"
-                        color="text.primary"
-                        sx={{ mb: 1 }}
-                      >
-                        Basic Information
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                        }}
-                      >
-                        {/* Category Name */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary" sx={{ minWidth: '100px' }}>
-                            Category:
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, justifyContent: 'flex-end' }}>
-                            <Tag size={14} color="#6366f1" />
-                            <Typography variant="body2" fontWeight="medium">
-                              {categoryName || "Unknown Category"}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        
-                        {/* Category ID */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary" sx={{ minWidth: '100px' }}>
-                            Category ID:
-                          </Typography>
-                          <Typography variant="body2" fontWeight="medium">
-                            {checklistData.snag_audit_category_id}
-                          </Typography>
-                        </Box>
-                        
-                        {/* Site Name */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary" sx={{ minWidth: '100px' }}>
-                            Site:
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, justifyContent: 'flex-end' }}>
-                            <Building2 size={14} color="#6366f1" />
-                            <Typography variant="body2" fontWeight="medium">
-                              {siteName || "Unknown Site"}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        
-                        {/* Site ID */}
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary" sx={{ minWidth: '100px' }}>
-                            Site ID:
-                          </Typography>
-                          <Typography variant="body2" fontWeight="medium">
-                            {checklistData.site_id}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary">
-                            Total Questions:
-                          </Typography>
-                          <Typography variant="body2" fontWeight="medium">
-                            {checklistData.total_questions}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight="semibold"
-                        color="text.primary"
-                        sx={{ mb: 1 }}
-                      >
-                        Timestamps
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 1,
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            Created:
-                          </Typography>
-                          <Typography variant="caption" fontWeight="medium">
-                            {formatDate(checklistData.created_at)}
-                          </Typography>
-                        </Box>
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
-                            Updated:
-                          </Typography>
-                          <Typography variant="caption" fontWeight="medium">
-                            {formatDate(checklistData.updated_at)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-
-                    {/* <Grid item xs={12} md={4}>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight="semibold"
-                        color="text.primary"
-                        sx={{ mb: 1 }}
-                      >
-                        Status
-                      </Typography>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        {checklistData.active ? (
-                          <CheckCircle2 size={16} color="#4caf50" />
-                        ) : (
-                          <X size={16} color="#f44336" />
-                        )}
-                        <Typography variant="body2" fontWeight="medium">
-                          {checklistData.active ? "Active" : "Inactive"}
-                        </Typography>
-                      </Box>
-                    </Grid> */}
-                  </Grid>
-                </CardContent>
-              </Card>
-
-              {/* Dynamic Form */}
-              <Card sx={{ mb: 3 }}>
-                <CardHeader>
-                  <Typography
-                    variant="h6"
-                    component="div"
-                    sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                  >
-                    <HelpCircle size={20} color="#d32f2f" />
-                    Checklist Form
-                  </Typography>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={onSubmit}>
-                    <Box
-                      sx={{ display: "flex", flexDirection: "column", gap: 3 }}
-                    >
-                      {checklistData.questions?.map((question) => (
-                        <Paper
-                          key={question.id}
-                          sx={{
-                            p: 3,
-                            border: "1px solid",
-                            borderColor: "grey.300",
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "flex-start",
-                              justifyContent: "space-between",
-                              mb: 2,
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <Chip
-                                label={`Q${question.qnumber}`}
-                                sx={{
-                                  bgcolor: "#d32f2f",
-                                  color: "white",
-                                  fontWeight: "medium",
-                                }}
-                              />
-                              <Chip
-                                icon={getQuestionTypeIcon(question.qtype)}
-                                label={question.qtype}
-                                color={getQuestionTypeBadgeColor(
-                                  question.qtype
-                                )}
-                                variant="outlined"
-                              />
-                            </Box>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                              }}
-                            >
-                              {question.quest_mandatory && (
-                                <Chip
-                                  label="Required"
-                                  color="error"
-                                  size="small"
-                                  variant="outlined"
-                                />
-                              )}
-                              {question.img_mandatory && (
-                                <Chip
-                                  icon={<Image size={12} />}
-                                  label="Image Required"
-                                  color="default"
-                                  size="small"
-                                  variant="outlined"
-                                />
-                              )}
-                            </Box>
-                          </Box>
-
-                          {renderQuestionInput(question)}
-                        </Paper>
-                      ))}
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "flex-end",
-                          gap: 2,
-                          mt: 3,
-                        }}
-                      >
-                        {/* <Button variant="outlined" color="inherit" onClick={onSaveDraft}>
-                        Save Draft
-                      </Button> */}
-                        {!isViewMode && (
-                          <Button
-                            type="submit"
-                            variant="contained"
-                            disabled={submitting}
-                            sx={{
-                              bgcolor: "#d32f2f",
-                              "&:hover": { bgcolor: "#b71c1c" },
-                            }}
-                            startIcon={<Send size={16} />}
-                          >
-                            {submitting ? "Submitting..." : "Submit Form"}
-                          </Button>
-                        )}
-                      </Box>
-                    </Box>
-                  </form>
-                </CardContent>
-              </Card>
-            </>
-          )}
         </Box>
+
+        {/* OVERVIEW */}
+        <Card sx={{ mb: 3 }}>
+          <CardHeader title="Checklist Overview" />
+
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Typography fontWeight="bold">
+                  Total Questions
+                </Typography>
+
+                <Typography>
+                  {checklistData?.total_questions}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Typography fontWeight="bold">
+                  Created On
+                </Typography>
+
+                <Typography>
+                  {formatDate(
+                    checklistData?.created_at
+                  )}
+                </Typography>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+
+        {/* FORM */}
+        <Card>
+          <CardHeader title="Checklist Questions" />
+
+          <CardContent>
+            <form onSubmit={onSubmit}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 3,
+                }}
+              >
+                {checklistData?.questions?.map(
+                  (question) => (
+                    <Paper
+                      key={question.id}
+                      sx={{
+                        p: 3,
+                        border: "1px solid #e5e7eb",
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent:
+                            "space-between",
+                          alignItems: "center",
+                          mb: 2,
+                          flexWrap: "wrap",
+                          gap: 1,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            alignItems: "center",
+                          }}
+                        >
+                          <Chip
+                            label={`Q${question.qnumber}`}
+                            color="error"
+                          />
+
+                          <Chip
+                            icon={getQuestionTypeIcon(
+                              question.qtype
+                            )}
+                            label={question.qtype}
+                            color={getQuestionTypeBadgeColor(
+                              question.qtype
+                            )}
+                            variant="outlined"
+                          />
+                        </Box>
+
+                        {question.quest_mandatory && (
+                          <Chip
+                            label="Required"
+                            size="small"
+                            color="error"
+                            variant="outlined"
+                          />
+                        )}
+                      </Box>
+
+                      {renderQuestionInput(question)}
+                    </Paper>
+                  )
+                )}
+
+                {!isViewMode && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                    }}
+                  >
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      disabled={submitting}
+                      startIcon={<Send size={16} />}
+                      sx={{
+                        bgcolor: "#d32f2f",
+                        "&:hover": {
+                          bgcolor: "#b71c1c",
+                        },
+                      }}
+                    >
+                      {submitting
+                        ? "Submitting..."
+                        : "Submit Form"}
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            </form>
+          </CardContent>
+        </Card>
       </Box>
-    </div>
+    </Box>
   );
 };
 
