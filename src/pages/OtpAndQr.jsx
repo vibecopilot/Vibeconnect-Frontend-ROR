@@ -5,24 +5,9 @@ import QRCode from "qrcode.react";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import LotusLogo from "../assets/LotusLogo.png"
 
-// Must match the backend encoder in visitors_controller.rb (BASE62_ALPHABET).
-const BASE62_ALPHABET =
-  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-const decodeVisitorRef = (ref) => {
-  if (!ref) return null;
-  let id = 0;
-  for (const ch of ref) {
-    const idx = BASE62_ALPHABET.indexOf(ch);
-    if (idx === -1) return null; // invalid character
-    id = id * 62 + idx;
-  }
-  return id;
-};
-
 const OtpAndQr = () => {
   const [searchParams] = useSearchParams();
-  const id = decodeVisitorRef(searchParams.get("v"));
+  const id = searchParams.get("v");
   const [userData, setUserData] = useState({});
   const [loading, setLoading] = useState(true);
   const [otpDigits, setOtpDigits] = useState([]);
