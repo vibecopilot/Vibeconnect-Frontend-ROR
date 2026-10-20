@@ -864,6 +864,8 @@ import HappyHomesPrivacyPolicy from "./pages/Setup/Abous/HappyHomes.jsx";
 import SugeePrivacyPolicy from "./pages/Setup/Abous/SugeePrivacyPolicy.jsx";
 import LotusHRMSPrivacyPolicy from "./pages/Setup/Abous/LotusHrms.jsx";
 import VibePulsePolicy from "./pages/Setup/Abous/VibePulse.jsx";
+import NotandaeCirclePrivacyPolicy from "./pages/Setup/Abous/NotandaeCircle.Jsx";
+
 
 
 
@@ -7088,6 +7090,7 @@ function App() {
         <Route path="/sugee/privacy_policy" element={<SugeePrivacyPolicy />} />
         <Route path="/lotus_hrms/privacy_policy" element={<LotusHRMSPrivacyPolicy />} />
         <Route path="/vibe_pulse/privacy_policy" element={<VibePulsePolicy />} />
+        <Route path="/notandae_circle/privacy_policy" element={<NotandaeCirclePrivacyPolicy />} />
 
 
         <Route
@@ -7496,6 +7499,7 @@ function App() {
         />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/otp-qr" element={<OtpAndQr />} />
+        <Route path="/q" element={<OtpAndQr />} />
 
         <Route
           path="/admin/mom"
