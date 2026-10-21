@@ -864,7 +864,7 @@ import HappyHomesPrivacyPolicy from "./pages/Setup/Abous/HappyHomes.jsx";
 import SugeePrivacyPolicy from "./pages/Setup/Abous/SugeePrivacyPolicy.jsx";
 import LotusHRMSPrivacyPolicy from "./pages/Setup/Abous/LotusHrms.jsx";
 import VibePulsePolicy from "./pages/Setup/Abous/VibePulse.jsx";
-import NotandaeCirclePrivacyPolicy from "./pages/Setup/Abous/NotandaeCircle.Jsx";
+import NotandaeCirclePrivacyPolicy from "./pages/Setup/Abous/NotandaeCircle.jsx";
 
 
 
