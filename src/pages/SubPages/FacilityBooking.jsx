@@ -42,6 +42,7 @@ const FacilityBooking = () => {
   const [terms, setTerms] = useState("No terms available.");
   const [gstNo, setGstNo] = useState(null);
   const [amountt, setAmountt] = useState("");
+  const [subFacilities, setSubFacilities] = useState([]);
   const [cancellationPolicy, setCancellationPolicy] = useState(
     "No cancellation policy available."
   );
@@ -491,6 +492,12 @@ const FacilityBooking = () => {
       for (const [key, value] of postData.entries()) {
         console.log(`${key}: ${value}`);
       }
+      if (formData.sub_facility_id) {
+        postData.append(
+          "amenity_booking[sub_facility_id]",
+          formData.sub_facility_id
+        );
+      }
 
       const response = await toast.promise(
         postAmenitiesBooking(postData),
@@ -555,18 +562,31 @@ const FacilityBooking = () => {
     const selectedFacilityId = e.target.value;
     setSelectedSlot("");
 
-    fetchSlotsForFacility(selectedFacilityId, date);
+    const selectedFacility =
+      facilities.find(
+        (item) => String(item.id) === String(selectedFacilityId)
+      ) || null;
 
-    fetchTermsPolicy(selectedFacilityId);
-
-    const selectedFacility = facilities.find(
-      (facility) => facility.id === parseInt(selectedFacilityId)
-    );
     setFacility(selectedFacility);
+
+    // Get active sub-facilities belonging to the selected main facility.
+    const activeSubFacilities = (
+      selectedFacility?.sub_facilities || []
+    ).filter(
+      (item) =>
+        String(item.status || "").toLowerCase() === "active"
+    );
+
+    setSubFacilities(activeSubFacilities);
+
+    fetchSlotsForFacility(selectedFacilityId, date);
+    fetchTermsPolicy(selectedFacilityId);
 
     setFormData((prevData) => ({
       ...prevData,
       amenity_id: selectedFacilityId,
+      sub_facility_id: "",
+      amenity_slot_id: "",
     }));
   };
 
@@ -794,7 +814,41 @@ const FacilityBooking = () => {
                 />
               </div>
             </div>
+          
             <div className="grid grid-cols-4 gap-2 mt-2 p-2">
+              <div>
+                  {facility && subFacilities.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="sub_facility_id"
+                    className="font-semibold"
+                  >
+                    Select Sub-Facility:
+                  </label>
+
+                  <select
+                    id="sub_facility_id"
+                    name="sub_facility_id"
+                    className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
+                    value={formData.sub_facility_id}
+                    onChange={(e) =>
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        sub_facility_id: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Select Sub-Facility</option>
+
+                    {subFacilities.map((subFacility) => (
+                      <option key={subFacility.id} value={subFacility.id}>
+                        {subFacility.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              </div>
               {facility !== "" && Array.isArray(slots) && slots.length > 0 && (
                 <div className="flex flex-col gap-1">
                   <p className="font-semibold">Select Slot :</p>
@@ -933,7 +987,12 @@ const FacilityBooking = () => {
               <label htmlFor="" className="font-semibold">
                 Comment :
               </label>
-              <textarea
+              <textareaif (formData.sub_facility_id) {
+  postData.append(
+    "amenity_booking[sub_facility_id]",
+    formData.sub_facility_id
+  );
+}
                 name=""
                 id=""
                 cols="30"

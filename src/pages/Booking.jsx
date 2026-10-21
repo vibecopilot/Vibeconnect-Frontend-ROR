@@ -693,6 +693,8 @@ const Booking = () => {
     },
     { name: "ID", selector: (row) => row.id, sortable: true },
     { name: "Facility Name", selector: (row) => row.fac_name, sortable: true },
+        { name: "Sub Facility Name", selector: (row) => row.sub_facility?.name || "-", sortable: true  },
+
     { name: "Facility Type", selector: (row) => row.fac_type, sortable: true },
     { name: "Total Amount", selector: (row) => row.amount || "NA", sortable: true },
     { name: "Payment Status", selector: (row) => row.status || "NA", sortable: true },
