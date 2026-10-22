@@ -2190,11 +2190,12 @@ export const getTransportation = async (transportationType) =>
       },
     },
   );
-export const getSetupUsers = async () =>
+export const getSetupUsers = async (params = {}) =>
   axiosInstance.get("/users.json", {
     params: {
-      token: token,
+      token:token,
       user_status: true,
+      ...params,
     },
   });
 export const putSetupUser = async (userId, data) =>
@@ -2216,13 +2217,26 @@ export const getUserCount = async () =>
     },
   });
 
-export const UsersExport = async () =>
+export const UsersExport = async (filterParams = {}) =>
   axiosInstance.get("/users/export_users.xlsx", {
     params: {
       token: token,
+      ...filterParams,
     },
      responseType: "blob",
   });
+
+export const UsersImport = async (file, siteId) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  return axiosInstance.post("/users/import.json", formData, {
+    params: {
+      token:token,
+      ...(siteId && { site_id: siteId }),
+    },
+  });
+};
 
 export const updateUserAdminApproval = async (id, payload, token) =>
   axiosInstance.patch(`users/${id}/update_status.json`, payload, {
