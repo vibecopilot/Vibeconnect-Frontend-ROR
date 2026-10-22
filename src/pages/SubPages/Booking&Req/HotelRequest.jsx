@@ -73,7 +73,7 @@ const HotelRequest = () => {
       if (decision === true) {
         toast.success("Booking successfully");
       } else {
-        toast.success("Approval denied");
+        toast.error("Approval denied");
       }
     } catch (error) {
       console.log(error);

@@ -3,6 +3,7 @@ import { PiPlusCircle } from "react-icons/pi";
 import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import Navbar from "../../../components/Navbar";
+import SiteHeader from "../../../components/SiteHeader";
 import AddGroupMeterCategoryTypeModal from "./AddGroupMeterCategoryTypeModal";
 import EditGroupMeterCategoryTypeModal from "./EditGroupMeterCategoryTypeModal";
 import AddSubGroupMeterCategoryTypeModal from "./AddSubGroupMeterCategoryTypeModal";
@@ -10,6 +11,8 @@ import EditSubGroupMeterCategoryTypeModal from "./EditSubGroupMeterCategoryTypeM
 import AddSubSubGroupMeterCategoryTypeModal from "./AddSubSubGroupMeterCategoryTypeModal";
 import EditSubSubGroupMeterCategoryTypeModal from "./EditSubSubGroupMeterCategoryTypeModal";
 import { useSelector } from "react-redux";
+import { getItemInLocalStorage } from "../../../utils/localStorage";
+import SetupNavbar from "../../../components/navbars/SetupNavbar";
 
 function MeterCategoryType() {
   const [addGroupModal, setAddGroupModal] = useState(false);
@@ -19,6 +22,11 @@ function MeterCategoryType() {
   const [addSubSubGroupModal, setAddSubSubGroupModal] = useState(false);
   const [editSubSubGroupModal, setEditSubSubGroupModal] = useState(false);
   const themeColor = useSelector((state) => state.theme.color);
+
+  // ── reactive site ID — SiteHeader updates this on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
   const meterColumns = [
     {
       name: "Sr. No",
@@ -218,8 +226,12 @@ function MeterCategoryType() {
   ];
   return (
     <div className="flex">
-      <Navbar />
+      <SetupNavbar />
       <div className="flex flex-col w-full overflow-hidden px-5">
+        {/* ── Site Switcher — switches active site context ── */}
+        <SiteHeader
+          onSiteChange={(id) => setActiveSiteId(id)}
+        />
         <h2
           style={{ background: themeColor }}
           className="text-center text-xl font-bold p-2 rounded-full text-white my-5"

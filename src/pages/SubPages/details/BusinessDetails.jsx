@@ -57,10 +57,10 @@ const BusinessDetails = () => {
         {details.logo && details.logo.map((doc, index) => (
           <div key={doc.id} className="flex justify-center">
             <img
-              src={domainPrefix + doc.document}
+              src={ doc.document}
               alt={`Attachment ${index + 1}`}
               className="w-40 h-40 object-cover rounded-md"
-              onClick={() => window.open(domainPrefix + doc.document, "_blank")}
+              onClick={() => window.open(doc.document, "_blank")}
             />
           </div>
         ))}
@@ -134,18 +134,18 @@ const BusinessDetails = () => {
               details.contact_books_attachment.length > 0 ? (
                 details.contact_books_attachment.map((doc, index) => (
                   <div key={doc.id} className="">
-                    {isImage(domainPrefix + doc.document) ? (
+                    {isImage( doc.document) ? (
                       <img
-                        src={domainPrefix + doc.document}
+                        src={ doc.document}
                         alt={`Attachment ${index + 1}`}
                         className="w-40 h-28 object-cover rounded-md"
                         onClick={() =>
-                          window.open(domainPrefix + doc.document, "_blank")
+                          window.open( doc.document, "_blank")
                         }
                       />
                     ) : (
                       <a
-                        href={domainPrefix + doc.document}
+                        href={ doc.document}
                         target="_blank"
                         rel="noopener noreferrer"
                         className=" hover:text-blue-400 transition-all duration-300  text-center flex flex-col items-center"

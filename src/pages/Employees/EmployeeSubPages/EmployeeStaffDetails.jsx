@@ -1,6 +1,6 @@
 import React from "react";
 import Detail from "../../../containers/Detail";
-import image from "/profile.png"
+import image from "/profile.png";
 import { useSelector } from "react-redux";
 import Table from "../../../components/table/Table";
 
