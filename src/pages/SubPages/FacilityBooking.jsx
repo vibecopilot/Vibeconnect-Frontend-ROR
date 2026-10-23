@@ -847,11 +847,18 @@ const FacilityBooking = () => {
             </div>
             <div className="grid grid-cols-4 gap-2 mt-2 p-2">
               {facility !== "" && Array.isArray(slots) && slots.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  <p className="font-semibold">
-                    Select Slot{maxSlots > 1 ? `s (up to ${maxSlots} consecutive)` : ""} :
-                  </p>
-                  <div className="flex flex-wrap gap-2">
+                <div className="col-span-4 flex flex-col gap-2 mt-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="font-semibold">
+                      Select Slot{maxSlots > 1 ? "s" : ""} :
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {maxSlots > 1
+                        ? `Tap neighbouring slots to extend (max ${maxSlots})`
+                        : "One slot per booking"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
                     {slots.map((slot) => {
                       const isSelected = selectedSlotIds.includes(slot.id);
                       return (
@@ -859,10 +866,10 @@ const FacilityBooking = () => {
                           type="button"
                           key={slot.id}
                           onClick={() => handleSlotToggle(slot)}
-                          className={`border px-3 py-1 rounded-md text-sm ${
+                          className={`w-full border px-2 py-2 rounded-md text-sm text-center transition-colors ${
                             isSelected
                               ? "bg-black text-white border-black"
-                              : "border-gray-500 hover:bg-gray-100"
+                              : "border-gray-400 hover:bg-gray-100"
                           }`}
                         >
                           {slot.slot_str}
@@ -870,11 +877,16 @@ const FacilityBooking = () => {
                       );
                     })}
                   </div>
-                  {selectedSlotIds.length > 0 && (
-                    <p className="text-sm text-gray-600">
-                      {selectedSlotIds.length} slot(s) selected
-                    </p>
-                  )}
+                  {selectedSlotIds.length > 0 && (() => {
+                    const chosen = slots.filter((s) => selectedSlotIds.includes(s.id));
+                    const first = chosen[0];
+                    const last = chosen[chosen.length - 1];
+                    return (
+                      <p className="text-sm font-medium">
+                        Selected: {formatTime(first.start_hr, first.start_min)} – {formatTime(last.end_hr, last.end_min)} ({chosen.length} slot{chosen.length > 1 ? "s" : ""})
+                      </p>
+                    );
+                  })()}
                 </div>
               )}
             </div>
