@@ -1721,6 +1721,23 @@ const SetupFacility = () => {
                 />
               </div>
               <div className="my-2 flex flex-col gap-2">
+                <label htmlFor="max_slots" className="font-medium">
+                  Consecutive Slots Allowed
+                </label>
+                <input
+                  type="number"
+                  name="max_slots"
+                  id="max_slots"
+                  min={1}
+                  value={formData.max_slots}
+                  onChange={(e) =>
+                    setFormData({ ...formData, max_slots: e.target.value })
+                  }
+                  className="border rounded-md p-2"
+                  placeholder="Max slots per booking"
+                />
+              </div>
+              <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="" className="font-medium">
                   GST
                 </label>

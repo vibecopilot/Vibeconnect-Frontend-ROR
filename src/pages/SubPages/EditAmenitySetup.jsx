@@ -1911,6 +1911,21 @@ const EditAmenitySetup = () => {
                 />
               </div>
               <div className="my-2 flex flex-col gap-2">
+                <label htmlFor="max_slots" className="font-medium">
+                  Consecutive Slots Allowed
+                </label>
+                <input
+                  type="number"
+                  name="max_slots"
+                  id="max_slots"
+                  min={1}
+                  className="border rounded-md p-2"
+                  placeholder="Max slots per booking"
+                  value={formData.amenity.max_slots}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="gst_no" className="font-medium">
                   GST No
                 </label>

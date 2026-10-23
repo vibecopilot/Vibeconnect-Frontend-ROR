@@ -30,6 +30,7 @@ const FacilityBooking = () => {
   const formattedDate = `${year}-${month}-${day}`;
   const [selectedSlot, setSelectedSlot] = useState([]);
   const [slots, setSlots] = useState([]);
+  const [selectedSlotIds, setSelectedSlotIds] = useState([]);
   const [blockedDates, setBlockedDates] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,16 +125,59 @@ const FacilityBooking = () => {
     }
   };
 
-  const calculateBookingAmount = (facility, formData) => {
-    if (facility?.fixed_amount) {
-      const fixedAmount = Number(facility?.fixed_amount) || 0;
-      const taxPercentage = Number(facility?.gst_no) || 0;
-      const taxAmount = (fixedAmount * taxPercentage) / 100;
-      const totalAmount = fixedAmount + taxAmount;
-      return totalAmount;
-    } else {
-      return formData?.amount ?? "";
+  const maxSlots = Number(facility?.max_slots) > 0 ? Number(facility.max_slots) : 1;
+
+  const perSlotAmount = (facility, formData) => {
+    if (Number(facility?.fixed_amount) > 0) {
+      return Number(facility.fixed_amount);
     }
+    return (
+      (Number(formData?.member_adult) || 0) * (Number(facility?.member_price_adult) || 0) +
+      (Number(formData?.member_child) || 0) * (Number(facility?.member_price_child) || 0) +
+      (Number(formData?.guest_adult) || 0) * (Number(facility?.guest_price_adult) || 0) +
+      (Number(formData?.guest_child) || 0) * (Number(facility?.guest_price_child) || 0)
+    );
+  };
+
+  const calculateBookingAmount = (facility, formData) => {
+    const slotCount = Math.max(selectedSlotIds.length, 1);
+    const subtotal = perSlotAmount(facility, formData) * slotCount;
+    const taxAmount = (subtotal * (Number(facility?.gst_no) || 0)) / 100;
+    return Math.round((subtotal + taxAmount) * 100) / 100;
+  };
+
+  const slotPosition = (slot) =>
+    slot.position !== undefined ? slot.position : slots.findIndex((s) => s.id === slot.id);
+
+  const handleSlotToggle = (slot) => {
+    const byId = (id) => slots.find((s) => s.id === id);
+    const selected = selectedSlotIds.map(byId).filter(Boolean);
+    const positions = selected.map(slotPosition);
+    const pos = slotPosition(slot);
+    const minPos = Math.min(...positions);
+    const maxPos = Math.max(...positions);
+    let next;
+
+    if (selectedSlotIds.includes(slot.id)) {
+      if (pos === minPos || pos === maxPos) {
+        next = selectedSlotIds.filter((id) => id !== slot.id);
+      } else {
+        next = [slot.id];
+      }
+    } else if (selected.length === 0) {
+      next = [slot.id];
+    } else if ((pos === minPos - 1 || pos === maxPos + 1) && selected.length < maxSlots) {
+      next = [...selectedSlotIds, slot.id];
+    } else if (pos === minPos - 1 || pos === maxPos + 1) {
+      toast.error(`You can select up to ${maxSlots} consecutive slot(s)`);
+      return;
+    } else {
+      next = [slot.id];
+    }
+
+    next = [...next].sort((a, b) => slotPosition(byId(a)) - slotPosition(byId(b)));
+    setSelectedSlotIds(next);
+    setFormData((prevData) => ({ ...prevData, amenity_slot_id: next[0] || "" }));
   };
 
   useEffect(() => {
@@ -151,7 +195,11 @@ const FacilityBooking = () => {
   useEffect(() => {
     const bookingAmount = calculateBookingAmount(facility, formData);
     setAmountt(bookingAmount);
-  }, [facility, formData]);
+  }, [facility, formData, selectedSlotIds]);
+
+  useEffect(() => {
+    setSelectedSlotIds([]);
+  }, [formData.amenity_id, formData.booking_date]);
 
   const calculateGST = (amount, gstNo) => {
     return (amount * gstNo) / 100;
@@ -427,7 +475,7 @@ const FacilityBooking = () => {
       toast.error("At least one member or guest must be added.");
       return;
     }
-    if (Array.isArray(slots) && slots.length > 0 && !formData.amenity_slot_id) {
+    if (Array.isArray(slots) && slots.length > 0 && selectedSlotIds.length === 0) {
       toast.error("Please select a slot for this facility.");
       return;
     }
@@ -456,7 +504,10 @@ const FacilityBooking = () => {
       postData.append("amenity_booking[amenity_id]", formData.amenity_id || "");
       postData.append(
         "amenity_booking[amenity_slot_id]",
-        formData.amenity_slot_id || ""
+        selectedSlotIds[0] || formData.amenity_slot_id || ""
+      );
+      selectedSlotIds.forEach((slotId) =>
+        postData.append("amenity_booking[slot_ids][]", slotId)
       );
       postData.append(
         "amenity_booking[booking_date]",
@@ -483,12 +534,6 @@ const FacilityBooking = () => {
         "amenity_booking[member_child]",
         formData.member_child || ""
       );
-      postData.append(
-        "amenity_booking[amenity_slot_id]",
-        formData.amenity_slot_id || ""
-      );
-
-      postData.append("amenity_booking[amount]", formData.amount || "");
       for (const [key, value] of postData.entries()) {
         console.log(`${key}: ${value}`);
       }
@@ -504,7 +549,9 @@ const FacilityBooking = () => {
         {
           loading: "Facility Booking, please wait...",
           success: "Booking successful!",
-          error: "Booking Limit Exhausted - Do you want to request a waitlist spot?",
+          error: (err) =>
+            err?.response?.data?.errors?.[0] ||
+            "Booking Limit Exhausted - Do you want to request a waitlist spot?",
         }
       );
       navigate("/bookings");
@@ -561,6 +608,7 @@ const FacilityBooking = () => {
   const handleFacilityChange = (e) => {
     const selectedFacilityId = e.target.value;
     setSelectedSlot("");
+    setSelectedSlotIds([]);
 
     const selectedFacility =
       facilities.find(
@@ -851,19 +899,33 @@ const FacilityBooking = () => {
               </div>
               {facility !== "" && Array.isArray(slots) && slots.length > 0 && (
                 <div className="flex flex-col gap-1">
-                  <p className="font-semibold">Select Slot :</p>
-                  <select
-                    className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
-                    value={selectedSlot}
-                    onChange={handleSlotChange}
-                  >
-                    <option value="">Select Slot</option>
-                    {slots.map((slot) => (
-                      <option key={slot.id} value={slot.id}>
-                        {slot.slot_str} {/* Use formatted slot_str here */}
-                      </option>
-                    ))}
-                  </select>
+                  <p className="font-semibold">
+                    Select Slot{maxSlots > 1 ? `s (up to ${maxSlots} consecutive)` : ""} :
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {slots.map((slot) => {
+                      const isSelected = selectedSlotIds.includes(slot.id);
+                      return (
+                        <button
+                          type="button"
+                          key={slot.id}
+                          onClick={() => handleSlotToggle(slot)}
+                          className={`border px-3 py-1 rounded-md text-sm ${
+                            isSelected
+                              ? "bg-black text-white border-black"
+                              : "border-gray-500 hover:bg-gray-100"
+                          }`}
+                        >
+                          {slot.slot_str}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedSlotIds.length > 0 && (
+                    <p className="text-sm text-gray-600">
+                      {selectedSlotIds.length} slot(s) selected
+                    </p>
+                  )}
                 </div>
               )}
             </div>
