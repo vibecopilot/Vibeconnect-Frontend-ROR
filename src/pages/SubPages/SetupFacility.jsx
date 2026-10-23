@@ -1721,23 +1721,6 @@ const SetupFacility = () => {
                 />
               </div>
               <div className="my-2 flex flex-col gap-2">
-                <label htmlFor="max_slots" className="font-medium">
-                  Consecutive Slots Allowed
-                </label>
-                <input
-                  type="number"
-                  name="max_slots"
-                  id="max_slots"
-                  min={1}
-                  value={formData.max_slots}
-                  onChange={(e) =>
-                    setFormData({ ...formData, max_slots: e.target.value })
-                  }
-                  className="border rounded-md p-2"
-                  placeholder="Max slots per booking"
-                />
-              </div>
-              <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="" className="font-medium">
                   GST
                 </label>
@@ -1758,11 +1741,43 @@ const SetupFacility = () => {
                 />
               </div>
             </div>
-            <div className="my-2 flex items-center gap-2">
-              <label htmlFor="" className="font-medium">
-                Consecutive slots Allowed
-              </label>
-              <Switch />
+            <div className="my-2 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <label htmlFor="" className="font-medium">
+                  Consecutive slots Allowed
+                </label>
+                <Switch
+                  checked={!!formData.consecutive_slot_allowed}
+                  onChange={(e) =>
+                    setFormData((prevState) => ({
+                      ...prevState,
+                      consecutive_slot_allowed: e.target.checked,
+                    }))
+                  }
+                />
+              </div>
+              {formData.consecutive_slot_allowed && (
+                <div className="flex flex-col gap-1">
+                  <label htmlFor="max_slots" className="font-medium">
+                    Max consecutive slots per booking
+                  </label>
+                  <input
+                    type="number"
+                    name="max_slots"
+                    id="max_slots"
+                    min={1}
+                    value={formData.max_slots}
+                    onChange={(e) =>
+                      setFormData((prevState) => ({
+                        ...prevState,
+                        max_slots: e.target.value,
+                      }))
+                    }
+                    className="border rounded-md p-2 w-48"
+                    placeholder="e.g. 3"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

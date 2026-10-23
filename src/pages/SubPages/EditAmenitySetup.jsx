@@ -1911,19 +1911,38 @@ const EditAmenitySetup = () => {
                 />
               </div>
               <div className="my-2 flex flex-col gap-2">
-                <label htmlFor="max_slots" className="font-medium">
-                  Consecutive Slots Allowed
-                </label>
-                <input
-                  type="number"
-                  name="max_slots"
-                  id="max_slots"
-                  min={1}
-                  className="border rounded-md p-2"
-                  placeholder="Max slots per booking"
-                  value={formData.amenity.max_slots}
-                  onChange={handleInputChange}
-                />
+                <div className="flex items-center gap-2">
+                  <label className="font-medium">Consecutive slots Allowed</label>
+                  <Switch
+                    checked={!!formData.amenity.consecutive_slot_allowed}
+                    onChange={(e) =>
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        amenity: {
+                          ...prevData.amenity,
+                          consecutive_slot_allowed: e.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                </div>
+                {formData.amenity.consecutive_slot_allowed && (
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor="max_slots" className="font-medium">
+                      Max consecutive slots per booking
+                    </label>
+                    <input
+                      type="number"
+                      name="max_slots"
+                      id="max_slots"
+                      min={1}
+                      className="border rounded-md p-2 w-48"
+                      placeholder="e.g. 3"
+                      value={formData.amenity.max_slots}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                )}
               </div>
               <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="gst_no" className="font-medium">

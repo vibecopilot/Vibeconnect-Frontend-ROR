@@ -125,7 +125,10 @@ const FacilityBooking = () => {
     }
   };
 
-  const maxSlots = Number(facility?.max_slots) > 0 ? Number(facility.max_slots) : 1;
+  const maxSlots =
+    facility?.consecutive_slot_allowed && Number(facility?.max_slots) > 0
+      ? Number(facility.max_slots)
+      : 1;
 
   const perSlotAmount = (facility, formData) => {
     if (Number(facility?.fixed_amount) > 0) {
