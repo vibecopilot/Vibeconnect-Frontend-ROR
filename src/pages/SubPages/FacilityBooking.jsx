@@ -695,7 +695,7 @@ const FacilityBooking = () => {
   return (
     <section className="flex">
       <Navbar />
-      <div className=" w-full flex mx-3  flex-col overflow-hidden">
+      <div className="flex-1 min-w-0 flex mx-3 flex-col overflow-hidden">
         <div className="flex flex-col items-center mb-10">
           <div className="md:border rounded-md w-full my-2">
             <h2
@@ -1116,7 +1116,7 @@ const FacilityBooking = () => {
                     />
                   </div> */}
                   <div>
-                    Total: {formData.member_adult * prices.member_price_adult}
+                    {selectedSlotIds.length > 1 ? "Total (per slot)" : "Total"}: {formData.member_adult * prices.member_price_adult}
                     {/* + formData.member_child * prices.member_price_child} */}
                   </div>
                 </div>
@@ -1159,7 +1159,7 @@ const FacilityBooking = () => {
                     />
                   </div> */}
                   <div>
-                    Total: {formData.guest_adult * prices.guest_price_adult}
+                    {selectedSlotIds.length > 1 ? "Total (per slot)" : "Total"}: {formData.guest_adult * prices.guest_price_adult}
                     {/* + formData.guest_child * prices.guest_price_child} */}
                   </div>
                 </div>
@@ -1210,6 +1210,23 @@ const FacilityBooking = () => {
               </div>
 
               {/* Final Amount */}
+              {selectedSlotIds.length > 1 && (() => {
+                const perSlot = perSlotAmount(facility, formData);
+                const count = selectedSlotIds.length;
+                const subtotal = perSlot * count;
+                const gstPct = Number(facility?.gst_no) || 0;
+                const tax = Math.round(subtotal * gstPct) / 100;
+                const money = (n) => `₹${Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+                return (
+                  <div className="flex justify-end">
+                    <p className="text-sm text-gray-700 bg-gray-50 border rounded-md px-3 py-2">
+                      {money(perSlot)} × {count} slots = {money(subtotal)}
+                      {gstPct ? ` + ${gstPct}% GST ${money(tax)}` : ""} ={" "}
+                      <span className="font-semibold">{money(subtotal + tax)}</span>
+                    </p>
+                  </div>
+                );
+              })()}
               <div className="flex items-center space-x-2 justify-end">
                 <label htmlFor="gst" className="font-bold">
                   Gst (%):
