@@ -30,6 +30,7 @@ const FacilityBooking = () => {
   const formattedDate = `${year}-${month}-${day}`;
   const [selectedSlot, setSelectedSlot] = useState([]);
   const [slots, setSlots] = useState([]);
+  const [selectedSlotIds, setSelectedSlotIds] = useState([]);
   const [blockedDates, setBlockedDates] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,16 +124,62 @@ const FacilityBooking = () => {
     }
   };
 
-  const calculateBookingAmount = (facility, formData) => {
-    if (facility?.fixed_amount) {
-      const fixedAmount = Number(facility?.fixed_amount) || 0;
-      const taxPercentage = Number(facility?.gst_no) || 0;
-      const taxAmount = (fixedAmount * taxPercentage) / 100;
-      const totalAmount = fixedAmount + taxAmount;
-      return totalAmount;
-    } else {
-      return formData?.amount ?? "";
+  const maxSlots =
+    facility?.consecutive_slot_allowed && Number(facility?.max_slots) > 0
+      ? Number(facility.max_slots)
+      : 1;
+
+  const perSlotAmount = (facility, formData) => {
+    if (Number(facility?.fixed_amount) > 0) {
+      return Number(facility.fixed_amount);
     }
+    return (
+      (Number(formData?.member_adult) || 0) * (Number(facility?.member_price_adult) || 0) +
+      (Number(formData?.member_child) || 0) * (Number(facility?.member_price_child) || 0) +
+      (Number(formData?.guest_adult) || 0) * (Number(facility?.guest_price_adult) || 0) +
+      (Number(formData?.guest_child) || 0) * (Number(facility?.guest_price_child) || 0)
+    );
+  };
+
+  const calculateBookingAmount = (facility, formData) => {
+    const slotCount = Math.max(selectedSlotIds.length, 1);
+    const subtotal = perSlotAmount(facility, formData) * slotCount;
+    const taxAmount = (subtotal * (Number(facility?.gst_no) || 0)) / 100;
+    return Math.round((subtotal + taxAmount) * 100) / 100;
+  };
+
+  const slotPosition = (slot) =>
+    slot.position !== undefined ? slot.position : slots.findIndex((s) => s.id === slot.id);
+
+  const handleSlotToggle = (slot) => {
+    const byId = (id) => slots.find((s) => s.id === id);
+    const selected = selectedSlotIds.map(byId).filter(Boolean);
+    const positions = selected.map(slotPosition);
+    const pos = slotPosition(slot);
+    const minPos = Math.min(...positions);
+    const maxPos = Math.max(...positions);
+    let next;
+
+    if (selectedSlotIds.includes(slot.id)) {
+      if (pos === minPos || pos === maxPos) {
+        next = selectedSlotIds.filter((id) => id !== slot.id);
+      } else {
+        next = [slot.id];
+      }
+    } else if (selected.length === 0) {
+      next = [slot.id];
+    } else if ((pos === minPos - 1 || pos === maxPos + 1) && selected.length < maxSlots) {
+      next = [...selectedSlotIds, slot.id];
+    } else if (pos === minPos - 1 || pos === maxPos + 1) {
+      toast.error(`You can select up to ${maxSlots} consecutive slot(s)`);
+      return;
+    } else {
+      next = [slot.id];
+    }
+
+    next = [...next].sort((a, b) => slotPosition(byId(a)) - slotPosition(byId(b)));
+    setSelectedSlotIds(next);
+    setFormData((prevData) => ({ ...prevData, amenity_slot_id: next[0] || "" }));
   };
 
   useEffect(() => {
@@ -150,7 +197,11 @@ const FacilityBooking = () => {
   useEffect(() => {
     const bookingAmount = calculateBookingAmount(facility, formData);
     setAmountt(bookingAmount);
-  }, [facility, formData]);
+  }, [facility, formData, selectedSlotIds]);
+
+  useEffect(() => {
+    setSelectedSlotIds([]);
+  }, [formData.amenity_id, formData.booking_date]);
 
   const calculateGST = (amount, gstNo) => {
     return (amount * gstNo) / 100;
@@ -426,7 +477,7 @@ const FacilityBooking = () => {
       toast.error("At least one member or guest must be added.");
       return;
     }
-    if (Array.isArray(slots) && slots.length > 0 && !formData.amenity_slot_id) {
+    if (Array.isArray(slots) && slots.length > 0 && selectedSlotIds.length === 0) {
       toast.error("Please select a slot for this facility.");
       return;
     }
@@ -455,7 +506,10 @@ const FacilityBooking = () => {
       postData.append("amenity_booking[amenity_id]", formData.amenity_id || "");
       postData.append(
         "amenity_booking[amenity_slot_id]",
-        formData.amenity_slot_id || ""
+        selectedSlotIds[0] || formData.amenity_slot_id || ""
+      );
+      selectedSlotIds.forEach((slotId) =>
+        postData.append("amenity_booking[slot_ids][]", slotId)
       );
       postData.append(
         "amenity_booking[booking_date]",
@@ -482,12 +536,6 @@ const FacilityBooking = () => {
         "amenity_booking[member_child]",
         formData.member_child || ""
       );
-      postData.append(
-        "amenity_booking[amenity_slot_id]",
-        formData.amenity_slot_id || ""
-      );
-
-      postData.append("amenity_booking[amount]", formData.amount || "");
       for (const [key, value] of postData.entries()) {
         console.log(`${key}: ${value}`);
       }
@@ -497,7 +545,9 @@ const FacilityBooking = () => {
         {
           loading: "Facility Booking, please wait...",
           success: "Booking successful!",
-          error: "Booking Limit Exhausted - Do you want to request a waitlist spot?",
+          error: (err) =>
+            err?.response?.data?.errors?.[0] ||
+            "Booking Limit Exhausted - Do you want to request a waitlist spot?",
         }
       );
       navigate("/bookings");
@@ -554,6 +604,7 @@ const FacilityBooking = () => {
   const handleFacilityChange = (e) => {
     const selectedFacilityId = e.target.value;
     setSelectedSlot("");
+    setSelectedSlotIds([]);
 
     fetchSlotsForFacility(selectedFacilityId, date);
 
@@ -624,7 +675,7 @@ const FacilityBooking = () => {
   return (
     <section className="flex">
       <Navbar />
-      <div className=" w-full flex mx-3  flex-col overflow-hidden">
+      <div className="flex-1 min-w-0 flex mx-3 flex-col overflow-hidden">
         <div className="flex flex-col items-center mb-10">
           <div className="md:border rounded-md w-full my-2">
             <h2
@@ -796,20 +847,46 @@ const FacilityBooking = () => {
             </div>
             <div className="grid grid-cols-4 gap-2 mt-2 p-2">
               {facility !== "" && Array.isArray(slots) && slots.length > 0 && (
-                <div className="flex flex-col gap-1">
-                  <p className="font-semibold">Select Slot :</p>
-                  <select
-                    className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
-                    value={selectedSlot}
-                    onChange={handleSlotChange}
-                  >
-                    <option value="">Select Slot</option>
-                    {slots.map((slot) => (
-                      <option key={slot.id} value={slot.id}>
-                        {slot.slot_str} {/* Use formatted slot_str here */}
-                      </option>
-                    ))}
-                  </select>
+                <div className="col-span-4 flex flex-col gap-2 mt-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="font-semibold">
+                      Select Slot{maxSlots > 1 ? "s" : ""} :
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {maxSlots > 1
+                        ? `Tap neighbouring slots to extend (max ${maxSlots})`
+                        : "One slot per booking"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                    {slots.map((slot) => {
+                      const isSelected = selectedSlotIds.includes(slot.id);
+                      return (
+                        <button
+                          type="button"
+                          key={slot.id}
+                          onClick={() => handleSlotToggle(slot)}
+                          className={`w-full border px-2 py-2 rounded-md text-sm text-center transition-colors ${
+                            isSelected
+                              ? "bg-black text-white border-black"
+                              : "border-gray-400 hover:bg-gray-100"
+                          }`}
+                        >
+                          {slot.slot_str}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedSlotIds.length > 0 && (() => {
+                    const chosen = slots.filter((s) => selectedSlotIds.includes(s.id));
+                    const first = chosen[0];
+                    const last = chosen[chosen.length - 1];
+                    return (
+                      <p className="text-sm font-medium">
+                        Selected: {formatTime(first.start_hr, first.start_min)} – {formatTime(last.end_hr, last.end_min)} ({chosen.length} slot{chosen.length > 1 ? "s" : ""})
+                      </p>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -980,7 +1057,7 @@ const FacilityBooking = () => {
                     />
                   </div> */}
                   <div>
-                    Total: {formData.member_adult * prices.member_price_adult}
+                    {selectedSlotIds.length > 1 ? "Total (per slot)" : "Total"}: {formData.member_adult * prices.member_price_adult}
                     {/* + formData.member_child * prices.member_price_child} */}
                   </div>
                 </div>
@@ -1023,7 +1100,7 @@ const FacilityBooking = () => {
                     />
                   </div> */}
                   <div>
-                    Total: {formData.guest_adult * prices.guest_price_adult}
+                    {selectedSlotIds.length > 1 ? "Total (per slot)" : "Total"}: {formData.guest_adult * prices.guest_price_adult}
                     {/* + formData.guest_child * prices.guest_price_child} */}
                   </div>
                 </div>
@@ -1074,6 +1151,23 @@ const FacilityBooking = () => {
               </div>
 
               {/* Final Amount */}
+              {selectedSlotIds.length > 1 && (() => {
+                const perSlot = perSlotAmount(facility, formData);
+                const count = selectedSlotIds.length;
+                const subtotal = perSlot * count;
+                const gstPct = Number(facility?.gst_no) || 0;
+                const tax = Math.round(subtotal * gstPct) / 100;
+                const money = (n) => `₹${Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+                return (
+                  <div className="flex justify-end">
+                    <p className="text-sm text-gray-700 bg-gray-50 border rounded-md px-3 py-2">
+                      {money(perSlot)} × {count} slots = {money(subtotal)}
+                      {gstPct ? ` + ${gstPct}% GST ${money(tax)}` : ""} ={" "}
+                      <span className="font-semibold">{money(subtotal + tax)}</span>
+                    </p>
+                  </div>
+                );
+              })()}
               <div className="flex items-center space-x-2 justify-end">
                 <label htmlFor="gst" className="font-bold">
                   Gst (%):
