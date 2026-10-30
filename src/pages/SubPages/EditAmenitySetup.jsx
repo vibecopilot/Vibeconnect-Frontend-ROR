@@ -1911,6 +1911,42 @@ const EditAmenitySetup = () => {
                 />
               </div>
               <div className="my-2 flex flex-col gap-2">
+                <label className="font-medium">Consecutive slots Allowed</label>
+                <div className="flex items-center gap-3 border rounded-md px-3 py-2 bg-white min-h-[42px]">
+                  <Switch
+                    checked={!!formData.amenity.consecutive_slot_allowed}
+                    onChange={(e) =>
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        amenity: {
+                          ...prevData.amenity,
+                          consecutive_slot_allowed: e.target.checked,
+                        },
+                      }))
+                    }
+                  />
+                  {formData.amenity.consecutive_slot_allowed ? (
+                    <>
+                      <label htmlFor="max_slots" className="text-sm text-gray-600 whitespace-nowrap">
+                        Max slots
+                      </label>
+                      <input
+                        type="number"
+                        name="max_slots"
+                        id="max_slots"
+                        min={1}
+                        className="border rounded-md px-2 py-1 w-24"
+                        placeholder="e.g. 3"
+                        value={formData.amenity.max_slots}
+                        onChange={handleInputChange}
+                      />
+                    </>
+                  ) : (
+                    <span className="text-sm text-gray-500">Off – 1 slot per booking</span>
+                  )}
+                </div>
+              </div>
+              <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="gst_no" className="font-medium">
                   GST No
                 </label>
