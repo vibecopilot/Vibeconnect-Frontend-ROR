@@ -13,6 +13,7 @@ import {
   getAllFloors,
   getAllUnits,
   UsersImport,
+  UsersSampleDownload,
 } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
@@ -68,7 +69,7 @@ const UserSetup = () => {
   const [buildings, setBuildings] = useState([]);
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
-   const [emailAttachments, setEmailAttachments] = useState([]);
+  const [emailAttachments, setEmailAttachments] = useState([]);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
   const [importingUsers, setImportingUsers] = useState(false);
@@ -83,33 +84,33 @@ const UserSetup = () => {
   const [emailModalOpen, setEmailModalOpen] = useState(false);
 
   const buildUserFilterParams = () => {
-  const params = {};
+    const params = {};
 
-  if (activeSiteId) {
-    params["q[user_sites_site_id_eq]"] = activeSiteId;
-    params["q[site_id]"] = activeSiteId;
-  }
+    if (activeSiteId) {
+      params["q[user_sites_site_id_eq]"] = activeSiteId;
+      params["q[site_id]"] = activeSiteId;
+    }
 
-  if (filterFirstName.trim()) params["q[firstname_eq]"] = filterFirstName.trim();
-  if (filterLastName.trim()) params["q[lastname_eq]"] = filterLastName.trim();
-  if (filterEmail.trim()) params["q[email_eq]"] = filterEmail.trim();
-  if (filterMobile.trim()) params["q[mobile_eq]"] = filterMobile.trim();
+    if (filterFirstName.trim()) params["q[firstname_eq]"] = filterFirstName.trim();
+    if (filterLastName.trim()) params["q[lastname_eq]"] = filterLastName.trim();
+    if (filterEmail.trim()) params["q[email_eq]"] = filterEmail.trim();
+    if (filterMobile.trim()) params["q[mobile_eq]"] = filterMobile.trim();
 
-  if (filterBuilding) params["q[building_id_eq]"] = filterBuilding;
-  if (filterFloor) params["q[floor_id_eq]"] = filterFloor;
-  if (filterUnit) params["q[unit_id_eq]"] = filterUnit;
+    if (filterBuilding) params["q[building_id_eq]"] = filterBuilding;
+    if (filterFloor) params["q[floor_id_eq]"] = filterFloor;
+    if (filterUnit) params["q[unit_id_eq]"] = filterUnit;
 
-  if (filterAppDownloaded === "yes") {
-    params["q[is_downloaded_eq]"] = true;
-  } else if (filterAppDownloaded === "no") {
-    params["q[is_downloaded_eq]"] = false;
-  }
+    if (filterAppDownloaded === "yes") {
+      params["q[is_downloaded_eq]"] = true;
+    } else if (filterAppDownloaded === "no") {
+      params["q[is_downloaded_eq]"] = false;
+    }
 
-  if (fromDate) params["q[created_at_gteq]"] = `${fromDate} 00:00:00`;
-  if (toDate) params["q[created_at_lteq]"] = `${toDate} 23:59:59`;
+    if (fromDate) params["q[created_at_gteq]"] = `${fromDate} 00:00:00`;
+    if (toDate) params["q[created_at_lteq]"] = `${toDate} 23:59:59`;
 
-  return params;
-};
+    return params;
+  };
 
   const fetchUsers = async (params = {}) => {
     try {
@@ -230,30 +231,30 @@ const UserSetup = () => {
     return filteredData;
   }, [filteredData, activeTab]);
 
-  
-const handleExportUsers = async () => {
-  try {
-    const filterParams = buildUserFilterParams();
 
-    const response = await UsersExport(filterParams);
+  const handleExportUsers = async () => {
+    try {
+      const filterParams = buildUserFilterParams();
 
-    const blob = new Blob([response.data], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
+      const response = await UsersExport(filterParams);
 
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "filtered_users.xlsx";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Export error:", error);
-    toast.error("Failed to export users");
-  }
-};
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "filtered_users.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export users");
+    }
+  };
 
   const matchesTextFilter = (values, filterValue) => {
     const search = String(filterValue || "").trim().toLowerCase();
@@ -346,113 +347,113 @@ const handleExportUsers = async () => {
   };
 
   const matchesLocationFilter = (user, type, selectedId) => {
-  if (!selectedId) return true;
+    if (!selectedId) return true;
 
-  const idFields = {
-    building: ["build_id", "building_id"],
-    floor: ["floor_id"],
-    unit: ["unit_id"],
-  };
+    const idFields = {
+      building: ["build_id", "building_id"],
+      floor: ["floor_id"],
+      unit: ["unit_id"],
+    };
 
-  const ids = [];
-  const nested = user[type];
+    const ids = [];
+    const nested = user[type];
 
-  if (nested?.id != null) {
-    ids.push(String(nested.id));
-  }
-
-  idFields[type].forEach((field) => {
-    if (user[field] != null) {
-      ids.push(String(user[field]));
+    if (nested?.id != null) {
+      ids.push(String(nested.id));
     }
-  });
 
-  if (Array.isArray(user.user_sites)) {
-    user.user_sites.forEach((site) => {
-      idFields[type].forEach((field) => {
-        if (site[field] != null) {
-          ids.push(String(site[field]));
-        }
-      });
-
-      if (site[type]?.id != null) {
-        ids.push(String(site[type].id));
+    idFields[type].forEach((field) => {
+      if (user[field] != null) {
+        ids.push(String(user[field]));
       }
     });
-  }
 
-  return ids.includes(String(selectedId));
-};
-
-
-useEffect(() => {
-  const fetchLocationOptions = async () => {
-    if (!activeSiteId) {
-      setBuildings([]);
-      setFloors([]);
-      setUnits([]);
-      return;
-    }
-
-    try {
-      const token = getItemInLocalStorage("TOKEN");
-
-      const params = {
-        token: token || "",
-        site_id: activeSiteId,
-      };
-
-      const [buildingResponse, floorResponse, unitResponse] =
-        await Promise.all([
-          getBuildings({
-            ...params,
-            Page: 1,
-            Per_Page: 1000,
-          }),
-          getAllFloors(params),
-          getAllUnits(params),
-        ]);
-
-      const getList = (response, keys) => {
-        const data = response?.data ?? response;
-
-        if (Array.isArray(data)) {
-          return data;
-        }
-
-        for (const key of keys) {
-          if (Array.isArray(data?.[key])) {
-            return data[key];
+    if (Array.isArray(user.user_sites)) {
+      user.user_sites.forEach((site) => {
+        idFields[type].forEach((field) => {
+          if (site[field] != null) {
+            ids.push(String(site[field]));
           }
+        });
+
+        if (site[type]?.id != null) {
+          ids.push(String(site[type].id));
         }
-
-        return [];
-      };
-
-      setBuildings(
-        getList(buildingResponse, ["buildings", "data"])
-      );
-
-      setFloors(
-        getList(floorResponse, ["floors", "data"])
-      );
-
-      setUnits(
-        getList(unitResponse, ["units", "data"])
-      );
-    } catch (error) {
-      console.error("Location options error:", error);
-
-      setBuildings([]);
-      setFloors([]);
-      setUnits([]);
-
-      toast.error("Failed to load location options");
+      });
     }
+
+    return ids.includes(String(selectedId));
   };
 
-  fetchLocationOptions();
-}, [activeSiteId]);
+
+  useEffect(() => {
+    const fetchLocationOptions = async () => {
+      if (!activeSiteId) {
+        setBuildings([]);
+        setFloors([]);
+        setUnits([]);
+        return;
+      }
+
+      try {
+        const token = getItemInLocalStorage("TOKEN");
+
+        const params = {
+          token: token || "",
+          site_id: activeSiteId,
+        };
+
+        const [buildingResponse, floorResponse, unitResponse] =
+          await Promise.all([
+            getBuildings({
+              ...params,
+              Page: 1,
+              Per_Page: 1000,
+            }),
+            getAllFloors(params),
+            getAllUnits(params),
+          ]);
+
+        const getList = (response, keys) => {
+          const data = response?.data ?? response;
+
+          if (Array.isArray(data)) {
+            return data;
+          }
+
+          for (const key of keys) {
+            if (Array.isArray(data?.[key])) {
+              return data[key];
+            }
+          }
+
+          return [];
+        };
+
+        setBuildings(
+          getList(buildingResponse, ["buildings", "data"])
+        );
+
+        setFloors(
+          getList(floorResponse, ["floors", "data"])
+        );
+
+        setUnits(
+          getList(unitResponse, ["units", "data"])
+        );
+      } catch (error) {
+        console.error("Location options error:", error);
+
+        setBuildings([]);
+        setFloors([]);
+        setUnits([]);
+
+        toast.error("Failed to load location options");
+      }
+    };
+
+    fetchLocationOptions();
+  }, [activeSiteId]);
 
 
   /* ---------------- DATE FILTER ---------------- */
@@ -551,35 +552,35 @@ useEffect(() => {
           return false;
         }
       }
-if (
-  !matchesLocationFilter(
-    user,
-    "building",
-    filterBuilding
-  )
-) {
-  return false;
-}
+      if (
+        !matchesLocationFilter(
+          user,
+          "building",
+          filterBuilding
+        )
+      ) {
+        return false;
+      }
 
-if (
-  !matchesLocationFilter(
-    user,
-    "floor",
-    filterFloor
-  )
-) {
-  return false;
-}
+      if (
+        !matchesLocationFilter(
+          user,
+          "floor",
+          filterFloor
+        )
+      ) {
+        return false;
+      }
 
-if (
-  !matchesLocationFilter(
-    user,
-    "unit",
-    filterUnit
-  )
-) {
-  return false;
-}
+      if (
+        !matchesLocationFilter(
+          user,
+          "unit",
+          filterUnit
+        )
+      ) {
+        return false;
+      }
 
       return true;
     });
@@ -626,11 +627,40 @@ if (
     setCurrentPage(1);
     setFilterOpen(false);
     setFilterBuilding("");
-setFilterFloor("");
-setFilterUnit("");
+    setFilterFloor("");
+    setFilterUnit("");
   };
 
-   const handleImportUsers = async () => {
+
+  const handleDownloadSample = async () => {
+    try {
+      const response = await UsersSampleDownload();
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "users_import_sample.xlsx";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Sample file downloaded successfully");
+    } catch (error) {
+      console.error("Sample download error:", error);
+      toast.error("Failed to download sample file");
+    }
+  };
+
+
+  const handleImportUsers = async () => {
     if (!importFile) {
       toast.error("Select an Excel file first");
       return;
@@ -1276,7 +1306,7 @@ setFilterUnit("");
               </button>
             )}
 
-              <button
+            <button
               onClick={() => setImportModalOpen(true)}
               style={{ background: themeColor }}
               className="text-white px-4 py-2 rounded-md flex items-center gap-2"
@@ -1610,7 +1640,7 @@ setFilterUnit("");
                     Clear
                   </button>
 
-                     <button
+                  <button
                     onClick={() => {
                       setCurrentPage(1);
                       setFilterOpen(false);
@@ -1728,73 +1758,95 @@ setFilterUnit("");
         )}
       </div>
 
-         {importModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-              <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Import Users</h2>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (importingUsers) return;
-                    setImportModalOpen(false);
-                    setImportFile(null);
-                  }}
-                  className="text-xl text-gray-500"
-                  aria-label="Close import dialog"
-                >
-                  ×
-                </button>
-              </div>
-
-              <label
-                htmlFor="users-import-file"
-                className="flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 p-5 text-center"
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Import Users</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  if (importingUsers) return;
+                  setImportModalOpen(false);
+                  setImportFile(null);
+                }}
+                className="text-xl text-gray-500"
+                aria-label="Close import dialog"
               >
-                <UploadCloud size={30} className="mb-3 text-indigo-500" />
-                <span className="text-sm font-medium">
-                  {importFile?.name || "Drag and drop a file here or browse"}
-                </span>
-                <span className="mt-2 text-xs text-gray-500">
-                  Supported formats: .xlsx, .xls
-                </span>
-              </label>
+                ×
+              </button>
+            </div>
 
-              <input
-                id="users-import-file"
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={(event) =>
-                  setImportFile(event.target.files?.[0] || null)
-                }
-              />
-
-              <div className="mt-5 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImportModalOpen(false);
-                    setImportFile(null);
-                  }}
-                  disabled={importingUsers}
-                  className="rounded-lg border px-4 py-2 disabled:opacity-60"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleImportUsers}
-                  disabled={!importFile || importingUsers}
-                  style={{ background: themeColor }}
-                  className="rounded-lg px-5 py-2 text-white disabled:opacity-60"
-                >
-                  {importingUsers ? "Uploading..." : "Upload Users"}
-                </button>
+            {/* DOWNLOAD SAMPLE */}
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">
+                  Download Sample Template
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Download the Excel template and fill in user details before uploading.
+                </p>
               </div>
+
+              <button
+                type="button"
+                onClick={handleDownloadSample}
+                className="flex shrink-0 items-center gap-2 rounded-lg border border-indigo-500 bg-white px-3 py-2 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100"
+              >
+                <FaDownload size={14} />
+                Download Sample
+              </button>
+            </div>
+
+
+            <label
+              htmlFor="users-import-file"
+              className="flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 p-5 text-center"
+            >
+              <UploadCloud size={30} className="mb-3 text-indigo-500" />
+              <span className="text-sm font-medium">
+                {importFile?.name || "Drag and drop a file here or browse"}
+              </span>
+              <span className="mt-2 text-xs text-gray-500">
+                Supported formats: .xlsx, .xls
+              </span>
+            </label>
+
+            <input
+              id="users-import-file"
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(event) =>
+                setImportFile(event.target.files?.[0] || null)
+              }
+            />
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setImportModalOpen(false);
+                  setImportFile(null);
+                }}
+                disabled={importingUsers}
+                className="rounded-lg border px-4 py-2 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleImportUsers}
+                disabled={!importFile || importingUsers}
+                style={{ background: themeColor }}
+                className="rounded-lg px-5 py-2 text-white disabled:opacity-60"
+              >
+                {importingUsers ? "Uploading..." : "Upload Users"}
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </section>
   );
 };

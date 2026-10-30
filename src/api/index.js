@@ -2238,6 +2238,14 @@ export const UsersImport = async (file, siteId) => {
   });
 };
 
+export const UsersSampleDownload = async () =>
+  axiosInstance.get("/api/v1/downloads/user_import.json", {
+    params: {
+      token,
+    },
+    responseType: "blob",
+  });
+
 export const updateUserAdminApproval = async (id, payload, token) =>
   axiosInstance.patch(`users/${id}/update_status.json`, payload, {
     params: { token },
