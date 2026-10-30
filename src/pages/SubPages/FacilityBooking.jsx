@@ -20,6 +20,7 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 import { error } from "highcharts";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { MdClose } from "react-icons/md";
 const FacilityBooking = () => {
   const navigate = useNavigate();
   const today = new Date();
@@ -31,6 +32,7 @@ const FacilityBooking = () => {
   const [slots, setSlots] = useState([]);
   const [blockedDates, setBlockedDates] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTermOpen, setIsTermOpen] = useState(false);
   const [time, setTime] = useState("");
   const [date, setDate] = useState(formattedDate);
@@ -40,6 +42,7 @@ const FacilityBooking = () => {
   const [terms, setTerms] = useState("No terms available.");
   const [gstNo, setGstNo] = useState(null);
   const [amountt, setAmountt] = useState("");
+  const [subFacilities, setSubFacilities] = useState([]);
   const [cancellationPolicy, setCancellationPolicy] = useState(
     "No cancellation policy available."
   );
@@ -81,8 +84,7 @@ const FacilityBooking = () => {
     if (!paymentMethods[key]) {
       if (!silent) {
         alert(
-          `${
-            mode.charAt(0).toUpperCase() + mode.slice(1)
+          `${mode.charAt(0).toUpperCase() + mode.slice(1)
           } is not available for this facility`
         );
       }
@@ -112,13 +114,11 @@ const FacilityBooking = () => {
     guest_price_adult: 0,
   });
 
-  console.log("formData", formData);
 
   const fetchUnits = async () => {
     try {
-      const response = await getAllUnits(); 
-      console.log("Units:", response);
-      setUnits(response.data); 
+      const response = await getAllUnits();
+      setUnits(response.data);
     } catch (error) {
       console.error("Error fetching units:", error);
     }
@@ -126,13 +126,10 @@ const FacilityBooking = () => {
 
   const calculateBookingAmount = (facility, formData) => {
     if (facility?.fixed_amount) {
-      console.log("Fixed amount of facility", facility.fixed_amount)
       const fixedAmount = Number(facility?.fixed_amount) || 0;
       const taxPercentage = Number(facility?.gst_no) || 0;
-      console.log("taxPercentage Amount:", taxPercentage);
       const taxAmount = (fixedAmount * taxPercentage) / 100;
       const totalAmount = fixedAmount + taxAmount;
-      console.log("Fixed Amount:", totalAmount);
       return totalAmount;
     } else {
       return formData?.amount ?? "";
@@ -153,7 +150,6 @@ const FacilityBooking = () => {
 
   useEffect(() => {
     const bookingAmount = calculateBookingAmount(facility, formData);
-    console.log("Booking Amount:", bookingAmount);
     setAmountt(bookingAmount);
   }, [facility, formData]);
 
@@ -171,7 +167,6 @@ const FacilityBooking = () => {
     }
   };
 
-  console.log("Slots", slots);
 
   const formatTime = (hr, min) => {
     const safeMin = min ?? 0;
@@ -180,24 +175,67 @@ const FacilityBooking = () => {
 
   const fetchSlotsForFacility = async (facilityId, selectedDate) => {
     try {
-      const response = await getFacilitySlots(facilityId, selectedDate); // API Call
+      const response = await getFacilitySlots(facilityId, selectedDate);
 
       if (response?.data?.slots) {
         const now = new Date();
+        const selectedDt = new Date(selectedDate);
+
+        const isToday =
+          selectedDt.toDateString() === now.toDateString();
+
         const currentHr = now.getHours();
         const currentMin = now.getMinutes();
-        const selectedDt = new Date(selectedDate);
-        const isToday = selectedDt.toDateString() === now.toDateString();
+
+        // 👉 Get selected facility
+        const selectedFacility = facilities.find(
+          (f) => f.id === parseInt(facilityId)
+        );
+
+        // 👉 Get day of week (0 = Sunday)
+        const dayOfWeek = selectedDt.getDay();
+
+        // 👉 Find operational day config
+        const operationalDay = selectedFacility?.operational_days?.find(
+          (d) => d.day_of_week === dayOfWeek
+        );
+
+        // ❌ If facility closed that day
+        if (!operationalDay || !operationalDay.is_active) {
+          setSlots([]);
+          return [];
+        }
+
+        // 👉 Convert operational times
+        const [opStartHr, opStartMin] = operationalDay.start_time
+          .split(":")
+          .map(Number);
+
+        const [opEndHr, opEndMin] = operationalDay.end_time
+          .split(":")
+          .map(Number);
 
         const formattedSlots = response.data.slots
           .filter((slot) => {
+            // ✅ Filter by operational time
+            const slotStart = slot.start_hr * 60 + (slot.start_min || 0);
+            const opStart = opStartHr * 60 + opStartMin;
+            const opEnd = opEndHr * 60 + opEndMin;
+
+            if (slotStart < opStart || slotStart >= opEnd) {
+              return false;
+            }
+
+            // ✅ Filter past slots (today only)
             if (isToday) {
               return (
                 slot.start_hr > currentHr ||
-                (slot.start_hr === currentHr && slot.start_min > currentMin)
+                (slot.start_hr === currentHr &&
+                  slot.start_min > currentMin)
               );
             }
-            return true; 
+
+            return true;
           })
           .map((slot) => ({
             ...slot,
@@ -207,22 +245,17 @@ const FacilityBooking = () => {
             )} to ${formatTime(slot.end_hr, slot.end_min)}`,
           }));
 
-        setSlots(formattedSlots); 
+        setSlots(formattedSlots);
 
-        if (formattedSlots.length === 0) {
-          setBlockedDates((prev) =>
-            prev.includes(selectedDate) ? prev : [...prev, selectedDate]
-          );
-        }
-          return formattedSlots;
+        return formattedSlots;
       } else {
-        console.log("No Slots Found");
         setSlots([]);
-        return []; 
+        return [];
       }
     } catch (error) {
-      console.log("Error Fetching Slots", error);
-      setSlots([]); 
+      console.error(error);
+      setSlots([]);
+      return [];
     }
   };
 
@@ -269,27 +302,22 @@ const FacilityBooking = () => {
           setTerms(selectedFacility.terms || "No terms available.");
           setCancellationPolicy(
             selectedFacility.cancellation_policy ||
-              "No cancellation policy available."
+            "No cancellation policy available."
           );
         } else {
-          console.log("Facility not found.");
           setTerms("No terms available.");
           setCancellationPolicy("No cancellation policy available.");
         }
       } else {
-        console.log("Error in fetching data.");
         setTerms("No terms available.");
         setCancellationPolicy("No cancellation policy available.");
       }
     } catch (error) {
-      console.log("Error fetching facility data:", error);
       setTerms("Error loading terms.");
       setCancellationPolicy("Error loading cancellation policy.");
     }
   };
 
-  console.log("Data coming from API", testFacility);
-  console.log("Payment methods", paymentMethods);
 
   const handleInputChange = (field, value) => {
     const updatedFormData = { ...formData, [field]: parseInt(value) || 0 };
@@ -325,7 +353,6 @@ const FacilityBooking = () => {
     const totalBeforeTax = memberTotal + guestTotal; //+ tenantTotal;
     // Assuming `tax_no` comes from the fetched data (e.g., tax rate is 12%)
     const taxAmount = calculateGST(totalBeforeTax, formData.gst_no || 0); // If no tax, use 0
-    console.log("tax amm", taxAmount);
     const finalAmount = totalBeforeTax + taxAmount;
     // Update formData and the total amount
     setFormData({
@@ -352,22 +379,17 @@ const FacilityBooking = () => {
   };
 
   const handleDateChange = async (e) => {
-    const rawDate = e.target.value;
-    const selectedDateObj = new Date(rawDate);
-    const formattedDate = formatDate(selectedDateObj);
+    const rawDate = e.target.value; // already in YYYY-MM-DD format
 
-    setDate(formattedDate);
+    setDate(rawDate); // ✅ directly use this (NO Date conversion)
 
     if (facility) {
-      const response = await fetchSlotsForFacility(facility.id, formattedDate);
-      console.log("Raw API response:", response);
+      const slots = await fetchSlotsForFacility(facility.id, rawDate);
 
-      const slots = Array.isArray(response) ? response : response?.slots || [];
-
-      if (slots.length === 0) {
-        toast.error("No slots available for this date.");
+      if (!slots || slots.length === 0) {
+        toast.error("This amenity cannot be booked today as it is a non-operational day. Kindly choose a working day.");
         setSlots([]);
-        setDate(""); // optional reset
+        setDate("");
         setFormData((prevData) => ({
           ...prevData,
           booking_date: "",
@@ -378,12 +400,15 @@ const FacilityBooking = () => {
       setSlots(slots);
       setFormData((prevData) => ({
         ...prevData,
-        booking_date: formattedDate,
+        booking_date: rawDate, // ✅ store same string
       }));
     }
   };
 
   const postBookFacility = async () => {
+    // const toastId = toast.loading("Facility Booking, please wait...");
+    if (isSubmitting) return; // guard against duplicate bookings from a double-click/second tap while the first submit is still in flight
+
     const postData = new FormData();
     const today = new Date();
     const selectedDate = new Date(formData.booking_date);
@@ -425,6 +450,7 @@ const FacilityBooking = () => {
     }
 
     try {
+      setIsSubmitting(true);
       postData.append("amenity_booking[site_id]", formData.site_id || "");
       postData.append("amenity_booking[user_id]", formData.user_id || "");
       postData.append("amenity_booking[amenity_id]", formData.amenity_id || "");
@@ -466,18 +492,31 @@ const FacilityBooking = () => {
       for (const [key, value] of postData.entries()) {
         console.log(`${key}: ${value}`);
       }
+      if (formData.sub_facility_id) {
+        postData.append(
+          "amenity_booking[sub_facility_id]",
+          formData.sub_facility_id
+        );
+      }
 
-      const response = await postAmenitiesBooking(postData);
-
-      console.log("Booking response:", response);
-      toast.success("Booking successful!");
+      const response = await toast.promise(
+        postAmenitiesBooking(postData),
+        {
+          loading: "Facility Booking, please wait...",
+          success: "Booking successful!",
+          error: "Booking Limit Exhausted - Do you want to request a waitlist spot?",
+        }
+      );
       navigate("/bookings");
     } catch (error) {
       console.error("Error in booking:", error);
-      alert("Error in booking. Please try again.", error);
+      // alert("Error in booking. Please try again.", error);
+      // toast.error("Booking limit exhausted! for this week");
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  console.log("uuu", units);
+  // console.log("uuu", units);
   const fetchUsers = async () => {
     try {
       const response = await getSetupUsers();
@@ -486,25 +525,20 @@ const FacilityBooking = () => {
         const userSite = user?.user_sites?.[0];
 
         if (!userSite) {
-          console.warn(`No user site found for user ${user.id}`);
           return {
             value: user.id,
-            label: `${user.firstname} ${user.lastname} - Unknown Unit - ${
-              user?.user_sites?.[0]?.ownership || "Unknown Ownership"
-            }`,
+            label: `${user.firstname} ${user.lastname} - Unknown Unit - ${user?.user_sites?.[0]?.ownership || "Unknown Ownership"
+              }`,
           };
         }
 
         const unit = units.find((unit) => unit?.id === userSite?.unit_id);
-        console.log("Found unit:", unit);
 
         return {
           value: user.id,
-          label: `${user.firstname} ${user.lastname} -${
-            unit ? unit.building_name : "Unknown Unit"
-          } - ${unit ? unit.name : "Unknown Unit"} - ${
-            unit ? unit.floor_name : "Unknown Unit"
-          }`,
+          label: `${user.firstname} ${user.lastname} -${unit ? unit.building_name : "Unknown Unit"
+            } - ${unit ? unit.name : "Unknown Unit"} - ${unit ? unit.floor_name : "Unknown Unit"
+            }`,
         };
       });
 
@@ -514,7 +548,7 @@ const FacilityBooking = () => {
     }
   };
 
-  useEffect(() => {}, []);
+  useEffect(() => { }, []);
 
   useEffect(() => {
     if (units.length > 0) {
@@ -522,24 +556,37 @@ const FacilityBooking = () => {
     }
   }, [units]);
 
-  console.log("facility", facility);
+  // console.log("facility", facility);
 
   const handleFacilityChange = (e) => {
     const selectedFacilityId = e.target.value;
-    setSelectedSlot(""); 
+    setSelectedSlot("");
+
+    const selectedFacility =
+      facilities.find(
+        (item) => String(item.id) === String(selectedFacilityId)
+      ) || null;
+
+    setFacility(selectedFacility);
+
+    // Get active sub-facilities belonging to the selected main facility.
+    const activeSubFacilities = (
+      selectedFacility?.sub_facilities || []
+    ).filter(
+      (item) =>
+        String(item.status || "").toLowerCase() === "active"
+    );
+
+    setSubFacilities(activeSubFacilities);
 
     fetchSlotsForFacility(selectedFacilityId, date);
-
-    fetchTermsPolicy(selectedFacilityId); 
-
-    const selectedFacility = facilities.find(
-      (facility) => facility.id === parseInt(selectedFacilityId)
-    );
-    setFacility(selectedFacility);
+    fetchTermsPolicy(selectedFacilityId);
 
     setFormData((prevData) => ({
       ...prevData,
       amenity_id: selectedFacilityId,
+      sub_facility_id: "",
+      amenity_slot_id: "",
     }));
   };
 
@@ -547,13 +594,13 @@ const FacilityBooking = () => {
     const selectedUserId = e.target.value;
     setFormData((prevData) => ({
       ...prevData,
-      user_id: selectedUserId, 
+      user_id: selectedUserId,
     }));
   };
 
   const [searchText, setSearchText] = useState("");
   const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null); 
+  const [selectedUser, setSelectedUser] = useState(null);
   const filteredOptions = userOptions.filter((user) =>
     user.label.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -571,18 +618,18 @@ const FacilityBooking = () => {
     setSearchText(user.label);
   };
 
-  const [searchFATerm, setSearchFATerm] = useState(""); 
-  const [showDropdown, setShowDropdown] = useState(false); 
+  const [searchFATerm, setSearchFATerm] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
   const [facilityError, setFacilityError] = useState("");
 
-  console.log("Line 536 filters", facilities);
+  // console.log("Line 536 filters", facilities);
   const filteredFacilities = facilities.filter((facility) =>
     facility.fac_name.toLowerCase().includes(searchFATerm.toLowerCase())
-  ); 
+  );
   const handleFacSelect = (facility) => {
     setSearchFATerm(facility.fac_name);
     setShowDropdown(false);
-    handleFacilityChange({ target: { value: facility.id } }); 
+    handleFacilityChange({ target: { value: facility.id } });
   };
 
   useEffect(() => {
@@ -599,9 +646,9 @@ const FacilityBooking = () => {
       <Navbar />
       <div className=" w-full flex mx-3  flex-col overflow-hidden">
         <div className="flex flex-col items-center mb-10">
-          <div className="md:border rounded-md my-2 p-4">
+          <div className="md:border rounded-md w-full my-2">
             <h2
-              style={{ background: "rgb(17, 24, 39)" }}
+              style={{ background: themeColor }}
               className="text-xl p-2 rounded-md font-semibold text-center mb-4 text-white "
             >
               Book Facility
@@ -708,30 +755,30 @@ const FacilityBooking = () => {
                   placeholder="Search User"
                   className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
                 />
-                  {isDropdownOpen && (
-                    <ul
-                      role="listbox"
-                      className="absolute left-0 top-full z-50 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full shadow-md"
-                    >
-                      {filteredOptions.length > 0 ? (
-                        filteredOptions.map((option) => (
-                          <li
-                            key={option.value} 
-                            role="option"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleUserSelect(option.value);
-                            }}
-                            className="p-2 hover:bg-gray-200 cursor-pointer"
-                          >
-                            {option.label}
-                          </li>
-                        ))
-                      ) : (
-                        <li className="p-2 text-gray-500">No results found</li>
-                      )}
-                    </ul>
-                  )}
+                {isDropdownOpen && (
+                  <ul
+                    role="listbox"
+                    className="absolute left-0 top-full z-50 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto w-full shadow-md"
+                  >
+                    {filteredOptions.length > 0 ? (
+                      filteredOptions.map((option) => (
+                        <li
+                          key={option.value}
+                          role="option"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleUserSelect(option.value);
+                          }}
+                          className="p-2 hover:bg-gray-200 cursor-pointer"
+                        >
+                          {option.label}
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-2 text-gray-500">No results found</li>
+                    )}
+                  </ul>
+                )}
 
               </div>
 
@@ -767,7 +814,41 @@ const FacilityBooking = () => {
                 />
               </div>
             </div>
+          
             <div className="grid grid-cols-4 gap-2 mt-2 p-2">
+              <div>
+                  {facility && subFacilities.length > 0 && (
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="sub_facility_id"
+                    className="font-semibold"
+                  >
+                    Select Sub-Facility:
+                  </label>
+
+                  <select
+                    id="sub_facility_id"
+                    name="sub_facility_id"
+                    className="border p-[6px] px-4 border-gray-500 rounded-md w-60"
+                    value={formData.sub_facility_id}
+                    onChange={(e) =>
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        sub_facility_id: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Select Sub-Facility</option>
+
+                    {subFacilities.map((subFacility) => (
+                      <option key={subFacility.id} value={subFacility.id}>
+                        {subFacility.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              </div>
               {facility !== "" && Array.isArray(slots) && slots.length > 0 && (
                 <div className="flex flex-col gap-1">
                   <p className="font-semibold">Select Slot :</p>
@@ -858,13 +939,11 @@ const FacilityBooking = () => {
                       return (
                         <div key={value} className="relative group">
                           <p
-                            className={`border-2 p-1 px-6 border-black font-medium rounded-full transition-all duration-200 ${
-                              isSelected ? "bg-black text-white" : ""
-                            } ${
-                              !isEnabled
+                            className={`border-2 p-1 px-6 border-black font-medium rounded-full transition-all duration-200 ${isSelected ? "bg-black text-white" : ""
+                              } ${!isEnabled
                                 ? "opacity-50 cursor-not-allowed"
                                 : "cursor-pointer"
-                            }`}
+                              }`}
                             onClick={() => handlePaymentChange(value)}
                           >
                             {label}
@@ -908,7 +987,12 @@ const FacilityBooking = () => {
               <label htmlFor="" className="font-semibold">
                 Comment :
               </label>
-              <textarea
+              <textareaif (formData.sub_facility_id) {
+  postData.append(
+    "amenity_booking[sub_facility_id]",
+    formData.sub_facility_id
+  );
+}
                 name=""
                 id=""
                 cols="30"
@@ -1070,18 +1154,25 @@ const FacilityBooking = () => {
                   type="text"
                   id="amount"
                   name="amount"
-                  value={amountt ? amountt : formData.amount || 0} // Conditional display
+                  value={amountt ? amountt : formData.amount || 0}
                   disabled
                   className="flex p-2 border border-grey-300 rounded"
                 />
               </div>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3">
               <button
-                onClick={postBookFacility} // Trigger the handleSubmit function on click
-                className="p-2 px-4 flex items-center gap-2 bg-green-400 text-white rounded-md font-medium transition-all duration-300"
+                className="p-2 px-4 flex items-center gap-2 bg-red-400 text-white rounded-md font-medium transition-all duration-300"
+                onClick={() => navigate("/bookings")}
               >
-                <FaCheck /> Submit
+                <MdClose /> Cancel
+              </button>
+              <button
+                onClick={postBookFacility}
+                disabled={isSubmitting}
+                className="p-2 px-4 flex items-center gap-2 bg-green-400 text-white rounded-md font-medium transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <FaCheck /> {isSubmitting ? "Submitting..." : "Submit"}
               </button>
             </div>
 

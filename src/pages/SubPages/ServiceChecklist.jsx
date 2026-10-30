@@ -11,12 +11,18 @@ import { DNA } from "react-loader-spinner";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
 import { FaCopy, FaDownload } from "react-icons/fa";
+import SiteHeader from "../../components/SiteHeader";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ServiceChecklist = () => {
   const [searchChecklistText, setSearchChecklistCheck] = useState("");
   const [filteredChecklistData, setFilteredChecklistData] = useState([]);
   const [checklists, setChecklists] = useState([]);
   const [filter, setFilter] = useState(false);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
   const checklistColumn = [
     {
       name: "Action",
@@ -29,7 +35,7 @@ const ServiceChecklist = () => {
             <BsEye size={15} />
           </Link>
           <Link to={`/admin/copy-checklist/service/${row.id}`}>
-          <FaCopy size={15}/>
+            <FaCopy size={15} />
           </Link>
         </div>
       ),
@@ -94,7 +100,7 @@ const ServiceChecklist = () => {
     } catch (error) {
       console.log(error);
     }
-  }, []);
+  }, [activeSiteId]); // ✅ re-fetch when site changes
   const handleChecklistSearch = (event) => {
     const searchValue = event.target.value;
     setSearchChecklistCheck(searchValue);
@@ -116,7 +122,7 @@ const ServiceChecklist = () => {
   };
   const exportToExcel = () => {
     const mappedData = filteredChecklistData.map((check) => ({
-     
+
       "Checklist Name": check.name,
       "Start Date": check.start_date,
       "End Date": check.end_date,
@@ -138,11 +144,18 @@ const ServiceChecklist = () => {
     link.click();
   };
 
-  const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color)
   return (
     <section className="flex ">
       <Navbar />
-      <div className="p-4 overflow-hidden w-full my-2 flex mx-3 flex-col">
+      <div className=" overflow-hidden w-full flex mx-3 flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setChecklists([]);
+            setFilteredChecklistData([]);
+          }}
+        />
         <Services />
         {/* {filter && (
           <div className="flex items-center justify-center gap-2">
@@ -204,7 +217,7 @@ const ServiceChecklist = () => {
             <Link
               to={"/services/add-service-checklist"}
               className="bg-black  rounded-lg flex font-semibold  items-center gap-2 text-white p-2 "
-              style={{background: themeColor}}
+              style={{ background: themeColor }}
             >
               <IoAddCircleOutline size={20} />
               Add
@@ -212,7 +225,7 @@ const ServiceChecklist = () => {
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
               onClick={exportToExcel}
-              style={{background: themeColor}}
+              style={{ background: themeColor }}
             >
               Export
             </button>

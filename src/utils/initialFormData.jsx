@@ -12,6 +12,7 @@ export const initialAddAssetFormData = {
     floor_id: "",
     unit_id: "",
     name: "",
+    equipemnt_id: "",
     serial_number: "",
     model_number: "",
     purchase_cost: "",

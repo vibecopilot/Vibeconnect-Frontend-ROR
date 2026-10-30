@@ -58,7 +58,10 @@ const GrnDetails = () => {
 
   const totals = useMemo(() => {
     const totalTaxes = inventoryRows.reduce((a, x) => a + num(x.tax_amt), 0);
-    const totalAmount = inventoryRows.reduce((a, x) => a + num(x.total_amount), 0);
+    const totalAmount = inventoryRows.reduce(
+      (a, x) => a + num(x.total_amount),
+      0,
+    );
     return { totalTaxes, totalAmount };
   }, [inventoryRows]);
 
@@ -90,20 +93,60 @@ const GrnDetails = () => {
     },
     { name: "Rate", selector: (row) => safeText(row.rate), sortable: true },
 
-    { name: "CGST Rate", selector: (row) => safeText(row.csgt_rate), sortable: true },
-    { name: "CGST Amount", selector: (row) => safeText(row.csgt_amt), sortable: true },
+    {
+      name: "CGST Rate",
+      selector: (row) => safeText(row.csgt_rate),
+      sortable: true,
+    },
+    {
+      name: "CGST Amount",
+      selector: (row) => safeText(row.csgt_amt),
+      sortable: true,
+    },
 
-    { name: "SGST Rate", selector: (row) => safeText(row.sgst_rate), sortable: true },
-    { name: "SGST Amount", selector: (row) => safeText(row.sgst_amt), sortable: true },
+    {
+      name: "SGST Rate",
+      selector: (row) => safeText(row.sgst_rate),
+      sortable: true,
+    },
+    {
+      name: "SGST Amount",
+      selector: (row) => safeText(row.sgst_amt),
+      sortable: true,
+    },
 
-    { name: "IGST Rate", selector: (row) => safeText(row.igst_rate), sortable: true },
-    { name: "IGST Amount", selector: (row) => safeText(row.igst_amt), sortable: true },
+    {
+      name: "IGST Rate",
+      selector: (row) => safeText(row.igst_rate),
+      sortable: true,
+    },
+    {
+      name: "IGST Amount",
+      selector: (row) => safeText(row.igst_amt),
+      sortable: true,
+    },
 
-    { name: "TCS Rate", selector: (row) => safeText(row.tcs_rate), sortable: true },
-    { name: "TCS Amount", selector: (row) => safeText(row.tcs_amt), sortable: true },
+    {
+      name: "TCS Rate",
+      selector: (row) => safeText(row.tcs_rate),
+      sortable: true,
+    },
+    {
+      name: "TCS Amount",
+      selector: (row) => safeText(row.tcs_amt),
+      sortable: true,
+    },
 
-    { name: "Total Taxes", selector: (row) => safeText(row.tax_amt), sortable: true },
-    { name: "Total Amount", selector: (row) => safeText(row.total_amount), sortable: true },
+    {
+      name: "Total Taxes",
+      selector: (row) => safeText(row.tax_amt),
+      sortable: true,
+    },
+    {
+      name: "Total Amount",
+      selector: (row) => safeText(row.total_amount),
+      sortable: true,
+    },
   ];
 
   if (loading) {
@@ -184,56 +227,71 @@ const GrnDetails = () => {
         <h2 className="border-t text-lg py-5 border-black font-semibold text-center">
           GRN
         </h2>
-
-        <div className="my-5 md:px-10 text-sm items-center font-medium grid gap-4 md:grid-cols-2">
-          <div className="grid grid-cols-2 items-center">
-            <p>Invoice Number</p>
-            <p className="text-sm font-normal">: {safeText(grn?.invoice_number)}</p>
+        <div className="my-6 md:px-10 text-sm font-medium grid gap-5 md:grid-cols-3 mb-4">
+          {/* Invoice Number */}
+          <div className="flex">
+            <p className="w-40">Invoice Number</p>
+            <p className="font-normal">: {safeText(grn?.invoice_number)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>Invoice Date</p>
-            <p className="text-sm font-normal">: {safeDate(grn?.invoice_date)}</p>
+          {/* GRN ID */}
+          <div className="flex">
+            <p className="w-40">GRN ID</p>
+            <p className="font-normal">: {safeText(grn?.grn_unique_id)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>Posting Date</p>
-            <p className="text-sm font-normal">: {safeDate(grn?.posting_date)}</p>
+          {/* Invoice Date */}
+          <div className="flex">
+            <p className="w-40">Invoice Date</p>
+            <p className="font-normal">: {safeDate(grn?.invoice_date)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>ID</p>
-            <p className="text-sm font-normal">: {safeText(grn?.id)}</p>
+          {/* Posting Date */}
+          <div className="flex">
+            <p className="w-40">Posting Date</p>
+            <p className="font-normal">: {safeDate(grn?.posting_date)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>Supplier Name</p>
-            <p className="text-sm font-normal">: {safeText(grn?.vendor_name)}</p>
+          {/* ID */}
+          <div className="flex">
+            <p className="w-40">ID</p>
+            <p className="font-normal">: {safeText(grn?.id)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>Related To</p>
-            <p className="text-sm font-normal">: {safeText(grn?.related_to)}</p>
+          {/* Supplier Name */}
+          <div className="flex">
+            <p className="w-40">Supplier Name</p>
+            <p className="font-normal">: {safeText(grn?.vendor_name)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>Invoice Amount</p>
-            <p className="text-sm font-normal">: {safeText(grn?.invoice_amount)}</p>
+          {/* Related To */}
+          <div className="flex">
+            <p className="w-40">Related To</p>
+            <p className="font-normal">: {safeText(grn?.related_to)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>Total Taxes</p>
-            <p className="text-sm font-normal">: {totals.totalTaxes.toFixed(2)}</p>
+          {/* Invoice Amount */}
+          <div className="flex">
+            <p className="w-40">Invoice Amount</p>
+            <p className="font-normal">: {safeText(grn?.invoice_amount)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>Total GRN Amount</p>
-            <p className="text-sm font-normal">: {totals.totalAmount.toFixed(2)}</p>
+          {/* Total Taxes */}
+          <div className="flex">
+            <p className="w-40">Total Taxes</p>
+            <p className="font-normal">: {totals.totalTaxes.toFixed(2)}</p>
           </div>
 
-          <div className="grid grid-cols-2 items-center">
-            <p>Notes</p>
-            <p className="text-sm font-normal">: {safeText(grn?.notes)}</p>
+          {/* Total GRN Amount */}
+          <div className="flex">
+            <p className="w-40">Total GRN Amount</p>
+            <p className="font-normal">: {totals.totalAmount.toFixed(2)}</p>
+          </div>
+
+          {/* Notes */}
+          <div className="flex md:col-span-2">
+            <p className="w-40">Notes</p>
+            <p className="font-normal">: {safeText(grn?.notes)}</p>
           </div>
         </div>
 
@@ -250,11 +308,15 @@ const GrnDetails = () => {
           </div>
           <div className="flex justify-between items-center">
             <p>Loading Expense:</p>
-            <p className="text-sm font-bold">{safeText(grn?.loading_expenses)}</p>
+            <p className="text-sm font-bold">
+              {safeText(grn?.loading_expenses)}
+            </p>
           </div>
           <div className="flex justify-between items-center">
             <p>Adjustment Amount:</p>
-            <p className="text-sm font-bold">{safeText(grn?.adjustment_amount)}</p>
+            <p className="text-sm font-bold">
+              {safeText(grn?.adjustment_amount)}
+            </p>
           </div>
         </div>
       </div>
@@ -282,7 +344,9 @@ const GrnDetails = () => {
       </div>
 
       <div className="border-t py-2 mx-5 border-black">
-        <h3 className="text-md font-semibold my-3">Retention Payment Details</h3>
+        <h3 className="text-md font-semibold my-3">
+          Retention Payment Details
+        </h3>
         <p className="text-sm">No records</p>
       </div>
 
