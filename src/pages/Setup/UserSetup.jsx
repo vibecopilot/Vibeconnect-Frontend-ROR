@@ -12,6 +12,8 @@ import {
   getBuildings,
   getAllFloors,
   getAllUnits,
+  UsersImport,
+  UsersSampleDownload,
 } from "../../api";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
@@ -37,7 +39,7 @@ import { useSelector } from "react-redux";
 import SiteHeader from "../../components/SiteHeader";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import SetupNavbar from "../../components/navbars/SetupNavbar";
-import { Download } from "lucide-react";
+import { Download, UploadCloud } from "lucide-react";
 
 const UserSetup = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -67,6 +69,11 @@ const UserSetup = () => {
   const [buildings, setBuildings] = useState([]);
   const [floors, setFloors] = useState([]);
   const [units, setUnits] = useState([]);
+  const [emailAttachments, setEmailAttachments] = useState([]);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importingUsers, setImportingUsers] = useState(false);
+
 
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -75,43 +82,62 @@ const UserSetup = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [sendingBulkEmail, setSendingBulkEmail] = useState(false);
   const [emailModalOpen, setEmailModalOpen] = useState(false);
-  const [emailAttachments, setEmailAttachments] = useState([]);
 
-  /* ---------------- FETCH USERS ---------------- */
-  const fetchUsers = async () => {
+  const buildUserFilterParams = () => {
+    const params = {};
+
+    if (activeSiteId) {
+      params["q[user_sites_site_id_eq]"] = activeSiteId;
+      params["q[site_id]"] = activeSiteId;
+    }
+
+    if (filterFirstName.trim()) params["q[firstname_eq]"] = filterFirstName.trim();
+    if (filterLastName.trim()) params["q[lastname_eq]"] = filterLastName.trim();
+    if (filterEmail.trim()) params["q[email_eq]"] = filterEmail.trim();
+    if (filterMobile.trim()) params["q[mobile_eq]"] = filterMobile.trim();
+
+    if (filterBuilding) params["q[building_id_eq]"] = filterBuilding;
+    if (filterFloor) params["q[floor_id_eq]"] = filterFloor;
+    if (filterUnit) params["q[unit_id_eq]"] = filterUnit;
+
+    if (filterAppDownloaded === "yes") {
+      params["q[is_downloaded_eq]"] = true;
+    } else if (filterAppDownloaded === "no") {
+      params["q[is_downloaded_eq]"] = false;
+    }
+
+    if (fromDate) params["q[created_at_gteq]"] = `${fromDate} 00:00:00`;
+    if (toDate) params["q[created_at_lteq]"] = `${toDate} 23:59:59`;
+
+    return params;
+  };
+
+  const fetchUsers = async (params = {}) => {
     try {
       setLoading(true);
 
-      const setupUsers = await getSetupUsers();
+      const setupUsers = await getSetupUsers(params);
       const userCount = await getUserCount();
 
       setCount(userCount.data);
 
       const data = setupUsers.data || [];
-
-      // ✅ SITE WISE FILTER
       const filteredSiteUsers = data.filter((user) => {
         if (!activeSiteId) return true;
 
-        // direct site_id
-        if (String(user.site_id) === String(activeSiteId)) {
-          return true;
-        }
+        if (String(user.site_id) === String(activeSiteId)) return true;
 
-        // user_sites array
-        if (Array.isArray(user.user_sites)) {
-          return user.user_sites.some(
+        return Array.isArray(user.user_sites) &&
+          user.user_sites.some(
             (site) => String(site.site_id) === String(activeSiteId)
           );
-        }
-
-        return false;
       });
 
       setUsers(filteredSiteUsers);
       setFilteredData(filteredSiteUsers);
     } catch (error) {
-      console.log(error);
+      console.error("Fetch users error:", error);
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
@@ -205,30 +231,28 @@ const UserSetup = () => {
     return filteredData;
   }, [filteredData, activeTab]);
 
+
   const handleExportUsers = async () => {
     try {
-      const response = await UsersExport();
+      const filterParams = buildUserFilterParams();
+
+      const response = await UsersExport(filterParams);
 
       const blob = new Blob([response.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       const url = window.URL.createObjectURL(blob);
-
       const link = document.createElement("a");
       link.href = url;
-      link.download = "users_export.xlsx";
-
+      link.download = "filtered_users.xlsx";
       document.body.appendChild(link);
       link.click();
       link.remove();
-
       window.URL.revokeObjectURL(url);
-
-      toast.success("Users exported successfully ✅");
     } catch (error) {
-      console.error("Export users error:", error);
-      toast.error("Failed to export users ❌");
+      console.error("Export error:", error);
+      toast.error("Failed to export users");
     }
   };
 
@@ -323,113 +347,113 @@ const UserSetup = () => {
   };
 
   const matchesLocationFilter = (user, type, selectedId) => {
-  if (!selectedId) return true;
+    if (!selectedId) return true;
 
-  const idFields = {
-    building: ["build_id", "building_id"],
-    floor: ["floor_id"],
-    unit: ["unit_id"],
-  };
+    const idFields = {
+      building: ["build_id", "building_id"],
+      floor: ["floor_id"],
+      unit: ["unit_id"],
+    };
 
-  const ids = [];
-  const nested = user[type];
+    const ids = [];
+    const nested = user[type];
 
-  if (nested?.id != null) {
-    ids.push(String(nested.id));
-  }
-
-  idFields[type].forEach((field) => {
-    if (user[field] != null) {
-      ids.push(String(user[field]));
+    if (nested?.id != null) {
+      ids.push(String(nested.id));
     }
-  });
 
-  if (Array.isArray(user.user_sites)) {
-    user.user_sites.forEach((site) => {
-      idFields[type].forEach((field) => {
-        if (site[field] != null) {
-          ids.push(String(site[field]));
-        }
-      });
-
-      if (site[type]?.id != null) {
-        ids.push(String(site[type].id));
+    idFields[type].forEach((field) => {
+      if (user[field] != null) {
+        ids.push(String(user[field]));
       }
     });
-  }
 
-  return ids.includes(String(selectedId));
-};
-
-
-useEffect(() => {
-  const fetchLocationOptions = async () => {
-    if (!activeSiteId) {
-      setBuildings([]);
-      setFloors([]);
-      setUnits([]);
-      return;
-    }
-
-    try {
-      const token = getItemInLocalStorage("TOKEN");
-
-      const params = {
-        token: token || "",
-        site_id: activeSiteId,
-      };
-
-      const [buildingResponse, floorResponse, unitResponse] =
-        await Promise.all([
-          getBuildings({
-            ...params,
-            Page: 1,
-            Per_Page: 1000,
-          }),
-          getAllFloors(params),
-          getAllUnits(params),
-        ]);
-
-      const getList = (response, keys) => {
-        const data = response?.data ?? response;
-
-        if (Array.isArray(data)) {
-          return data;
-        }
-
-        for (const key of keys) {
-          if (Array.isArray(data?.[key])) {
-            return data[key];
+    if (Array.isArray(user.user_sites)) {
+      user.user_sites.forEach((site) => {
+        idFields[type].forEach((field) => {
+          if (site[field] != null) {
+            ids.push(String(site[field]));
           }
+        });
+
+        if (site[type]?.id != null) {
+          ids.push(String(site[type].id));
         }
-
-        return [];
-      };
-
-      setBuildings(
-        getList(buildingResponse, ["buildings", "data"])
-      );
-
-      setFloors(
-        getList(floorResponse, ["floors", "data"])
-      );
-
-      setUnits(
-        getList(unitResponse, ["units", "data"])
-      );
-    } catch (error) {
-      console.error("Location options error:", error);
-
-      setBuildings([]);
-      setFloors([]);
-      setUnits([]);
-
-      toast.error("Failed to load location options");
+      });
     }
+
+    return ids.includes(String(selectedId));
   };
 
-  fetchLocationOptions();
-}, [activeSiteId]);
+
+  useEffect(() => {
+    const fetchLocationOptions = async () => {
+      if (!activeSiteId) {
+        setBuildings([]);
+        setFloors([]);
+        setUnits([]);
+        return;
+      }
+
+      try {
+        const token = getItemInLocalStorage("TOKEN");
+
+        const params = {
+          token: token || "",
+          site_id: activeSiteId,
+        };
+
+        const [buildingResponse, floorResponse, unitResponse] =
+          await Promise.all([
+            getBuildings({
+              ...params,
+              Page: 1,
+              Per_Page: 1000,
+            }),
+            getAllFloors(params),
+            getAllUnits(params),
+          ]);
+
+        const getList = (response, keys) => {
+          const data = response?.data ?? response;
+
+          if (Array.isArray(data)) {
+            return data;
+          }
+
+          for (const key of keys) {
+            if (Array.isArray(data?.[key])) {
+              return data[key];
+            }
+          }
+
+          return [];
+        };
+
+        setBuildings(
+          getList(buildingResponse, ["buildings", "data"])
+        );
+
+        setFloors(
+          getList(floorResponse, ["floors", "data"])
+        );
+
+        setUnits(
+          getList(unitResponse, ["units", "data"])
+        );
+      } catch (error) {
+        console.error("Location options error:", error);
+
+        setBuildings([]);
+        setFloors([]);
+        setUnits([]);
+
+        toast.error("Failed to load location options");
+      }
+    };
+
+    fetchLocationOptions();
+  }, [activeSiteId]);
 
 
   /* ---------------- DATE FILTER ---------------- */
@@ -528,35 +552,35 @@ useEffect(() => {
           return false;
         }
       }
-if (
-  !matchesLocationFilter(
-    user,
-    "building",
-    filterBuilding
-  )
-) {
-  return false;
-}
+      if (
+        !matchesLocationFilter(
+          user,
+          "building",
+          filterBuilding
+        )
+      ) {
+        return false;
+      }
 
-if (
-  !matchesLocationFilter(
-    user,
-    "floor",
-    filterFloor
-  )
-) {
-  return false;
-}
+      if (
+        !matchesLocationFilter(
+          user,
+          "floor",
+          filterFloor
+        )
+      ) {
+        return false;
+      }
 
-if (
-  !matchesLocationFilter(
-    user,
-    "unit",
-    filterUnit
-  )
-) {
-  return false;
-}
+      if (
+        !matchesLocationFilter(
+          user,
+          "unit",
+          filterUnit
+        )
+      ) {
+        return false;
+      }
 
       return true;
     });
@@ -603,8 +627,61 @@ if (
     setCurrentPage(1);
     setFilterOpen(false);
     setFilterBuilding("");
-setFilterFloor("");
-setFilterUnit("");
+    setFilterFloor("");
+    setFilterUnit("");
+  };
+
+
+  const handleDownloadSample = async () => {
+    try {
+      const response = await UsersSampleDownload();
+
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = "users_import_sample.xlsx";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Sample file downloaded successfully");
+    } catch (error) {
+      console.error("Sample download error:", error);
+      toast.error("Failed to download sample file");
+    }
+  };
+
+
+  const handleImportUsers = async () => {
+    if (!importFile) {
+      toast.error("Select an Excel file first");
+      return;
+    }
+
+    try {
+      setImportingUsers(true);
+      await UsersImport(importFile, activeSiteId);
+
+      toast.success("Users imported successfully");
+      setImportFile(null);
+      setImportModalOpen(false);
+      await fetchUsers(buildUserFilterParams());
+    } catch (error) {
+      console.error("Import users error:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to import users"
+      );
+    } finally {
+      setImportingUsers(false);
+    }
   };
 
   /* ---------------- USER APPROVAL ---------------- */
@@ -1230,6 +1307,15 @@ setFilterUnit("");
             )}
 
             <button
+              onClick={() => setImportModalOpen(true)}
+              style={{ background: themeColor }}
+              className="text-white px-4 py-2 rounded-md flex items-center gap-2"
+            >
+              <UploadCloud />
+              Import
+            </button>
+
+            <button
               onClick={handleExportUsers}
               style={{ background: themeColor }}
               className="text-white px-4 py-2 rounded-md flex items-center gap-2"
@@ -1558,6 +1644,7 @@ setFilterUnit("");
                     onClick={() => {
                       setCurrentPage(1);
                       setFilterOpen(false);
+                      fetchUsers(buildUserFilterParams());
                     }}
                     style={{ background: themeColor }}
                     className="px-5 py-2 text-white rounded-lg"
@@ -1670,6 +1757,96 @@ setFilterUnit("");
           </div>
         )}
       </div>
+
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Import Users</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  if (importingUsers) return;
+                  setImportModalOpen(false);
+                  setImportFile(null);
+                }}
+                className="text-xl text-gray-500"
+                aria-label="Close import dialog"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* DOWNLOAD SAMPLE */}
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">
+                  Download Sample Template
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Download the Excel template and fill in user details before uploading.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDownloadSample}
+                className="flex shrink-0 items-center gap-2 rounded-lg border border-indigo-500 bg-white px-3 py-2 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100"
+              >
+                <FaDownload size={14} />
+                Download Sample
+              </button>
+            </div>
+
+
+            <label
+              htmlFor="users-import-file"
+              className="flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 p-5 text-center"
+            >
+              <UploadCloud size={30} className="mb-3 text-indigo-500" />
+              <span className="text-sm font-medium">
+                {importFile?.name || "Drag and drop a file here or browse"}
+              </span>
+              <span className="mt-2 text-xs text-gray-500">
+                Supported formats: .xlsx, .xls
+              </span>
+            </label>
+
+            <input
+              id="users-import-file"
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(event) =>
+                setImportFile(event.target.files?.[0] || null)
+              }
+            />
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setImportModalOpen(false);
+                  setImportFile(null);
+                }}
+                disabled={importingUsers}
+                className="rounded-lg border px-4 py-2 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleImportUsers}
+                disabled={!importFile || importingUsers}
+                style={{ background: themeColor }}
+                className="rounded-lg px-5 py-2 text-white disabled:opacity-60"
+              >
+                {importingUsers ? "Uploading..." : "Upload Users"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

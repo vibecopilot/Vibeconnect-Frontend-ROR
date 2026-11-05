@@ -82,13 +82,13 @@ const Account = () => {
                     : "  items-center text-sm  font-medium p-2 hover:bg-white hover:text-black rounded-md "
                 }`
               }>Entity</NavLink> */}
-          {/* <NavLink to={"/setup/account/building"} className={({ isActive }) =>
+          <NavLink to={"/setup/account/building"} className={({ isActive }) =>
                 ` ${
                   isActive
                     ? "text-black bg-white p-2 font-medium rounded-md  items-center text-sm "
                     : "  items-center text-sm  font-medium p-2 hover:bg-white hover:text-black rounded-md "
                 }`
-              }>Building</NavLink> */}
+              }>Building</NavLink>
           {/* <NavLink to={"/setup/account/wing"} className={({ isActive }) =>
                 ` ${
                   isActive
