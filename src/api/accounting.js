@@ -126,19 +126,72 @@ export const getAccountingInvoice = async (id) => {
   return response;
 };
 
-export const createAccountingInvoice = async (data) => {
-  const response = await axios.post('/accounting_invoices.json', data);
+// Convert the flat invoice form payload into the nested structure expected by
+// Rails strong parameters. Without this, line items (sent as `items`) are
+// dropped and the invoice is created with a zero total.
+const buildAccountingInvoicePayload = (data = {}) => {
+  if (data.accounting_invoice) {
+    return data;
+  }
+
+  const { items, accounting_invoice_items, payment_data, ...attributes } = data;
+  const lineItems = items || accounting_invoice_items || [];
+
+  return {
+    accounting_invoice: {
+      ...attributes,
+      accounting_invoice_items_attributes: lineItems.map((item, index) => {
+        const mappedItem = {
+          ...item,
+          s_no: item.s_no || index + 1,
+          description: item.description || item.service_description,
+          unit_price: item.unit_price ?? item.rate,
+        };
+
+        // Let the backend generate ids for new rows.
+        if (!mappedItem.id) {
+          delete mappedItem.id;
+        }
+
+        return mappedItem;
+      }),
+    },
+    ...(payment_data ? { payment_data } : {}),
+  };
+};
+
+export const createAccountingInvoice = async (data, paymentData) => {
+  const payload = buildAccountingInvoicePayload(data);
+  const resolvedPaymentData = paymentData || data?.payment_data;
+  if (resolvedPaymentData && resolvedPaymentData.payment_mode) {
+    payload.payment_data = resolvedPaymentData;
+  }
+  const response = await axios.post('/accounting_invoices.json', payload);
   return response;
 };
 
 export const updateAccountingInvoice = async (id, data) => {
-  const response = await axios.put(`/accounting_invoices/${id}.json`, data);
+  const response = await axios.put(
+    `/accounting_invoices/${id}.json`,
+    buildAccountingInvoicePayload(data)
+  );
   return response;
 };
 
 export const deleteAccountingInvoice = async (id) => {
   const response = await axios.delete(`/accounting_invoices/${id}.json`);
   return response;
+};
+
+export const downloadAccountingInvoiceBulkTemplate = () =>
+  axios.get('/accounting_invoices/bulk_upload_template.xlsx', { responseType: 'blob' });
+
+export const bulkUploadAccountingInvoices = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return axios.post('/accounting_invoices/bulk_upload.json', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 };
 
 export const sendInvoice = async (id) => {

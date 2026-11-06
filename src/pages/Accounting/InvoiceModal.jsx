@@ -1326,6 +1326,20 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
   const totals = calculateTotals();
   const amountInWords = convertAmountToWords(totals.total);
 
+  // When a payment mode is selected, default the payment amount to the
+  // invoice total so the user does not have to type it manually.
+  const handlePaymentModeChange = (e) => {
+    const paymentMode = e.target.value;
+    setPaymentData((prev) => ({
+      ...prev,
+      payment_mode: paymentMode,
+      amount:
+        paymentMode && Number(totals.total) > 0
+          ? Number(totals.total).toFixed(2)
+          : prev.amount,
+    }));
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto p-4">
@@ -2137,7 +2151,7 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
                   <select
                     name="payment_mode"
                     value={paymentData.payment_mode || ""}
-                    onChange={(e) => setPaymentData({...paymentData, payment_mode: e.target.value})}
+                    onChange={handlePaymentModeChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
                     <option value="">Select Payment Mode</option>
