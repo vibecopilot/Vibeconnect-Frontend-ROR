@@ -11,11 +11,14 @@ import {
   addPaymentToInvoice,
   getOverdueInvoices,
   downloadInvoicePdf,
+  downloadAccountingInvoiceBulkTemplate,
+  bulkUploadAccountingInvoices,
   // getInvoicesByUnit,
 } from "../../api/accounting";
 import InvoiceModal from "./InvoiceModal";
 import AddPaymentModal from "./AddPaymentModal";
 import Navbar from "../../components/Navbar";
+import FileInput from "../../Buttons/FileInput";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const AccountingInvoices = () => {
@@ -31,8 +34,14 @@ const AccountingInvoices = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("");
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState([]);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [bulkFile, setBulkFile] = useState(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkSummary, setBulkSummary] = useState(null);
+  const [bulkErrors, setBulkErrors] = useState([]);
 
   useEffect(() => {
     fetchInvoices();
@@ -177,6 +186,80 @@ const AccountingInvoices = () => {
     }
   };
 
+  const handleBulkUpload = async () => {
+    if (!bulkFile) {
+      toast.error("Please select a file first");
+      return;
+    }
+
+    setBulkUploading(true);
+    setBulkSummary(null);
+    setBulkErrors([]);
+
+    try {
+      const res = await bulkUploadAccountingInvoices(bulkFile);
+      const data = res?.data || {};
+      const errors = Array.isArray(data.errors) ? data.errors : [];
+
+      setBulkSummary(data);
+      setBulkErrors(errors);
+
+      if (data.success) {
+        toast.success(data.message || "Bulk upload completed");
+      } else if (errors.length > 0) {
+        toast.error(`${errors.length} row(s) failed during bulk upload`);
+      } else {
+        toast.error(data.message || data.error || "Bulk upload failed");
+      }
+
+      if (data.invoices_created || data.invoices_updated) {
+        fetchInvoices();
+      }
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Bulk upload failed";
+      toast.error(message);
+
+      const responseErrors = error?.response?.data?.errors;
+      if (Array.isArray(responseErrors)) {
+        setBulkErrors(responseErrors);
+      }
+    } finally {
+      setBulkUploading(false);
+    }
+  };
+
+  const handleDownloadBulkTemplate = async () => {
+    try {
+      toast.loading("Downloading sample sheet...", { id: "bulk-template" });
+      const response = await downloadAccountingInvoiceBulkTemplate();
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "accounting_invoices_bulk_upload_sample.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Sample sheet downloaded", { id: "bulk-template" });
+    } catch (error) {
+      toast.error("Failed to download sample sheet", { id: "bulk-template" });
+      console.error(error);
+    }
+  };
+
+  const closeBulkUploadModal = () => {
+    setIsBulkUploadOpen(false);
+    setBulkFile(null);
+    setBulkSummary(null);
+    setBulkErrors([]);
+  };
+
   const handleAddPayment = (invoice) => {
     setSelectedInvoice(invoice);
     setIsPaymentModalOpen(true);
@@ -213,8 +296,7 @@ const AccountingInvoices = () => {
           toast.success("Payment added successfully");
         }
       } else {
-        const res = await createAccountingInvoice(invoiceData, paymentData);
-        const createdInvoice = res?.data?.data || res?.data;
+        await createAccountingInvoice(invoiceData, paymentData);
         toast.success("Invoice created successfully");
 
         // Payment will be created automatically on backend
@@ -227,6 +309,29 @@ const AccountingInvoices = () => {
     }
   };
 
+  const getAmountDue = (invoice) => {
+    if (invoice.amount_due !== undefined && invoice.amount_due !== null) {
+      return parseFloat(invoice.amount_due) || 0;
+    }
+    return parseFloat(invoice.balance_amount || 0) || 0;
+  };
+
+  const getPaymentStatus = (invoice) => {
+    if (invoice.payment_status) return invoice.payment_status;
+    if (invoice.status === "cancelled") return "cancelled";
+    if (invoice.status === "paid") return "paid";
+    return getAmountDue(invoice) > 0.009 ? "unpaid" : "paid";
+  };
+
+  const getPaymentStatusLabel = (invoice) => {
+    if (invoice.payment_status_label) return invoice.payment_status_label;
+    const status = getPaymentStatus(invoice);
+    if (status === "paid") return "Paid";
+    if (status === "partially_paid") return "Partially Paid";
+    if (status === "cancelled") return "Cancelled";
+    return "Unpaid";
+  };
+
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
       (invoice.invoice_number || "")
@@ -236,7 +341,16 @@ const AccountingInvoices = () => {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter ? invoice.status === statusFilter : true;
-    return matchesSearch && matchesStatus;
+
+    const paymentStatus = getPaymentStatus(invoice);
+    const matchesPaymentStatus =
+      paymentStatusFilter === "paid"
+        ? paymentStatus === "paid"
+        : paymentStatusFilter === "unpaid"
+          ? paymentStatus === "unpaid" || paymentStatus === "partially_paid"
+          : true;
+
+    return matchesSearch && matchesStatus && matchesPaymentStatus;
   });
 
   return (
@@ -258,12 +372,20 @@ const AccountingInvoices = () => {
             )}
           </div>
           {canCreate && (
-            <button
-              onClick={handleCreate}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              + Add Invoice
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsBulkUploadOpen(true)}
+                className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800"
+              >
+                Bulk Upload
+              </button>
+              <button
+                onClick={handleCreate}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                + Add Invoice
+              </button>
+            </div>
           )}
         </div>
 
@@ -287,6 +409,15 @@ const AccountingInvoices = () => {
             <option value="partially_paid">Partially Paid</option>
             <option value="overdue">Overdue</option>
             <option value="cancelled">Cancelled</option>
+          </select>
+          <select
+            value={paymentStatusFilter}
+            onChange={(e) => setPaymentStatusFilter(e.target.value)}
+            className="px-4 py-2 border rounded"
+          >
+            <option value="">All Payment Status</option>
+            <option value="paid">Paid</option>
+            <option value="unpaid">Unpaid</option>
           </select>
           <label className="flex items-center gap-2">
             <input
@@ -349,6 +480,9 @@ const AccountingInvoices = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Payment Status
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
@@ -358,7 +492,7 @@ const AccountingInvoices = () => {
                 {filteredInvoices.length === 0 ? (
                   <tr>
                       <td
-                        colSpan="9"
+                        colSpan="10"
                         className="px-6 py-4 text-center text-gray-500"
                       >
                       No invoices found
@@ -371,6 +505,9 @@ const AccountingInvoices = () => {
                       "partially_paid",
                       "sent",
                     ].includes(invoice.status);
+                    const amountDue = getAmountDue(invoice);
+                    const paymentStatus = getPaymentStatus(invoice);
+                    const paymentStatusLabel = getPaymentStatusLabel(invoice);
 
                     return (
                       <tr key={invoice.id} className="hover:bg-gray-50">
@@ -400,6 +537,11 @@ const AccountingInvoices = () => {
 
                         <td className="px-6 py-4 whitespace-nowrap">
                           ₹{parseFloat(invoice.total_amount || 0).toFixed(2)}
+                          {amountDue > 0 && (
+                            <div className="text-xs text-red-600 mt-0.5">
+                              Due: ₹{amountDue.toFixed(2)}
+                            </div>
+                          )}
                         </td>
 
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -420,6 +562,22 @@ const AccountingInvoices = () => {
                               }`}
                           >
                             {invoice.status}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-2 py-1 rounded text-xs font-medium ${
+                              paymentStatus === "paid"
+                                ? "bg-green-100 text-green-800"
+                                : paymentStatus === "partially_paid"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : paymentStatus === "cancelled"
+                                    ? "bg-gray-100 text-gray-600"
+                                    : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {paymentStatusLabel}
                           </span>
                         </td>
 
@@ -498,6 +656,102 @@ const AccountingInvoices = () => {
             onClose={() => setIsPaymentModalOpen(false)}
             onSave={handleSavePayment}
           />
+        )}
+
+        {isBulkUploadOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-xl">
+              <div className="flex items-center justify-between border-b px-6 py-4">
+                <h2 className="text-lg font-semibold">Bulk Upload Invoices</h2>
+                <button
+                  onClick={closeBulkUploadModal}
+                  className="text-gray-500 hover:text-gray-800 text-xl leading-none"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="px-6 py-5">
+                <p className="text-sm text-gray-600">
+                  Upload an Excel file with one row per invoice line item. Rows with the same
+                  Invoice Number are grouped into a single invoice. Use the sample sheet to see
+                  the exact format.
+                </p>
+
+                <div className="mt-4">
+                  <button
+                    onClick={handleDownloadBulkTemplate}
+                    className="px-4 py-2 bg-white border border-green-700 text-green-700 rounded hover:bg-green-50 text-sm font-medium"
+                  >
+                    Download Sample Sheet
+                  </button>
+                </div>
+
+                <div className="mt-6 border-t pt-4">
+                  <div className="font-medium mb-2">Select Excel file</div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <FileInput
+                      accept=".xlsx,.xls"
+                      handleFileChange={(e) => {
+                        setBulkFile(e.target.files?.[0] || null);
+                        setBulkSummary(null);
+                        setBulkErrors([]);
+                      }}
+                    />
+                    <button
+                      onClick={handleBulkUpload}
+                      disabled={bulkUploading || !bulkFile}
+                      className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
+                    >
+                      {bulkUploading ? "Uploading..." : "Upload"}
+                    </button>
+                  </div>
+                  {bulkFile && (
+                    <p className="mt-2 text-sm text-gray-500">Selected: {bulkFile.name}</p>
+                  )}
+                </div>
+
+                {bulkSummary && (
+                  <div className="mt-4 rounded border border-green-200 bg-green-50 p-3 text-sm">
+                    <div className="font-medium text-green-800">
+                      {bulkSummary.message || "Bulk upload completed"}
+                    </div>
+                    <div className="mt-1 text-green-700">
+                      Invoices created: {bulkSummary.invoices_created || 0} | Invoices updated:{" "}
+                      {bulkSummary.invoices_updated || 0} | Line items:{" "}
+                      {bulkSummary.items_created || 0}
+                    </div>
+                  </div>
+                )}
+
+                {bulkErrors.length > 0 && (
+                  <div className="mt-3 rounded border border-red-200 bg-red-50 p-3 text-sm">
+                    <div className="font-medium text-red-700 mb-1">
+                      Rows with errors ({bulkErrors.length})
+                    </div>
+                    <ul className="list-disc pl-5 max-h-40 overflow-y-auto text-red-700 space-y-1">
+                      {bulkErrors.map((error, index) => (
+                        <li key={index}>
+                          {error.row ? `Row ${error.row}: ` : ""}
+                          {error.error || error.message || "Unknown error"}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 border-t px-6 py-4">
+                <button
+                  onClick={closeBulkUploadModal}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </section>

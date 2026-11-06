@@ -665,7 +665,20 @@ const AccountingReports = () => {
       downloadBlob(res.data, filename);
       toast.success("MIS downloaded");
     } catch (error) {
-      toast.error("Failed to download MIS");
+      let message = "Failed to download MIS";
+      const responseData = error?.response?.data;
+      if (responseData instanceof Blob) {
+        try {
+          const text = await responseData.text();
+          const parsed = JSON.parse(text);
+          message = parsed?.error || parsed?.message || message;
+        } catch (_) {
+          // Ignore non-JSON error bodies.
+        }
+      } else {
+        message = responseData?.error || responseData?.message || message;
+      }
+      toast.error(message);
       console.error(error);
     } finally {
       setMisBusy(false);
@@ -698,22 +711,33 @@ const AccountingReports = () => {
         throw new Error("Invalid MIS import type");
       }
 
-      const created = res?.data?.created;
-      const updated = res?.data?.updated;
-      const errors = res?.data?.errors;
+      const data = res?.data || {};
+      const created = data.created ?? data.invoices_created ?? 0;
+      const updated = data.updated ?? data.invoices_updated ?? 0;
+      const itemsCreated = data.items_created ?? 0;
+      const errors = Array.isArray(data.errors) ? data.errors : [];
 
-      if (Array.isArray(errors) && errors.length > 0) {
-        toast.error(`Imported with ${errors.length} errors`);
+      const summary = [
+        created ? `created ${created}` : null,
+        updated ? `updated ${updated}` : null,
+        itemsCreated ? `items ${itemsCreated}` : null,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      const message = data.message || data.error || "Import completed";
+
+      if (errors.length > 0) {
+        toast.error(`${message} (${errors.length} row(s) failed)`);
+        console.error("MIS import errors", errors);
       } else {
-        toast.success(
-          `Import successful${typeof created === "number" || typeof updated === "number"
-            ? ` (created ${created || 0}, updated ${updated || 0})`
-            : ""
-          }`
-        );
+        toast.success(summary ? `${message} (${summary})` : message);
       }
     } catch (error) {
-      const message = error?.response?.data?.error || "Failed to import MIS";
+      const message =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Failed to import MIS";
       toast.error(message);
       console.error(error);
     } finally {
@@ -724,147 +748,179 @@ const AccountingReports = () => {
   const renderReportContent = () => {
     // Show MIS section directly without needing to generate report
     if (activeReport === "accounting_statements") {
+      const activeDateRange =
+        filters.start_date || filters.end_date
+          ? `${filters.start_date || "earliest"} to ${filters.end_date || "today"}`
+          : "all available data";
+
+      const misCards = [
+        {
+          key: "expenses",
+          title: "Expense MIS",
+          description: "Monthly expenses and posted expense journal entries.",
+          downloadLabel: "Download Expense MIS",
+          importLabel: "Import Expense MIS",
+          file: expensesMisFile,
+          setFile: setExpensesMisFile,
+        },
+        {
+          key: "income",
+          title: "Income MIS",
+          description: "Invoices, payments and posted income journal entries.",
+          downloadLabel: "Download Income MIS",
+          importLabel: "Import Income MIS",
+          file: incomeMisFile,
+          setFile: setIncomeMisFile,
+        },
+      ];
+      const selectedMisType = filterDownloadMis.mis_type;
+
       return (
-        <div>
-          <h3 className="text-lg font-semibold mb-4">MIS Report (Excel)</h3>
-          {/* Expense MIS */}
-          {(filterDownloadMis?.mis_type === "expenses") && (
-            <div className="flex justify-between items-center mb-6">
-              <button
-                onClick={() => handleMisDownload("expenses")}
-                disabled={misBusy}
-                className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
-              >
-                Download Expenses MIS
-              </button>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold">MIS Report (Excel)</h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Download a MIS workbook, edit it if needed, then import it back. Expense and
+              Income MIS use the selected date range ({activeDateRange}).
+            </p>
+          </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="border rounded p-4">
-                  <div className="font-medium mb-2">Import Expenses MIS</div>
-                  <div className="flex items-center gap-3">
-                    <FileInput
-                      accept=".xlsx,.xls"
-                      className=""
-                      handleFileChange={(e) => setExpensesMisFile(e.target.files?.[0] || null)}
-                    />
-                    <button
-                      onClick={() => handleMisImport("expenses")}
-                      disabled={misBusy || !expensesMisFile}
-                      className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
-                    >
-                      Import
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          )}
-
-          {/* Imcome MIS */}
-          {(filterDownloadMis?.mis_type === "income") && (
-            <div className="flex justify-between items-center mb-6">
-              <button
-                onClick={() => handleMisDownload("income")}
-                disabled={misBusy}
-                className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-900 disabled:bg-gray-400"
-              >
-                Download Income MIS
-              </button>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="border rounded p-4">
-                  <div className="font-medium mb-2">Import Income MIS</div>
-                  <div className="flex items-center gap-3">
-                    <FileInput
-                      accept=".xlsx,.xls"
-                      className=""
-                      handleFileChange={(e) => setIncomeMisFile(e.target.files?.[0] || null)}
-                    />
-                    <button
-                      onClick={() => handleMisImport("income")}
-
-                      disabled={misBusy || !incomeMisFile}
-                      className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
-                    >
-                      Import
-                    </button>
-                  </div>
-                </div>
-              </div>
+          {!selectedMisType && (
+            <div className="border border-dashed rounded-lg p-8 text-center text-gray-500">
+              Select a <span className="font-medium">Type of MIS</span> above to download or
+              import that MIS report.
             </div>
           )}
 
-          {/* Individual MIS */}
-          {(filterDownloadMis.mis_type === "individual") && (
-            <div className="mb-6">
-              {/* Year and Month Filters */}
+          {misCards.filter((card) => card.key === selectedMisType).map((card) => (
+            <div key={card.key} className="border rounded-lg p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-semibold">{card.title}</h4>
+                  <p className="text-sm text-gray-500">{card.description}</p>
+                </div>
+                <button
+                  onClick={() => handleMisDownload(card.key)}
+                  disabled={misBusy}
+                  className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
+                >
+                  {card.downloadLabel}
+                </button>
+              </div>
 
+              <div className="mt-4 border-t pt-4">
+                <div className="font-medium mb-2">{card.importLabel}</div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <FileInput
+                    accept=".xlsx,.xls"
+                    className=""
+                    handleFileChange={(e) => card.setFile(e.target.files?.[0] || null)}
+                  />
+                  <button
+                    onClick={() => handleMisImport(card.key)}
+                    disabled={misBusy || !card.file}
+                    className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
+                  >
+                    Import
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
 
-              <div className="flex justify-between items-center">
+          {selectedMisType === "individual" && (
+            <div className="border rounded-lg p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-semibold">Individual MIS</h4>
+                  <p className="text-sm text-gray-500">
+                    Unit-wise CAM dues, receipts, expenses and income for the selected month.
+                  </p>
+                </div>
                 <button
                   onClick={() => handleMisDownload("individual")}
                   disabled={misBusy}
-                  className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-900 disabled:bg-gray-400"
+                  className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
                 >
                   Download Individual MIS
                 </button>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="border rounded p-4">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                        <select
-                          value={individualMisFilters.year}
-                          onChange={(e) => setIndividualMisFilters(prev => ({ ...prev, year: parseInt(e.target.value) }))}
-                          className="px-3 py-2 border rounded min-w-[120px]"
-                        >
-                          {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                            <option key={year} value={year}>{year}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
-                        <select
-                          value={individualMisFilters.month}
-                          onChange={(e) => setIndividualMisFilters(prev => ({ ...prev, month: parseInt(e.target.value) }))}
-                          className="px-3 py-2 border rounded min-w-[120px]"
-                        >
-                          {[
-                            { value: 1, label: "January" },
-                            { value: 2, label: "February" },
-                            { value: 3, label: "March" },
-                            { value: 4, label: "April" },
-                            { value: 5, label: "May" },
-                            { value: 6, label: "June" },
-                            { value: 7, label: "July" },
-                            { value: 8, label: "August" },
-                            { value: 9, label: "September" },
-                            { value: 10, label: "October" },
-                            { value: 11, label: "November" },
-                            { value: 12, label: "December" },
-                          ].map(month => (
-                            <option key={month.value} value={month.value}>{month.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="font-medium mb-2">Individual MIS contains both Income and Expenses data</div>
-                    <div className="flex item-center gap-3">
-                      <FileInput
-                        accept=".xlsx,.xls"
-                        className=""
-                        handleFileChange={(e) => setIndividualMisFile(e.target.files?.[0] || null)}
-                      />
-                      <button
-                        onClick={() => handleMisImport("individual")}
-                        disabled={misBusy || !individualMisFile}
-                        className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
-                      >
-                        Import
-                      </button>
-                    </div>
+              </div>
+
+              <div className="mt-4 border-t pt-4">
+                <div className="flex flex-wrap items-end gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                    <select
+                      value={individualMisFilters.year}
+                      onChange={(e) =>
+                        setIndividualMisFilters((prev) => ({
+                          ...prev,
+                          year: parseInt(e.target.value, 10),
+                        }))
+                      }
+                      className="px-3 py-2 border rounded min-w-[120px]"
+                    >
+                      {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map(
+                        (year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        )
+                      )}
+                    </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                    <select
+                      value={individualMisFilters.month}
+                      onChange={(e) =>
+                        setIndividualMisFilters((prev) => ({
+                          ...prev,
+                          month: parseInt(e.target.value, 10),
+                        }))
+                      }
+                      className="px-3 py-2 border rounded min-w-[120px]"
+                    >
+                      {[
+                        "January",
+                        "February",
+                        "March",
+                        "April",
+                        "May",
+                        "June",
+                        "July",
+                        "August",
+                        "September",
+                        "October",
+                        "November",
+                        "December",
+                      ].map((label, index) => (
+                        <option key={label} value={index + 1}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="font-medium mb-2">Import Individual MIS</div>
+                <p className="text-sm text-gray-500 mb-3">
+                  Individual MIS contains both Income and Expenses data. Imports are applied to
+                  the selected year and month.
+                </p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <FileInput
+                    accept=".xlsx,.xls"
+                    className=""
+                    handleFileChange={(e) => setIndividualMisFile(e.target.files?.[0] || null)}
+                  />
+                  <button
+                    onClick={() => handleMisImport("individual")}
+                    disabled={misBusy || !individualMisFile}
+                    className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400"
+                  >
+                    Import
+                  </button>
                 </div>
               </div>
             </div>
