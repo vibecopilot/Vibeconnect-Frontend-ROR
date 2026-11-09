@@ -277,6 +277,17 @@ const handleInvoice = async () => {
   const amenity = booking.amenity;
   const selectedSlotId = bookingDetails.amenity_slot_id;
 
+  const formatRupees = (value) =>
+    Number(value).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  const gstPercent = parseFloat(amenity?.gst_no) || 0;
+  const totalAmount = parseFloat(booking.amount);
+  const hasAmount = !Number.isNaN(totalAmount);
+  const baseAmount = hasAmount ? totalAmount / (1 + gstPercent / 100) : 0;
+  const gstAmount = hasAmount ? totalAmount - baseAmount : 0;
+
   return (
     <section className="flex">
       <Navbar />
@@ -526,15 +537,20 @@ const handleInvoice = async () => {
             value={booking.created_at?.split("T")[0]}
           />
           <Field
-            label="Slot"
+            label={booking.slot_count > 1 ? `Slots (${booking.slot_count})` : "Slot"}
             value={
-              selectedSlot?.twelve_hr_slot
-                ? selectedSlot.twelve_hr_slot
-                : "No Slot Available"
+              booking.slot_count > 1 && booking.slot_time_range
+                ? booking.slot_time_range
+                : selectedSlot?.twelve_hr_slot
+                  ? selectedSlot.twelve_hr_slot
+                  : "No Slot Available"
             }
           />
           <Field label="Payment Mode" value={booking.payment_mode} />
-          <Field label="Amount" value={`₹ ${booking.amount}`} />
+          <Field
+            label={gstPercent > 0 ? "Amount (incl. GST)" : "Amount"}
+            value={hasAmount ? `₹ ${formatRupees(totalAmount)}` : "-"}
+          />
         </div>
 
         {/* FACILITY INFORMATION */}
@@ -606,6 +622,30 @@ const handleInvoice = async () => {
             </div>
           )}
         </div>
+
+        {hasAmount && (
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold mb-3">Amount Breakdown</h2>
+
+            <div className="bg-gray-100 p-5 rounded max-w-md">
+              <div className="flex justify-between py-1">
+                <span>
+                  Base amount
+                  {booking.slot_count > 1 ? ` (${booking.slot_count} slots)` : ""}
+                </span>
+                <span>₹ {formatRupees(baseAmount)}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span>GST ({gstPercent}%)</span>
+                <span>₹ {formatRupees(gstAmount)}</span>
+              </div>
+              <div className="flex justify-between py-2 mt-1 border-t border-gray-300 font-semibold">
+                <span>Total (incl. GST)</span>
+                <span>₹ {formatRupees(totalAmount)}</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* PAYMENT DETAILS */}
         {bookingDetails.payment && (
