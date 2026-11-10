@@ -132,6 +132,10 @@ const EditAmenitySetup = () => {
       postpaid: false,
       pay_on_facility: false,
       complimentary: false,
+      razorpay_enabled: false,
+      razorpay_key: "",
+      razorpay_secret: "",
+      razorpay_account_id: "",
       fixed_amount: null,
       is_fixed: false,
       terms: "",
@@ -356,6 +360,11 @@ const EditAmenitySetup = () => {
             payment_methods: facility.payment_methods || [],
             complimentary: facility.complimentary ?? false,
             pay_on_facility: facility.pay_on_facility ?? false,
+            razorpay_enabled: facility.razorpay_enabled ?? false,
+            razorpay_key: facility.razorpay_key || "",
+            razorpay_secret: "",
+            razorpay_secret_present: facility.razorpay_secret_present ?? false,
+            razorpay_account_id: facility.razorpay_account_id || "",
             shreable: facility.shareable ?? facility.shreable ?? false,
             link_to_building: facility.link_to_building ?? false,
             slot_by: facility.slot_by || "",
@@ -583,6 +592,17 @@ const EditAmenitySetup = () => {
     const postData = new FormData();
     const a = formData.amenity;
 
+    if (
+      a.razorpay_enabled &&
+      (!a.razorpay_key?.trim() ||
+        (!a.razorpay_secret?.trim() && !a.razorpay_secret_present))
+    ) {
+      toast.error(
+        "Razorpay Key ID and Secret Key are required when online payment is enabled."
+      );
+      return;
+    }
+
     // helper: convert days/hours/mins fields to total minutes integer
     const calcTotalMinutes = (prefix) => {
       const d = parseInt(a[`${prefix}_days`]) || 0;
@@ -628,6 +648,14 @@ const EditAmenitySetup = () => {
     postData.append("amenity[pay_on_facility]", a.pay_on_facility ? "true" : "false");
     postData.append("amenity[complimentary]", a.complimentary ? "true" : "false");
     postData.append("amenity[payment_methods]", a.payment_methods || "");
+
+    // ── Online payment gateway (Razorpay) ─────────────────────────────────────
+    postData.append("amenity[razorpay_enabled]", a.razorpay_enabled ? "true" : "false");
+    postData.append("amenity[razorpay_key]", a.razorpay_key || "");
+    if (a.razorpay_secret) {
+      postData.append("amenity[razorpay_secret]", a.razorpay_secret);
+    }
+    postData.append("amenity[razorpay_account_id]", a.razorpay_account_id || "");
 
     // ── Fixed / Flat ──────────────────────────────────────────────────────────
     postData.append("amenity[is_fixed]", a.is_fixed ? "true" : "false");
@@ -1400,6 +1428,81 @@ const EditAmenitySetup = () => {
 
           </div>
 
+        </div>
+
+        {/* Online Payment (Razorpay) */}
+        <div className="my-4">
+          <h2 className="border-b border-black font-medium text-lg">
+            Online Payment (Razorpay)
+          </h2>
+          <div className="border rounded-lg p-3 mt-2">
+            <label className="flex items-center gap-2 font-medium">
+              <input
+                type="checkbox"
+                name="razorpay_enabled"
+                checked={formData.amenity.razorpay_enabled}
+                onChange={handlePaymentCheckbox}
+              />
+              Enable online payment for this facility
+            </label>
+            <p className="text-sm text-gray-500 mt-1">
+              When enabled, the Razorpay gateway opens for Online (Razorpay) or
+              Prepaid bookings made from Workspace Bookings.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-3 mt-3">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="edit_razorpay_key" className="font-medium">
+                  Razorpay Key ID
+                </label>
+                <input
+                  type="text"
+                  id="edit_razorpay_key"
+                  name="razorpay_key"
+                  className="border rounded-md border-gray-400 p-2"
+                  placeholder="rzp_live_xxxxxxxxxxxx"
+                  value={formData.amenity.razorpay_key}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label htmlFor="edit_razorpay_secret" className="font-medium">
+                  Razorpay Secret Key
+                </label>
+                <input
+                  type="password"
+                  id="edit_razorpay_secret"
+                  name="razorpay_secret"
+                  className="border rounded-md border-gray-400 p-2"
+                  placeholder={
+                    formData.amenity.razorpay_secret_present
+                      ? "Secret saved — leave blank to keep"
+                      : "Enter secret key"
+                  }
+                  value={formData.amenity.razorpay_secret}
+                  onChange={handleInputChange}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label htmlFor="edit_razorpay_account_id" className="font-medium">
+                  Linked Account ID{" "}
+                  <span className="text-gray-500 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="edit_razorpay_account_id"
+                  name="razorpay_account_id"
+                  className="border rounded-md border-gray-400 p-2"
+                  placeholder="acc_xxxxxxxxxxxx"
+                  value={formData.amenity.razorpay_account_id}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          </div>
         </div>
         <div className="my-4">
           <h2 className="border-b border-black font-medium text-lg">
