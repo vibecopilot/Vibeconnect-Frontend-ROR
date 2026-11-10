@@ -14,6 +14,14 @@ import FileInputBox from "../../containers/Inputs/FileInputBox";
 import { Switch } from "../../Buttons";
 import { FaCheck, FaTrash } from "react-icons/fa";
 import toast from "react-hot-toast";
+import BlockPricingFields from "../../containers/BlockPricingFields";
+import {
+  appendBlockPricing,
+  blockPricingFromFacility,
+  emptyBlockPricing,
+  isBlockPricingFeatureOn,
+  validateBlockPricing,
+} from "../../utils/blockPricing";
 
 
 const EditAmenitySetup = () => {
@@ -88,6 +96,8 @@ const EditAmenitySetup = () => {
   };
   const themeColor = useSelector((state) => state.theme.color);
   const sitID = getItemInLocalStorage("SITEID");
+  const blockPricingFeatureOn = isBlockPricingFeatureOn();
+  const [blockPricing, setBlockPricing] = useState(emptyBlockPricing);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     amenity: {
@@ -294,6 +304,7 @@ const EditAmenitySetup = () => {
             : rules,
         );
 
+        setBlockPricing(blockPricingFromFacility(facility));
         setFormData({
           amenity: {
             site_id: facility.site_id || "",
@@ -549,6 +560,13 @@ const EditAmenitySetup = () => {
   }, [id]); // Trigger when ID changes
 
   const updateAmenitiesSetup = async () => {
+    if (blockPricingFeatureOn) {
+      const blockPricingError = validateBlockPricing(blockPricing);
+      if (blockPricingError) {
+        toast.error(blockPricingError);
+        return;
+      }
+    }
     // ── Validate slot fields before submitting ──────────────────────────────
     if (formData.slots && formData.slots.length > 0) {
       for (let idx = 0; idx < formData.slots.length; idx++) {
@@ -632,6 +650,9 @@ const EditAmenitySetup = () => {
     // ── Fixed / Flat ──────────────────────────────────────────────────────────
     postData.append("amenity[is_fixed]", a.is_fixed ? "true" : "false");
     postData.append("amenity[fixed_amount]", a.fixed_amount || "");
+    if (blockPricingFeatureOn) {
+      appendBlockPricing(postData, blockPricing);
+    }
 
     // ── Member ────────────────────────────────────────────────────────────────
     postData.append("amenity[member]", a.member ? "true" : "false");
@@ -1946,6 +1967,11 @@ const EditAmenitySetup = () => {
                   )}
                 </div>
               </div>
+              {blockPricingFeatureOn && (
+                <div className="col-span-full">
+                  <BlockPricingFields value={blockPricing} onChange={setBlockPricing} />
+                </div>
+              )}
               <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="gst_no" className="font-medium">
                   GST No

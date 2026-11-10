@@ -1613,6 +1613,25 @@ export const getFacilitySlots = async (facilityId, selectedDate) =>
     },
   });
 
+export const getAmenityPriceQuote = async (amenityId, slotIds) =>
+  axiosInstance.get(`/amenities/${amenityId}/price_quote.json`, {
+    params: {
+      token: token,
+      slot_ids: slotIds,
+    },
+  });
+
+export const extendAmenityBooking = async (id, slotIds) =>
+  axiosInstance.post(
+    `/amenity_bookings/${id}/extend_booking.json`,
+    { slot_ids: slotIds },
+    {
+      params: {
+        token: token,
+      },
+    }
+  );
+
 export const postAmenitiesBooking = async (data) =>
   axiosInstance.post(`/amenity_bookings.json`, data, {
     params: {

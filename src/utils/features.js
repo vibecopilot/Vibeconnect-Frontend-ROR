@@ -38,5 +38,6 @@ export const features = [
   "integration",
   "Setup",
   "konstruct_updates",
+  "amenity_block_pricing",
 
 ];
