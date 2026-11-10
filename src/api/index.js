@@ -1620,6 +1620,20 @@ export const postAmenitiesBooking = async (data) =>
     },
   });
 
+export const createAmenityPaymentOrder = async (data) =>
+  axiosInstance.post(`/api/v1/amenity_payments/create_order.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
+export const verifyAmenityPayment = async (data) =>
+  axiosInstance.post(`/api/v1/amenity_payments/verify.json`, data, {
+    params: {
+      token: token,
+    },
+  });
+
 export const updateActivity = async (id, data) =>
   axiosInstance.put(`/activities/bulk_update.json`, data, {
     params: {

@@ -12,6 +12,8 @@ import {
   getSetupUsers,
   getSiteData,
   postAmenitiesBooking,
+  createAmenityPaymentOrder,
+  verifyAmenityPayment,
 } from "../../api";
 import { useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
@@ -21,6 +23,7 @@ import { error } from "highcharts";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { MdClose } from "react-icons/md";
+import { openRazorpayCheckout } from "../../utils/razorpay";
 const FacilityBooking = () => {
   const navigate = useNavigate();
   const today = new Date();
@@ -77,6 +80,7 @@ const FacilityBooking = () => {
     pre: "prepaid",
     facility: "pay_on_facility",
     complimentary: "complimentary",
+    online: "online",
   };
 
   const handlePaymentChange = (mode, { silent = false } = {}) => {
@@ -91,12 +95,13 @@ const FacilityBooking = () => {
       return;
     }
     setPaymentMode(mode);
+    setFormData((prev) => ({ ...prev, payment_mode: mode }));
   };
 
   useEffect(() => {
     if (!paymentMethods || !paymentMethodMap) return;
 
-    const priorityOrder = ["post", "pre", "facility", "complimentary"];
+    const priorityOrder = ["online", "post", "pre", "facility", "complimentary"];
 
     for (const mode of priorityOrder) {
       const key = paymentMethodMap[mode];
@@ -274,6 +279,7 @@ const FacilityBooking = () => {
           prepaid: selectedFacility.prepaid ?? false,
           pay_on_facility: selectedFacility.pay_on_facility ?? false,
           complimentary: selectedFacility.complimentary ?? "",
+          online: selectedFacility.online_payment_enabled ?? false,
         });
 
         setFormData((prev) => ({
@@ -405,6 +411,63 @@ const FacilityBooking = () => {
     }
   };
 
+  const startRazorpayPayment = async (bookingId) => {
+    const loadingToast = toast.loading("Opening payment gateway...");
+    try {
+      const orderResponse = await createAmenityPaymentOrder({
+        amenity_id: facility.id,
+        booking_id: bookingId,
+      });
+      const order = orderResponse?.data || {};
+      toast.dismiss(loadingToast);
+
+      await openRazorpayCheckout({
+        key: order.razorpay_key,
+        orderId: order.razorpay_order_id,
+        amount: Number(order.amount || 0) / 100,
+        currency: order.currency || "INR",
+        name: facility.fac_name || "Workspace Booking",
+        description: `Booking #${bookingId}`,
+        notes: {
+          amenity_id: facility.id,
+          booking_id: bookingId,
+        },
+        onSuccess: async (response) => {
+          try {
+            await verifyAmenityPayment({
+              amenity_id: facility.id,
+              booking_id: bookingId,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            toast.success("Payment successful! Booking confirmed.");
+          } catch (error) {
+            console.error("Payment verification failed:", error);
+            toast.error(
+              error?.response?.data?.error ||
+              "Payment verification failed. Your booking is pending payment."
+            );
+          } finally {
+            navigate("/bookings");
+          }
+        },
+        onDismiss: () => {
+          toast.error("Payment cancelled. Your booking is pending payment.");
+          navigate("/bookings");
+        },
+      });
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error("Unable to start online payment:", error);
+      toast.error(
+        error?.response?.data?.error ||
+        "Unable to start online payment. Your booking is pending payment."
+      );
+      navigate("/bookings");
+    }
+  };
+
   const postBookFacility = async () => {
     // const toastId = toast.loading("Facility Booking, please wait...");
     if (isSubmitting) return; // guard against duplicate bookings from a double-click/second tap while the first submit is still in flight
@@ -464,7 +527,7 @@ const FacilityBooking = () => {
       );
       postData.append(
         "amenity_booking[payment_mode]",
-        formData.payment_mode || ""
+        paymentMode || formData.payment_mode || ""
       );
       postData.append("amenity_booking[amount]", amountt || "");
       postData.append(
@@ -488,7 +551,6 @@ const FacilityBooking = () => {
         formData.amenity_slot_id || ""
       );
 
-      postData.append("amenity_booking[amount]", formData.amount || "");
       for (const [key, value] of postData.entries()) {
         console.log(`${key}: ${value}`);
       }
@@ -499,15 +561,30 @@ const FacilityBooking = () => {
         );
       }
 
+      const willPayOnline =
+        Boolean(facility?.online_payment_enabled ?? facility?.razorpay_enabled) &&
+        (paymentMode === "online" || paymentMode === "pre") &&
+        Number(amountt || formData.amount || 0) > 0;
+
       const response = await toast.promise(
         postAmenitiesBooking(postData),
         {
           loading: "Facility Booking, please wait...",
-          success: "Booking successful!",
+          success: willPayOnline
+            ? "Booking created. Opening payment gateway..."
+            : "Booking successful!",
           error: "Booking Limit Exhausted - Do you want to request a waitlist spot?",
         }
       );
-      navigate("/bookings");
+
+      const bookingId = response?.data?.booking_id;
+      const shouldPayOnline = willPayOnline;
+
+      if (shouldPayOnline && bookingId) {
+        await startRazorpayPayment(bookingId);
+      } else {
+        navigate("/bookings");
+      }
     } catch (error) {
       console.error("Error in booking:", error);
       // alert("Error in booking. Please try again.", error);
@@ -927,6 +1004,9 @@ const FacilityBooking = () => {
                 <div className="flex flex-col md:flex-row items-center my-2 w-full">
                   <div className="flex gap-5 w-full mt-4">
                     {[
+                      ...(paymentMethods.online
+                        ? [{ label: "Online (Razorpay)", value: "online" }]
+                        : []),
                       { label: "Post Paid", value: "post" },
                       { label: "Prepaid", value: "pre" },
                       { label: "Pay on facility", value: "facility" },
@@ -958,6 +1038,14 @@ const FacilityBooking = () => {
                     })}
                   </div>
                 </div>
+                {facility?.online_payment_enabled && (
+                  <p className="text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-md p-2">
+                    Online payment is enabled for this facility. Choosing{" "}
+                    <span className="font-semibold">Online (Razorpay)</span> or{" "}
+                    <span className="font-semibold">Prepaid</span> will open the
+                    Razorpay payment gateway.
+                  </p>
+                )}
               </div>
             </div>
             <div className="border-b text-xl border-black font-semibold">

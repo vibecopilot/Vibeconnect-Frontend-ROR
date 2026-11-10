@@ -129,6 +129,11 @@ const SetupFacility = () => {
     postpaid: false,
     pay_on_facility: false,
     complimentary: false,
+    // Online payment gateway (Razorpay)
+    razorpay_enabled: false,
+    razorpay_key: "",
+    razorpay_secret: "",
+    razorpay_account_id: "",
     gst_no: "",
     cancellation_policy: "",
     book_before: "",
@@ -412,6 +417,17 @@ const SetupFacility = () => {
           }
         }
       });
+    }
+
+    //Online payment gateway check
+    if (
+      formData.razorpay_enabled &&
+      (!formData.razorpay_key?.trim() || !formData.razorpay_secret?.trim())
+    ) {
+      toast.error(
+        "Razorpay Key ID and Secret Key are required when online payment is enabled."
+      );
+      formIsValid = false;
     }
 
     //Final submission trigger
@@ -797,6 +813,14 @@ const SetupFacility = () => {
     sendData.append("amenity[pay_on_facility]", formData.pay_on_facility ? "true" : "false");
     sendData.append("amenity[complimentary]", formData.complimentary ? "true" : "false");
     sendData.append("amenity[payment_methods]", formData.payment_methods || "");
+
+    // ── Online payment gateway (Razorpay) ─────────────────────────────────────
+    sendData.append("amenity[razorpay_enabled]", formData.razorpay_enabled ? "true" : "false");
+    sendData.append("amenity[razorpay_key]", formData.razorpay_key || "");
+    if (formData.razorpay_secret) {
+      sendData.append("amenity[razorpay_secret]", formData.razorpay_secret);
+    }
+    sendData.append("amenity[razorpay_account_id]", formData.razorpay_account_id || "");
 
     // ── Fixed / Flat ──────────────────────────────────────────────────────────
     sendData.append("amenity[is_fixed]", formData.is_fixed ? "true" : "false");
@@ -1255,6 +1279,77 @@ const SetupFacility = () => {
             Complimentary
           </label>
 
+        </div>
+
+        {/* Online Payment (Razorpay) */}
+        <div className="my-4">
+          <h2 className="border-b border-black font-medium text-lg mb-3">
+            Online Payment (Razorpay)
+          </h2>
+          <div className="border rounded-lg p-3">
+            <label className="flex items-center gap-2 font-medium">
+              <input
+                type="checkbox"
+                name="razorpay_enabled"
+                checked={formData.razorpay_enabled}
+                onChange={handlePaymentCheckbox}
+              />
+              Enable online payment for this facility
+            </label>
+            <p className="text-sm text-gray-500 mt-1">
+              When enabled, the Razorpay gateway opens for Online (Razorpay) or
+              Prepaid bookings made from Workspace Bookings.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-3 mt-3">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="razorpay_key" className="font-medium">
+                  Razorpay Key ID
+                </label>
+                <input
+                  type="text"
+                  id="razorpay_key"
+                  name="razorpay_key"
+                  className="border rounded-md border-gray-400 p-2"
+                  placeholder="rzp_live_xxxxxxxxxxxx"
+                  value={formData.razorpay_key}
+                  onChange={handleChange1}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label htmlFor="razorpay_secret" className="font-medium">
+                  Razorpay Secret Key
+                </label>
+                <input
+                  type="password"
+                  id="razorpay_secret"
+                  name="razorpay_secret"
+                  className="border rounded-md border-gray-400 p-2"
+                  placeholder="Enter secret key"
+                  value={formData.razorpay_secret}
+                  onChange={handleChange1}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label htmlFor="razorpay_account_id" className="font-medium">
+                  Linked Account ID{" "}
+                  <span className="text-gray-500 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="razorpay_account_id"
+                  name="razorpay_account_id"
+                  className="border rounded-md border-gray-400 p-2"
+                  placeholder="acc_xxxxxxxxxxxx"
+                  value={formData.razorpay_account_id}
+                  onChange={handleChange1}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="my-4">
