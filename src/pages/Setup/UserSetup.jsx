@@ -1028,9 +1028,11 @@ const UserSetup = () => {
           userType = "Security Guard";
         } else if (row.user_type === "valet_manager") {
           userType = "Valet Manager";
-        } else if (row.user_type === "employee") {
-          userType = "Employee";
-        } else if (
+        } else if (row.user_type === "employee" || row.user_type === "Employee") {
+          userType = "User";
+        }else if (row.user_type === "user" || row.user_type === "User") {
+          userType = "User";
+        }else if (
           userTypeValue === "unit_resident" ||
           userTypeValue === "user" ||
           userTypeValue === "unit_owner"

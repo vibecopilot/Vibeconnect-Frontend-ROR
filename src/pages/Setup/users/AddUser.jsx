@@ -180,7 +180,7 @@ const AddUser = () => {
       mobile: formData.mobile,
       user_type: formData.userType || "user",
       active: true,
-      user_status: isAdmin,
+      user_status: true,
       is_admin_approved: isAdmin ? true : null,
       birth_date: formData.birth_date,
       anniversary: formData.anniversary,
@@ -658,7 +658,7 @@ const AddUser = () => {
                   <option value="pms_technician">Technician</option>
                   <option value="security_guard">Security Guard</option>
                   <option value="valet_manager">Valet Manager</option>
-                  <option value="employee">Employee</option>
+                  <option value="user">User</option>
                 </select>
               </div>
 

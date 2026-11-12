@@ -727,7 +727,7 @@ const UserEdit = () => {
                   <option value="pms_technician">Technician</option>
                   <option value="security_guard">Security Guard</option>
                   <option value="valet_manager">Valet Manager</option>
-                  <option value="employee">Employee</option>
+                  <option value="user">User</option>
                 </select>
               </div>
 
