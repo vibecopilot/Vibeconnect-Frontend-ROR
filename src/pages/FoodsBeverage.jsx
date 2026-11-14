@@ -294,6 +294,13 @@ const FoodsBeverage = () => {
                 </div>
               </div> */}
               <span className="flex gap-4">
+                 <input
+                  type="text"
+                  placeholder="Search BY Name"
+                  className="border border-gray-400 w-96 placeholder:text-xs rounded-lg p-2"
+                  value={searchText}
+                  onChange={handleSearch}
+                />
                 <Link
                   to={"/admin/add-fb"}
                   className="border-2 font-semibold hover:bg-black hover:text-white transition-all border-black p-2 rounded-md text-black cursor-pointer text-center flex items-center gap-2 justify-center"
@@ -303,13 +310,7 @@ const FoodsBeverage = () => {
                   Add
                 </Link>
 
-                <input
-                  type="text"
-                  placeholder="Search  "
-                  className="border border-gray-400 w-96 placeholder:text-xs rounded-lg p-2"
-                  value={searchText}
-                  onChange={handleSearch}
-                />
+               
                 <button
                   className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                   

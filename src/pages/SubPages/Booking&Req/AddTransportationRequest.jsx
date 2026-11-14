@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Select from "react-select";
+import { FaCheck } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 const AddTransportRequest = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const [users, setUsers] = useState([]);
@@ -219,6 +221,8 @@ const AddTransportRequest = () => {
               name="booking_confirmation_number"
               value={formData.booking_confirmation_number}
               onChange={handleChange}
+              maxLength={10}
+              minLength={10}
               className="border p-1 px-4 border-gray-500 rounded-md"
               placeholder="Enter Mobile Number"
             />
@@ -403,14 +407,20 @@ const AddTransportRequest = () => {
             placeholder="Enter Vehicle Details"
           ></textarea>
         </div>
-      </div>
-      <div className="flex flex-col gap-5 justify-center items-center my-4">
-        <button
-          onClick={handleTransportRequest}
-          className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
-        >
-          Submit
-        </button>
+        <div className="flex gap-5 justify-end items-center my-6 gap-3">
+          <button
+            onClick={handleTransportRequest}
+            className="bg-green-400 text-white flex items-center gap-2 font-semibold py-2 px-4 rounded-md"
+          >
+            <FaCheck /> Submit
+          </button>
+          <button
+            onClick={() => navigate("/admin/booking-request/transportation-request")}
+            className="bg-red-500 text-white flex items-center gap-2 font-semibold py-2 px-4 rounded-md"
+          >
+            <MdClose /> Cancel
+          </button>
+        </div>
       </div>
     </div>
   );

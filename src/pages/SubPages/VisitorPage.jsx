@@ -6,6 +6,7 @@ import Passes from "../Passes";
 import { useSelector } from "react-redux";
 import Table from "../../components/table/Table";
 import {
+  domainPrefix,
   getAllVisitorLogs,
   getExpectedVisitor,
   getVisitorApprovals,
@@ -13,14 +14,21 @@ import {
   postVisitorLogFromDevice,
   postVisitorLogToBackend,
   visitorApproval,
+  getSecurityGuardVisitors,
+  getSiteData,
+  siteChange,
 } from "../../api";
 import { BsEye } from "react-icons/bs";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
-import { formatTime } from "../../utils/dateUtils";
+import { getItemInLocalStorage, setItemInLocalStorage } from "../../utils/localStorage";
 import { IoClose } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
+import { FaBuilding } from "react-icons/fa";
+import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import toast from "react-hot-toast";
+import image from "/profile.png";
 import SelfRegistration from "./SelfRegistration";
+import { getBuildings } from "../../api";
 
 const VisitorPage = () => {
   const [page, setPage] = useState("all");
@@ -40,6 +48,7 @@ const VisitorPage = () => {
   const [histories, setHistories] = useState([]);
   const [filteredHistory, setFilteredHistory] = useState([]);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [securityVisitors, setSecurityVisitors] = useState([]);
 
   // Pagination (All / In / Out)
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,18 +80,140 @@ const VisitorPage = () => {
   const [filterUnit, setFilterUnit] = useState("");
   const [filterApproval, setFilterApproval] = useState("");
 
+  //Filter(Histories)
+  const [historyDateFrom, setHistoryDateFrom] = useState("");
+  const [historyDateTo, setHistoryDateTo] = useState("");
+  const [historyMobile, setHistoryMobile] = useState("");
+  const [historyStatus, setHistoryStatus] = useState("");
+  const [buildings, setBuildings] = useState([]);
+
+  // ── Site switcher ──────────────────────────────────────────────────────────
+  const [activeSiteId, setActiveSiteId] = useState(() => getItemInLocalStorage("SITEID"));
+  const [siteName, setSiteName] = useState("");
+  const [siteData, setSiteData] = useState([]);
+  const [siteOpen, setSiteOpen] = useState(false);
+  const siteDropdownRef = useRef(null);
+
+  // Initialise site name from localStorage
+  useEffect(() => {
+    const stored = getItemInLocalStorage("SITENAME");
+    if (stored) setSiteName(stored);
+  }, []);
+
+  // Fetch available sites
+  useEffect(() => {
+    getSiteData()
+      .then((res) => setSiteData(res?.data?.sites || []))
+      .catch(console.error);
+  }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (siteDropdownRef.current && !siteDropdownRef.current.contains(e.target))
+        setSiteOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSiteChange = async (id, name) => {
+    try {
+      await siteChange(id);
+      setItemInLocalStorage("SITEID", id);
+      setItemInLocalStorage("SITENAME", name);
+      setSiteName(name);
+      setActiveSiteId(id);   // ← triggers the data-fetch useEffect
+      setSiteOpen(false);
+      // Reset pagination so fresh data starts from page 1
+      setCurrentPage(1);
+      setApprovalPage(1);
+      setHistoryPage(1);
+    } catch (err) {
+      console.error("Site change error:", err);
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   const webcamRef = useRef(null);
 
-  const dateFormat = (dateString) => {
-    const date = new Date(dateString);
-    return date.toDateString();
+  // Company-specific labels: show "Planned" / "Unplanned Visitors" only for company_id 55
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const isCompany55 = companyId == 55;
+  const expectedVisitorLabel = isCompany55 ? "Planned Visitors" : "Expected visitor";
+  const unexpectedVisitorLabel = isCompany55 ? "Unplanned Visitors" : "Unexpected visitor";
+  const expectedDateLabel = isCompany55 ? "Planned Date" : "Expected Date";
+  const expectedTimeLabel = isCompany55 ? "Planned Time" : "Expected Time";
+  const expectedDateRangeLabel = isCompany55 ? "Planned Date Range" : "Expected Date Range";
+
+  const dateFormat = (date) => {
+    if (!date) return "-";
+
+    return new Date(date).toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   const dateTimeFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
+
+  const formatDateUS = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "-";
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  const actualTime = (time) => {
+    if (!time) return "-";
+
+    const normalized = time.split(".")[0].replace("Z", "");
+    const date = new Date(`1970-01-01T${normalized}`);
+    if (isNaN(date.getTime())) return "-";
+
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "UTC",
+    });
+  };
+
+  const actualTimeZ = (time) => {
+  if (!time) return "-";
+
+  return new Date(`1970-01-01T${time}`).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+const actualFormat = (dateString) => {
+  if (!dateString) return "-";
+
+  const [date, time] = dateString.split("T");
+  const [year, month, day] = date.split("-");
+
+  const formattedTime = new Date(`1970-01-01T${time}`)
+    .toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "UTC",
+    });
+
+  return `${month}/${day}/${year} ${formattedTime}`;
+};
 
   // ✅ helper: safe csv escape
   const csvEscape = (v) => {
@@ -194,8 +325,8 @@ const VisitorPage = () => {
         "Contact No",
         "Purpose",
         "Coming From",
-        "Expected Date",
-        "Expected Time",
+        expectedDateLabel,
+        expectedTimeLabel,
         "Vehicle No",
         "Host Approval",
         "Pass Start",
@@ -204,6 +335,8 @@ const VisitorPage = () => {
         "Created By",
         "Host",
         "Created At",
+        "CheckedIn At",
+        "CheckedOut At"
       ];
 
       const csvRows = allRows.map((r) => {
@@ -216,16 +349,19 @@ const VisitorPage = () => {
           csvEscape(r.contact_no || ""),
           csvEscape(r.purpose || ""),
           csvEscape(r.coming_from || ""),
-          csvEscape(r.expected_date || ""),
-          csvEscape(r.expected_time ? formatTime(r.expected_time) : ""),
+          csvEscape(r.expected_date ? formatDateUS(r.expected_date) : ""),
+          csvEscape(r.expected_time ? actualTimeZ(r.expected_time) : ""),
           csvEscape(r.vehicle_number || ""),
-          csvEscape(r.skip_host_approval ? "Not Required" : "Required"),
+          csvEscape(r?.hosts[0]?.is_approved ? "Approved" : "Not Approved!"),
           csvEscape(r.start_pass ? dateFormat(r.start_pass) : ""),
           csvEscape(r.end_pass ? dateFormat(r.end_pass) : ""),
           csvEscape(r.visitor_in_out || ""),
           csvEscape(createdBy),
           csvEscape(r.hosts_display || (createdBy ? createdBy : "No Host")),
           csvEscape(r.created_at ? dateTimeFormat(r.created_at) : ""),
+          csvEscape(r.visits_log[0]?.check_in ? actualFormat(r.visits_log[0]?.check_in) : ""),
+          csvEscape(r.visits_log[0]?.check_out ? actualFormat(r.visits_log[0]?.check_out) : "")
+
         ].join(",");
       });
 
@@ -254,32 +390,76 @@ const VisitorPage = () => {
     }
   };
 
-  // Existing History export (kept)
-  const exportHistoryToCSV = () => {
-    if (filteredHistory.length === 0) {
-      toast.error("No data to export");
-      return;
-    }
-    const headers = ["Name", "Purpose", "Mobile", "Approval Date", "Status"];
-    const csvRows = filteredHistory.map((item) =>
-      [
-        csvEscape(item.name),
-        csvEscape(item.purpose),
-        csvEscape(item.contactno || item.contact_no),
-        csvEscape(dateTimeFormat(item.approvaldate)),
-        csvEscape(item.approved ? "Approved" : "Denied"),
-      ].join(",")
-    );
+  // ✅ UPDATED: Export ALL History records (fetches all pages)
+  const exportHistoryToCSV = async () => {
+    try {
+      toast.loading("Preparing history export... Please wait");
 
-    const blob = new Blob([headers.join(",") + "\n" + csvRows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.setAttribute("href", url);
-    a.setAttribute("download", "visitorhistory.csv");
-    a.click();
-    window.URL.revokeObjectURL(url);
+      let allRows = [];
+      let pageNum = 1;
+      let hasMoreData = true;
+      const itemsPerPage = 1000;
+
+      // Build filters from current history filter state
+      const filters = {};
+      if (historyDateFrom) filters.dateFrom = historyDateFrom;
+      if (historyDateTo) filters.dateTo = historyDateTo;
+      if (historyMobile) filters.mobile = historyMobile;
+      if (historyStatus === "approved") filters.approved = true;
+      else if (historyStatus === "denied") filters.approved = false;
+
+      while (hasMoreData) {
+        const res = await getVisitorHistory(pageNum, itemsPerPage, filters);
+        const data = res.data;
+        const historyData = data.approval_history || [];
+        const totalPages = data.total_pages || 1;
+
+        if (historyData.length === 0) {
+          hasMoreData = false;
+        } else {
+          allRows = [...allRows, ...historyData];
+          if (pageNum >= totalPages) {
+            hasMoreData = false;
+          } else {
+            pageNum++;
+          }
+        }
+      }
+
+      toast.dismiss();
+
+      if (!allRows || allRows.length === 0) {
+        toast.error("No data to export");
+        return;
+      }
+
+      const headers = ["Name", "Purpose", "Mobile", "Approval Date", "Status"];
+      const csvRows = allRows.map((item) =>
+        [
+          csvEscape(item.name),
+          csvEscape(item.purpose),
+          csvEscape(item.contactno || item.contact_no),
+          csvEscape(item.approval_date ? dateTimeFormat(item.approval_date) : ""),
+          csvEscape(item.approved ? "Approved" : "Denied"),
+        ].join(",")
+      );
+
+      const blob = new Blob([headers.join(",") + "\n" + csvRows.join("\n")], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.setAttribute("href", url);
+      a.setAttribute("download", `visitorhistory_${new Date().toISOString().split('T')[0]}.csv`);
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`visitor history records exported successfully`);
+    } catch (error) {
+      console.error("History export error:", error);
+      toast.dismiss();
+      toast.error("Export failed. Please try again");
+    }
   };
 
   const handleClick = (visitorType) => {
@@ -297,6 +477,10 @@ const VisitorPage = () => {
 
   const handleApplyFilters = () => {
     setCurrentPage(1);
+    setApprovalPage(1);
+    setHistoryPage(1);
+    setRefetchTrigger((prev) => prev + 1);
+    setShowFilters(false);
   };
 
   const handleClearFilters = () => {
@@ -304,27 +488,80 @@ const VisitorPage = () => {
     setFilterDateTo("");
     setFilterMobile("");
     setFilterHost("");
+    setFilterBuilding("");
+    setFilterApproval("");
+
+    setHistoryDateFrom("");
+    setHistoryDateTo("");
+    setHistoryMobile("");
+    setHistoryStatus("");
+
     setCurrentPage(1);
+    setApprovalPage(1);
+    setHistoryPage(1);
+    setRefetchTrigger((prev) => prev + 1);
+    setShowFilters(false);
   };
 
+
+
   useEffect(() => {
-    if (page === "Visitor In") {
-      if (selectedVisitor === "expected") {
-        const expectedIn = visitorIn.filter(
-          (visit) => visit.usertype !== "security_guard"
-        );
-        setFilteredData(expectedIn);
-      } else {
-        const unexpectedIn = visitorIn.filter(
-          (visit) => visit.usertype === "security_guard"
-        );
-        setFilteredUnexpectedVisitor(unexpectedIn);
+    console.log("Security visitors useEffect running...");
+
+    const fetchSecurityVisitors = async () => {
+      try {
+        const res = await getSecurityGuardVisitors(1, 10);
+
+        console.log("Security Visitors API:", res);
+
+        let data = [];
+
+        if (Array.isArray(res.data)) {
+          data = res.data;
+        } else if (res.data.visitors) {
+          data = res.data.visitors;
+        } else if (res.data.data) {
+          data = res.data.data;
+        }
+
+        setSecurityVisitors(data);
+
+      } catch (error) {
+        console.log("Security visitor API error:", error);
       }
-    } else if (page === "all") {
-      setFilteredExpectedVisitor(expectedVisitor);
-      setFilteredUnexpectedVisitor(unexpectedVisitor);
-    }
-  }, [page, selectedVisitor, visitorIn, expectedVisitor, unexpectedVisitor]);
+    };
+
+    fetchSecurityVisitors();
+  }, []);
+
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      try {
+        const res = await getBuildings(1, 10);
+
+        console.log("Buildings API response:", res.data);
+
+        let buildingData = [];
+
+        if (Array.isArray(res.data)) {
+          buildingData = res.data;
+        }
+        else if (res.data.buildings) {
+          buildingData = res.data.buildings;
+        }
+        else if (res.data.data) {
+          buildingData = res.data.data;
+        }
+
+        setBuildings(buildingData);
+
+      } catch (error) {
+        console.log("Building fetch error:", error);
+      }
+    };
+
+    fetchBuildings();
+  }, []);
 
   useEffect(() => {
     const fetchExpectedVisitor = async () => {
@@ -357,6 +594,12 @@ const VisitorPage = () => {
         if (filterDateTo) filters.dateTo = filterDateTo;
         if (filterMobile) filters.mobile = filterMobile;
         if (filterHost) filters.host = filterHost;
+        if (filterBuilding) filters.building_id = filterBuilding;
+        if (filterApproval === "approved") {
+          filters.skip_host_approval = true;
+        } else if (filterApproval === "rejected") {
+          filters.skip_host_approval = false;  // explicitly set false — handled in API
+        }
 
         const visitorResp = await getExpectedVisitor(
           currentPage,
@@ -460,6 +703,7 @@ const VisitorPage = () => {
             setFilteredData(processedVisitors);
             setFilteredExpectedVisitor(processedVisitors);
           } else {
+            setUnexpectedVisitor(processedVisitors);
             setFilteredUnexpectedVisitor(processedVisitors);
           }
         } else if (page === "Visitor Out") {
@@ -484,21 +728,71 @@ const VisitorPage = () => {
 
     const fetchVisitorHistory = async () => {
       try {
-        const res = await getVisitorHistory(historyPage, historyRowsPerPage);
+        const filters = {};
+
+        if (historyDateFrom) filters.dateFrom = historyDateFrom;
+        if (historyDateTo) filters.dateTo = historyDateTo;
+        if (historyMobile) filters.mobile = historyMobile;
+
+        if (historyStatus) {
+          if (historyStatus === "approved") filters.approved = true;
+          else if (historyStatus === "denied") filters.approved = false;
+        }
+
+        const res = await getVisitorHistory(
+          historyPage,
+          historyRowsPerPage,
+          filters
+        );
+
         const data = res.data;
         const historyData = data.approval_history || [];
 
+        // ✅ store original
         setHistories(historyData);
-        setFilteredHistory(historyData);
+
+        // ✅ apply frontend filter ALSO (safe fallback)
+        let filtered = historyData;
+
+        if (historyMobile) {
+          filtered = filtered.filter((item) =>
+            String(item.contact_no || "")
+              .toLowerCase()
+              .includes(historyMobile.toLowerCase())
+          );
+        }
+
+        if (historyStatus) {
+          filtered = filtered.filter((item) =>
+            historyStatus === "approved"
+              ? item.approved === true
+              : item.approved === false
+          );
+        }
+
+        if (historyDateFrom) {
+          filtered = filtered.filter(
+            (item) =>
+              new Date(item.approval_date) >= new Date(historyDateFrom)
+          );
+        }
+
+        if (historyDateTo) {
+          filtered = filtered.filter(
+            (item) =>
+              new Date(item.approval_date) <= new Date(historyDateTo)
+          );
+        }
+
+        setFilteredHistory(filtered);
 
         setHistoryTotalPages(data.total_pages || 1);
-        setHistoryTotalRecords(data.total_count || historyData.length || 0);
+        setHistoryTotalRecords(data.total_count || filtered.length || 0);
       } catch (error) {
         setFilteredHistory([]);
         setHistoryTotalRecords(0);
       }
     };
-
     const fetchApprovals = async () => {
       try {
         const approvalResp = await getVisitorApprovals(
@@ -565,7 +859,7 @@ const VisitorPage = () => {
         setFilteredApproval([]);
       }
     };
-    
+
     fetchApprovals();
     fetchExpectedVisitor();
     fetchVisitorHistory();
@@ -583,7 +877,15 @@ const VisitorPage = () => {
     filterDateTo,
     filterMobile,
     filterHost,
+    filterBuilding,
+    filterApproval,
+    historyDateFrom,
+    historyDateTo,
+    historyMobile,
+    historyStatus,
+    activeSiteId, // ✅ re-fetch whenever the active site changes
   ]);
+
 
   const VisitorColumns = [
     {
@@ -599,17 +901,73 @@ const VisitorPage = () => {
         </div>
       ),
     },
+    { name: "ID", selector: (row) => row.id, sortable: true },
+    {
+      name: "Profile",
+      cell: (row) => {
+        let profileUrl = "";
+
+        // ✅ Case 1: profile_picture is string (your current API)
+        if (typeof row.profile_picture === "string" && row.profile_picture.trim()) {
+          profileUrl = domainPrefix + row.profile_picture;
+        }
+
+        // ✅ Case 2: profile_picture is object (future-safe)
+        else if (row.profile_picture?.url) {
+          profileUrl = domainPrefix + row.profile_picture.url;
+        }
+
+        // ✅ Case 3: fallback to QR image
+        // else if (row.qr_code_image_url) {
+        //   profileUrl = domainPrefix + row.qr_code_image_url;
+        // }
+
+        return (
+          <img
+            src={profileUrl || image} // 👈 default fallback
+            alt="Profile"
+            className="w-10 h-10 rounded-full object-cover cursor-pointer"
+            onClick={() => {
+              if (profileUrl) window.open(profileUrl, "_blank");
+            }}
+            onError={(e) => {
+              e.target.src = image; // 👈 fallback if broken image
+            }}
+          />
+        );
+      },
+      sortable: true,
+    },
     { name: "Visitor Type", selector: (row) => row.visit_type, sortable: true },
     { name: "Name", selector: (row) => row.name, sortable: true },
     { name: "Contact No.", selector: (row) => row.contact_no, sortable: true },
     { name: "Purpose", selector: (row) => row.purpose, sortable: true },
     { name: "Coming from", selector: (row) => row.coming_from, sortable: true },
-    { name: "Expected Date", selector: (row) => row.expected_date, sortable: true },
-    { name: "Expected Time", selector: (row) => row.expected_time, sortable: true },
+    { name: expectedDateLabel, selector: (row) => row.expected_date ? formatDateUS(row.expected_date) : "-", sortable: true },
+    { name: expectedTimeLabel, selector: (row) => row.expected_time ? actualTimeZ(row.expected_time) : "-", sortable: true },
     { name: "Vehicle No.", selector: (row) => row.vehicle_number, sortable: true },
     {
       name: "Host Approval",
-      selector: (row) => (row.skip_host_approval ? "Not Required" : "Required"),
+      cell: (row) => {
+        const hostApproval = row.hosts?.[0]?.is_approved;
+
+        let status = "Pending";
+        let colorClass = "text-yellow-600";
+
+        if (hostApproval === true) {
+          status = "Approved";
+          colorClass = "text-green-600";
+        } else if (hostApproval === false) {
+          status = "Rejected";
+          colorClass = "text-red-600";
+        }
+
+        return (
+          <span className={`px-2 py-1 rounded text-sm font-medium ${colorClass}`}>
+            {status}
+          </span>
+        );
+      },
       sortable: true,
     },
     {
@@ -651,132 +1009,199 @@ const VisitorPage = () => {
         "No Host",
       sortable: true,
     },
+    {
+      name: "Check In",
+      selector: (row) =>
+        row.visits_log?.[0]?.check_in
+          ? dateFormat(row.visits_log[0].check_in)
+          : "-",
+      sortable: true,
+    },
+
+    {
+      name: "Check Out",
+      selector: (row) =>
+        row.visits_log?.[0]?.check_out
+          ? dateFormat(row.visits_log[0].check_out)
+          : "-",
+      sortable: true,
+    },
+
+    {
+      name: "Created At",
+      selector: (row) =>
+        row.created_at ? dateFormat(row.created_at) : "-",
+      sortable: true,
+    },
   ];
 
   const [searchText, setSearchText] = useState("");
 
-const handleSearch = (e) => {
-  const searchValue = e.target.value.toLowerCase();
-  setSearchText(e.target.value);
 
-  if (!searchValue.trim()) {
-    // Reset when empty
+  const handleSearch = (e) => {
+    const searchValue = e.target.value.toLowerCase();
+    setSearchText(e.target.value);
+
+    const filterLogic = (item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.vehicle_number?.toLowerCase().includes(searchValue) ||
+      item.hosts_display?.toLowerCase().includes(searchValue);
+
+    // 🔁 Reset when search is empty
+    if (!searchValue.trim()) {
+      if (page === "Visitor In") {
+        setFilteredData(visitorIn);
+      }
+      else if (page === "Visitor Out") {
+        setFilteredData(visitorOut);
+      }
+      else if (page === "all") {
+        if (selectedVisitor === "expected") {
+          setFilteredExpectedVisitor(expectedVisitor);
+        } else {
+          setFilteredUnexpectedVisitor(unexpectedVisitor);
+        }
+      }
+      return;
+    }
+
+    // 🔎 Filtering Logic (NO user_type filtering anymore)
     if (page === "Visitor In") {
-      setFilteredData(visitorIn);
-      setFilteredUnexpectedVisitor(visitorIn);
+      setFilteredData(visitorIn.filter(filterLogic));
     }
     else if (page === "Visitor Out") {
-      setFilteredData(visitorOut);
-      setFilteredUnexpectedVisitor(visitorOut);
+      setFilteredData(visitorOut.filter(filterLogic));
     }
     else if (page === "all") {
-      setFilteredExpectedVisitor(expectedVisitor);
-      setFilteredUnexpectedVisitor(unexpectedVisitor);
+      if (selectedVisitor === "expected") {
+        setFilteredExpectedVisitor(expectedVisitor.filter(filterLogic));
+      } else {
+        setFilteredUnexpectedVisitor(unexpectedVisitor.filter(filterLogic));
+      }
     }
-    return;
-  }
-
-  const filterLogic = (item) =>
-    item.name?.toLowerCase().includes(searchValue) ||
-    item.vehicle_number?.toLowerCase().includes(searchValue) ||
-    item.hosts_display?.toLowerCase().includes(searchValue);
-
-  if (page === "Visitor In") {
-    if (selectedVisitor === "expected") {
-      const filtered = visitorIn.filter(
-        (v) => v.usertype !== "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredData(filtered);
-    } else {
-      const filtered = visitorIn.filter(
-        (v) => v.usertype === "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredUnexpectedVisitor(filtered);
-    }
-  }
-
-  else if (page === "Visitor Out") {
-    if (selectedVisitor === "expected") {
-      const filtered = visitorOut.filter(
-        (v) => v.usertype !== "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredData(filtered);
-    } else {
-      const filtered = visitorOut.filter(
-        (v) => v.usertype === "security_guard"
-      ).filter(filterLogic);
-
-      setFilteredUnexpectedVisitor(filtered);
-    }
-  }
-
-  else if (page === "all") {
-    if (selectedVisitor === "expected") {
-      setFilteredExpectedVisitor(
-        expectedVisitor.filter(filterLogic)
-      );
-    } else {
-      setFilteredUnexpectedVisitor(
-        unexpectedVisitor.filter(filterLogic)
-      );
-    }
-  }
-};
-
-
-
+  };
 
   const [searchAll, setSearchAll] = useState("");
+  // const handleSearchAll = (e) => {
+  //   const searchValue = e.target.value.toLowerCase();
+  //   setSearchAll(e.target.value);
+
+  //   if (!searchValue.trim()) {
+  //     setFilteredExpectedVisitor(expectedVisitor);
+  //     setFilteredUnexpectedVisitor(unexpectedVisitor);
+  //     return;
+  //   }
+
+  //   const filterLogic = (item) => {
+  //     const name = item.name?.toLowerCase() || "";
+  //     const host = item.hosts_display?.toLowerCase() || "";
+  //     const vehicle = item.vehicle_number?.toLowerCase() || "";
+  //     const mobile = String(item.contact_no || "");
+  //     const purpose = item.purpose?.toLowerCase() || "";
+  //     const coming = item.coming_from?.toLowerCase() || "";
+
+  //     return (
+  //       name.includes(searchValue) ||
+  //       host.includes(searchValue) ||
+  //       vehicle.includes(searchValue) ||
+  //       mobile.includes(searchValue) ||
+  //       purpose.includes(searchValue) ||
+  //       coming.includes(searchValue)
+  //     );
+  //   };
+
+
+  //   if (selectedVisitor === "expected") {
+  //     const filtered = expectedVisitor.filter((item) =>
+  //       item.name?.toLowerCase().includes(searchValue) ||
+  //       item.vehicle_number?.toLowerCase().includes(searchValue) ||
+  //       item.hosts_display?.toLowerCase().includes(searchValue)
+  //     );
+  //     setFilteredExpectedVisitor(filtered);
+  //   } else {
+  //     const filtered = unexpectedVisitor.filter((item) =>
+  //       item.name?.toLowerCase().includes(searchValue) ||
+  //       item.vehicle_number?.toLowerCase().includes(searchValue) ||
+  //       item.hosts_display?.toLowerCase().includes(searchValue)
+  //     );
+  //     setFilteredUnexpectedVisitor(filtered);
+  //   }
+  // };
+
+
   const handleSearchAll = (e) => {
-    const searchValue = e.target.value;
-    setSearchAll(searchValue);
-    if (searchValue.trim()) {
-      setAll(visitor);
-    } else {
-      const filteredResults = visitor.filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.vehicle_number &&
-            item.vehicle_number.toLowerCase().includes(searchValue.toLowerCase()))
+    const value = e.target.value.toLowerCase();
+    setSearchAll(e.target.value);
+
+    // Reset if search empty
+    if (!value.trim()) {
+      setFilteredExpectedVisitor(expectedVisitor);
+      setFilteredUnexpectedVisitor(unexpectedVisitor);
+      return;
+    }
+
+    const filterLogic = (item) => {
+      const name = item.name?.toLowerCase() || "";
+      const host = item.hosts_display?.toLowerCase() || "";
+      const vehicle = item.vehicle_number?.toLowerCase() || "";
+      const mobile = String(item.contact_no || "");
+      const purpose = item.purpose?.toLowerCase() || "";
+      const coming = item.coming_from?.toLowerCase() || "";
+
+      return (
+        name.includes(value) ||
+        host.includes(value) ||
+        vehicle.includes(value) ||
+        mobile.includes(value) ||
+        purpose.includes(value) ||
+        coming.includes(value)
       );
-      setAll(filteredResults);
+    };
+
+    if (selectedVisitor === "expected") {
+      const filtered = expectedVisitor.filter(filterLogic);
+      setFilteredExpectedVisitor(filtered);
+    } else {
+      const filtered = unexpectedVisitor.filter(filterLogic);
+      setFilteredUnexpectedVisitor(filtered);
+      console.log("searchAll:", value);
+      console.log("FilteredUnexpectedVisitor:", filtered.length);
     }
   };
-
   const [searchHIstoryText, setSearchHistoryText] = useState("");
   const handleSearchHistory = (e) => {
-    const searchValue = e.target.value;
-    setSearchHistoryText(searchValue);
-    if (searchValue.trim()) {
-      setFilteredHistory(histories);
-    } else {
-      const filteredResults = histories.filter(
-        (item) =>
-          item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-          (item.contactno &&
-            item.contactno.toLowerCase().includes(searchValue.toLowerCase()))
-      );
-      setFilteredHistory(filteredResults);
-    }
-  };
+    const searchValue = e.target.value.toLowerCase();
+    setSearchHistoryText(e.target.value);
 
+    if (!searchValue.trim()) {
+      // If empty → show all data
+      setFilteredHistory(histories);
+      return;
+    }
+
+    const filteredResults = histories.filter((item) =>
+      item.name?.toLowerCase().includes(searchValue) ||
+      item.contact_no?.toLowerCase().includes(searchValue)
+    );
+
+    setFilteredHistory(filteredResults);
+  };
   const [searchApprovalText, setSearchApprovalText] = useState("");
   const handleSearchApproval = (e) => {
-    const searchValue = e.target.value;
-    setSearchApprovalText(searchValue);
-    if (searchValue.trim()) {
-      setFilteredApproval(approvals);
-    } else {
-      const filteredResults = approvals.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredApproval(filteredResults);
-    }
-  };
+    const value = e.target.value;
+    setSearchApprovalText(value);
 
+    const search = value.toLowerCase();
+
+    const filtered = approvals.filter((item) => {
+      const name = item.name ? item.name.toLowerCase() : "";
+      const mobile = item.contact_no ? item.contact_no.toLowerCase() : "";
+
+      return name.includes(search) || mobile.includes(search);
+    });
+
+    setFilteredApproval(filtered);
+  };
   const historyColumn = [
     {
       name: "Action",
@@ -801,7 +1226,6 @@ const handleSearch = (e) => {
         row.visitor_logs?.check_in
           ? new Date(row.visitor_logs.check_in).toLocaleString()
           : "--",
-      sortable: true,
     },
     {
       name: "Check Out",
@@ -809,11 +1233,10 @@ const handleSearch = (e) => {
         row.visitor_logs?.check_out
           ? new Date(row.visitor_logs.check_out).toLocaleString()
           : "--",
-      sortable: true,
     },
     {
       name: "Approval Date",
-      selector: (row) => dateTimeFormat(row.approvaldate),
+      selector: (row) => dateTimeFormat(row.approval_date),
       sortable: true,
     },
     {
@@ -852,21 +1275,42 @@ const handleSearch = (e) => {
         </div>
       ),
     },
+
     { name: "Name", selector: (row) => row.name, sortable: true },
+
     { name: "Purpose", selector: (row) => row.purpose, sortable: true },
+
     {
-      name: "Expected Date",
-      selector: (row) => dateFormat(row.expected_date),
+      name: expectedDateLabel,
+      selector: (row) =>
+        row.expected_date ? formatDateUS(row.expected_date) : "--",
       sortable: true,
     },
+
     {
-      name: "Expected Time",
-      selector: (row) => formatTime(row.expected_time),
+      name: expectedTimeLabel,
+      selector: (row) =>
+        row.expected_time ? actualTimeZ(row.expected_time) : "--",
       sortable: true,
     },
+
+    // ✅ STATUS COLUMN
+    {
+      name: "Status",
+      cell: (row) => (
+        <span
+          className={`font-medium ${row.approved ? "text-green-500" : "text-red-500"
+            }`}
+        >
+          {row.approved ? "Approved" : "Denied"}
+        </span>
+      ),
+      sortable: true,
+    },
+
     {
       name: "Approval",
-      selector: (row) => (
+      cell: (row) => (
         <div className="flex gap-2">
           <button
             className="text-white bg-green-400 rounded-full p-1"
@@ -874,6 +1318,7 @@ const handleSearch = (e) => {
           >
             <FaCheck size={20} />
           </button>
+
           <button
             className="text-white bg-red-400 rounded-full p-1"
             onClick={() => handleApproval(row.id, false)}
@@ -882,10 +1327,8 @@ const handleSearch = (e) => {
           </button>
         </div>
       ),
-      sortable: true,
     },
   ];
-
   document.title = "Passes - Vibe Connect";
 
   const getVisitorLogData = () => {
@@ -907,6 +1350,8 @@ const handleSearch = (e) => {
       },
     };
   };
+
+
 
   useEffect(() => {
     const postLogs = async () => {
@@ -939,12 +1384,12 @@ const handleSearch = (e) => {
     { name: "Name", selector: (row) => row.name, sortable: true },
     {
       name: "Check in",
-      selector: (row) => (row.intime ? dateTimeFormat(row.intime) : ""),
+      selector: (row) => (row.in_time ? dateTimeFormat(row.in_time) : ""),
       sortable: true,
     },
     {
       name: "Check out",
-      selector: (row) => (row.outtime ? dateTimeFormat(row.outtime) : null),
+      selector: (row) => (row.out_time ? dateTimeFormat(row.out_time) : null),
       sortable: true,
     },
   ];
@@ -967,24 +1412,76 @@ const handleSearch = (e) => {
 
   const [logSearchText, setLogSearchText] = useState("");
   const handleLogSearch = (e) => {
-    const searchValue = e.target.value;
-    setLogSearchText(searchValue);
-    if (searchValue.trim()) {
+    const value = e.target.value.toLowerCase();
+    setLogSearchText(e.target.value);
+
+    if (!value.trim()) {
       setFilteredLogs(logs);
-    } else {
-      const filteredResults = logs.filter((item) =>
-        item.name.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredLogs(filteredResults);
+      return;
     }
+
+    const filtered = logs.filter((item) =>
+      item.name?.toLowerCase().includes(value)
+    );
+
+    setFilteredLogs(filtered);
   };
 
   return (
     <div className="visitors-page">
       <section className="flex">
         <Navbar />
+
         <div className="w-full flex mx-3 flex-col overflow-hidden">
+          <header className="px-3 pt-3 mb-3">
+            <div
+              style={{ background: themeColor }}
+              className="w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
+            >
+              <h1 className="text-white font-semibold text-base sm:text-lg">
+                Vibe Connect
+              </h1>
+
+              <div className="relative" ref={siteDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setSiteOpen((v) => !v)}
+                  className="cursor-pointer flex items-center gap-2 font-medium px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 transition text-white"
+                >
+                  <FaBuilding />
+                  <span className="max-w-[160px] sm:max-w-[260px] truncate">
+                    {siteName || "Select Site"}
+                  </span>
+                  {siteOpen ? <MdExpandLess size={22} /> : <MdExpandMore size={22} />}
+                </button>
+
+                {siteOpen && (
+                  <div className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg max-h-80 w-80 overflow-y-auto z-20 p-2">
+                    {siteData.length ? (
+                      siteData.map((s) => (
+                        <button
+                          type="button"
+                          key={s.id}
+                          onClick={() => handleSiteChange(s.id, s.name)}
+                          className={`w-full text-left px-3 py-2 rounded-xl hover:bg-gray-50 text-gray-800 ${String(s.id) === String(activeSiteId)
+                            ? "font-semibold bg-gray-50"
+                            : ""
+                            }`}
+                        >
+                          <span className="block truncate">{s.name}</span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-gray-500">No sites found</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </header>
+
           <Passes />
+
 
           <div className="flex w-full m-2">
             <div className="flex w-full md:flex-row flex-col space-x-4 border-b border-gray-400">
@@ -994,14 +1491,14 @@ const handleSearch = (e) => {
                 { key: "Visitor Out", label: "Visitor Out" },
                 { key: "approval", label: "Approvals" },
                 { key: "History", label: "History" },
-                { key: "logs", label: "Logs" },
+                // { key: "logs", label: "Logs" },
                 { key: "self-registration", label: "Self-Registration" },
               ].map((t) => (
                 <h2
                   key={t.key}
                   className={`p-2 px-4 ${page === t.key
-                      ? "text-blue-500 font-medium  shadow-custom-all-sides"
-                      : "text-black"
+                    ? "text-blue-500 font-medium  shadow-custom-all-sides"
+                    : "text-black"
                     } rounded-t-md cursor-pointer text-center text-sm flex items-center justify-center transition-all duration-300`}
                   onClick={() => handlePageChange(t.key)}
                 >
@@ -1029,14 +1526,14 @@ const handleSearch = (e) => {
                       } text-center`}
                     onClick={() => handleClick("expected")}
                   >
-                    <span>Expected visitor</span>
+                    <span>{expectedVisitorLabel}</span>
                   </span>
                   <span
                     className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                       } text-center`}
                     onClick={() => handleClick("unexpected")}
                   >
-                    &nbsp; <span>Unexpected visitor</span>
+                    &nbsp; <span>{unexpectedVisitorLabel}</span>
                   </span>
                 </div>
 
@@ -1068,76 +1565,7 @@ const handleSearch = (e) => {
                 </div>
               </div>
 
-              {/* {showFilters && (
-                <div className="border border-gray-300 rounded-md p-4 bg-gray-50">
-                  <h3 className="font-semibold mb-3 text-gray-700">
-                    Advanced Filters
-                  </h3>
-                  <div className="grid md:grid-cols-4 gap-3">
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Date From
-                      </label>
-                      <input
-                        type="date"
-                        value={filterDateFrom}
-                        onChange={(e) => setFilterDateFrom(e.target.value)}
-                        className="border border-gray-300 p-2 rounded-md text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Date To
-                      </label>
-                      <input
-                        type="date"
-                        value={filterDateTo}
-                        onChange={(e) => setFilterDateTo(e.target.value)}
-                        className="border border-gray-300 p-2 rounded-md text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Mobile Number
-                      </label>
-                      <input
-                        type="text"
-                        value={filterMobile}
-                        onChange={(e) => setFilterMobile(e.target.value)}
-                        placeholder="Enter mobile number"
-                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <label className="text-sm font-medium text-gray-600 mb-1">
-                        Host Name
-                      </label>
-                      <input
-                        type="text"
-                        value={filterHost}
-                        onChange={(e) => setFilterHost(e.target.value)}
-                        placeholder="Enter host name"
-                        className="border border-gray-300 p-2 rounded-md text-sm placeholder:text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={handleApplyFilters}
-                      style={{ background: themeColor }}
-                      className="px-4 py-2 text-white rounded-md font-medium hover:opacity-90 transition-all"
-                    >
-                      Apply Filters
-                    </button>
-                    <button
-                      onClick={handleClearFilters}
-                      className="px-4 py-2 border-2 border-gray-300 rounded-md font-medium hover:bg-gray-100 transition-all"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                </div>
-              )} */}
+
             </div>
           )}
 
@@ -1158,14 +1586,14 @@ const handleSearch = (e) => {
                     } text-center`}
                   onClick={() => handleClick("expected")}
                 >
-                  <span>Expected visitor</span>
+                  <span>{expectedVisitorLabel}</span>
                 </span>
                 <span
                   className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                     } text-center`}
                   onClick={() => handleClick("unexpected")}
                 >
-                  &nbsp; <span>Unexpected visitor</span>
+                  &nbsp; <span>{unexpectedVisitorLabel}</span>
                 </span>
               </div>
 
@@ -1208,14 +1636,14 @@ const handleSearch = (e) => {
                       } text-center`}
                     onClick={() => handleClick("expected")}
                   >
-                    <span>Expected visitor</span>
+                    <span>{expectedVisitorLabel}</span>
                   </span>
                   <span
                     className={`cursor-pointer hover:underline ${selectedVisitor === "unexpected" ? "text-blue-600 underline" : ""
                       } text-center`}
                     onClick={() => handleClick("unexpected")}
                   >
-                    &nbsp; <span>Unexpected visitor</span>
+                    &nbsp; <span>{unexpectedVisitorLabel}</span>
                   </span>
                 </div>
 
@@ -1231,11 +1659,12 @@ const handleSearch = (e) => {
 
               <Table
                 columns={VisitorColumns}
-data={
-  selectedVisitor === "expected"
-    ? filteredData
-    : FilteredUnexpectedVisitor
-}
+                data={
+                  selectedVisitor === "expected"
+                    ? filteredData
+                    // : FilteredUnexpectedVisitor
+                    : (searchText ? FilteredUnexpectedVisitor : unexpectedVisitor)
+                }
 
                 paginationServer
                 paginationTotalRows={totalRecords}
@@ -1249,7 +1678,7 @@ data={
           {/* HISTORY */}
           {page === "History" && (
             <div>
-              <div className="flex gap-2 mb-2">
+              <div className="flex gap-2 mb-2 items-center">
                 <input
                   type="text"
                   placeholder="Search using Name or Mobile Number"
@@ -1257,6 +1686,14 @@ data={
                   value={searchHIstoryText}
                   onChange={handleSearchHistory}
                 />
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className="border px-3 py-2 rounded-md flex items-center gap-1"
+                >
+                  <BiFilterAlt />
+                  Filter
+                </button>
+
                 <button
                   onClick={exportHistoryToCSV}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition"
@@ -1337,7 +1774,9 @@ data={
             {selectedVisitor === "unexpected" && page === "Visitor In" && (
               <Table
                 columns={VisitorColumns}
-                data={FilteredUnexpectedVisitor}
+                // data={FilteredUnexpectedVisitor}
+                // data={searchText ? FilteredUnexpectedVisitor : unexpectedVisitor}
+                data={securityVisitors}
                 paginationServer
                 paginationTotalRows={totalRecords}
                 onChangePage={setCurrentPage}
@@ -1371,161 +1810,103 @@ data={
             )}
           </div>
         </div>
-        {/* ================= FILTER DRAWER POPUP ================= */}
-        {showFilters && (
-          <>
-            {/* Overlay */}
-            <div
-              className="fixed inset-0 bg-black bg-opacity-40 z-40"
-              onClick={() => setShowFilters(false)}
-            />
+        {/* FILTER DRAWER */}
+{showFilters && (
+  <>
+    <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={() => setShowFilters(false)} />
 
-            {/* Drawer */}
-            <div className="fixed top-0 right-0 h-full w-[420px] bg-white shadow-2xl z-50 p-6 overflow-y-auto transition-transform duration-300">
+    <div className="fixed right-6 top-28 w-[380px] bg-white shadow-xl border rounded-xl z-50 p-6 max-h-[85vh] overflow-y-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-lg font-semibold">Filters</h2>
+        <button onClick={() => setShowFilters(false)} className="text-gray-500 hover:text-black">
+          <IoClose size={24} />
+        </button>
+      </div>
 
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-semibold">Filter Visitors</h2>
-                <button onClick={() => setShowFilters(false)}>
-                  <IoClose size={22} />
-                </button>
-              </div>
+      {/* Date Range */}
+      <div className="mb-5">
+        <label className="text-sm font-medium block mb-2">
+          {page === "History" ? "Approval Date Range" : expectedDateRangeLabel}
+        </label>
+        <div className="flex gap-3">
+          <input
+            type="date"
+            value={page === "History" ? historyDateFrom : filterDateFrom}
+            onChange={(e) => page === "History" ? setHistoryDateFrom(e.target.value) : setFilterDateFrom(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          />
+          <input
+            type="date"
+            value={page === "History" ? historyDateTo : filterDateTo}
+            onChange={(e) => page === "History" ? setHistoryDateTo(e.target.value) : setFilterDateTo(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          />
+        </div>
+      </div>
 
-              {/* Expected Date Range */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  Expected Date Range
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    value={filterDateFrom}
-                    onChange={(e) => setFilterDateFrom(e.target.value)}
-                    className="border p-2 rounded-md w-full"
-                  />
-                  <input
-                    type="date"
-                    value={filterDateTo}
-                    onChange={(e) => setFilterDateTo(e.target.value)}
-                    className="border p-2 rounded-md w-full"
-                  />
-                </div>
-              </div>
+      {/* Mobile */}
+      <div className="mb-5">
+        <label className="text-sm font-medium block mb-2">Mobile Number</label>
+        <input
+          type="text"
+          placeholder="Enter mobile number"
+          value={page === "History" ? historyMobile : filterMobile}
+          onChange={(e) => page === "History" ? setHistoryMobile(e.target.value) : setFilterMobile(e.target.value)}
+          className="border p-2 rounded-md w-full"
+        />
+      </div>
 
-              {/* Mobile */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">
-                  Mobile Number
-                </label>
-                <input
-                  type="text"
-                  value={filterMobile}
-                  onChange={(e) => setFilterMobile(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                />
-              </div>
+      {/* Host / Approval Status */}
+      {page !== "History" && (
+        <div className="mb-5">
+          <label className="text-sm font-medium block mb-2">Host Approval</label>
+          <select
+            value={filterApproval}
+            onChange={(e) => setFilterApproval(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          >
+            <option value="">All</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+      )}
 
-              {/* Building */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Building</label>
-                <select
-                  value={filterBuilding}
-                  onChange={(e) => setFilterBuilding(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Building</option>
-                  <option value="Oakbrook">Oakbrook</option>
-                </select>
-              </div>
+      {page === "History" && (
+        <div className="mb-5">
+          <label className="text-sm font-medium block mb-2">Approval Status</label>
+          <select
+            value={historyStatus}
+            onChange={(e) => setHistoryStatus(e.target.value)}
+            className="border p-2 rounded-md w-full"
+          >
+            <option value="">All</option>
+            <option value="approved">Approved</option>
+            <option value="denied">Denied</option>
+          </select>
+        </div>
+      )}
 
-              {/* Floor */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Floor</label>
-                <select
-                  value={filterFloor}
-                  onChange={(e) => setFilterFloor(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Floor</option>
-                  <option value="1">1</option>
-                </select>
-              </div>
-
-              {/* Unit */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Unit</label>
-                <select
-                  value={filterUnit}
-                  onChange={(e) => setFilterUnit(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Unit</option>
-                  <option value="101">101</option>
-                </select>
-              </div>
-
-              {/* Host */}
-              <div className="mb-4">
-                <label className="text-sm font-medium block mb-2">Host</label>
-                <select
-                  value={filterHost}
-                  onChange={(e) => setFilterHost(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select Host</option>
-                  <option value="host1">undefined undefined</option>
-                </select>
-              </div>
-
-              {/* Host Approval */}
-              <div className="mb-6">
-                <label className="text-sm font-medium block mb-2">
-                  Host Approval
-                </label>
-                <select
-                  value={filterApproval}
-                  onChange={(e) => setFilterApproval(e.target.value)}
-                  className="border p-2 rounded-md w-full"
-                >
-                  <option value="">Select</option>
-                  <option value="required">Required</option>
-                  <option value="not_required">Not Required</option>
-                </select>
-              </div>
-
-              {/* Buttons */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleClearFilters}
-                  className="w-full border py-2 rounded-md font-medium"
-                >
-                  Reset
-                </button>
-
-                <button
-                  onClick={() => {
-                    handleApplyFilters();
-                    setShowFilters(false);
-                  }}
-                  style={{ background: themeColor }}
-                  className="w-full text-white py-2 rounded-md font-medium"
-                >
-                  Apply Filters
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+      {/* Buttons */}
+      <div className="flex gap-3 pt-4 border-t">
+        <button onClick={handleClearFilters} className="flex-1 border py-3 rounded-lg font-medium">
+          Reset
+        </button>
+        <button
+          onClick={handleApplyFilters}
+          style={{ background: themeColor }}
+          className="flex-1 text-white py-3 rounded-lg font-medium"
+        >
+          Apply Filters
+        </button>
+      </div>
+    </div>
+  </>
+)}
       </section>
     </div>
   );
 };
 
 export default VisitorPage;
-
-
-
-
-
-
-

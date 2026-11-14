@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { domainPrefix, getRoutineTaskDetails } from "../../../api";
+import { domainPrefix, getPmsAdmins, getRoutineTaskDetails } from "../../../api";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -8,6 +8,8 @@ const AssetRoutineDetails = () => {
 
   const [taskDetails, setTaskDetails] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState("");
 
   useEffect(() => {
     const fetchTaskDetails = async () => {
@@ -57,6 +59,29 @@ const AssetRoutineDetails = () => {
     fetchTaskDetails();
   }, [assetId, activityId]);
 
+  useEffect(() => {
+  const fetchUsers = async () => {
+    try {
+      const res = await getPmsAdmins();
+
+      console.log("Users API:", res.data);
+
+      const userData =
+        res?.data?.users ||
+        res?.data?.data ||
+        res?.data ||
+        [];
+
+      setUsers(userData);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Failed to load users");
+    }
+  };
+
+  fetchUsers();
+}, []);
+
   const dateFormat = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -79,16 +104,16 @@ const AssetRoutineDetails = () => {
   }
 
   if (!taskDetails || taskDetails.length === 0) {
-  return (
-    <div className="flex justify-center items-center w-full h-screen bg-gray-50">
-      <div className="bg-white p-8 rounded-xl shadow-md text-center">
-        <p className="text-gray-400 text-xl font-semibold">
-          No Submission Done Yet!
-        </p>
+    return (
+      <div className="flex justify-center items-center w-full h-screen bg-gray-50">
+        <div className="bg-white p-8 rounded-xl shadow-md text-center">
+          <p className="text-gray-400 text-xl font-semibold">
+            No Submission Done Yet!
+          </p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 
   const {
@@ -118,7 +143,7 @@ const AssetRoutineDetails = () => {
         </div>
 
         <div>
-          <p className="text-sm opacity-80">Created At</p>
+          <p className="text-sm opacity-80">Updated At</p>
           <p className="font-semibold text-lg">
             {dateFormat(created_at)}
           </p>
@@ -173,6 +198,53 @@ const AssetRoutineDetails = () => {
           </div>
         ))}
       </div>
+    <div className="bg-white shadow-md rounded-xl p-4 mt-4 border">
+
+  <div className="flex flex-col gap-3">
+
+  <label className="font-semibold text-gray-700">
+    Select User
+  </label>
+
+  <select
+    value={selectedUser}
+    onChange={(e) => setSelectedUser(e.target.value)}
+    className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 w-[200px]"
+  >
+    <option value="">Select User</option>
+
+    {users.map((user) => (
+      <option key={user.id} value={user.id}>
+        {user.full_name}
+      </option>
+    ))}
+  </select>
+
+  {/* ✅ Buttons in one row */}
+  <div className="flex gap-3">
+    <button
+      onClick={() => handleForward(task.id)}
+      className="bg-yellow-400 hover:bg-yellow-500 text-white font-medium rounded-lg px-4 py-2 transition"
+    >
+      Forward
+    </button>
+
+    <button
+      className="bg-green-400 hover:bg-green-500 text-white font-medium rounded-lg px-4 py-2 transition"
+    >
+      Accept
+    </button>
+
+    <button
+      className="bg-red-400 hover:bg-red-500 text-white font-medium rounded-lg px-4 py-2 transition"
+    >
+      Reject
+    </button>
+  </div>
+
+</div>
+
+</div>
     </div>
   );
 };

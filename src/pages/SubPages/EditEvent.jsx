@@ -25,12 +25,9 @@ const EditEvent = () => {
     description: "",
     start_date_time: null,
     end_date_time: null,
-    // react-select selected array
     user_ids: [],
     group_ids: "",
-    // new uploads
-    event_image: [],
-    // existing urls/meta (keep separate)
+   attachfiles:[],
     existing_event_image: [],
     important: false,
     sendMail: false,
@@ -154,9 +151,9 @@ const EditEvent = () => {
       formDataSend.append("event[start_date_time]", formatDateTime(formData.start_date_time));
       formDataSend.append("event[end_date_time]", formatDateTime(formData.end_date_time));
       formDataSend.append("event[venue]", formData.venue || "");
-      formDataSend.append("event[important]", formData.important ? "1" : "0");
-      formDataSend.append("event[email_enabled]", formData.sendMail ? "1" : "0");
-      formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "1" : "0");
+      formDataSend.append("event[important]", formData.important ? "true" : "false");
+formDataSend.append("event[email_enabled]", formData.sendMail ? "true" : "false");
+formDataSend.append("event[rsvp_enabled]", formData.rsvp_enabled ? "true" : "false");
 
       // ✅ share + ids (same pattern as Create)
       if (share === "all") {
@@ -177,12 +174,11 @@ const EditEvent = () => {
       }
 
       // ✅ attachments key same as Create
-      const filesArr = Array.isArray(formData.event_image) ? formData.event_image : [];
-      filesArr.forEach((file) => {
-        if (file instanceof File) {
-          formDataSend.append("event[event_images][]", file);
-        }
-      });
+  if (formData.event_image && formData.event_image.length > 0) {
+  formData.event_image.forEach((file) => {
+    formDataSend.append("attachfiles[]", file);
+  });
+}
 
       await editEventDetails(id, formDataSend);
 

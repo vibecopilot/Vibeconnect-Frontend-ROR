@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import wave from "/wave.png";
-import bridge from "/bridge.jpg";
+const wave = "/wave.png";
+const bridge = "/bridge.jpg";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import { API_URL, getVibeBackground, postVibeBackground } from "../api";
 import { useDispatch, useSelector } from "react-redux";

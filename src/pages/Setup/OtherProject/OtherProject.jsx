@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 import Navbar from "../../../components/Navbar";
 import {
   deleteOtherProject,
+  domainPrefix,
   getOtherProject,
   postOtherProject,
   postProjectLike,
@@ -12,13 +13,12 @@ import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { PiPlusCircle } from "react-icons/pi";
 import { FiEdit, FiTrash2, FiHeart } from "react-icons/fi";
 import toast from "react-hot-toast";
-// import Slider from "react-slick";
-
-// import "slick-carousel/slick/slick.css";
-// import "slick-carousel/slick/slick-theme.css";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import SetupNavbar from "../../../components/navbars/SetupNavbar";
+import SiteHeader from "../../../components/SiteHeader";
 
 const API_BASE = "https://admin.vibecopilot.ai";
-const PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
+// const PLACEHOLDER = "https://via.placeholder.com/600x400?text=No+Image";
 
 const OtherProject = () => {
   const userID = Number(getItemInLocalStorage("UserId")) || null;
@@ -35,10 +35,14 @@ const OtherProject = () => {
   });
 
   const [likedProjects, setLikedProjects] = useState([]);
+  const [imageIndexes, setImageIndexes] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [likeLoadingIds, setLikeLoadingIds] = useState([]);
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
 
   const fileImageRef = useRef(null);
   const filePdfRef = useRef(null);
@@ -47,8 +51,16 @@ const OtherProject = () => {
     title: "",
     description: "",
     address: "",
+    contact_us: "",
+    project_type: "",
     attachments: null,
     pdf: null,
+    amenities: [
+      {
+        name: "",
+        icon: null,
+      },
+    ],
   });
 
   const resetForm = useCallback(() => {
@@ -56,19 +68,28 @@ const OtherProject = () => {
       title: "",
       description: "",
       address: "",
+      contact_us: "",
+      project_type: "",
       attachments: null,
       pdf: null,
+      amenities: [
+        {
+          name: "",
+          icon: null,
+        },
+      ],
     });
     if (fileImageRef.current) fileImageRef.current.value = "";
     if (filePdfRef.current) filePdfRef.current.value = "";
   }, []);
 
-  const buildImageUrl = (docPath) => {
-    if (!docPath || typeof docPath !== "string") return null;
-    if (docPath.startsWith("http://") || docPath.startsWith("https://")) return docPath;
+  const buildFileUrl = (docPath) => {
+    if (!docPath) return null;
+
+    if (docPath.startsWith("http")) return docPath;
+
     return `${API_BASE}${docPath}`;
   };
-
   const extractLikeUserName = (like) => {
     const u = like?.user || like?.liked_by || like?.created_by || null;
     return (
@@ -83,26 +104,26 @@ const OtherProject = () => {
     );
   };
 
-      const normalizeLikeUser = (like) => {
-        // If API returns just number IDs
-        if (typeof like === "number") {
-          return { id: like, name: `User #${like}`, email: "", mobile: "", avatar: "" };
-        }
+  const normalizeLikeUser = (like) => {
+    // If API returns just number IDs
+    if (typeof like === "number") {
+      return { id: like, name: `User #${like}`, email: "", mobile: "", avatar: "" };
+    }
 
-        // Your backend format: { user_id, full_name, mobile, email }
-        const id = Number(like?.user_id ?? like?.userId ?? like?.id) || null;
+    // Your backend format: { user_id, full_name, mobile, email }
+    const id = Number(like?.user_id ?? like?.userId ?? like?.id) || null;
 
-        const name =
-          like?.full_name ||
-          like?.name ||
-          like?.username ||
-          (id ? `User #${id}` : "Unknown User");
+    const name =
+      like?.full_name ||
+      like?.name ||
+      like?.username ||
+      (id ? `User #${id}` : "Unknown User");
 
-        const email = like?.email || "";
-        const mobile = like?.mobile || "";
+    const email = like?.email || "";
+    const mobile = like?.mobile || "";
 
-        return { id, name, email, mobile, avatar: "" };
-      };
+    return { id, name, email, mobile, avatar: "" };
+  };
 
 
   const didILikeProject = (project) => {
@@ -230,40 +251,74 @@ const OtherProject = () => {
     try {
       setLoading(true);
 
-      const response = await getOtherProject();
-      const list = Array.isArray(response?.data) ? response.data : [];
+      // ✅ Pass site_id in API
+      const response = await getOtherProject(activeSiteId);
+
+      const list = Array.isArray(response?.data)
+        ? response.data
+        : [];
 
       const transformed = list.map((project) => {
-        const attachments = Array.isArray(project?.attachments) ? project.attachments : [];
+        const attachments = Array.isArray(project?.attachments)
+          ? project.attachments
+          : [];
+
         const images = attachments
-          .map((a) => buildImageUrl(a?.document))
+          .map((a) =>
+            buildFileUrl(
+              a?.document ||
+              a?.url ||
+              a?.file ||
+              a?.file_url
+            )
+          )
           .filter(Boolean);
 
-        const likesArr = Array.isArray(project?.likes) ? project.likes : [];
+        const likesArr = Array.isArray(project?.likes)
+          ? project.likes
+          : [];
 
-        // ✅ keep full like users for modal
         const likeUsers = likesArr.map(normalizeLikeUser);
 
         const likedByMe = didILikeProject(project);
 
         const likeCount =
           project?.likes_count ??
-          (Array.isArray(project?.likes) ? project.likes.length : 0) ??
+          (Array.isArray(project?.likes)
+            ? project.likes.length
+            : 0) ??
           0;
+
+        const amenities = Array.isArray(project?.other_p_amenities)
+          ? project.other_p_amenities.map((item) => ({
+            id: item?.id,
+            name: item?.name || "",
+            icon: item?.icon_url
+              ? buildFileUrl(item.icon_url)
+              : null,
+          }))
+          : [];
 
         return {
           ...project,
           likeCount,
           likedByMe,
           likeUsers,
-          images: images.length > 0 ? images : [PLACEHOLDER],
+          amenities,
+          images,
+          // images: images.length > 0
+          //   ? images
+          //   : [PLACEHOLDER],
         };
       });
 
       setProjects(transformed);
 
       if (userID) {
-        const likedIds = transformed.filter((p) => p.likedByMe).map((p) => p.id);
+        const likedIds = transformed
+          .filter((p) => p.likedByMe)
+          .map((p) => p.id);
+
         setLikedProjects(likedIds);
       } else {
         setLikedProjects([]);
@@ -274,8 +329,9 @@ const OtherProject = () => {
     } finally {
       setLoading(false);
     }
-  }, [userID]);
+  }, [userID, activeSiteId]);
 
+  // ✅ Re-fetch when site changes
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
@@ -298,8 +354,21 @@ const OtherProject = () => {
       title: project.title || "",
       description: project.description || "",
       address: project.address || "",
+      contact_us: project.contact_us || "",
+      project_type: project.project_type || "",
       attachments: null,
       pdf: null,
+      amenities:
+        project.amenities?.map((item) => ({
+          id: item.id,
+          name: item.name || "",
+          icon: item.icon || null,
+        })) || [
+          {
+            name: "",
+            icon: null,
+          },
+        ],
     });
 
     if (fileImageRef.current) fileImageRef.current.value = "";
@@ -365,13 +434,56 @@ const OtherProject = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (
+      !isEditMode &&
+      (!formData.attachments || formData.attachments.length === 0)
+    ) {
+      toast.error("Please upload at least one project image.");
+      return;
+    }
     const toastId = toast.loading("Processing...");
+
+    const companyId = Number(getItemInLocalStorage("COMPANYID")) || null;
 
     const fd = new FormData();
     fd.append("other_project[title]", formData.title?.trim() || "");
     fd.append("other_project[description]", formData.description?.trim() || "");
     fd.append("other_project[address]", formData.address?.trim() || "");
+    fd.append("other_project[contact_us]", formData.contact_us?.trim() || "");
+    fd.append("other_project[project_type]", formData.project_type || "");
+    if (activeSiteId) {
+      fd.append(
+        "other_project[site_id]",
+        activeSiteId
+      );
+    }
+    if (Array.isArray(formData.amenities)) {
+      formData.amenities.forEach((amenity, index) => {
 
+        // send id while editing
+        if (amenity.id) {
+          fd.append(
+            `other_project[other_p_amenities_attributes][${index}][id]`,
+            amenity.id
+          );
+        }
+
+        fd.append(
+          `other_project[other_p_amenities_attributes][${index}][name]`,
+          amenity.name || ""
+        );
+
+        if (amenity.icon instanceof File) {
+          fd.append(
+            `amenity_icons[${index}]`,
+            amenity.icon
+          );
+        }
+      });
+    }
+    if (companyId) {
+      fd.append("other_project[company_id]", companyId);
+    }
     if (formData.attachments && formData.attachments.length) {
       Array.from(formData.attachments).forEach((f) => fd.append("attachments[]", f));
     }
@@ -399,24 +511,28 @@ const OtherProject = () => {
     }
   };
 
-  const baseSliderSettings = useMemo(
-    () => ({
-      dots: true,
-      infinite: false,
-      speed: 500,
-      slidesToShow: 1,
-      slidesToScroll: 1,
-      arrows: true,
-      adaptiveHeight: false,
-    }),
-    []
-  );
+  const goToPrevImage = (projectId, total) => {
+    setImageIndexes((prev) => ({
+      ...prev,
+      [projectId]: ((prev[projectId] ?? 0) - 1 + total) % total,
+    }));
+  };
+
+  const goToNextImage = (projectId, total) => {
+    setImageIndexes((prev) => ({
+      ...prev,
+      [projectId]: ((prev[projectId] ?? 0) + 1) % total,
+    }));
+  };
 
   return (
     <section className="flex">
-      <Navbar />
+      <SetupNavbar />
 
-      <div className="min-h-screen bg-gray-100 w-full p-6">
+      <div className="min-h-screen bg-gray-100 w-full p-6 mx-3">
+        <SiteHeader
+          onSiteChange={(id) => setActiveSiteId(id)}
+        />
         <div className="flex justify-between mb-8 gap-4 flex-wrap">
           <h1 className="text-2xl font-bold">Other Projects</h1>
 
@@ -435,80 +551,145 @@ const OtherProject = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => {
-              const createdById =
-                project?.created_by_id ??
-                project?.created_by?.id ??
-                project?.created_by ??
-                null;
+              const createdById = Number(
+                project?.created_by_id ||
+                project?.created_by?.id ||
+                project?.created_by ||
+                0
+              );
 
-              const isOwnerOrAdmin =
-                userID &&
-                (Number(createdById) === Number(userID) ||
-                  [574, 570].includes(Number(userID)));
+              // const isOwnerOrAdmin =
+              //   Number(userID) > 0 &&
+              //   (
+              //     createdById === Number(userID) ||
+              //     [574, 570].includes(Number(userID))
+              //   );
 
               const hasMultipleImages = (project.images?.length || 0) > 1;
-              const sliderSettings = {
-                ...baseSliderSettings,
-                dots: hasMultipleImages,
-                arrows: hasMultipleImages,
-                infinite: hasMultipleImages,
-              };
+              const currentImgIndex = imageIndexes[project.id] ?? 0;
+              const totalImages = project.images?.length || 1;
 
               const isLiked = likedProjects.includes(project.id);
               const likeBusy = likeLoadingIds.includes(project.id);
 
               return (
+
                 <div
                   key={project.id}
-                  className="bg-white rounded-xl shadow-lg border overflow-hidden"
+                  className="bg-white rounded-xl shadow-lg border overflow-hidden "
                 >
-                  {/* IMAGE */}
-                  <div className="relative h-56 bg-gray-200">
-                    <Slider {...sliderSettings}>
-                      {(project.images || [PLACEHOLDER]).map((img, i) => (
+                  {/* IMAGE CAROUSEL */}
+                  <div className="relative h-56 bg-gray-200 overflow-hidden">
+                    {project.images?.length > 0 ? (
+                      <a
+                        href={project.images[currentImgIndex]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <img
-                          key={`${project.id}-${i}`}
-                          src={img}
-                          className="h-56 w-full object-cover"
-                          alt={project?.title ? `Project: ${project.title}` : "project"}
+                          src={project.images[currentImgIndex]}
+                          alt={project.title}
+                          className="h-56 w-full object-cover cursor-pointer"
                           onError={(e) => {
-                            e.currentTarget.src = PLACEHOLDER;
+                            e.currentTarget.style.display = "none";
                           }}
                         />
-                      ))}
-                    </Slider>
+                      </a>
+                    ) : (
+                      <div className="h-56 w-full bg-gray-100 flex flex-col items-center justify-center text-gray-500">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-12 h-12 mb-2 text-gray-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 16.5V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v9.75M3 16.5l4.72-4.72a2.25 2.25 0 013.18 0l2.1 2.1a2.25 2.25 0 003.18 0L21 9.75M3 16.5v.75A2.25 2.25 0 005.25 19.5h13.5A2.25 2.25 0 0021 17.25v-.75"
+                          />
+                        </svg>
+
+                        <p className="text-sm font-medium">No Image Available</p>
+                      </div>
+                    )}
+
+                    {hasMultipleImages && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => goToPrevImage(project.id, totalImages)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1 z-10"
+                          title="Previous"
+                        >
+                          <FiChevronLeft size={18} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => goToNextImage(project.id, totalImages)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1 z-10"
+                          title="Next"
+                        >
+                          <FiChevronRight size={18} />
+                        </button>
+                        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
+                          {project.images.map((_, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() =>
+                                setImageIndexes((prev) => ({ ...prev, [project.id]: idx }))
+                              }
+                              className={`h-1.5 rounded-full transition-all ${idx === currentImgIndex
+                                ? "w-4 bg-white"
+                                : "w-1.5 bg-white/50"
+                                }`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="p-5">
                     <div className="flex justify-between items-start mb-2 gap-3">
-                      <h2
-                        className="font-bold text-lg truncate"
-                        title={project.title || ""}
-                      >
-                        {project.title || "—"}
-                      </h2>
+                      <div className="min-w-0">
+                        <h2
+                          className="font-bold text-lg truncate"
+                          title={project.title || ""}
+                        >
+                          {project.title || "—"}
+                        </h2>
+                        {project.project_type && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${project.project_type === "Residential" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+                            {project.project_type}
+                          </span>
+                        )}
+                      </div>
 
-                      {isOwnerOrAdmin && (
-                        <div className="flex gap-2 shrink-0">
-                          <button
-                            onClick={() => handleEdit(project.id)}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Edit"
-                            type="button"
-                          >
-                            <FiEdit size={16} />
-                          </button>
+                      {/* {isOwnerOrAdmin && ( */}
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleEdit(project.id)}
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Edit"
+                          type="button"
+                        >
+                          <FiEdit size={16} />
+                        </button>
 
-                          <button
-                            onClick={() => handleDelete(project.id)}
-                            className="text-red-600 hover:text-red-800"
-                            title="Delete"
-                            type="button"
-                          >
-                            <FiTrash2 size={16} />
-                          </button>
-                        </div>
-                      )}
+                        <button
+                          onClick={() => handleDelete(project.id)}
+                          className="text-red-600 hover:text-red-800"
+                          title="Delete"
+                          type="button"
+                        >
+                          <FiTrash2 size={16} />
+                        </button>
+                      </div>
+                      {/* )} */}
                     </div>
 
                     <div className="flex justify-between items-center mb-2 gap-3">
@@ -522,18 +703,28 @@ const OtherProject = () => {
                       <button
                         onClick={() => handleLikeSubmit(project.id)}
                         disabled={isLiked || likeBusy}
-                        className={`flex items-center gap-1 ${
-                          isLiked ? "text-red-500" : "text-gray-400"
-                        } ${
-                          likeBusy ? "opacity-60 cursor-not-allowed" : "hover:opacity-90"
-                        }`}
+                        className={`flex items-center gap-1 ${isLiked ? "text-red-500" : "text-gray-400"
+                          } ${likeBusy ? "opacity-60 cursor-not-allowed" : "hover:opacity-90"
+                          }`}
                         type="button"
                         title={isLiked ? "Liked" : "Like"}
                       >
                         <FiHeart fill={isLiked ? "currentColor" : "none"} />
                         <span className="text-sm">{project.likeCount ?? 0}</span>
                       </button>
+
                     </div>
+                    {project.contact_us && (
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-medium text-blue-600 whitespace-nowrap">
+                          Contact Number :
+                        </span>
+
+                        <span className="text-sm text-gray-700 break-all">
+                          {project.contact_us}
+                        </span>
+                      </div>
+                    )}
 
                     {/* ✅ Clickable "You and others" */}
                     {renderLikedByLine(project)}
@@ -541,6 +732,40 @@ const OtherProject = () => {
                     <p className="text-sm text-gray-600 line-clamp-3">
                       {project.description || "—"}
                     </p>
+                    {/* Amenities */}
+                    {Array.isArray(project?.amenities) &&
+                      project.amenities.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                            Amenities
+                          </h3>
+
+                          <div className="flex flex-wrap gap-3">
+                            {project.amenities.map((amenity) => (
+                              <div
+                                key={amenity.id}
+                                className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg"
+                              >
+                                {amenity.icon ? (
+                                  <img
+                                    src={amenity.icon}
+                                    alt={amenity.name}
+                                    className="h-8 w-8 rounded object-cover cursor-pointer"
+                                    onClick={() => window.open(amenity.icon, "_blank")}
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                ) : null}
+
+                                <span className="text-sm text-gray-700">
+                                  {amenity.name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 </div>
               );
@@ -552,81 +777,195 @@ const OtherProject = () => {
       {/* CREATE / UPDATE MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-4">
-          <div className="bg-white p-8 rounded-xl w-full max-w-lg">
-            <h2 className="text-2xl font-bold mb-6">
-              {isEditMode ? "Update Project" : "Create New Project"}
-            </h2>
+          <div className="bg-white rounded-xl w-full max-w-xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-6">
+            <div className="bg-white p-8 rounded-xl w-full max-w-lg">
+              <h2 className="text-2xl font-bold mb-6">
+                {isEditMode ? "Update Project" : "Create New Project"}
+              </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                placeholder="Project Title"
-                required
-                value={formData.title}
-                onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
-                className="border rounded-lg p-2 w-full"
-              />
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <input
+                  placeholder="Project Title"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+                  className="border rounded-lg p-2 w-full"
+                />
 
-              <textarea
-                placeholder="Description"
-                rows="3"
-                required
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, description: e.target.value }))
-                }
-                className="border rounded-lg p-2 w-full"
-              />
+                <textarea
+                  placeholder="Description"
+                  rows="3"
+                  required
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, description: e.target.value }))
+                  }
+                  className="border rounded-lg p-2 w-full"
+                />
 
-              <input
-                placeholder="Address"
-                value={formData.address}
-                onChange={(e) => setFormData((p) => ({ ...p, address: e.target.value }))}
-                className="border rounded-lg p-2 w-full"
-              />
+                <input
+                  placeholder="Address"
+                  value={formData.address}
+                  onChange={(e) => setFormData((p) => ({ ...p, address: e.target.value }))}
+                  className="border rounded-lg p-2 w-full"
+                />
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-600">Images</p>
-                  <input
-                    ref={fileImageRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, attachments: e.target.files }))
-                    }
-                  />
+                <input
+                  placeholder="Contact Number"
+                  value={formData.contact_us}
+                  maxlength={10}
+                  minlength={10}
+                  onChange={(e) =>
+                    setFormData((p) => ({
+                      ...p,
+                      contact_us: e.target.value,
+                    }))
+                  }
+                  className="border rounded-lg p-2 w-full"
+                />
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Project Type</label>
+                  <select
+                    value={formData.project_type}
+                    onChange={(e) => setFormData((p) => ({ ...p, project_type: e.target.value }))}
+                    className="border rounded-lg p-2 w-full"
+                  >
+                    <option value="">Select Type</option>
+                    <option value="Residential">Residential</option>
+                    <option value="Commercial">Commercial</option>
+                  </select>
                 </div>
 
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-600">PDF</p>
-                  <input
-                    ref={filePdfRef}
-                    type="file"
-                    multiple
-                    accept="application/pdf,.pdf"
-                    onChange={(e) => setFormData((p) => ({ ...p, pdf: e.target.files }))}
-                  />
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-gray-700">
+                      Amenities
+                    </h3>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          amenities: [
+                            ...prev.amenities,
+                            {
+                              name: "",
+                              icon: null,
+                            },
+                          ],
+                        }))
+                      }
+                      className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                    >
+                      + Add Amenity
+                    </button>
+                  </div>
+
+                  {(formData.amenities || []).map((amenity, index) => (
+                    <div
+                      key={index}
+                      className="border rounded-lg p-3 space-y-3"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Amenity Name"
+                        value={amenity.name}
+                        onChange={(e) => {
+                          const updated = [...formData.amenities];
+                          updated[index].name = e.target.value;
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenities: updated,
+                          }));
+                        }}
+                        className="border rounded-lg p-2 w-full"
+                      />
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const updated = [...formData.amenities];
+                          updated[index].icon = e.target.files[0];
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            amenities: updated,
+                          }));
+                        }}
+                        className="w-full"
+                      />
+
+                      {formData.amenities.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = formData.amenities.filter(
+                              (_, i) => i !== index
+                            );
+
+                            setFormData((prev) => ({
+                              ...prev,
+                              amenities: updated,
+                            }));
+                          }}
+                          className="text-red-500 text-sm"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              </div>
 
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2 border rounded"
-                >
-                  Cancel
-                </button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">Images</p>
+                    <input
+                      ref={fileImageRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      required={!isEditMode}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, attachments: e.target.files }))
+                      }
+                    />
+                  </div>
 
-                <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">
-                  {isEditMode ? "Update" : "Create"}
-                </button>
-              </div>
-            </form>
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600">PDF</p>
+                    <input
+                      ref={filePdfRef}
+                      type="file"
+                      multiple
+                      accept="application/pdf,.pdf"
+                      onChange={(e) => setFormData((p) => ({ ...p, pdf: e.target.files }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalOpen(false);
+                      resetForm();
+                    }}
+                    className="px-4 py-2 border rounded"
+                  >
+                    Cancel
+                  </button>
+
+                  <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded">
+                    {isEditMode ? "Update" : "Create"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
@@ -677,11 +1016,11 @@ const OtherProject = () => {
 
                       <div className="min-w-0">
                         <p className="font-semibold truncate">{u?.name || "Unknown User"}</p>
-                     <p className="text-xs text-gray-600 truncate">
-                        {u?.email ? u.email : "—"}
-                        {u?.mobile ? ` • ${u.mobile}` : ""}
-                        {(!u?.email && !u?.mobile && u?.id) ? `User ID: ${u.id}` : ""}
-                      </p>
+                        <p className="text-xs text-gray-600 truncate">
+                          {u?.email ? u.email : "—"}
+                          {u?.mobile ? ` • ${u.mobile}` : ""}
+                          {(!u?.email && !u?.mobile && u?.id) ? `User ID: ${u.id}` : ""}
+                        </p>
 
                       </div>
                     </div>

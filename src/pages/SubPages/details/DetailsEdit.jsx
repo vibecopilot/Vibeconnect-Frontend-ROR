@@ -6,6 +6,8 @@ import {
   getAssignedTo,
   getComplaintsDetails,
   updateComplaintsDetails,
+  getHelpDeskCategoriesSetup,
+  getIssueType,
 } from "../../../api";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
@@ -22,6 +24,8 @@ const DetailsEdit = () => {
   const [editTicketInfo, setEditTicketInfo] = useState({});
   const [assignedUser, setAssignedUser] = useState();
   const [categ, setCateg] = useState([]);
+  const [ticketCategories, setTicketCategories] = useState([]);
+  const [issueTypes, setIssueTypes] = useState([]);
   const [units, setUnits] = useState([]);
   const [feat, setFeat] = useState("")
   const [formData, setFormData] = useState({
@@ -46,7 +50,9 @@ const DetailsEdit = () => {
     documents: [],
     assigned_to_id: "",
     issue_status_id:"",
-    territory_manager_id:""
+    territory_manager_id: "",
+    issue_type_id: "",
+    issue_related_to: "",
   });
   console.log(formData);
   const getAllowedFeatures = () => {
@@ -57,16 +63,37 @@ const DetailsEdit = () => {
   };
 
 
-  const categories = getItemInLocalStorage("categories");
-  // console.log(categories , "Catss")
   const statuses = getItemInLocalStorage("STATUS");
   console.log(statuses)
+
+  const getIssueTypeCategories = (issueType) => {
+    const categories =
+      issueType?.helpdesk_categories ||
+      issueType?.categories ||
+      issueType?.category_types;
+
+    return Array.isArray(categories) ? categories : [];
+  };
 
 
   useEffect(() => {
     const fetchDetails = async () => {
       try {
-        const response = await getComplaintsDetails(id);
+        const [response, issueTypesResponse] = await Promise.all([
+          getComplaintsDetails(id),
+          getIssueType(),
+        ]);
+        const availableIssueTypes = Array.isArray(issueTypesResponse.data)
+          ? issueTypesResponse.data
+          : [];
+        const relatedIssueType = availableIssueTypes.find(
+          (issueType) =>
+            String(issueType.id) === String(response.data.issue_type_id) ||
+            issueType.name === response.data.issue_related_to
+        );
+        const issueTypeId = relatedIssueType?.id || response.data.issue_type_id || "";
+
+        setIssueTypes(availableIssueTypes);
         // Update state with fetched data
         setFormData({
           ...formData,
@@ -80,6 +107,8 @@ const DetailsEdit = () => {
           text: response.data.text,
           issue_status_id: response.data.issue_status_id,
           territory_manager_id: response.data.territory_manager_id,
+          issue_type_id: issueTypeId,
+          issue_related_to: response.data.issue_related_to || relatedIssueType?.name || "",
           // status: response.data.status,
           // category_type_id: response.data.category_type_id,
           // sub_category_id: response.data.sub_category_id,
@@ -95,7 +124,17 @@ const DetailsEdit = () => {
         console.log("check",response.data)
         setTicketInfo(response.data);
         setEditTicketInfo(response.data);
-        fetchEditSubCategories(response.data.category_type_id);
+
+        // If no issue types are configured, load all helpdesk categories for
+        // the site so Category / Sub-Category dropdowns are still usable.
+        const categoriesToLoad =
+          availableIssueTypes.length === 0 ? null : relatedIssueType;
+
+        await Promise.all([
+          fetchEditSubCategories(response.data.category_type_id),
+          loadTicketCategories(categoriesToLoad),
+        ]);
+
       } catch (error) {
         console.error("Error fetching details:", error);
       }
@@ -135,7 +174,34 @@ const DetailsEdit = () => {
     fetchDetails();
     fetchAssignedTo();
     // fetchEditSubCategories(formData.category_type_id);
-  }, []);
+  }, [id]);
+
+  const loadTicketCategories = async (issueType) => {
+    setTicketCategories([]);
+
+    const issueTypeCategories = getIssueTypeCategories(issueType);
+    if (issueTypeCategories.length) {
+      setTicketCategories(issueTypeCategories);
+      return;
+    }
+
+    try {
+      // No related-to category data was returned, so load all categories for the site.
+      const response = await getHelpDeskCategoriesSetup(
+        undefined,
+        getItemInLocalStorage("SITEID")
+      );
+      const categoryData = response.data;
+      setTicketCategories(
+        Array.isArray(categoryData)
+          ? categoryData
+          : categoryData?.helpdesk_categories || categoryData?.categories || []
+      );
+    } catch (error) {
+      console.error("Error fetching ticket categories:", error);
+      toast.error("Failed to load categories");
+    }
+  };
 
 
   const handleTicketDetails = (e, name) => {
@@ -145,28 +211,14 @@ const DetailsEdit = () => {
     });
   };
 
-
-  /*
-  const saveEditDetails = async () => {
-    try {
-      await editComplaintsDetails(formData);
-      console.log("Edited Ticket Details:", formData);
-      toast.success("Updated Successfully")
-    } catch (error) {
-      console.error("Error Saving in details update: ", error);
-    }
-  };
-
-
-  */
-
-
   const saveEditDetails = async () => {
     try {
       const updatedData = {
         complaint: {
           category_type_id: formData.category_type_id,
           sub_category_id: formData.sub_category_id,
+          issue_type_id: formData.issue_type_id,
+          issue_related_to: formData.issue_related_to,
           issue_status: formData?.issue_status,
           issue_status_id : formData.issue_status_id,
           complaint_type: formData.issue_type,
@@ -245,6 +297,26 @@ const DetailsEdit = () => {
     }
   };
 
+  const handleRelatedToChange = async (e) => {
+    const issueTypeId = e.target.value;
+    const issueRelatedTo = e.target.options[e.target.selectedIndex]?.text || "";
+    const selectedIssueType = issueTypes.find(
+      (issueType) => String(issueType.id) === String(issueTypeId)
+    );
+
+    setFormData((previousFormData) => ({
+      ...previousFormData,
+      issue_type_id: issueTypeId,
+      issue_related_to: issueRelatedTo,
+      category_type_id: "",
+      sub_category_id: "",
+    }));
+    setUnits([]);
+    if (selectedIssueType) {
+      await loadTicketCategories(selectedIssueType);
+    }
+  };
+
 
   console.log(formData.category_type_id);
   console.log("SubCategory" + formData.sub_category_id);
@@ -266,7 +338,24 @@ const DetailsEdit = () => {
     { title: "Building Name  :", description: ticketinfo.building_name },
     { title: "Floor Name  :", description: ticketinfo.floor_name },
     { title: "Unit  :", description: ticketinfo.unit },
-    { title: "Related To  :", description: ticketinfo.issue_related_to },
+    {
+      title: "Related To :",
+      description: (
+        <select
+          value={formData.issue_type_id || ""}
+          name="issue_type_id"
+          onChange={handleRelatedToChange}
+          className="border p-1 px-4 max-w-40 w-40 border-gray-500 rounded-md"
+        >
+          <option value="">Select Related To</option>
+          {issueTypes.map((issueType) => (
+            <option key={issueType.id} value={issueType.id}>
+              {issueType.name}
+            </option>
+          ))}
+        </select>
+      ),
+    },
 
 
     // { title: " Current status  :", description: ticketinfo.issue_status },
@@ -389,7 +478,7 @@ const DetailsEdit = () => {
           className="border p-1 px-4 max-w-40 w-40 border-gray-500 rounded-md"
         >
           <option value="">Select Category</option>
-          {categories?.map((category) => (
+          {ticketCategories?.map((category) => (
             <option
               key={category.id}
            
@@ -622,7 +711,4 @@ const themeColor = useSelector((state)=> state.theme.color)
 
 
 export default DetailsEdit;
-
-
-
 

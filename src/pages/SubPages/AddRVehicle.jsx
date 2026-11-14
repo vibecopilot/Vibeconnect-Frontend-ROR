@@ -6,6 +6,7 @@ import {
   getSetupUsers,
   postRegisteredVehicle,
 } from "../../api";
+import { getVehicleSetups } from "../../api";
 import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import Select from "react-select";
@@ -18,6 +19,9 @@ const AddRVehicles = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [slots, setSlots] = useState([]);
+  const [vehicleCategories, setVehicleCategories] = useState([]);
+  const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [vehicleData, setVehicleData] = useState([]);
 
   const [formData, setFormData] = useState({
     slotNumber: "",
@@ -27,6 +31,7 @@ const AddRVehicles = () => {
     registrationNumber: "",
     InsuranceNumber: "",
     InsuranceTill: "",
+    PassValidTill: "",  
     Category: "",
     vehicleNumber: "",
     unit: "",
@@ -36,45 +41,68 @@ const AddRVehicles = () => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  useEffect(() => {
-    const fetchParkingConfig = async () => {
-      try {
-        const parkingRes = await getParkingConfig();
-        setSlots(parkingRes.data || []);
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to load parking slots");
-      }
-    };
+ useEffect(() => {
+  const fetchParkingConfig = async () => {
+    try {
+      const parkingRes = await getParkingConfig();
+      setSlots(parkingRes.data || []);
+    } catch (error) {
+      toast.error("Failed to load parking slots");
+    }
+  };
 
-    const fetchUnits = async () => {
-      try {
-        const unitRes = await getAllUnits();
-        setUnits(unitRes.data || []);
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to load units");
-      }
-    };
+  const fetchUnits = async () => {
+    try {
+      const unitRes = await getAllUnits();
+      setUnits(unitRes.data || []);
+    } catch (error) {
+      toast.error("Failed to load units");
+    }
+  };
 
-    const fetchUsers = async () => {
-      try {
-        const userRes = await getSetupUsers();
-        const userData = (userRes.data || []).map((user) => ({
-          value: user.id,
-          label: `${user.firstname} ${user.lastname}`,
-        }));
-        setUsers(userData);
-      } catch (error) {
-        console.log(error);
-        toast.error("Failed to load users");
-      }
-    };
+  const fetchUsers = async () => {
+    try {
+      const userRes = await getSetupUsers();
+      const userData = (userRes.data || []).map((user) => ({
+        value: user.id,
+        label: `${user.firstname} ${user.lastname}`,
+      }));
+      setUsers(userData);
+    } catch (error) {
+      toast.error("Failed to load users");
+    }
+  };
 
-    fetchParkingConfig();
-    fetchUnits();
-    fetchUsers();
-  }, []);
+ 
+
+const fetchVehicleSetups = async () => {
+  try {
+    const res = await getVehicleSetups(47);
+
+    const data = res.data || [];
+
+    console.log("Vehicle Setup Response:", data);
+
+    setVehicleData(data); // store full data
+
+    // Extract unique categories
+    const categories = [
+      ...new Set(data.map((item) => item.vehicle_category)),
+    ];
+
+    setVehicleCategories(categories);
+
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to load vehicle setups");
+  }
+};
+  fetchParkingConfig();
+  fetchUnits();
+  fetchUsers();
+  fetchVehicleSetups();
+
+}, []);
 
   const handleUserSelection = (selectedOption) => {
     setSelectedUser(selectedOption);
@@ -122,6 +150,11 @@ const AddRVehicles = () => {
       "registered_vehicle[insurance_valid_till]",
       formData.InsuranceTill
     );
+      postData.append(
+    "registered_vehicle[valid_till]",
+     formData.PassValidTill
+    );
+    
     postData.append("registered_vehicle[category]", formData.Category);
     postData.append(
       "registered_vehicle[vehicle_number]",
@@ -131,6 +164,7 @@ const AddRVehicles = () => {
     if (userId) {
       postData.append("registered_vehicle[created_by_id]", userId);
     }
+  
 
     // safe access in case selectedUser is null
     const userID = selectedUser?.value;
@@ -204,38 +238,65 @@ const AddRVehicles = () => {
             <label htmlFor="vehicleCategory" className="font-semibold">
               Vehicle Category
             </label>
-            <select
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={formData.vehicleCategory}
-              onChange={handleChange}
-              name="vehicleCategory"
-            >
-              <option value="">Select Vehicle Category</option>
-              <option value="2 Wheeler">2 Wheeler</option>
-              <option value="4 Wheeler">4 Wheeler</option>
-            </select>
+       <select
+  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+  value={formData.vehicleCategory}
+  name="vehicleCategory"
+  onChange={(e) => {
+    const selectedCategory = e.target.value;
+
+    // Update category and reset type
+    setFormData((prev) => ({
+      ...prev,
+      vehicleCategory: selectedCategory,
+      vehicleType: "",
+    }));
+
+    // Filter types from API data
+    const filteredTypes = vehicleData
+      .filter(
+        (item) =>
+          item.vehicle_category.trim() === selectedCategory.trim()
+      )
+      .map((item) => item.vehicle_type_name);
+
+    console.log("Filtered Types:", filteredTypes); // Debug
+
+    setVehicleTypes(filteredTypes);
+  }}
+>
+  <option value="">Select Vehicle Category</option>
+  {vehicleCategories.map((cat) => (
+    <option key={cat} value={cat}>
+      {cat}
+    </option>
+  ))}
+</select>
           </div>
 
-          {/* Vehicle Type */}
-          <div className="flex flex-col">
-            <label htmlFor="vehicleType" className="font-semibold">
-              Vehicle Type
-            </label>
-            <select
-              className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-              value={formData.vehicleType}
-              onChange={handleChange}
-              name="vehicleType"
-            >
-              <option value="">Select Vehicle Type</option>
-              <option value="SUV">SUV</option>
-              <option value="Sedan">Sedan</option>
-              <option value="Hatchback">Hatchback</option>
-              <option value="Bike">Bike</option>
-              <option value="Truck">Truck</option>
-            </select>
-          </div>
+        {/* Vehicle Type */}
+<div className="flex flex-col">
+  <label htmlFor="vehicleType" className="font-semibold">
+    Vehicle Type
+  </label>
 
+  <select
+    className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
+    value={formData.vehicleType}
+    onChange={handleChange}
+    name="vehicleType"
+    disabled={!formData.vehicleCategory}
+  >
+    <option value="">Select Vehicle Type</option>
+
+    {[...new Set(vehicleTypes)].map((type) => (
+      <option key={type} value={type}>
+        {type}
+      </option>
+    ))}
+
+  </select>
+</div>
           {/* Sticker Number */}
           <div className="flex flex-col">
             <label htmlFor="stickerNumber" className="font-semibold">
@@ -299,6 +360,23 @@ const AddRVehicles = () => {
               min={today}
             />
           </div>
+
+
+          {/* Pass Valid Till */}
+<div className="flex flex-col">
+  <label htmlFor="passValidTill" className="font-semibold">
+    Pass Valid Till
+  </label>
+  <input
+    type="date"
+    id="passValidTill"
+    name="PassValidTill"
+    value={formData.PassValidTill}
+    onChange={handleChange}
+    className="border p-2 rounded-md border-gray-300"
+    min={today}
+  />
+</div>
 
           {/* Category */}
           <div className="flex flex-col">
@@ -371,3 +449,6 @@ const AddRVehicles = () => {
 };
 
 export default AddRVehicles;
+
+
+

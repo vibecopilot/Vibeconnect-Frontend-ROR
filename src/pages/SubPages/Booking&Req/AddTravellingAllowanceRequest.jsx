@@ -5,6 +5,8 @@ import { postTravellingAllowanceRequest, getSetupUsers } from "../../../api";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import { useSelector } from "react-redux";
 import Select from "react-select";
+import { MdClose } from "react-icons/md";
+import { FaCheck } from "react-icons/fa";
 const AddTravellingAllowanceRequest = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -122,10 +124,10 @@ const AddTravellingAllowanceRequest = () => {
       );
       toast.success("Travelling Allowance Request Added");
       navigate("/admin/booking-request/traveling-allowance-request");
-      console.log(
-        "Travelling Allowance request Response",
-        TravelAllowancereqResp
-      );
+      // console.log(
+      //   "Travelling Allowance request Response",
+      //   TravelAllowancereqResp
+      // );
     } catch (error) {
       console.log(error);
     }
@@ -224,6 +226,8 @@ const AddTravellingAllowanceRequest = () => {
               name="mobileNo"
               value={formData.mobileNo}
               onChange={handleChange}
+              maxLength={10}
+              minLength={10}
               id="reimbursementConfirmationEmail"
               className="border p-1 px-4 border-gray-500 rounded-md"
               placeholder="Enter Mobile Number"
@@ -383,12 +387,18 @@ const AddTravellingAllowanceRequest = () => {
             isMulti={true}
           />
         </div>
-        <div className="flex gap-5 justify-center items-center my-4">
+        <div className="flex gap-5 justify-end items-center my-4 gap-3">
           <button
             onClick={handleTravelAllowanceRequest}
-            className="bg-black text-white hover:bg-gray-700 font-semibold py-2 px-4 rounded"
+            className="bg-green-400 text-white flex items-center gap-2 font-semibold py-2 px-4 rounded-md"
           >
-            Submit
+            <FaCheck/>Submit
+          </button>
+          <button
+            onClick={() => navigate("/admin/booking-request/traveling-allowance-request")}
+            className="bg-red-500 text-white flex items-center gap-2 font-semibold py-2 px-4 rounded-md"
+          >
+            <MdClose /> Cancel
           </button>
         </div>
       </div>

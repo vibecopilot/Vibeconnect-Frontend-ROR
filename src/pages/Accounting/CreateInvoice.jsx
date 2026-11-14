@@ -39,7 +39,7 @@ const CreateInvoice = () => {
   const fetchTaxRates = async () => {
     try {
       const data = await getTaxRates({ active: true });
-      setTaxRates(data);
+      setTaxRates(data.data || data);
     } catch (error) {
       console.error('Error fetching tax rates:', error);
     }

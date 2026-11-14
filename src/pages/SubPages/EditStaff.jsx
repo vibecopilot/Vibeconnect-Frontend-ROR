@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { initialSchedule } from "../../utils/initialFormData";
 import { SendDateFormat } from "../../utils/dateUtils";
+import Select from "react-select";
 import { Switch } from "../../Buttons";
 const EmployeeAddStaff = () => {
   const themeColor = useSelector((state) => state.theme.color);
@@ -39,7 +40,7 @@ const EmployeeAddStaff = () => {
     lastName: "",
     email: "",
     mobile: "",
-    unit: "",
+    unit: [],
     workType: "",
     staffId: "",
     vendorId: "",
@@ -48,7 +49,7 @@ const EmployeeAddStaff = () => {
     status: true,
     documents: [],
     workingSchedule: initialSchedule,
- 
+
   });
   const daysOfWeek = [
     "Monday",
@@ -82,15 +83,22 @@ const EmployeeAddStaff = () => {
           email: editData.email,
           mobile: editData.mobile_no,
           status: editData.status,
-          unit: editData.unit_id,
+          unit: editData.units?.map((u) => ({
+            value: u.id,
+            label: u.name,
+          })) || [],
           validFrom: SendDateFormat(editData.valid_from),
           validTill: SendDateFormat(editData.valid_till),
           vendorId: editData.vendor_id,
           workType: editData.work_type,
-          
-          workingSchedule: initializeWorkingSchedule(editData.working_schedule),
+
+          workingSchedule: initializeWorkingSchedule(editData.working_schedule || {}),
         });
-        setCapturedImage(domainPrefix + editData.profile_picture.url);
+        if (editData.profile_picture && editData.profile_picture.url) {
+          setCapturedImage(domainPrefix + editData.profile_picture.url);
+        } else {
+          setCapturedImage(null);
+        }
 
         console.log(editData);
       } catch (error) {
@@ -195,11 +203,19 @@ const EmployeeAddStaff = () => {
     sendData.append("staff[lastname]", formData.lastName);
     sendData.append("staff[mobile_no]", formData.mobile);
     sendData.append("staff[email]", formData.email);
-    sendData.append("staff[units]", formData.unit);
+    //  formData.unit.forEach((unit) => {
+    //    sendData.append("staff[units][]", unit.value);});
+    if (formData.unit.length > 0) {
+      formData.unit.forEach((unit) => {
+        sendData.append("staff[unit_ids][]", unit.value);
+      });
+      sendData.append("staff[unit_id]", formData.unit[0].value); // fallback for single-unit API keys
+    }
+    // sendData.append("staff[units]", formData.unit);
     sendData.append("staff[work_type]", formData.workType);
     // sendData.append("staff[staff_id]", formData.staffId);
     sendData.append("staff[status]", formData.status);
-    sendData.append("staff[unit_id]", formData.unit);
+    // sendData.append("staff[unit_id]", formData.unit);
     sendData.append("staff[vendor_id]", formData.vendorId);
     sendData.append("staff[valid_from]", formData.validFrom);
     sendData.append("staff[valid_till]", formData.validTill);
@@ -223,14 +239,13 @@ const EmployeeAddStaff = () => {
     //   sendData.append("staff[profile_picture]", blob, "staff_image.jpg");
     // }
 
-    if (capturedImage) {
+    if (capturedImage && capturedImage.startsWith("data:image")) {
       try {
         const response = await fetch(capturedImage);
         const blob = await response.blob();
         sendData.append("staff[profile_picture]", blob, "staff_image.jpg");
       } catch (error) {
-        console.error("Failed to fetch the profile picture:", error);
-        return toast.error("Failed to upload the profile picture.");
+        console.error("Image conversion error:", error);
       }
     }
     formData.documents.forEach((docs) => {
@@ -380,6 +395,8 @@ const EmployeeAddStaff = () => {
                   name="mobile"
                   value={formData.mobile}
                   onChange={handleChange}
+                  minLength={10}
+                  maxLength={10}
                   placeholder="Enter Mobile Number"
                   className="border p-2 rounded-md border-gray-300"
                 />
@@ -388,20 +405,21 @@ const EmployeeAddStaff = () => {
                 <label htmlFor="unit" className="font-semibold">
                   Unit
                 </label>
-                <select
-                  id="unit"
+                <Select
+                  options={units.map((unit) => ({
+                    value: unit.id,
+                    label: unit.name,
+                  }))}
+                  isMulti
+                  placeholder="Select Units"
                   value={formData.unit}
-                  name="unit"
-                  onChange={handleChange}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Select Unit</option>
-                  {units.map((unit) => (
-                    <option value={unit.id} key={unit.id}>
-                      {unit.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(selectedOptions) =>
+                    setFormData({
+                      ...formData,
+                      unit: selectedOptions || [],
+                    })
+                  }
+                />
               </div>
 
               <div className="grid gap-2 items-center w-full">
@@ -455,7 +473,7 @@ const EmployeeAddStaff = () => {
                   <option value="">Select Vendor</option>
                   {vendors.map((vendor) => (
                     <option value={vendor.id} key={vendor.id}>
-                      {vendor.company_name}
+                      {vendor.company_name || vendor.vendor_name}
                     </option>
                   ))}
                 </select>
@@ -490,11 +508,11 @@ const EmployeeAddStaff = () => {
                 <label htmlFor="status" className="font-semibold">
                   Active/Inactive
                 </label>
-               <div className="flex items-center gap-4">
-                <p>Inactive</p>
-                <Switch checked={formData.status} onChange={()=>setFormData({...formData, status: !formData.status})} />
-                <p>Active</p>
-               </div>
+                <div className="flex items-center gap-4">
+                  <p>Inactive</p>
+                  <Switch checked={formData.status} onChange={() => setFormData({ ...formData, status: !formData.status })} />
+                  <p>Active</p>
+                </div>
               </div>
             </div>
             <div className="grid gap-2 items-center w-full mt-2">
@@ -560,13 +578,20 @@ const EmployeeAddStaff = () => {
               </table>
             </div>
 
-            <div className="flex gap-5 justify-center items-center my-4">
+            <div className="flex gap-5 justify-end items-center my-4 gap-3">
+              <button
+                className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300"
+                onClick={() => navigate("/admin/passes/staff")}
+              >
+                Cancel
+              </button>
               <button
                 type="submit"
                 onClick={handleEditStaff}
-                className="text-white bg-black hover:bg-white hover:text-black border-2 border-black font-semibold py-2 px-4 rounded transition-all duration-300"
+                className="text-white bg-black hover:bg-white font-semibold py-2 px-4 rounded transition-all duration-300"
+                style={{ background: themeColor }}
               >
-                Save
+                Update Staff
               </button>
             </div>
           </div>

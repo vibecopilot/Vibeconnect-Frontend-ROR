@@ -89,10 +89,10 @@ const AddBusiness = () => {
       formData.subCategoryId
     );
     if (imageFile) {
-      sendData.append("logo[]", imageFile);
+      sendData.append("contact_book[logo][]", imageFile);
     }
     formData.attachments.forEach((files)=>{
-      sendData.append("attachfiles[]", files)
+      sendData.append("contact_book[attachments][]", files)
     })
     try {
       const res = await postContactBook(sendData);
@@ -219,6 +219,8 @@ const AddBusiness = () => {
                 name="mobileNumber"
                 className="border p-1 px-4 border-gray-500 rounded-md"
                 pattern="[0-9]*"
+                minLength={10}
+                maxLength={10}
                 onKeyDown={(e) => {
                   if (!/[0-9]/.test(e.key) && e.key !== "Backspace" && e.key !== "ArrowLeft" && e.key !== "ArrowRight") {
                     e.preventDefault();

@@ -4,6 +4,7 @@ import Table from "../../../components/table/Table";
 import { BiEdit } from "react-icons/bi";
 import { RiDeleteBin5Line } from "react-icons/ri";
 import Navbar from "../../../components/Navbar";
+import axios from "axios";
 import { useSelector } from "react-redux";
 import AddVehicleParkingModal from "./AddVehicleParkingModal";
 import EditVehicleParkingModal from "./EditVehicleParkingModal";
@@ -11,12 +12,14 @@ import {
   getVehicleParking,
   deleteVehicleParking,
   getDeviceConfiguration,
+  deleteDeviceConfiguration,
 } from "../../../api";
 import toast from "react-hot-toast";
 import AddDeviceModal from "./AddDeviceModal";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import EditDeviceModal from "./EditDeviceModal";
 function DeviceConfiguration() {
+  const token = getItemInLocalStorage("TOKEN");
   const themeColor = useSelector((state) => state.theme.color);
   const [addDevice, setAddDevice] = useState(false);
   const [editVehicleModal, setEditVehicleModal] = useState(false);
@@ -54,9 +57,11 @@ function DeviceConfiguration() {
           <button onClick={() => editDeviceConfiguration(row.id)}>
             <BiEdit size={15} />
           </button>
-          {/* <button>
-            <RiDeleteBin5Line size={15} onClick={() => deleteVehicle(row.id)} />
-          </button> */}
+           <RiDeleteBin5Line
+        size={20}
+        className="cursor-pointer text-red-600"
+        onClick={() => handleDeleteDevice(row.id)}
+      />
         </div>
       ),
     },
@@ -91,6 +96,25 @@ function DeviceConfiguration() {
     }
   };
 
+  // const BASE_URL = "https://admin.vibecopilot.ai";
+
+const handleDeleteDevice = async (id) => {
+  if (!window.confirm("Are you sure you want to delete this device?")) return;
+
+  try {
+    await deleteDeviceConfiguration(id);
+
+    toast.success("Device deleted successfully");
+
+    fetchDeviceConfiguration(); // refresh list
+  } catch (error) {
+    console.error("Delete error:", error.response || error);
+
+    toast.error(
+      error?.response?.data?.message || "Failed to delete device"
+    );
+  }
+};
   const editDeviceConfiguration = (id) => {
     setEditModal(true);
     setDeviceId(id);

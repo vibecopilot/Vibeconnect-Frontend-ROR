@@ -12,15 +12,18 @@ import { FaTimes } from "react-icons/fa";
 import FileInputBox from "../../../containers/Inputs/FileInputBox";
 import {
   deleteHelpDeskCategorySetup,
- 
   editHelpDeskCategoriesSetupDetails,
   getHelpDeskCategoriesSetup,
   getHelpDeskCategoriesSetupDetails,
   getHelpDeskSubCategoriesSetup,
   getHelpDeskSubCategoriesSetupDetails,
   getSetupUsers,
+  getIssueType,
 } from "../../../api";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
+import toast from "react-hot-toast";
+import Select from "react-select";
+// import { toast } from "react-toastify";
 
 const TicketCategorySetup = () => {
   const [page, setPage] = useState("Category");
@@ -29,13 +32,15 @@ const TicketCategorySetup = () => {
   const [showSubCategoryPage, setShowSubCategoryPage] = useState(false);
   const [categories, setCategories] = useState([]);
   const [subCategories, setSubCategories] = useState([]);
-  const themeColor = useSelector((state) => state.theme.color);
+  const themeColor = "rgb(3,19,37)";
   const [isCatEditModalOpen, setIsCatEditModalOpen] = useState(false);
   const [isSubCatEditModalOpen, setIsSubCatEditModalOpen] = useState(false);
+  const [issueTypes, setIssueTypes] = useState([]);
   const [formData, setFormData] = useState({
     category: "",
     minTat: "",
     engineer: "",
+    issueTypeId: "",
   });
 
   const handleToggleCategoryPage = () => {
@@ -126,39 +131,52 @@ const TicketCategorySetup = () => {
     }
   };
   const [catAdded, setCatAdded] = useState(true);
+  const fetchCategory = async () => {
+    try {
+      const catResp = await getHelpDeskCategoriesSetup();
+      setCategories(catResp.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchSubCategory = async () => {
+    try {
+      const subCatResp = await getHelpDeskSubCategoriesSetup();
+      const sortedSubCat = subCatResp.data.sub_categories.sort((a, b) => {
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setSubCategories(sortedSubCat);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    const fetchCategory = async () => {
-      try {
-        const catResp = await getHelpDeskCategoriesSetup();
-        setCategories(catResp.data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    const fetchSubCategory = async () => {
-      try {
-        const subCatResp = await getHelpDeskSubCategoriesSetup();
-    const sortedSubCat = subCatResp.data.sub_categories.sort((a,b)=> {
-      return new Date(b.created_at) - new Date(a.created_at)
-    })
-        setSubCategories(sortedSubCat);
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchCategory();
     fetchSubCategory();
+    const fetchIssueTypes = async () => {
+      try {
+        const res = await getIssueType();
+        setIssueTypes(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchIssueTypes();
   }, [catAdded]);
 
-  const handleCatDelete = async (id) => {
+  console.log("category --", categories);
+
+   const handleCatDelete = async (id) => {
     const formData = new FormData();
     formData.append("helpdesk_category[active]", 0);
     formData.append("id", id);
     try {
       const res = deleteHelpDeskCategorySetup(id, formData);
+      toast.success("Category deleted successfully");
       setCatAdded(true);
     } catch (error) {
       console.log(error);
+      toast.error("Failed to delete category");
     } finally {
       setTimeout(() => {
         setCatAdded(false);
@@ -194,16 +212,27 @@ const TicketCategorySetup = () => {
     },
     {
       name: "Assignee",
-      // selector: (row) => row.Assignee,
-       selector: (row) =>
-    row.assigned_to
-      ? `${row.assigned_to.firstname} ${row.assigned_to.lastname}`
-      : "-",
+      selector: (row) => {
+        if (row.complaint_worker && row.complaint_worker.assign_to_details) {
+          return row.complaint_worker.assign_to_details
+            .map((name) => name.name)
+            .join(", ");
+        }
+        return "";
+      },
       sortable: true,
     },
     {
       name: "Response Time (Min)",
       selector: (row) => row.tat,
+      sortable: true,
+    },
+    {
+      name: "Related To",
+      selector: (row) => {
+        const it = issueTypes.find((t) => t.id === row.issue_type_id);
+        return it ? it.name : "-";
+      },
       sortable: true,
     },
 
@@ -225,7 +254,7 @@ const TicketCategorySetup = () => {
           <button onClick={() => openCatEditModal(row.id)}>
             <BiEdit size={15} />
           </button>
-          <button onClick={() => handleCatDelete(row.id)}>
+            <button onClick={() => handleCatDelete(row.id)}>
             <FaTrash size={15} />
           </button>
         </div>
@@ -252,7 +281,8 @@ const TicketCategorySetup = () => {
 
   const [isModalOpen1, setIsModalOpen1] = useState(false);
   const [catId, setCatId] = useState(null);
-const [subCatId, setSubCatId] = useState(null)
+  const [subCatId, setSubCatId] = useState(null);
+  
   const openCatEditModal = async (id) => {
     const fetchCatDetails = await getHelpDeskCategoriesSetupDetails(id);
     setCatId(id);
@@ -260,19 +290,24 @@ const [subCatId, setSubCatId] = useState(null)
       ...formData,
       category: fetchCatDetails.data.name,
       minTat: fetchCatDetails.data.tat,
-      // engineer:
+      engineer:
+        fetchCatDetails.data.complaint_worker &&
+        fetchCatDetails.data.complaint_worker.assign_to
+          ? fetchCatDetails.data.complaint_worker.assign_to
+          : [],
+      issueTypeId: fetchCatDetails.data.issue_type_id || "",
     });
     setIsCatEditModalOpen(true);
   };
   const openSubCatEditModal = async (id) => {
     const fetchCatDetails = await getHelpDeskSubCategoriesSetupDetails(id);
-    console.log(fetchCatDetails)
+    console.log(fetchCatDetails);
     setSubCatId(id);
     // setFormData({
     //   ...formData,
     //   category: fetchCatDetails.data.name,
     //   minTat: fetchCatDetails.data.tat,
-      
+
     // });
     setIsCatEditModalOpen(true);
   };
@@ -280,6 +315,16 @@ const [subCatId, setSubCatId] = useState(null)
   const closeModal1 = () => setIsModalOpen1(false);
 
   const subCatColumns = [
+    {
+      name: "Action",
+      cell: (row) => (
+        <div className="flex items-center gap-4">
+          <button onClick={() => openSubCatEditModal(row.id)}>
+            <BiEdit size={15} />
+          </button>
+        </div>
+      ),
+    },
     {
       name: "Sr.no.",
       selector: (row, index) => index + 1,
@@ -293,6 +338,14 @@ const [subCatId, setSubCatId] = useState(null)
     {
       name: "Sub Category Type",
       selector: (row) => row.name,
+      sortable: true,
+    },
+    {
+      name: "Related To",
+      selector: (row) => {
+        const it = issueTypes.find((t) => t.id === row.issue_type_id);
+        return it ? it.name : "-";
+      },
       sortable: true,
     },
     // {
@@ -322,19 +375,7 @@ const [subCatId, setSubCatId] = useState(null)
     //   selector: (row) => row.Icon,
     //   sortable: true,
     // },
-    {
-      name: "Action",
-      cell: (row) => (
-        <div className="flex items-center gap-4">
-          <button onClick={()=>openSubCatEditModal(row.id)}>
-            <BiEdit size={15} />
-          </button>
-          {/* <button>
-            <FaTrash size={15} />
-          </button> */}
-        </div>
-      ),
-    },
+ 
   ];
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -346,21 +387,28 @@ const [subCatId, setSubCatId] = useState(null)
     sendData.append("helpdesk_category[of_phase]", "pms");
     sendData.append("helpdesk_category[name]", formData.category);
     sendData.append("helpdesk_category[tat]", formData.minTat);
-    sendData.append("helpdesk_category[assigned_to]", formData.engineer
-);
-
+    if (formData.issueTypeId) sendData.append("helpdesk_category[issue_type_id]", formData.issueTypeId);
+    const engineers = Array.isArray(formData.engineer) ? formData.engineer : [];
+    engineers.forEach((workerId, index) => {
+      sendData.append(`complaint_worker[assign_to][]`, workerId);
+    });
     try {
       const resp = await editHelpDeskCategoriesSetupDetails(catId, sendData);
-      setIsCatEditModalOpen(false);
-
-          // ✅ REFRESH TABLE
-    setCatAdded(true);
-    setTimeout(() => setCatAdded(false), 300);
-      console.log(resp);
+      toast.success("Category updated successfully!");
+      setIsCatEditModalOpen(false); // Close modal
+      setCatAdded(Date.now()); // Trigger immediate refresh
     } catch (error) {
       console.log(error);
+      toast.error("Failed to update category");
     }
   };
+
+  const engineerOptions = engineers.map((engineer) => ({
+    value: engineer.id,
+    label: `${engineer.firstname} ${engineer.lastname}`,
+  }));
+
+  console.log("fomrData", formData);
   return (
     <div className=" w-full my-2 flex  overflow-hidden flex-col">
       <div className="flex w-full">
@@ -391,7 +439,6 @@ const [subCatId, setSubCatId] = useState(null)
           <div>
             <div className="flex justify-end">
               <button
-                style={{ background: themeColor }}
                 onClick={handleToggleCategoryPage}
                 className="p-2 my-2 bg-blue-500 text-white rounded-md"
               >
@@ -547,6 +594,20 @@ const [subCatId, setSubCatId] = useState(null)
               <div>
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="form-group">
+                    <label className="block mb-2">Related To</label>
+                    <select
+                      className="border p-2 w-full bg-white"
+                      value={formData.issueTypeId}
+                      onChange={handleChange}
+                      name="issueTypeId"
+                    >
+                      <option value="">Select Related To</option>
+                      {issueTypes.map((it) => (
+                        <option key={it.id} value={it.id}>{it.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
                     <label className="block mb-2">Enter Category</label>
                     <input
                       type="text"
@@ -559,14 +620,29 @@ const [subCatId, setSubCatId] = useState(null)
                   </div>
                   <div className="form-group">
                     <label className="block mb-2">Select Engineer</label>
-                    <select className="border p-2 w-full">
-                      {engineers.map((engineer) => (
-                        <option value={engineer.id} key={engineer.id}>
-                          {engineer.firstname}
-                          {engineer.lastname}
-                        </option>
-                      ))}
-                    </select>
+                    <Select
+                      isMulti
+                      options={engineerOptions}
+                      value={engineerOptions.filter((opt) =>
+                        Array.isArray(formData.engineer)
+                          ? formData.engineer.includes(opt.value)
+                          : formData.engineer === opt.value
+                      )}
+                      onChange={(selected) =>
+                        setFormData({
+                          ...formData,
+                          engineer: selected
+                            ? selected.map((opt) => opt.value)
+                            : [],
+                        })
+                      }
+                      placeholder="Select Engineer"
+                      className="w-full"
+                      menuPortalTarget={document.body}
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                    />
                   </div>
                   <div className="form-group">
                     <label className="block mb-2">Response Time (min)</label>
