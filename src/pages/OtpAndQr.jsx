@@ -31,11 +31,18 @@ const OtpAndQr = () => {
   const [companyId, setCompanyId] = useState(null);
   const [dynamicQrToken, setDynamicQrToken] = useState("");
   const [qrSecondsLeft, setQrSecondsLeft] = useState(30);
+  const isCompany57 =
+    Number(companyId) === 57 ||
+    Number(userData?.site_company_id) === 57 ||
+    /titanium\s*tech\s*park/i.test(userData?.site_name || "");
 
-  // Fetch a fresh 32-character QR token every 30 seconds. The token is
-  // time-based, so the QR visibly changes at each refresh.
+  // Fetch a fresh 32-character QR token every 30 seconds for company 57 only.
+  // All other companies keep their existing QR behaviour.
   useEffect(() => {
-    if (!id) return undefined;
+    if (!id || !isCompany57) {
+      setDynamicQrToken("");
+      return undefined;
+    }
     let cancelled = false;
     let refreshTimer;
 
@@ -73,7 +80,7 @@ const OtpAndQr = () => {
       clearTimeout(refreshTimer);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [id]);
+  }, [id, isCompany57]);
 
   useEffect(() => {
     if (!dynamicQrToken) return undefined;
@@ -120,23 +127,19 @@ setCompanyId(response.data.company_id);
   const QrCodePic = userData.qr_code ? userData.qr_code : null;
   const isApproved = userData?.hosts?.some((host) => host.is_approved === true);
   const hasHosts = Boolean(userData?.hosts?.length);
-  // Prefer the rotating 32-character token, then fall back to the card/visitor
-  // id if the token request has not completed yet.
-  const qrValue =
-    dynamicQrToken ||
-    (userData?.card_id
-      ? String(userData.card_id)
-      : userData?.id
-        ? String(userData.id)
-        : id
-          ? String(id)
-          : "");
+  const qrValue = userData?.card_id ? String(userData.card_id) : "";
 
   // ─── Company 57 — Goyal & Co / Titanium Tech Park Layout ────────────────────
-  if (
-    Number(companyId) === 57 ||
-    /titanium\s*tech\s*park/i.test(userData?.site_name || "")
-  ) {
+  if (isCompany57) {
+    const company57QrValue =
+      dynamicQrToken ||
+      (userData?.card_id
+        ? String(userData.card_id)
+        : userData?.id
+          ? String(userData.id)
+          : id
+            ? String(id)
+            : "");
     const gold = "#E8A33D";
     const charcoal = "#1F1F1F";
     const softCream = "#FAF7F2";
@@ -172,9 +175,9 @@ setCompanyId(response.data.company_id);
       ? dynamicQrToken.match(/.{1,8}/g).join(" ")
       : "";
 
-    const qrCode = qrValue ? (
+    const qrCode = company57QrValue ? (
       <QRCode
-        value={qrValue}
+        value={company57QrValue}
         size={214}
         level="H"
         includeMargin={true}
@@ -605,18 +608,6 @@ if (Number(userData?.company_id) === 56) {
                 )}
               </div>
             </div>
-        {/* {dynamicQrToken && (
-              <>
-                <p className="mb-1 text-center font-mono text-[10px] tracking-[0.14em] text-gray-400">
-                  {dynamicQrToken.match(/.{1,8}/g).join(" ")}
-                </p>
-                <p className="mb-2 text-center text-[10px] text-gray-400">
-                  {qrSecondsLeft > 0
-                    ? `Changes in ${qrSecondsLeft}s`
-                    : "Refreshing..."}
-                </p>
-              </>
-            )}  */}
             {otpDigits.length > 0 && (
               <>
                 <p className="text-sm text-gray-500 mb-2">Or</p>
