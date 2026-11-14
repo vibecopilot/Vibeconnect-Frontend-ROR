@@ -2281,6 +2281,8 @@ export const getUserOtp = async (id) =>
     //   token: token,
     // },
   });
+export const getVisitorDynamicQr = async (id) =>
+  axiosInstance.get(`/visitors/dynamic_qr.json?id=${id}`);
 export const postSetupUsers = async (data) =>
   axiosInstance.post("/users/create.json", data, {
     params: {
