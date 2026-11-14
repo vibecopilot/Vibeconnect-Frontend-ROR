@@ -1,9 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { getUserOtp } from "../api";
+import { useEffect, useState } from "react";
+import { getVisitorDynamicQr, getUserOtp } from "../api";
 import { useSearchParams } from "react-router-dom";
 import QRCode from "qrcode.react";
-import { getItemInLocalStorage } from "../utils/localStorage";
 import LotusLogo from "../assets/LotusLogo.png"
+import GoyalLogo from "../assets/GoyalLogo.png"
+
+const getOrdinalSuffix = (day) => {
+  const value = Number(day);
+  if (!value) return "";
+  const remainder = value % 100;
+  if (remainder >= 11 && remainder <= 13) return "TH";
+  switch (value % 10) {
+    case 1:
+      return "ST";
+    case 2:
+      return "ND";
+    case 3:
+      return "RD";
+    default:
+      return "TH";
+  }
+};
 
 const OtpAndQr = () => {
   const [searchParams] = useSearchParams();
@@ -12,6 +29,59 @@ const OtpAndQr = () => {
   const [loading, setLoading] = useState(true);
   const [otpDigits, setOtpDigits] = useState([]);
   const [companyId, setCompanyId] = useState(null);
+  const [dynamicQrToken, setDynamicQrToken] = useState("");
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(30);
+
+  // Fetch a fresh 32-character QR token every 30 seconds. The token is
+  // time-based, so the QR visibly changes at each refresh.
+  useEffect(() => {
+    if (!id) return undefined;
+    let cancelled = false;
+    let refreshTimer;
+
+    const fetchDynamicQr = async () => {
+      try {
+        const response = await getVisitorDynamicQr(id);
+        if (cancelled) return;
+
+        setDynamicQrToken(response.data?.token || "");
+        const refreshIn = Number(response.data?.refresh_in) || 30;
+        setQrSecondsLeft(refreshIn);
+        refreshTimer = setTimeout(
+          fetchDynamicQr,
+          Math.max(1, refreshIn) * 1000 + 250
+        );
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Error fetching dynamic QR token:", error);
+        refreshTimer = setTimeout(fetchDynamicQr, 5000);
+      }
+    };
+
+    fetchDynamicQr();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        clearTimeout(refreshTimer);
+        fetchDynamicQr();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(refreshTimer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!dynamicQrToken) return undefined;
+    const countdown = setInterval(() => {
+      setQrSecondsLeft((seconds) => (seconds > 0 ? seconds - 1 : 0));
+    }, 1000);
+    return () => clearInterval(countdown);
+  }, [dynamicQrToken]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,7 +119,257 @@ setCompanyId(response.data.company_id);
   const ProfilePic = userData.profile_picture ? userData.profile_picture : "/visitor.png";
   const QrCodePic = userData.qr_code ? userData.qr_code : null;
   const isApproved = userData?.hosts?.some((host) => host.is_approved === true);
-  const qrValue = userData?.card_id ? String(userData.card_id) : "";
+  const hasHosts = Boolean(userData?.hosts?.length);
+  // Prefer the rotating 32-character token, then fall back to the card/visitor
+  // id if the token request has not completed yet.
+  const qrValue =
+    dynamicQrToken ||
+    (userData?.card_id
+      ? String(userData.card_id)
+      : userData?.id
+        ? String(userData.id)
+        : id
+          ? String(id)
+          : "");
+
+  // ─── Company 57 — Goyal & Co / Titanium Tech Park Layout ────────────────────
+  if (
+    Number(companyId) === 57 ||
+    /titanium\s*tech\s*park/i.test(userData?.site_name || "")
+  ) {
+    const gold = "#E8A33D";
+    const charcoal = "#1F1F1F";
+    const softCream = "#FAF7F2";
+
+    let formattedDay = "";
+    let formattedMonth = "";
+    let formattedTime = "";
+
+    if (userData?.expected_date) {
+      const d = new Date(userData.expected_date);
+      formattedDay = d.getDate();
+      formattedMonth = d
+        .toLocaleDateString("en-GB", { month: "long" })
+        .toUpperCase();
+    }
+
+    if (userData?.expected_time) {
+      formattedTime = new Date(
+        `2000-01-01T${userData.expected_time}`
+      ).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+    }
+
+    const host = userData?.hosts?.[0];
+    const location = [host?.unit_name, userData?.site_name]
+      .filter(Boolean)
+      .join(" · ");
+    const shouldBlurQr = hasHosts && !isApproved;
+    const readableQrToken = dynamicQrToken
+      ? dynamicQrToken.match(/.{1,8}/g).join(" ")
+      : "";
+
+    const qrCode = qrValue ? (
+      <QRCode
+        value={qrValue}
+        size={214}
+        level="H"
+        includeMargin={true}
+        fgColor={charcoal}
+        bgColor="#FFFFFF"
+        imageSettings={{
+          src: GoyalLogo,
+          width: 48,
+          height: 24,
+          excavate: true,
+        }}
+      />
+    ) : QrCodePic ? (
+      <img
+        src={QrCodePic}
+        alt="QR Code"
+        className="w-[214px] h-[214px] object-contain"
+      />
+    ) : (
+      <div className="w-[214px] h-[214px] flex items-center justify-center">
+        <p className="text-gray-400 text-xs text-center">QR not available</p>
+      </div>
+    );
+
+    return (
+      <div
+        className="flex flex-col items-center min-h-screen py-10 px-4"
+        style={{ backgroundColor: "#0F0F0F" }}
+      >
+        <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+          {/* ── Brand Header ── */}
+          <div
+            className="flex flex-col items-center px-6 pt-7 pb-5"
+            style={{ backgroundColor: charcoal }}
+          >
+            <div className="rounded-lg bg-white px-4 py-2">
+              <img
+                src={GoyalLogo}
+                alt="Goyal & Co"
+                className="h-12 w-auto object-contain"
+              />
+            </div>
+            <p
+              className="mt-4 text-[10px] uppercase text-center"
+              style={{
+                color: gold,
+                letterSpacing: "0.42em",
+                fontFamily: "Century Gothic",
+              }}
+            >
+              Titanium Tech Park
+            </p>
+          </div>
+          <div className="h-1.5 w-full" style={{ backgroundColor: gold }} />
+
+          <div className="flex flex-col items-center px-6 pt-6 pb-5">
+            <p
+              className="text-[10px] uppercase text-gray-400"
+              style={{ letterSpacing: "0.35em" }}
+            >
+              Visitor Pass
+            </p>
+            <h2
+              className="mt-2 text-2xl font-bold uppercase text-center"
+              style={{
+                color: charcoal,
+                fontFamily: "Century Gothic",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {userData?.name || "Visitor"}
+            </h2>
+            <p
+              className="mt-1 text-xs uppercase text-gray-500 text-center"
+              style={{ letterSpacing: "0.18em" }}
+            >
+              {userData?.comming_from || "Guest"}
+            </p>
+
+            {/* ── Dynamic QR ── */}
+            <div
+              className="mt-6 rounded-2xl bg-white p-3"
+              style={{
+                border: `2px solid ${gold}`,
+                boxShadow: `0 0 0 4px #FFFFFF, 0 0 0 6px ${gold}33`,
+              }}
+            >
+              <div className={shouldBlurQr ? "blur-sm opacity-50" : ""}>
+                {qrCode}
+              </div>
+            </div>
+            <p
+              className="mt-3 text-[10px] uppercase text-gray-400"
+              style={{ letterSpacing: "0.25em" }}
+            >
+              Scan at gate
+            </p>
+            {readableQrToken && (
+              <>
+                <p className="mt-2 font-mono text-[11px] tracking-[0.16em] text-gray-500 text-center">
+                  {readableQrToken}
+                </p>
+                <p className="mt-1 text-[9px] uppercase tracking-widest text-gray-400">
+                  {qrSecondsLeft > 0
+                    ? `Changes in ${qrSecondsLeft}s`
+                    : "Refreshing..."}
+                </p>
+              </>
+            )}
+
+            {otpDigits.length > 0 && (
+              <>
+                <p className="mt-4 text-[10px] uppercase tracking-widest text-gray-400">
+                  Or use OTP
+                </p>
+                <div className="mt-2 flex justify-center gap-2">
+                  {otpDigits.map((digit, index) => (
+                    <div
+                      key={index}
+                      className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-semibold shadow-sm"
+                      style={{
+                        backgroundColor: softCream,
+                        color: charcoal,
+                        border: `1px solid ${gold}55`,
+                      }}
+                    >
+                      {digit}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* ── Date & Time ── */}
+            <div className="mt-6 grid w-full grid-cols-2 gap-3">
+              <div
+                className="rounded-xl px-3 py-3 text-center"
+                style={{ backgroundColor: softCream }}
+              >
+                <p className="text-[9px] uppercase tracking-widest text-gray-400">
+                  Date
+                </p>
+                <p
+                  className="mt-1 text-sm font-semibold uppercase"
+                  style={{ color: charcoal }}
+                >
+                  {formattedDay
+                    ? `${formattedDay}${getOrdinalSuffix(formattedDay)} ${formattedMonth}`
+                    : "--"}
+                </p>
+              </div>
+              <div
+                className="rounded-xl px-3 py-3 text-center"
+                style={{ backgroundColor: softCream }}
+              >
+                <p className="text-[9px] uppercase tracking-widest text-gray-400">
+                  Time
+                </p>
+                <p
+                  className="mt-1 text-sm font-semibold uppercase"
+                  style={{ color: charcoal }}
+                >
+                  {formattedTime || "--"}
+                </p>
+              </div>
+            </div>
+
+            {/* ── Host / Location ── */}
+            <div
+              className="mt-4 w-full rounded-xl px-4 py-3"
+              style={{ backgroundColor: softCream }}
+            >
+              <p className="text-[9px] uppercase tracking-widest text-gray-400">
+                Host
+              </p>
+              <p className="mt-1 text-sm font-semibold" style={{ color: charcoal }}>
+                {host?.full_name || "-"}
+              </p>
+              <p className="mt-1 text-xs text-gray-500">{location || "-"}</p>
+            </div>
+          </div>
+
+          <div
+            className="px-6 py-4 text-center text-[10px] uppercase text-gray-400"
+            style={{
+              backgroundColor: "#F7F7F7",
+              letterSpacing: "0.25em",
+            }}
+          >
+            Powered by VibeConnect
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ─── Company 56 — Lotus Developers Layout ────────────────────────────────────
 if (Number(userData?.company_id) === 56) {
@@ -79,7 +399,6 @@ if (Number(userData?.company_id) === 56) {
     const gold = "#D39A43";
     const white = "#FFFFFF";
     const darkBrown = "#382b24";
-    const midBrown = "#4B352B";
 
     return (
       <div
@@ -286,6 +605,18 @@ if (Number(userData?.company_id) === 56) {
                 )}
               </div>
             </div>
+        {/* {dynamicQrToken && (
+              <>
+                <p className="mb-1 text-center font-mono text-[10px] tracking-[0.14em] text-gray-400">
+                  {dynamicQrToken.match(/.{1,8}/g).join(" ")}
+                </p>
+                <p className="mb-2 text-center text-[10px] text-gray-400">
+                  {qrSecondsLeft > 0
+                    ? `Changes in ${qrSecondsLeft}s`
+                    : "Refreshing..."}
+                </p>
+              </>
+            )}  */}
             {otpDigits.length > 0 && (
               <>
                 <p className="text-sm text-gray-500 mb-2">Or</p>
