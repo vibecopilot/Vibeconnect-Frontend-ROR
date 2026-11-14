@@ -275,7 +275,7 @@ setCompanyId(response.data.company_id);
             >
               Scan at gate
             </p>
-            {readableQrToken && (
+            {/* {readableQrToken && (
               <>
                 <p className="mt-2 font-mono text-[11px] tracking-[0.16em] text-gray-500 text-center">
                   {readableQrToken}
@@ -286,7 +286,7 @@ setCompanyId(response.data.company_id);
                     : "Refreshing..."}
                 </p>
               </>
-            )}
+            )} */}
 
             {otpDigits.length > 0 && (
               <>
