@@ -241,15 +241,10 @@ const ServiceChecklist = () => {
         {checklists.length !== 0 ? (
           <Table columns={checklistColumn} data={filteredChecklistData} />
         ) : (
-          <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
-            />
+          <div className="flex justify-center items-center w-full h-full min-h-[200px]">
+            <p className="text-sm text-gray-500 font-medium">
+              No checklists found
+            </p>
           </div>
         )}
       </div>

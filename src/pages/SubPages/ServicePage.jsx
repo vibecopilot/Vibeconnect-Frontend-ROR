@@ -293,7 +293,12 @@ const ServicePage = () => {
             onSelectedRows={handleSelectedRows}
           />
         ) : (
-          <DNA height={120} width={120} />
+          // <DNA height={120} width={120} />
+          <div className="flex justify-center items-center w-full h-full min-h-[200px]">
+            <p className="text-sm text-gray-500 font-medium">
+              No services found
+            </p>
+          </div>
         )}
       </div>
 

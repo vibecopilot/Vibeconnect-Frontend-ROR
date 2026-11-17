@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../../../components/Navbar";
 import {
@@ -38,6 +38,11 @@ const BookingDetails = () => {
 
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isCapturingPayment, setIsCapturingPayment] = useState(false);
+  const [isRefunding, setIsRefunding] = useState(false);
+  // Synchronous locks prevent duplicate requests before React re-renders.
+  const capturePaymentLock = useRef(false);
+  const refundPaymentLock = useRef(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -73,52 +78,66 @@ const BookingDetails = () => {
   }, [id]);
 
   const postPaymentBooking = async () => {
-    if (!formData.payment_method || !formData.paid_amount || !formData.total_amount) {
+    // Prevent rapid double-clicks and duplicate payment API calls.
+    if (capturePaymentLock.current) return;
+
+    if (
+      !formData.payment_method ||
+      !formData.paid_amount ||
+      !formData.total_amount
+    ) {
       toast.error("Total amount, payment type and paid amount are mandatory!");
       return;
     }
 
-    // Validate against the total amount entered/confirmed for this booking
-    // (not bookingDetails.amount — that's blank for "Pay on Facility"
-    // bookings, where the amount is only decided here at capture time).
+    const totalAmount = Number(formData.total_amount);
+    const paidAmount = Number(formData.paid_amount);
+
     if (
-      parseFloat(formData.paid_amount) !== parseFloat(formData.total_amount)
+      !Number.isFinite(totalAmount) ||
+      !Number.isFinite(paidAmount) ||
+      totalAmount <= 0 ||
+      paidAmount !== totalAmount
     ) {
       toast.error("Paid amount must equal the total amount!");
       return;
     }
 
+    capturePaymentLock.current = true;
+    setIsCapturingPayment(true);
+
     try {
       const postData = new FormData();
 
-      // Append all form data fields (includes total_amount and paid_amount)
-      Object.keys(formData).forEach((key) =>
-        postData.append(`payment[${key}]`, formData[key]),
-      );
+      Object.keys(formData).forEach((key) => {
+        postData.append(`payment[${key}]`, formData[key]);
+      });
 
-      // Post payment data
       const response = await postPaymentBookings(postData);
 
       if (response?.status === 201) {
-        const updatedBookingData = {
+        const updateResponse = await updateAmenityBook(id, {
           status: "paid",
-        };
+        });
 
-        console.log("Booking ID to update:", id); // Log the id to check
-        const updateResponse = await updateAmenityBook(id, updatedBookingData); // Pass the id and updated data
-        console.log("update response", updateResponse);
+        if (updateResponse?.status !== 200) {
+          toast.error("Payment captured, but booking status update failed.");
+          await fetchData();
+          return;
+        }
 
         setShowModal(false);
         toast.success("Payment Captured successfully!");
-
-        // Refetch the booking details to show the latest payment information
         await fetchData();
       } else {
         toast.error("Booking failed. Please try again.");
       }
     } catch (error) {
-      console.error("Error in booking:", error);
+      console.error("Error capturing payment:", error);
       toast.error("Error in booking. Please try again.");
+    } finally {
+      capturePaymentLock.current = false;
+      setIsCapturingPayment(false);
     }
   };
 
@@ -206,12 +225,16 @@ const handleInvoice = async () => {
   };
 
   const handleRefund = async () => {
-    try {
-      const updatedBookingData = {
-        status: "refunded", // or "cancelled" based on backend
-      };
+    // Prevent duplicate refund API calls on rapid clicks.
+    if (refundPaymentLock.current) return;
 
-      const response = await updateAmenityBook(id, updatedBookingData);
+    refundPaymentLock.current = true;
+    setIsRefunding(true);
+
+    try {
+      const response = await updateAmenityBook(id, {
+        status: "refunded",
+      });
 
       if (response?.status === 200) {
         toast.success("Refund processed successfully!");
@@ -220,12 +243,19 @@ const handleInvoice = async () => {
           ...prev,
           status: "refunded",
         }));
+        setBooking((prev) => ({
+          ...prev,
+          status: "refunded",
+        }));
       } else {
         toast.error("Refund failed!");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Refund error:", error);
       toast.error("Error processing refund!");
+    } finally {
+      refundPaymentLock.current = false;
+      setIsRefunding(false);
     }
   };
 
@@ -281,6 +311,18 @@ const handleInvoice = async () => {
     <section className="flex">
       <Navbar />
 
+      {(isCapturingPayment || isRefunding) && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
+          <div className="flex min-w-[220px] flex-col items-center gap-3 rounded-lg bg-white px-8 py-6 shadow-xl">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
+            <p className="font-semibold text-gray-800">
+              {isCapturingPayment ? "Capturing payment..." : "Processing refund..."}
+            </p>
+            <p className="text-sm text-gray-500">Please wait, do not close this page.</p>
+          </div>
+        </div>
+      )}
+
       <div className="w-full p-6 overflow-y-auto">
         {/* HEADER */}
         <div
@@ -322,10 +364,11 @@ const handleInvoice = async () => {
                     <span>Download</span>
                   </button>
                   <button
-                    className="bg-orange-500 rounded-md text-white p-2 w-[150px] cursor-pointer"
-                    onClick={() => handleRefund()}
+                    onClick={handleRefund}
+                    disabled={isRefunding || bookingDetails.status === "refunded"}
+                    className={`bg-orange-500 rounded-md text-white p-2 w-[150px] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed`}
                   >
-                    Refund
+                    {isRefunding ? "Processing Refund..." : bookingDetails.status === "refunded" ? "Refunded" : "Refund"}
                   </button>
                 </>
               )}
@@ -481,13 +524,15 @@ const handleInvoice = async () => {
                     </label>
                     <div className="flex justify-end gap-2">
                       <button
-                        className="bg-blue-500 text-white p-2 rounded-md"
                         onClick={postPaymentBooking}
+                        disabled={isCapturingPayment}
+                        className="bg-blue-500 text-white p-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
                       >
-                        Submit
+                        {isCapturingPayment ? "Capturing Payment..." : "Submit"}
                       </button>
                       <button
-                        className="bg-gray-500 text-white p-2 rounded-md"
+                        className="bg-gray-500 text-white p-2 rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
+                        disabled={isCapturingPayment}
                         onClick={() => setShowModal(false)}
                       >
                         Cancel
