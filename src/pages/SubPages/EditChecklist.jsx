@@ -13,6 +13,7 @@ import Cron from "react-js-cron";
 import "react-js-cron/dist/styles.css";
 import { FaTrash } from "react-icons/fa";
 import { useParams } from "react-router-dom";
+import { checklistListPath } from "../../utils/publicAuth";
 
 const EditChecklist = () => {
   const { id } = useParams();
@@ -465,7 +466,7 @@ const EditChecklist = () => {
   console.log(response);
 
   toast.success("Checklist updated successfully");
-navigate("/assets/checklist"); 
+navigate(checklistListPath());
   setUpdate(true);
   setIsEditing(false);
 

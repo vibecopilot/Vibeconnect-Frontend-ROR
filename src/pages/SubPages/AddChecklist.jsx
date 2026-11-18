@@ -21,6 +21,7 @@ import Select from "react-select";
 import Cron from "react-js-cron";
 import "react-js-cron/dist/styles.css";
 import { FaTrash } from "react-icons/fa";
+import { checklistListPath } from "../../utils/publicAuth";
 
 const AddChecklist = () => {
   const categories = getItemInLocalStorage("categories");
@@ -444,7 +445,7 @@ const AddChecklist = () => {
       const response = await postChecklist(formData);
       console.log(response);
       toast.success("New Checklist Created");
-      navigate("/assets/checklist");
+      navigate(checklistListPath());
     } catch (error) {
       console.error("Error:", error);
       toast.error("Failed to create checklist");
@@ -1453,7 +1454,7 @@ const AddChecklist = () => {
             </div>
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => navigate("/assets/checklist")}
+                onClick={() => navigate(checklistListPath())}
                 className="border-2 border-gray-500 text-white p-2 px-4 rounded-md font-medium bg-gray-500"
               >
                 Cancel

@@ -3,6 +3,7 @@ import "react-date-range/dist/theme/default.css";
 import "./App.css";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import AppDashboard from "./pages/AppDashboard.jsx";
+import PublicChecklist from "./pages/PublicChecklist.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import toast from "react-hot-toast";
 import Notification from "./pages/SubPages/Notification.jsx";
@@ -1103,6 +1104,17 @@ function App() {
           element={
             <AppDashboard />
           }
+        />
+
+        {/* Public checklist opened from the mobile app with ?token=... .
+            These routes intentionally have no ProtectedAdminRoutes wrapper. */}
+        <Route path="/apps/checklist" element={<PublicChecklist view="list" />} />
+        <Route path="/apps/checklist/add" element={<PublicChecklist view="add" />} />
+        <Route path="/apps/checklist/edit/:id" element={<PublicChecklist view="edit" />} />
+        <Route path="/apps/checklist/copy/:id" element={<PublicChecklist view="copy" />} />
+        <Route
+          path="/apps/checklist/associate/:id"
+          element={<PublicChecklist view="associate" />}
         />
 
         <Route
