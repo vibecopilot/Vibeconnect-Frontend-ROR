@@ -1475,12 +1475,13 @@ export const getMasterChecklist = async (start_date, end_date) =>
       end_date: end_date
     },
   });
-export const exportChecklist = async (startDate, endDate) =>
+export const exportChecklist = async (startDate, endDate, ctype) =>
   axiosInstance.get("/export_checklist.xlsx", {
     params: {
       token: token,
       ...(startDate && { "q[start_date]": startDate }),
       ...(endDate && { "q[end_date]": endDate }),
+      ...(ctype && { ctype }),
     },
     responseType: "blob",
   });
