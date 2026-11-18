@@ -11,6 +11,7 @@ import { IoClose } from "react-icons/io5";
 import Table from "../../components/table/Table";
 import Navbar from "../../components/Navbar";
 import Passes from "../Passes";
+import SiteHeader from "../../components/SiteHeader";
 import qr from "/QR.png";
 import {
   getFloors,
@@ -30,6 +31,7 @@ import { getUnit } from "@mui/material/styles/cssUtils";
 import toast from "react-hot-toast";
 const Patrolling = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [totalRows, setTotalRows] = useState(0);
   const themeColor = useSelector((state) => state.theme.color);
   const [modalVisible, setModalVisible] = useState(false);
   const [interval, setInterval] = useState("hrs");
@@ -45,6 +47,7 @@ const Patrolling = () => {
   const [PatrollingHistories, setPatrollingHistories] = useState([]);
   const [filteredHistories, setFilteredHistories] = useState([]);
   const [page, setPage] = useState("schedule");
+  const [historyPage, setHistoryPage] = useState(1);
   const [formData, setFormData] = useState({
     buildingId: "",
     floorId: "",
@@ -64,34 +67,63 @@ const Patrolling = () => {
     setModalVisible(false);
   };
 
+
+  const fetchPatrolling = async () => {
+    try {
+      const patrollingResp = await getPatrollings();
+
+      const data = patrollingResp.data.patrollings || [];
+
+      const sortedData = data.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+
+      setPatrollings(sortedData);
+      setFilteredData(sortedData);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchPatrollingHistory = async (page = 1) => {
+    try {
+      const response = await getPatrollingHistory(page);
+
+      const histories = response.data.patrolling_histories || [];
+
+      setPatrollingHistories(histories);
+      setFilteredHistories(histories);
+
+      // ✅ IMPORTANT
+      setTotalRows(response.data.total_count || 0);
+
+    } catch (error) {
+      console.log(error);
+    }
+  };
   useEffect(() => {
-    const fetchPatrolling = async () => {
-      try {
-        const patrollingResp = await getPatrollings();
-        const sortedData = patrollingResp.data.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
-        setPatrollings(sortedData);
-        setFilteredData(sortedData);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    const fetchPatrollingHistory = async () => {
-      try {
-        const patrollingHistoryResp = await getPatrollingHistory();
-        const sortedData = patrollingHistoryResp.data.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
-        setPatrollingHistories(sortedData);
-        setFilteredHistories(sortedData)
-      } catch (error) {
-        console.log(error);
-      }
-    };
     fetchPatrolling();
     fetchPatrollingHistory();
   }, [patrollingAdded]);
+
+  useEffect(() => {
+    fetchPatrollingHistory(historyPage);
+  }, [historyPage]);
+
+  const formatTime = (time) => {
+    if (!time) return "-";
+    const date = new Date(time);
+
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+
+    const period = hours >= 12 ? "PM" : "AM";
+    const formattedHour = hours % 12 || 12;
+
+    return `${formattedHour.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")} ${period}`;
+  };
 
   const columns = [
     {
@@ -135,12 +167,12 @@ const Patrolling = () => {
 
     {
       name: "Start Time",
-      selector: (row) => convertToIST(row.start_time),
+      selector: (row) => formatTime(row.start_time),
       sortable: true,
     },
     {
       name: "End Time",
-      selector: (row) => convertToIST(row.end_time),
+      selector: (row) => formatTime(row.end_time),
       sortable: true,
     },
     {
@@ -331,22 +363,27 @@ const Patrolling = () => {
     <section className="flex">
       <Navbar />
       <div className=" w-full flex mx-3 flex-col overflow-hidden">
+        <SiteHeader
+          onSiteChange={() => {
+            setHistoryPage(1);
+            fetchPatrolling();
+            fetchPatrollingHistory(1);
+          }}
+        />
         <Passes />
         <div className="flex gap-4 border-b border-gray-200 ml-1 items-center">
           <h2
-            className={` cursor-pointer ${
-              page === "schedule" &&
+            className={` cursor-pointer ${page === "schedule" &&
               "shadow-custom-all-sides px-2 p-1 rounded-t-md text-blue-500 font-medium"
-            }`}
+              }`}
             onClick={() => setPage("schedule")}
           >
             Schedule
           </h2>
           <h2
-            className={`cursor-pointer ${
-              page === "logs" &&
+            className={`cursor-pointer ${page === "logs" &&
               "shadow-custom-all-sides px-2 p-1 rounded-t-md text-blue-500 font-medium"
-            }`}
+              }`}
             onClick={() => setPage("logs")}
           >
             Logs
@@ -389,7 +426,14 @@ const Patrolling = () => {
                 placeholder="Search by building, floor, unit"
               />
             </div>
-            <Table columns={HistoryColumns} data={filteredHistories} />
+            <Table
+              columns={HistoryColumns}
+              data={filteredHistories}
+              pagination
+              paginationServer
+              paginationTotalRows={totalRows}
+              onChangePage={(page) => setHistoryPage(page)}
+            />
           </div>
         )}
       </div>
@@ -542,19 +586,17 @@ const Patrolling = () => {
                 <div className="flex items-center gap-2 my-2">
                   <p
                     onClick={() => setInterval("hrs")}
-                    className={`font-medium cursor-pointer transition-all border px-4 rounded-full p-1 border-gray-300 duration-300 ${
-                      interval === "hrs" &&
+                    className={`font-medium cursor-pointer transition-all border px-4 rounded-full p-1 border-gray-300 duration-300 ${interval === "hrs" &&
                       "bg-black text-white  rounded-full p-1 px-2"
-                    }`}
+                      }`}
                   >
                     Time Interval(hrs)
                   </p>
                   <p
                     onClick={() => setInterval("specific")}
-                    className={`font-medium cursor-pointer transition-all duration-300 border px-4 rounded-full p-1 border-gray-300  ${
-                      interval === "specific" &&
+                    className={`font-medium cursor-pointer transition-all duration-300 border px-4 rounded-full p-1 border-gray-300  ${interval === "specific" &&
                       "bg-black text-white  rounded-full p-1 "
-                    }`}
+                      }`}
                   >
                     Specific Time
                   </p>
@@ -576,11 +618,10 @@ const Patrolling = () => {
                     {hours.map((hour) => (
                       <p
                         key={hour}
-                        className={`p-2 rounded cursor-pointer ${
-                          selectedHours.includes(hour)
-                            ? "bg-gray-500 text-white"
-                            : "bg-gray-200 text-black"
-                        }`}
+                        className={`p-2 rounded cursor-pointer ${selectedHours.includes(hour)
+                          ? "bg-gray-500 text-white"
+                          : "bg-gray-200 text-black"
+                          }`}
                         onClick={() => toggleHourSelection(hour)}
                       >
                         {hour}

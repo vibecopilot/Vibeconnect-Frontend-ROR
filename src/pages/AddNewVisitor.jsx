@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import image from "/profile.png";
 import { FaTrash } from "react-icons/fa";
 import { getItemInLocalStorage } from "../utils/localStorage";
@@ -7,10 +7,11 @@ import {
   getHostList,
   getParkingConfig,
   getVisitorStaffCategory,
-  postNewGoods,
   postNewVisitor,
-  uploadVisitorLicense,
-  uploadVisitorConsignment,
+  getBuildingsList,
+  getFloorsByBuilding,
+  getUnitsByFloor,
+  getUsersByUnit,
 } from "../api";
 import { useNavigate } from "react-router-dom";
 import Webcam from "react-webcam";
@@ -19,21 +20,38 @@ import FileInputBox from "../containers/Inputs/FileInputBox";
 const AddNewVisitor = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const userId = getItemInLocalStorage("UserId");
+  const companyId = getItemInLocalStorage("COMPANYID");
+  const isCompany55 = companyId == 55;
+  const expectedDateLabel = isCompany55 ? "Planned Date" : "Expected Date";
+  const expectedTimeLabel = isCompany55 ? "Planned Time" : "Expected Time";
   const navigate = useNavigate();
 
   const themeColor = "#222";
   const currentDate = new Date().toISOString().split("T")[0];
   const todayDate = currentDate;
 
-  const [behalf] = useState("Visitor"); // kept (if used later)
   const [visitors, setVisitors] = useState([{ name: "", mobile: "" }]);
   const [selectedFrequency, setSelectedFrequency] = useState("Once");
   const [selectedVisitorType, setSelectedVisitorType] = useState("Guest");
+
+  // All potential hosts from fetch_potential_hosts API (source of truth)
   const [hosts, setHosts] = useState([]);
   const [staffCategories, setStaffCategories] = useState([]);
   const [slots, setSlots] = useState([]);
   const [passStartDate, setPassStartDate] = useState("");
   const [passEndDate, setPassEndDate] = useState("");
+
+  // ---------- Building / Floor / Unit / Users ----------
+  const [buildings, setBuildings] = useState([]);
+  const [floors, setFloors] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [unitUsers, setUnitUsers] = useState([]);
+  const [selectedBuilding, setSelectedBuilding] = useState("");
+  const [selectedFloor, setSelectedFloor] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState("");
+  const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingUnits, setLoadingUnits] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   const [showWebcam, setShowWebcam] = useState(false);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -75,14 +93,22 @@ const AddNewVisitor = () => {
 
   const getHeadingText = () => "NEW VISITOR";
 
-  // ✅ Safety helpers (prevents runtime crashes + handles different API shapes)
+  // ---------- Helpers ----------
   const safeArray = (val) => {
     if (Array.isArray(val)) return val;
     if (val && typeof val === "object") {
-      if (Array.isArray(val.data)) return val.data;
-      if (Array.isArray(val.hosts)) return val.hosts;
-      if (Array.isArray(val.users)) return val.users;
-      if (Array.isArray(val.results)) return val.results;
+      const keys = [
+        "data",
+        "hosts",
+        "users",
+        "results",
+        "buildings",
+        "floors",
+        "units",
+      ];
+      for (const k of keys) {
+        if (Array.isArray(val[k])) return val[k];
+      }
     }
     return [];
   };
@@ -91,7 +117,27 @@ const AddNewVisitor = () => {
   const safeSlots = safeArray(slots);
   const safeStaffCategories = safeArray(staffCategories);
 
-  // ✅ File normalizer (supports: File, {file}, {originFileObj}, FileList, array)
+  const getUserDisplayName = (u) =>
+    u?.name ||
+    `${u?.firstname || ""} ${u?.lastname || ""}`.trim() ||
+    u?.full_name ||
+    `User ${u?.id}`;
+
+  /**
+   * Host dropdown options:
+   *  - No unit selected  -> all hosts from fetch_potential_hosts API
+   *  - Unit selected     -> only users of that unit who ALSO exist in the host API
+   */
+  const hostOptions = useMemo(() => {
+    if (!selectedUnit) {
+      return safeHosts.map((h) => ({ id: h.id, label: getUserDisplayName(h) }));
+    }
+    const hostIds = new Set(safeHosts.map((h) => String(h.id)));
+    return safeArray(unitUsers)
+      .filter((u) => hostIds.has(String(u.id)))
+      .map((u) => ({ id: u.id, label: getUserDisplayName(u) }));
+  }, [selectedUnit, safeHosts, unitUsers]);
+
   const normalizeFileArray = (files) => {
     const raw = Array.isArray(files) ? files : Array.from(files || []);
     return raw
@@ -105,6 +151,7 @@ const AddNewVisitor = () => {
       .filter(Boolean);
   };
 
+  // ---------- Initial data ----------
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -114,20 +161,19 @@ const AddNewVisitor = () => {
           getParkingConfig(),
         ]);
 
-        // ✅ host list normalization
         setHosts(safeArray(usersResp?.data));
 
-        // ✅ categories normalization
-        setStaffCategories(safeArray(visitorCat?.data?.categories));
+        const categoriesData = visitorCat?.data?.staff_categories || [];
+        setStaffCategories(
+          categoriesData.filter((cat) => cat?.name && cat.name.trim() !== "")
+        );
 
-        // ✅ parking normalization
         let parkingSlots = [];
         if (Array.isArray(parkingRes?.data)) parkingSlots = parkingRes.data;
         else if (Array.isArray(parkingRes?.data?.slots)) parkingSlots = parkingRes.data.slots;
         else if (Array.isArray(parkingRes?.data?.parking_slots))
           parkingSlots = parkingRes.data.parking_slots;
         else if (Array.isArray(parkingRes?.data?.data)) parkingSlots = parkingRes.data.data;
-
         setSlots(safeArray(parkingSlots));
       } catch (error) {
         console.error("Error fetching initial data:", error?.response?.data || error);
@@ -141,6 +187,95 @@ const AddNewVisitor = () => {
     fetchInitialData();
   }, [siteId]);
 
+  // Buildings
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      try {
+        const res = await getBuildingsList();
+        setBuildings(safeArray(res?.data));
+      } catch (error) {
+        console.error("Error fetching buildings:", error?.response?.data || error);
+        toast.error("Failed to load buildings.");
+        setBuildings([]);
+      }
+    };
+    fetchBuildings();
+  }, []);
+
+  // ---------- Cascading handlers ----------
+  const resetHost = () => setFormData((prev) => ({ ...prev, host: "" }));
+
+  const handleBuildingChange = async (e) => {
+    const buildingId = e.target.value;
+    setSelectedBuilding(buildingId);
+
+    // reset everything below
+    setSelectedFloor("");
+    setSelectedUnit("");
+    setFloors([]);
+    setUnits([]);
+    setUnitUsers([]);
+    resetHost();
+
+    if (!buildingId) return;
+
+    try {
+      setLoadingFloors(true);
+      const res = await getFloorsByBuilding(buildingId);
+      setFloors(safeArray(res?.data));
+    } catch (error) {
+      console.error("Error fetching floors:", error?.response?.data || error);
+      toast.error("Failed to load floors.");
+    } finally {
+      setLoadingFloors(false);
+    }
+  };
+
+  const handleFloorChange = async (e) => {
+    const floorId = e.target.value;
+    setSelectedFloor(floorId);
+
+    setSelectedUnit("");
+    setUnits([]);
+    setUnitUsers([]);
+    resetHost();
+
+    if (!floorId) return;
+
+    try {
+      setLoadingUnits(true);
+      const res = await getUnitsByFloor(floorId);
+      setUnits(safeArray(res?.data));
+    } catch (error) {
+      console.error("Error fetching units:", error?.response?.data || error);
+      toast.error("Failed to load units.");
+    } finally {
+      setLoadingUnits(false);
+    }
+  };
+
+  const handleUnitChange = async (e) => {
+    const unitId = e.target.value;
+    setSelectedUnit(unitId);
+
+    setUnitUsers([]);
+    resetHost();
+
+    if (!unitId) return;
+
+    try {
+      setLoadingUsers(true);
+      const res = await getUsersByUnit(unitId);
+      setUnitUsers(safeArray(res?.data));
+    } catch (error) {
+      console.error("Error fetching unit users:", error?.response?.data || error);
+      toast.error("Failed to load users of this unit.");
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // ---------- Generic handlers ----------
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -165,29 +300,13 @@ const AddNewVisitor = () => {
     }
   };
 
-  /**
-   * ✅ BIG FIX:
-   * FileInputBox kabhi direct files bhejta hai, kabhi event, kabhi {fileList}.
-   * Is function se sab cases handle ho jayenge — warna attachments empty reh jaate hain
-   * aur upload call hi nahi hota.
-   */
   const handleFileChange = (input, fieldName) => {
     let files = input;
-
-    // normal <input type="file" /> event
     if (input?.target?.files) files = input.target.files;
-
-    // antd Upload like shapes
     else if (Array.isArray(input?.fileList)) files = input.fileList;
-
-    // custom wrapper
     else if (Array.isArray(input?.files)) files = input.files;
 
     const normalized = normalizeFileArray(files);
-
-    // 🔎 debug (remove later if you want)
-    // console.log("FILE SET:", fieldName, normalized);
-
     setFormData((prev) => ({ ...prev, [fieldName]: normalized }));
   };
 
@@ -224,7 +343,7 @@ const AddNewVisitor = () => {
     const { name, value } = event.target;
     setVisitors((prev) => {
       const newVisitors = [...prev];
-      newVisitors[index][name] = value;
+      newVisitors[index] = { ...newVisitors[index], [name]: value };
       return newVisitors;
     });
   };
@@ -256,14 +375,11 @@ const AddNewVisitor = () => {
       )
     );
 
-    setSelectedWeekdays((prevSelectedWeekdays) =>
-      prevSelectedWeekdays.includes(weekday)
-        ? prevSelectedWeekdays.filter((day) => day !== weekday)
-        : [...prevSelectedWeekdays, weekday]
+    setSelectedWeekdays((prev) =>
+      prev.includes(weekday) ? prev.filter((day) => day !== weekday) : [...prev, weekday]
     );
   };
 
-  // ✅ API expects "HH:MM:SS"
   const normalizeTimeWithSeconds = (t) => {
     if (!t) return "";
     if (typeof t !== "string") return String(t);
@@ -272,46 +388,7 @@ const AddNewVisitor = () => {
     return t;
   };
 
-  // ✅ Upload docs using required API keys
-  const uploadVisitorDocs = async ({ visitorId, licenseFiles = [], consignmentFiles = [] }) => {
-    const safeLicenseFiles = normalizeFileArray(licenseFiles);
-    const safeConsignmentFiles = normalizeFileArray(consignmentFiles);
-
-    // 🔎 debug (remove later)
-    // console.log("LICENSE FILES:", safeLicenseFiles);
-    // console.log("CONSIGNMENT FILES:", safeConsignmentFiles);
-
-    // license
-    if (safeLicenseFiles.length > 0) {
-      const fd = new FormData();
-      fd.append("visitor_id", String(visitorId));
-      safeLicenseFiles.forEach((file) => fd.append("visitor_license[]", file, file.name));
-
-      try {
-        // ⚠️ If your axios instance forces JSON headers, fix it in ../api (multipart/form-data).
-        await uploadVisitorLicense(fd);
-      } catch (err) {
-        console.log("License upload error:", err?.response?.data || err);
-        toast.error("Visitor created but license upload failed");
-      }
-    }
-
-    // consignment
-    if (safeConsignmentFiles.length > 0) {
-      const fd = new FormData();
-      fd.append("visitor_id", String(visitorId));
-      safeConsignmentFiles.forEach((file) => fd.append("visitor_consignment[]", file, file.name));
-
-      try {
-        // ⚠️ If your axios instance forces JSON headers, fix it in ../api (multipart/form-data).
-        await uploadVisitorConsignment(fd);
-      } catch (err) {
-        console.log("Consignment upload error:", err?.response?.data || err);
-        toast.error("Visitor created but consignment upload failed");
-      }
-    }
-  };
-
+  // ---------- Submit ----------
   const createNewVisitor = async (e) => {
     e.preventDefault();
 
@@ -320,9 +397,12 @@ const AddNewVisitor = () => {
     }
 
     const mobile = String(formData.mobile || "").replace(/\D/g, "");
-    const mobilePattern = /^\d{10}$/;
-    if (!mobilePattern.test(mobile)) {
+    if (!/^\d{10}$/.test(mobile)) {
       return toast.error("Mobile number must be 10 digits.");
+    }
+
+    if (!formData.host) {
+      return toast.error("Please select a host (person to meet).");
     }
 
     const apiVisitType = selectedVisitorType === "Support Staff" ? "support_staff" : "guest";
@@ -341,7 +421,6 @@ const AddNewVisitor = () => {
     postData.append("visitor[contact_no]", mobile);
     postData.append("visitor[purpose]", formData.purpose);
 
-    // pass dates
     postData.append("visitor[start_pass]", passStartDate);
     postData.append("visitor[end_pass]", passEndDate);
     postData.append("visitor[pass_start_date]", passStartDate);
@@ -352,7 +431,7 @@ const AddNewVisitor = () => {
     postData.append("visitor[expected_date]", formData.expectedDate);
     postData.append("visitor[expected_time]", normalizeTimeWithSeconds(formData.expectedTime));
 
-    postData.append("visitor[skip_host_approval]", formData.hostApproval ? "1" : "0");
+    postData.append("visitor[skip_host_approval]", formData.hostApproval ? "true" : "false");
     postData.append("visitor[goods_inwards]", formData.goodsInward ? "1" : "0");
     postData.append("visitor[visit_type]", apiVisitType);
     postData.append("visitor[frequency]", apiFrequency);
@@ -360,81 +439,51 @@ const AddNewVisitor = () => {
 
     if (formData.slotNumber) postData.append("visitor[parking_slot_id]", formData.slotNumber);
 
-    // webcam -> profile_picture
     if (capturedImage) {
       const response = await fetch(capturedImage);
       const blob = await response.blob();
       postData.append("visitor[profile_picture]", blob, "visitor_image.jpg");
     }
 
-    // working_days if frequently
     if (apiFrequency === "frequently") {
       selectedWeekdays.forEach((day) => postData.append("visitor[working_days][]", day));
     }
 
-    // extra visitors
     visitors.forEach((extraVisitor, index) => {
       const name = (extraVisitor.name || "").trim();
       const mob = String(extraVisitor.mobile || "").replace(/\D/g, "");
-
       if (name || mob) {
         postData.append(`visitor[extra_visitors_attributes][${index}][name]`, name);
         postData.append(`visitor[extra_visitors_attributes][${index}][contact_no]`, mob);
       }
     });
 
+    if (formData.goodsInward) {
+      postData.append("visitor[no_of_goods]", formData.noOfGoods || "");
+      postData.append("visitor[goods_description]", formData.goodsDescription || "");
+    }
+
+    if (formData.license && formData.licenseAttachments?.length > 0) {
+      normalizeFileArray(formData.licenseAttachments).forEach((file) => {
+        postData.append("visitor_license[]", file, file.name);
+      });
+    }
+
+    if (formData.consignment && formData.consignmentAttachments?.length > 0) {
+      normalizeFileArray(formData.consignmentAttachments).forEach((file) => {
+        postData.append("visitor_consignment[]", file, file.name);
+      });
+    }
+
+    if (formData.goodsInward && formData.goodsAttachments?.length > 0) {
+      normalizeFileArray(formData.goodsAttachments).forEach((file) => {
+        postData.append("goods_files[]", file, file.name);
+      });
+    }
+
     try {
       toast.loading("Creating new visitor, please wait...", { id: "createVisitor" });
-
-      const visitResp = await postNewVisitor(postData);
-      const visitorId = visitResp?.data?.id || visitResp?.data?.visitor?.id;
-
-      if (!visitorId) {
-        toast.dismiss("createVisitor");
-        console.error("No visitorId in response:", visitResp?.data);
-        return toast.error("Visitor created but visitor ID not received.");
-      }
-
-      // ✅ upload license/consignment AFTER create
-      await uploadVisitorDocs({
-        visitorId,
-        licenseFiles: formData.licenseAttachments || [],
-        consignmentFiles: formData.consignmentAttachments || [],
-      });
-
-      // goods inward after create
-      const hasGoodsPayload =
-        formData.goodsInward &&
-        (String(formData.noOfGoods || "").trim() ||
-          String(formData.goodsDescription || "").trim() ||
-          (formData.goodsAttachments?.length || 0) > 0);
-
-      if (hasGoodsPayload) {
-        const postGoods = new FormData();
-
-        const safeGoodsFiles = normalizeFileArray(formData.goodsAttachments);
-        if (safeGoodsFiles.length > 0) {
-          safeGoodsFiles.forEach((file) => {
-            postGoods.append("goods_in_out[goods_files][]", file, file.name);
-          });
-        }
-
-        postGoods.append("goods_in_out[visitor_id]", visitorId);
-        postGoods.append("goods_in_out[no_of_goods]", formData.noOfGoods || "");
-        postGoods.append("goods_in_out[description]", formData.goodsDescription || "");
-        postGoods.append("goods_in_out[ward_type]", "in");
-        postGoods.append("goods_in_out[vehicle_no]", formData.vehicleNumber || "");
-        postGoods.append("goods_in_out[person_name]", formData.visitorName || "");
-        postGoods.append("goods_in_out[created_by_id]", userId);
-
-        try {
-          await postNewGoods(postGoods);
-        } catch (error) {
-          console.error("Error posting goods:", error?.response?.data || error);
-          toast.error("Visitor created but goods inward failed");
-        }
-      }
-
+      await postNewVisitor(postData);
       toast.dismiss("createVisitor");
       toast.success("Visitor Added Successfully");
       navigate("/admin/passes/visitors");
@@ -448,10 +497,22 @@ const AddNewVisitor = () => {
           .join("\n");
         toast.error(errorMessages || "Failed to add visitor");
       } else {
-        toast.error(error?.response?.data?.message || "Failed to add visitor. Please check form data.");
+        toast.error(
+          error?.response?.data?.message || "Failed to add visitor. Please check form data."
+        );
       }
     }
   };
+
+  const selectClass =
+    "border border-gray-300 p-2.5 rounded-lg text-sm bg-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed";
+
+  // Text for the host dropdown's empty / helper state
+  const hostEmptyText = loadingUsers
+    ? "Loading users..."
+    : selectedUnit
+    ? "No host found in this unit"
+    : "No hosts available";
 
   return (
     <div className="flex justify-center w-full min-h-screen bg-gray-50">
@@ -607,6 +668,120 @@ const AddNewVisitor = () => {
 
           <hr className="border-t border-gray-200" />
 
+          {/* HOST LOCATION: Building → Floor → Unit → Host */}
+          <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-4">
+            <div>
+              <h3 className="font-bold text-lg text-gray-700">Whom are they visiting?</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Choose a building, floor and unit to narrow the host list. You can also skip
+                this and pick from all hosts.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-semibold text-gray-700 text-sm">Building</label>
+                <select
+                  className={selectClass}
+                  value={selectedBuilding}
+                  onChange={handleBuildingChange}
+                  name="building"
+                >
+                  <option value="">Select Building</option>
+                  {safeArray(buildings).map((b) => (
+                    <option value={b.id} key={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-semibold text-gray-700 text-sm">Floor</label>
+                <select
+                  className={selectClass}
+                  value={selectedFloor}
+                  onChange={handleFloorChange}
+                  name="floor"
+                  disabled={!selectedBuilding || loadingFloors}
+                >
+                  <option value="">
+                    {loadingFloors
+                      ? "Loading floors..."
+                      : selectedBuilding
+                      ? "Select Floor"
+                      : "Select building first"}
+                  </option>
+                  {safeArray(floors).map((f) => (
+                    <option value={f.id} key={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-semibold text-gray-700 text-sm">Unit</label>
+                <select
+                  className={selectClass}
+                  value={selectedUnit}
+                  onChange={handleUnitChange}
+                  name="unit"
+                  disabled={!selectedFloor || loadingUnits}
+                >
+                  <option value="">
+                    {loadingUnits
+                      ? "Loading units..."
+                      : selectedFloor
+                      ? "Select Unit"
+                      : "Select floor first"}
+                  </option>
+                  {safeArray(units).map((u) => (
+                    <option value={u.id} key={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-semibold text-gray-700 text-sm">
+                  Host <span className="text-red-500">*</span>
+                </label>
+                <select
+                  className={selectClass}
+                  value={formData.host}
+                  onChange={handleChange}
+                  name="host"
+                  required
+                  disabled={loadingUsers}
+                >
+                  <option value="">
+                    {loadingUsers ? "Loading users..." : "Select Person to meet"}
+                  </option>
+                  {hostOptions.length > 0 ? (
+                    hostOptions.map((h) => (
+                      <option value={h.id} key={h.id}>
+                        {h.label}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>
+                      {hostEmptyText}
+                    </option>
+                  )}
+                </select>
+              </div>
+            </div>
+
+            {selectedUnit && !loadingUsers && (
+              <p className="text-xs text-gray-500">
+                {hostOptions.length} host{hostOptions.length === 1 ? "" : "s"} available in
+                this unit.
+              </p>
+            )}
+          </div>
+
           {/* FORM FIELDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="flex flex-col gap-1.5">
@@ -643,33 +818,6 @@ const AddNewVisitor = () => {
                 placeholder="Enter Mobile Number"
                 required
               />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="font-semibold text-gray-700 text-sm">Host</label>
-              <select
-                className="border border-gray-300 p-2.5 rounded-lg text-sm"
-                value={formData.host}
-                onChange={handleChange}
-                name="host"
-                required
-              >
-                <option value="">Select Person to meet</option>
-                {safeHosts.length > 0 ? (
-                  safeHosts.map((host) => (
-                    <option value={host.id} key={host.id}>
-                      {host.name ||
-                        `${host.firstname || ""} ${host.lastname || ""}`.trim() ||
-                        host.full_name ||
-                        `Host ${host.id}`}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    No hosts available
-                  </option>
-                )}
-              </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
@@ -725,14 +873,14 @@ const AddNewVisitor = () => {
                   ))
                 ) : (
                   <option value="" disabled>
-                    {safeSlots.length === 0 ? "No slots available" : "Loading..."}
+                    No slots available
                   </option>
                 )}
               </select>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="font-semibold text-gray-700 text-sm">Expected Date</label>
+              <label className="font-semibold text-gray-700 text-sm">{expectedDateLabel}</label>
               <input
                 type="date"
                 className="border border-gray-300 p-2.5 rounded-lg text-sm"
@@ -744,7 +892,7 @@ const AddNewVisitor = () => {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="font-semibold text-gray-700 text-sm">Expected Time</label>
+              <label className="font-semibold text-gray-700 text-sm">{expectedTimeLabel}</label>
               <input
                 type="time"
                 value={formData.expectedTime}
@@ -824,7 +972,9 @@ const AddNewVisitor = () => {
           {/* GOODS */}
           {formData.goodsInward && (
             <div className="p-4 border border-blue-200 rounded-lg bg-blue-50 space-y-4">
-              <h3 className="font-bold text-lg text-blue-800 border-b pb-2 mb-4">Goods Information</h3>
+              <h3 className="font-bold text-lg text-blue-800 border-b pb-2 mb-4">
+                Goods Information
+              </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="font-semibold text-gray-700 text-sm">No. of Goods:</label>
@@ -913,7 +1063,10 @@ const AddNewVisitor = () => {
 
           <div className="space-y-4">
             {visitors.map((visitor, index) => (
-              <div key={index} className="p-4 border border-gray-300 rounded-lg relative bg-white shadow-sm">
+              <div
+                key={index}
+                className="p-4 border border-gray-300 rounded-lg relative bg-white shadow-sm"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1">
                     <label className="font-semibold text-gray-700 text-xs">Name</label>
@@ -929,7 +1082,6 @@ const AddNewVisitor = () => {
 
                   <div className="flex flex-col gap-1">
                     <label className="font-semibold text-gray-700 text-xs">Mobile</label>
-                    {/* ✅ removed arrows by using tel */}
                     <input
                       type="tel"
                       inputMode="numeric"
@@ -1015,10 +1167,17 @@ const AddNewVisitor = () => {
           </div>
 
           {/* SUBMIT */}
-          <div className="flex justify-center pt-8">
+          <div className="flex gap-4 justify-end pt-8">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/passes/visitors")}
+              className="text-white bg-black font-semibold py-2 px-4 rounded-lg"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
-              style={{ backgroundColor: themeColor }}
+              style={{ background: themeColor }}
               className="px-10 py-3 text-lg font-bold text-white rounded-lg shadow-xl hover:opacity-90 transition-opacity"
             >
               Submit

@@ -28,7 +28,7 @@ const CreateJournalEntry = () => {
   const fetchLedgers = async () => {
     try {
       const data = await getLedgers({});
-      setLedgers(data);
+      setLedgers(data.data || data);
     } catch (error) {
       console.error('Error fetching ledgers:', error);
     }

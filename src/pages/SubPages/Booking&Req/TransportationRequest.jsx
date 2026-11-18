@@ -15,6 +15,7 @@ import {
   transportationApproval,
 } from "../../../api";
 import BookingRequestNav from "./BookingRequestnav";
+import toast from "react-hot-toast";
 
 const TransportationRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -74,7 +75,7 @@ const TransportationRequest = () => {
       if (decision === true) {
         toast.success("Booking successfully");
       } else {
-        toast.success("Approval denied");
+        toast.error("Approval denied");
       }
     } catch (error) {
       console.log(error);

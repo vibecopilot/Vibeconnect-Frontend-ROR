@@ -12,7 +12,7 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] }) => {
   const themeColor = useSelector((state) => state.theme.color);
   const token = getItemInLocalStorage("TOKEN");
-  // const siteId = getItemInLocalStorage("SITE_ID"); 
+  // const siteId = getItemInLocalStorage("SITEID"); 
   // const siteId = useSelector((state) => state.auth.site_id);
 
 
@@ -24,8 +24,8 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
   const [iconPreview, setIconPreview] = useState(null);
   const [active, setActive] = useState(true);
   const [loading, setLoading] = useState(false);
-   const siteId = getItemInLocalStorage("SITEID");
-   console.log("SITEID",siteId)
+  const siteId = getItemInLocalStorage("SITEID");
+  console.log("SITEID", siteId)
 
   const iconInputRef = useRef(null);
   // const API_TOKEN = "140494b3f6c6431bc0964ee3458411ccaa10f7617b197b35";
@@ -56,7 +56,7 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
   //       formData.append("visitor_category[name]", name.trim());
   //       formData.append("visitor_category[code]", code.trim().toUpperCase());
   //       formData.append("visitor_category[active]", active ? "1" : "0");
-        
+
   //       if (icon) {
   //         console.log('Uploading visitor category icon:', icon);
   //         formData.append("visitor_category[icon_attributes][image]", icon);
@@ -73,7 +73,7 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
   //       console.log('Posting to:', `${BASE_URL}/visitor_categories.json?token=${API_TOKEN}`);
   //       await postVisitorCategory(formData);
 
-        
+
   //       console.log('Success response:', response.data);
   //     } 
   //     else if (type === "visitorSubCategory") {
@@ -103,109 +103,114 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
   //     console.error("Submission Error:", error);
   //     console.error("Error Response:", error.response?.data);
   //     console.error("Error Status:", error.response?.status);
-      
+
   //     const errorMessage = error.response?.data?.error || 
   //                         error.response?.data?.message || 
   //                         (error.response?.data?.errors ? JSON.stringify(error.response.data.errors) : null) ||
   //                         "Failed to add category";
-      
+
   //     toast.error(errorMessage, { id: "add-category", duration: 5000 });
   //   } finally {
   //     setLoading(false);
   //   }
   // };
- const handleSubmit = async () => {
-  if (!name.trim()) return toast.error("Please enter name");
+  const handleSubmit = async () => {
+    if (!name.trim()) return toast.error("Please enter name");
 
-  try {
-    setLoading(true);
-    toast.loading("Processing...", { id: "add-category" });
+    try {
+      setLoading(true);
+      toast.loading("Processing...", { id: "add-category" });
 
-    const formData = new FormData();
+      const formData = new FormData();
 
-   if (type === "visitorCategory") {
-  if (!code.trim()) return toast.error("Please enter code");
+      if (type === "visitorCategory") {
+        if (!code.trim()) return toast.error("Please enter code");
 
-  formData.append("visitor_category[name]", name.trim());
-  formData.append("visitor_category[code]", code.trim().toUpperCase());
-  formData.append("visitor_category[active]", active ? "1" : "0");
+        formData.append("visitor_category[name]", name.trim());
+        formData.append("visitor_category[code]", code); // dropdown value
+        formData.append("visitor_category[active]", active ? "1" : "0");
 
-  // const siteId = getItemInLocalStorage("SITEID");
-  formData.append("visitor_category[site_id]", siteId);
+        // const siteId = getItemInLocalStorage("SITEID");
+        formData.append("visitor_category[site_id]", siteId);
 
-  if (icon) {
-    formData.append(
-      "visitor_category[icon_attributes][image]",
-      icon
-    );
-  }
+        if (icon) {
+          formData.append(
+            "visitor_category[icon_attributes][image]",
+            icon
+          );
+        }
 
-  await postVisitorCategory(formData);
-}
+        await postVisitorCategory(formData);
+      }
 
 
-    else if (type === "visitorSubCategory") {
-      if (!selectedCategoryId)
-        return toast.error("Please select parent category");
+      else if (type === "visitorSubCategory") {
+        if (!selectedCategoryId)
+          return toast.error("Please select parent category");
 
-      formData.append("visitor_sub_category[name]", name.trim());
-      formData.append(
-        "visitor_sub_category[visitor_category_id]",
-        selectedCategoryId
-      );
-      formData.append(
-        "visitor_sub_category[active]",
-        active ? "1" : "0"
-      );
-
-      if (icon) {
+        formData.append("visitor_sub_category[site_id]", siteId);
+        formData.append("visitor_sub_category[name]", name.trim());
         formData.append(
-          "visitor_sub_category[iconv2_attributes][image]",
-          icon
+          "visitor_sub_category[visitor_category_id]",
+          selectedCategoryId
+        );
+        formData.append(
+          "visitor_sub_category[active]",
+          active ? "1" : "0"
+        );
+
+        if (icon) {
+          formData.append(
+            "visitor_sub_category[iconv2_attributes][image]",
+            icon
+          );
+        }
+
+        await axios.post(
+          `https://admin.vibecopilot.ai/visitor_sub_categories.json`,
+          formData,
+          {
+            params: { token: token },
+            headers: { "Content-Type": "multipart/form-data" },
+          }
         );
       }
 
-      await axios.post(
-        `https://admin.vibecopilot.ai/visitor_sub_categories.json`,
-        formData,
-        {
-          params: { token: token },
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+      else if (type === "staffCategory") {
+        const formData = new FormData();
+
+        formData.append(
+          "name",
+          name.trim()
+        );
+
+        await axios.post(
+          `https://admin.vibecopilot.ai/visitor_staff_categories.json`,
+          formData,
+          {
+            params: { token: token },
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+      }
+      toast.success("Added successfully", { id: "add-category" });
+
+      setAdded();   // 🔁 THIS TRIGGERS RELOAD
+      onclose();
+
+    } catch (error) {
+      toast.error(
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        "Failed to add category",
+        { id: "add-category" }
       );
+    } finally {
+      setLoading(false);
     }
-
-    else if (type === "staffCategory") {
-      const data = new FormData();
-      data.append("visitor_staff_category[name]", name.trim());
-
-      await axios.post(
-        `https://admin.vibecopilot.ai/visitor_staff_categories.json`,
-        data,
-        {
-          params: { token: token },
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-    }
-
-    toast.success("Added successfully", { id: "add-category" });
-
-    setAdded();   // 🔁 THIS TRIGGERS RELOAD
-    onclose();
-
-  } catch (error) {
-    toast.error(
-      error.response?.data?.error ||
-      error.response?.data?.message ||
-      "Failed to add category",
-      { id: "add-category" }
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <ModalWrapper onclose={onclose}>
@@ -216,10 +221,10 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
 
         <div className="mb-4">
           <label className="block text-sm font-medium mb-1">Name</label>
-          <input 
-            value={name} 
-            onChange={(e) => setName(e.target.value)} 
-            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="Enter name"
           />
         </div>
@@ -227,8 +232,8 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
         {type === "visitorSubCategory" && (
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Parent Category</label>
-            <select 
-              value={selectedCategoryId} 
+            <select
+              value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             >
@@ -243,11 +248,16 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
         {type === "visitorCategory" && (
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Code</label>
-            <input 
-              value={code} 
-              onChange={(e) => setCode(e.target.value.toUpperCase())} 
-              className="w-full px-4 py-2 border rounded-lg uppercase outline-none" 
-            />
+            <select
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full px-4 py-2 border rounded-lg outline-none"
+            >
+              <option value="">Select Code Type</option>
+              <option value="PLANNED">Planned</option>
+              <option value="UNPLANNED">Unplanned</option>
+              <option value="OTHER">Other</option>
+            </select>
           </div>
         )}
 
@@ -257,7 +267,7 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
             {iconPreview ? (
               <img src={iconPreview} alt="preview" className="w-20 h-20 mb-2 border rounded mx-auto object-contain bg-gray-50" />
             ) : (
-               <div className="w-20 h-20 mb-2 border rounded mx-auto bg-gray-100 flex items-center justify-center text-[10px] text-gray-400">No Preview</div>
+              <div className="w-20 h-20 mb-2 border rounded mx-auto bg-gray-100 flex items-center justify-center text-[10px] text-gray-400">No Preview</div>
             )}
             <input type="file" ref={iconInputRef} accept="image/*" onChange={handleIconChange} className="text-xs w-full" />
           </div>
@@ -267,7 +277,7 @@ const AddVisitorSetupModal = ({ onclose, setAdded, type, visitorCategories = [] 
           onClick={handleSubmit}
           disabled={loading}
           style={{ backgroundColor: themeColor }}
-          className="mt-4 py-3 text-black rounded-lg font-bold hover:brightness-90 transition-all shadow-md"
+          className="mt-4 py-3 text-white rounded-lg font-bold hover:brightness-90 transition-all shadow-md bg-blue-600"
         >
           {loading ? "Adding..." : "Submit"}
         </button>

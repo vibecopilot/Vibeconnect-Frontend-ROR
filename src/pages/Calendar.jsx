@@ -9,7 +9,7 @@ import {
   CreateVibeZoomMeeting,
   UpdateVibeTask,
   deleteVibeCalenderTask,
-  getVibeCalendar,
+  // getVibeCalendar,
   getVibeCalenderEventsNew,
   getVibeUsers,
   postCalendarTask,

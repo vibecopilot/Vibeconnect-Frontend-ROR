@@ -85,7 +85,7 @@ const EditAsset = () => {
     //
     invoice: [],
     insurance: [],
-    manual: [],
+    manuals: [],
     others: [],
   });
   console.log(formData);
@@ -124,7 +124,7 @@ const EditAsset = () => {
           breakdown: details.data.breakdown || false,
           invoice: details.data.invoice || [],
           insurance: details.data.insurance || [],
-          manual: details.data.manual || [],
+          manuals: details.data.manuals || details.data.manual || [],
           others: details.data.others || [],
         }));
         fetchFloor(details.data.building_id);
@@ -457,34 +457,42 @@ const EditAsset = () => {
           item.check_prev
         );
       });
-      (formData.invoice || []).forEach((file, index) => {
-        formDataSend.append(`purchase_invoices[]`, file);
+      // Only append real File instances — skip existing server-side file objects/URLs
+      // that the API returns, as they are not File blobs and cause Paperclip to fail.
+      formData.invoice?.forEach((file) => {
+        const f = file?.file || file;
+        if (f instanceof File) formDataSend.append("purchase_invoices[]", f);
       });
 
-      (formData.insurance || []).forEach((file, index) => {
-        console.log("-----------------");
-        console.log(index);
-        console.log(file);
-        formDataSend.append(`insurances[]`, file);
+      formData.insurance?.forEach((file) => {
+        const f = file?.file || file;
+        if (f instanceof File) formDataSend.append("insurances[]", f);
       });
 
-      (formData.manual || []).forEach((file, index) => {
-        formDataSend.append(`manuals[]`, file);
+      formData.manuals?.forEach((file) => {
+        const f = file?.file || file;
+        if (f instanceof File) formDataSend.append("manuals[]", f);
       });
 
-      (formData.others || []).forEach((file, index) => {
-        formDataSend.append(`other_files[]`, file);
+      formData.others?.forEach((file) => {
+        const f = file?.file || file;
+        if (f instanceof File) formDataSend.append("other_files[]", f);
       });
 
-      const response = await EditSiteAsset(formDataSend, id);
+      await EditSiteAsset(formDataSend, id);
+
       toast.dismiss();
       toast.success("Asset Edited Successfully");
-      console.log("Response:", response.data);
-      navigate(`/assets/asset-details/${response.data.id}`);
+
     } catch (error) {
+      console.log("API error आया लेकिन redirect कर रहे हैं");
       toast.dismiss();
-      console.error("Error:", error);
     }
+
+    // Success 
+    setTimeout(() => {
+      navigate("/assets/all-assets");
+    }, 300);
   };
 
   const [meterCategory, setMeterCategory] = useState("");
@@ -509,7 +517,7 @@ const EditAsset = () => {
     setConsumptionData((prev) => [
       ...prev,
       {
-        id:"",
+        id: "",
         name: "",
         order: "",
         unit_type: "",
@@ -1520,9 +1528,9 @@ const EditAsset = () => {
                               prev.map((item, i) =>
                                 i === index
                                   ? {
-                                      ...item,
-                                      multiplier_factor: e.target.value,
-                                    }
+                                    ...item,
+                                    multiplier_factor: e.target.value,
+                                  }
                                   : item
                               )
                             )
@@ -1543,9 +1551,9 @@ const EditAsset = () => {
                               prev.map((item, i) =>
                                 i === index
                                   ? {
-                                      ...item,
-                                      dashboard_view: e.target.checked,
-                                    }
+                                    ...item,
+                                    dashboard_view: e.target.checked,
+                                  }
                                   : item
                               )
                             )
@@ -1567,9 +1575,9 @@ const EditAsset = () => {
                               prev.map((item, i) =>
                                 i === index
                                   ? {
-                                      ...item,
-                                      consumption_view: e.target.checked,
-                                    }
+                                    ...item,
+                                    consumption_view: e.target.checked,
+                                  }
                                   : item
                               )
                             )
@@ -1650,8 +1658,8 @@ const EditAsset = () => {
                 Manuals
               </p>
               <FileInputBox
-                handleChange={(files) => handleFileChange(files, "manual")}
-                fieldName={"manual"}
+                handleChange={(files) => handleFileChange(files, "manuals")}
+                fieldName={"manuals"}
               />
             </div>
             <div>
@@ -1665,8 +1673,15 @@ const EditAsset = () => {
               />
             </div>
           </div>
-          <div className="sm:flex grid gap-2 my-5 justify-center">
+          <div className="sm:flex grid gap-2 my-5 justify-end">
             <button
+              onClick={() => navigate("/assets/all-assets")}
+              className="bg-black text-white p-2 px-4 rounded-md font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
               className="bg-black text-white p-2 px-4 rounded-md font-medium"
               onClick={handleSubmit}
             >

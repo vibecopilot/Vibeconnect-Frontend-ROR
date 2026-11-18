@@ -11,6 +11,7 @@ import { TiTick } from "react-icons/ti";
 import { IoAddCircleOutline, IoClose } from "react-icons/io5";
 import { getcabRequest, getFilterCabRequest, cabApproval } from "../../../api";
 import BookingRequestNav from "./BookingRequestnav";
+import toast from "react-hot-toast";
 
 const CabRequest = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
@@ -96,23 +97,34 @@ const CabRequest = () => {
     fetchCabRequest(); // Trigger the fetch function
   }, [selectedStatus, approved]); // Re-run when `selectedStatus` changes
 
-  const handleApproval = async (id, decision) => {
-    const approveData = new FormData();
-    approveData.append("cab_and_bus_request[booking_status]", decision);
-    try {
-      const res = await cabApproval(id, approveData);
-      console.log(res);
-      setApproved((prev) => !prev);
-      fetchApprovals();
-      if (decision === true) {
-        toast.success("Booking successfully");
-      } else {
-        toast.success("Approval denied");
-      }
-    } catch (error) {
-      console.log(error);
+ const handleApproval = async (id, decision) => {
+  const approveData = new FormData();
+
+  approveData.append(
+    "cab_and_bus_request[booking_status]",
+    decision
+  );
+
+  try {
+    const res = await cabApproval(id, approveData);
+
+    console.log(res);
+
+    // Refresh table data
+    setApproved((prev) => !prev);
+
+    // Success Toast
+    if (decision === true) {
+      toast.success("Booking successfully");
+    } else {
+      toast.error("Approval Denied");
     }
-  };
+  } catch (error) {
+    console.log(error);
+
+    toast.error("Something went wrong");
+  }
+};
 
   const CustomNavLink = ({ to, children }) => {
     return (

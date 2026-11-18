@@ -3,7 +3,7 @@ import Navbar from "../../../components/Navbar";
 import { Link, NavLink } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { CgWebsite } from "react-icons/cg";
-import marketing from "/digitalMarketing.jpg"
+import marketing from "/digitalMarketing.jpg";
 function EmployeeApproved() {
   const themeColor = useSelector((state) => state.theme.color);
   const approved = [

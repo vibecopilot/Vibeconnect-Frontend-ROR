@@ -1,10 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { getServicesTaskList, getSoftServiceDownload } from "../api";
+import {
+  getServicesTaskList,
+  getSoftServiceDownload,
+  getSoftServicesDashboardDrill,
+} from "../api";
+import DetailPopup from "./DetailPopup";
 import { useSelector } from "react-redux";
 import { DNA } from "react-loader-spinner";
-import { FaDownload, FaChevronDown } from "react-icons/fa";
+import { FaDownload, FaChevronDown, FaFileExcel, FaFilePdf } from "react-icons/fa";
 import toast from "react-hot-toast";
 import {
   AiOutlineAreaChart,
@@ -29,6 +36,14 @@ const CHART_PALETTE = [
   "#0EA5E9", // sky
   "#6366F1", // indigo
 ];
+
+/** Map count_type → nested response key */
+const COUNT_TYPE_TO_KEY = {
+  floor: "by_floor",
+  building: "by_building",
+  task_status: "by_task_status",
+  assigned_user: "by_assigned_user",
+};
 
 /** =========================
  *  Screenshot UI building blocks
@@ -101,6 +116,37 @@ const chartIcon = (type) => {
   }
 };
 
+const DownloadMenu = ({ onExcelDownload, onChartDownload }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const close = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" onClick={() => setOpen(!open)}
+        className="h-9 w-10 grid place-items-center rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200"
+        title="Download Options">
+        <FaDownload className="text-sm" />
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-52 bg-white border rounded-xl shadow-lg z-50 overflow-hidden">
+          <button onClick={() => { onExcelDownload(); setOpen(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium flex items-center gap-2">
+            <FaFileExcel className="text-green-600" /> Download Excel
+          </button>
+          <button onClick={() => { onChartDownload(); setOpen(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-gray-50 font-medium flex items-center gap-2">
+            <FaFilePdf className="text-red-500" /> Download Chart
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ChartTypeMenu = ({ value, onChange, includeBar = false }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
@@ -168,48 +214,36 @@ const ChartCard = ({
   legendItems = [],
   footerText = "",
   footerDirection = "down",
-  onDownload,
+  onExcelDownload,
+  onChartDownload,
   chartType,
   setChartType,
   includeBar = false,
   children,
 }) => {
   const footerArrow = footerDirection === "up" ? "↑" : "↓";
-  const footerColor =
-    footerDirection === "up" ? "text-red-600" : "text-emerald-700";
+  const footerColor = footerDirection === "up" ? "text-red-600" : "text-emerald-700";
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-5">
-      <div className="flex items-start justify-between gap-3">
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.06)] p-4 sm:p-5 overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[18px] font-bold text-gray-900 truncate">{title}</p>
+          <p className="text-base sm:text-[18px] font-bold text-gray-900 break-words">{title}</p>
           {subtitle ? (
-            <p className="text-sm text-gray-500 truncate mt-1">{subtitle}</p>
+            <p className="text-sm text-gray-500 break-words mt-1">{subtitle}</p>
           ) : null}
         </div>
-
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <TrendPill percent={trendPercent} direction={trendDirection} />
-          <ChartTypeMenu
-            value={chartType}
-            onChange={setChartType}
-            includeBar={includeBar}
-          />
-          <IconBtn onClick={onDownload} title="Download">
-            <FaDownload className="text-sm" />
-          </IconBtn>
+          <ChartTypeMenu value={chartType} onChange={setChartType} includeBar={includeBar} />
+          <DownloadMenu onExcelDownload={onExcelDownload} onChartDownload={onChartDownload} />
         </div>
       </div>
-
       <LegendRow items={legendItems} />
-
-      <div className="mt-2">{children}</div>
-
+      <div className="mt-2 overflow-x-auto">{children}</div>
       {footerText ? (
         <div className="mt-2 text-center text-sm">
-          <span className={footerColor}>
-            {footerArrow} {footerText}
-          </span>
+          <span className={footerColor}>{footerArrow} {footerText}</span>
         </div>
       ) : null}
     </div>
@@ -228,15 +262,15 @@ const baseNoSelect = {
 };
 
 const toSortedEntries = (obj = {}, order = "desc") =>
-  Object.entries(obj).sort((a, b) =>
-    order === "asc"
-      ? (Number(a[1]) || 0) - (Number(b[1]) || 0)
-      : (Number(b[1]) || 0) - (Number(a[1]) || 0)
-  );
+  Object.entries(obj).sort((a, b) => {
+    const va = Number(a[1]?.count ?? a[1]) || 0;
+    const vb = Number(b[1]?.count ?? b[1]) || 0;
+    return order === "asc" ? va - vb : vb - va;
+  });
 
 /** ✅ PIE supports palette for multi colors */
 const buildPieOptions = ({ title, data, colorsMap, palette = CHART_PALETTE }) => ({
-  chart: { type: "pie", backgroundColor: "transparent", height: 280 },
+  chart: { type: "pie", backgroundColor: "transparent", height: window.innerWidth < 640 ? 250 : 280 },
   title: { text: null },
   tooltip: {
     backgroundColor: "#FFFFFF",
@@ -253,7 +287,11 @@ const buildPieOptions = ({ title, data, colorsMap, palette = CHART_PALETTE }) =>
       borderWidth: 0,
       allowPointSelect: false,
       cursor: "pointer",
-      dataLabels: { enabled: true, format: "<b>{point.name}</b>: {point.y}" },
+      dataLabels: {
+        enabled: window.innerWidth >= 480,
+        format: "<b>{point.name}</b>: {point.y}",
+        style: { fontSize: window.innerWidth < 640 ? "10px" : "12px", textOutline: "none" },
+      },
     },
   },
   series: [
@@ -262,7 +300,7 @@ const buildPieOptions = ({ title, data, colorsMap, palette = CHART_PALETTE }) =>
       colorByPoint: true,
       data: Object.keys(data || {}).map((k, i) => ({
         name: k,
-        y: Number(data?.[k]) || 0,
+        y: Number(data?.[k]?.count ?? data?.[k]) || 0,
         color: colorsMap?.[k] || palette[i % palette.length],
       })),
     },
@@ -285,18 +323,17 @@ const buildXYOptions = ({
   const hcType =
     type === "line" ? "spline" : type === "area" ? "areaspline" : type;
 
-  // pick a “series” color for line/area
   const seriesColor = themeColor || palette[0];
 
   const areaFill =
     type === "area"
       ? {
-          linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
-          stops: [
-            [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
-            [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
-          ],
-        }
+        linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+        stops: [
+          [0, Highcharts.color(seriesColor).setOpacity(0.22).get("rgba")],
+          [1, Highcharts.color(seriesColor).setOpacity(0).get("rgba")],
+        ],
+      }
       : undefined;
 
   const dataPoints = values.map((v, i) => {
@@ -309,7 +346,7 @@ const buildXYOptions = ({
     chart: {
       type: hcType,
       backgroundColor: "transparent",
-      height: 280,
+      height: window.innerWidth < 640 ? 250 : 280,
       spacing: [8, 8, 8, 8],
     },
     title: { text: null },
@@ -321,7 +358,7 @@ const buildXYOptions = ({
       categories,
       lineColor: "#E5E7EB",
       tickColor: "#E5E7EB",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
       title: { text: null },
     },
     yAxis: {
@@ -329,7 +366,7 @@ const buildXYOptions = ({
       title: { text: null },
       gridLineColor: "#E5E7EB",
       gridLineDashStyle: "Dash",
-      labels: { style: { color: "#6B7280", fontSize: "12px" } },
+      labels: { style: { color: "#6B7280", fontSize: window.innerWidth < 640 ? "10px" : "12px" } },
     },
 
     tooltip: {
@@ -348,12 +385,12 @@ const buildXYOptions = ({
         marker:
           type === "line" || type === "area"
             ? {
-                enabled: true,
-                radius: 4,
-                lineWidth: 2,
-                lineColor: seriesColor,
-                fillColor: "#FFFFFF",
-              }
+              enabled: true,
+              radius: 4,
+              lineWidth: 2,
+              lineColor: seriesColor,
+              fillColor: "#FFFFFF",
+            }
             : { enabled: false },
       },
       column: {
@@ -383,40 +420,178 @@ const buildXYOptions = ({
 /** =========================
  *  Main Component
  *  ========================= */
+const formatDateForApi = (isoDate) => {
+  if (!isoDate) return null;
+  const [year, month, day] = isoDate.split("-");
+  if (!year || !month || !day) return null;
+  return `${day}/${month}/${year}`;
+};
+
 const SoftServiceHighCharts = () => {
   const [byStatus, setByStatus] = useState({});
   const [byBuilding, setByBuilding] = useState({});
   const [byFloor, setByFloor] = useState({});
-  const [byUnit, setByUnit] = useState({});
+  const [byAssignedUser, setByAssignedUser] = useState({});
 
-  useSelector((state) => state.theme.color); // keep if needed
+  /* ── Date filter state ── */
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [tempFromDate, setTempFromDate] = useState("");
+  const [tempToDate, setTempToDate] = useState("");
+  const fromDateRef = useRef("");
+  const toDateRef = useRef("");
+  useEffect(() => { fromDateRef.current = fromDate; }, [fromDate]);
+  useEffect(() => { toDateRef.current = toDate; }, [toDate]);
+  const isDateFilterActive = Boolean(fromDate && toDate);
+
+  const [detailPopup, setDetailPopup] = useState({
+    open: false,
+    title: "",
+    records: [],
+    loading: false,
+  });
+  const [detailPage, setDetailPage] = useState(1);
+  const [detailTotalPages, setDetailTotalPages] = useState(1);
+  const [detailFilter, setDetailFilter] = useState({
+    countType: "",
+    countValue: "",
+  });
+
+  /* refs for highcharts click handlers */
+  const onFloorClickRef = useRef(null);
+  const onBuildingClickRef = useRef(null);
+  const onStatusClickRef = useRef(null);
+  const onUnitClickRef = useRef(null);
+
+  useSelector((state) => state.theme.color);
 
   const [statusType, setStatusType] = useState("column");
   const [buildingType, setBuildingType] = useState("line");
   const [floorType, setFloorType] = useState("area");
   const [unitType, setUnitType] = useState("column");
 
+  const statusChartRef = useRef(null);
+  const buildingChartRef = useRef(null);
+  const floorChartRef = useRef(null);
+  const unitChartRef = useRef(null);
+
+  const downloadSingleChartPdf = async (ref, fileName) => {
+    const toastId = toast.loading("Generating chart PDF...");
+    try {
+      if (!ref?.current) { toast.error("Chart not found"); return; }
+      const canvas = await html2canvas(ref.current, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const width = 190;
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(imgData, "PNG", 10, 15, width, height);
+      pdf.save(`${fileName}.pdf`);
+      toast.dismiss(toastId);
+      toast.success("Chart PDF downloaded");
+    } catch (error) {
+      console.error(error);
+      toast.dismiss(toastId);
+      toast.error("Chart PDF download failed");
+    }
+  };
+
+  /* ── fetch dashboard summary ── */
   useEffect(() => {
     const fetchInfo = async () => {
       try {
-        const resp = await getServicesTaskList();
-        setByStatus(resp?.data?.by_status || {});
-        setByBuilding(resp?.data?.by_building || {});
-        setByFloor(resp?.data?.by_floor || {});
-        setByUnit(resp?.data?.by_unit || {});
+        const rangeFrom = formatDateForApi(fromDate);
+        const rangeTo = formatDateForApi(toDate);
+        const resp = await getServicesTaskList(rangeFrom, rangeTo);
+        const d = resp?.data || {};
+        setByStatus(d.by_task_status || {});
+        setByBuilding(d.by_building || {});
+        setByFloor(d.by_floor || {});
+        setByAssignedUser(d.by_assigned_user || {});
       } catch (e) {
         console.log("Error fetching soft service info:", e);
       }
     };
     fetchInfo();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fromDate, toDate]);
 
+  /* ── generic drill-down fetcher ── */
+  const fetchDrillDetails = async (countType, countValue, page = 1) => {
+    const label =
+      countType.charAt(0).toUpperCase() + countType.slice(1);
+    const title = `Soft Services – ${label}: ${countValue}`;
+
+    setDetailPopup({ open: true, title, records: [], loading: true });
+    setDetailFilter({ countType, countValue });
+    setDetailPage(page);
+
+    try {
+      const rangeFrom = formatDateForApi(fromDateRef.current) || undefined;
+      const rangeTo = formatDateForApi(toDateRef.current) || undefined;
+      const res = await getSoftServicesDashboardDrill(
+        countType,
+        countValue,
+        page,
+        rangeFrom,
+        rangeTo,
+      );
+      const data = res?.data || {};
+
+      /* resolve nested bucket e.g. data.by_floor["Ground Floor"] */
+      const groupKey = COUNT_TYPE_TO_KEY[countType];
+      const bucket =
+        groupKey && data[groupKey]
+          ? data[groupKey][countValue] ||
+          data[groupKey][countValue?.toLowerCase()] ||
+          {}
+          : {};
+
+      let records = [];
+
+      if (Array.isArray(bucket?.records)) {
+        records = bucket.records;
+      } else if (Array.isArray(bucket)) {
+        records = bucket;
+      } else if (Array.isArray(data?.records)) {
+        records = data.records;
+      } const totalPages =
+        Number(bucket.total_pages) ||
+        (bucket.per_page > 0
+          ? Math.max(1, Math.ceil((bucket.count || records.length) / bucket.per_page))
+          : 1);
+
+      setDetailTotalPages(totalPages);
+      setDetailPage(Number(bucket.current_page) || page);
+      setDetailPopup({ open: true, title, records, loading: false });
+    } catch (err) {
+      console.error("Soft service drill error:", err);
+      toast.error("Failed to load task details");
+      setDetailPopup((p) => ({ ...p, loading: false }));
+    }
+  };
+
+  const handlePageChange = (nextPage) => {
+    if (!detailFilter.countType || !detailFilter.countValue) return;
+    if (nextPage < 1 || nextPage > detailTotalPages) return;
+    fetchDrillDetails(detailFilter.countType, detailFilter.countValue, nextPage);
+  };
+
+  /* keep refs up to date every render */
+  useEffect(() => {
+    onFloorClickRef.current = (name) => fetchDrillDetails("floor", name, 1);
+    onBuildingClickRef.current = (name) => fetchDrillDetails("building", name, 1);
+    onStatusClickRef.current = (name) => fetchDrillDetails("task_status", name, 1);
+    onUnitClickRef.current = (name) => fetchDrillDetails("assigned_user", name, 1);
+  });
+
+  /* ── download ── */
   const handleDownload = async () => {
     const toastId = toast.loading("Downloading Please Wait");
     try {
       const response = await getSoftServiceDownload();
       const url = window.URL.createObjectURL(
-        new Blob([response.data], { type: response.headers["content-type"] })
+        new Blob([response.data], { type: response.headers["content-type"] }),
       );
       const link = document.createElement("a");
       link.href = url;
@@ -433,132 +608,157 @@ const SoftServiceHighCharts = () => {
     }
   };
 
-  /** optional: keep explicit status colors for pie legends if you want */
-  const statusColors = useMemo(
-    () => ({
-      overdue: "#EF4444",
-      complete: "#10B981",
-      pending: "#F59E0B",
-      inprogress: "#3B82F6",
-      in_progress: "#3B82F6",
-      open: "#6366F1",
-    }),
-    []
-  );
-
-  const topTwoLegend = (obj, colorsMap) => {
-    const entries = toSortedEntries(obj, "desc").slice(0, 2);
-    return entries.map(([label, value], idx) => ({
-      label,
-      value,
-      color:
-        colorsMap?.[label] ||
-        CHART_PALETTE[idx % CHART_PALETTE.length] ||
-        "#1D4ED8",
-    }));
+  const statusColors = {
+    overdue: "#EF4444",
+    complete: "#10B981",
+    pending: "#F59E0B",
+    inprogress: "#3B82F6",
+    in_progress: "#3B82F6",
+    open: "#6366F1",
   };
+
+  const shouldColorByPoint = (type) => type === "column" || type === "bar";
 
   const calcTrendFromTotals = (obj) => {
     const total = Object.values(obj || {}).reduce(
-      (s, v) => s + (Number(v) || 0),
-      0
+      (s, v) => s + (Number(v?.count ?? v) || 0),
+      0,
     );
     if (!Number.isFinite(total)) return { pct: null, dir: "down" };
     return { pct: 0, dir: "down" };
   };
 
-  /** ✅ For Column/Bar: multi-color bars
-   *  For Line/Area: single color (palette[0]) */
-  const shouldColorByPoint = (type) => type === "column" || type === "bar";
+  /* ── inject click handler into chart options ── */
+  const withClickHandler = (options, handlerRef) => {
+    const handler = function () {
+      const name = this.name ?? this.category ?? String(this.x ?? "");
+      if (!name) return;
+      handlerRef.current?.(name);
+    };
+    return {
+      ...options,
+      plotOptions: {
+        ...options.plotOptions,
+        pie: {
+          ...(options.plotOptions?.pie || {}),
+          point: {
+            events: { click: handler },
+          },
+        },
+        series: {
+          ...(options.plotOptions?.series || {}),
+          point: {
+            events: { click: handler },
+          },
+        },
+      },
+    };
+  };
 
+  /* ── chart options ── */
   const statusOptions = useMemo(() => {
+    let options;
     if (statusType === "pie") {
-      return buildPieOptions({
-        title: "Soft Services by Status",
+      options = buildPieOptions({
+        title: "Soft Services by Task Status",
         data: byStatus,
         colorsMap: statusColors,
         palette: CHART_PALETTE,
       });
+    } else {
+      const entries = toSortedEntries(byStatus, "desc");
+      options = buildXYOptions({
+        title: "Soft Services by Task Status",
+        type: statusType,
+        categories: entries.map(([k]) => k),
+        values: entries.map(([, v]) => Number(v?.count ?? v) || 0),
+        themeColor: CHART_PALETTE[0],
+        colorByPoint: shouldColorByPoint(statusType),
+        palette: CHART_PALETTE,
+      });
     }
-    const entries = toSortedEntries(byStatus, "desc");
-    return buildXYOptions({
-      title: "Soft Services by Status",
-      type: statusType,
-      categories: entries.map(([k]) => k),
-      values: entries.map(([, v]) => v),
-      themeColor: CHART_PALETTE[0],
-      colorByPoint: shouldColorByPoint(statusType),
-      palette: CHART_PALETTE,
-    });
-  }, [byStatus, statusType, statusColors]);
+    return withClickHandler(options, onStatusClickRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byStatus, statusType]);
 
   const buildingOptions = useMemo(() => {
+    let options;
     if (buildingType === "pie") {
-      return buildPieOptions({
+      options = buildPieOptions({
         title: "Soft Services by Building",
         data: byBuilding,
         palette: CHART_PALETTE,
       });
+    } else {
+      const entries = toSortedEntries(byBuilding, "desc");
+      options = buildXYOptions({
+        title: "Soft Services by Building",
+        type: buildingType,
+        categories: entries.map(([k]) => k),
+        values: entries.map(([, v]) => Number(v?.count ?? v) || 0),
+        themeColor: CHART_PALETTE[0],
+        colorByPoint: shouldColorByPoint(buildingType),
+        palette: CHART_PALETTE,
+      });
     }
-    const entries = toSortedEntries(byBuilding, "desc");
-    return buildXYOptions({
-      title: "Soft Services by Building",
-      type: buildingType,
-      categories: entries.map(([k]) => k),
-      values: entries.map(([, v]) => v),
-      themeColor: CHART_PALETTE[0],
-      colorByPoint: shouldColorByPoint(buildingType),
-      palette: CHART_PALETTE,
-    });
+    return withClickHandler(options, onBuildingClickRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [byBuilding, buildingType]);
 
   const floorOptions = useMemo(() => {
+    let options;
     if (floorType === "pie") {
-      return buildPieOptions({
+      options = buildPieOptions({
         title: "Soft Services by Floor",
         data: byFloor,
         palette: CHART_PALETTE,
       });
-    }
-    const entries = toSortedEntries(byFloor, "desc");
-    return buildXYOptions({
-      title: "Soft Services by Floor",
-      type: floorType,
-      categories: entries.map(([k]) => k),
-      values: entries.map(([, v]) => v),
-      themeColor: CHART_PALETTE[0],
-      colorByPoint: shouldColorByPoint(floorType),
-      palette: CHART_PALETTE,
-    });
-  }, [byFloor, floorType]);
-
-  const unitOptions = useMemo(() => {
-    if (unitType === "pie") {
-      return buildPieOptions({
-        title: "Soft Services by Unit",
-        data: byUnit,
+    } else {
+      const entries = toSortedEntries(byFloor, "desc");
+      options = buildXYOptions({
+        title: "Soft Services by Floor",
+        type: floorType,
+        categories: entries.map(([k]) => k),
+        values: entries.map(([, v]) => Number(v?.count ?? v) || 0),
+        themeColor: CHART_PALETTE[0],
+        colorByPoint: shouldColorByPoint(floorType),
         palette: CHART_PALETTE,
       });
     }
-    const entries = toSortedEntries(byUnit, "desc");
-    const limited = entries.length > 25 ? entries.slice(0, 25) : entries;
+    return withClickHandler(options, onFloorClickRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byFloor, floorType]);
 
-    return buildXYOptions({
-      title:
-        entries.length > 25
-          ? "Soft Services by Unit (Top 25)"
-          : "Soft Services by Unit",
-      type: unitType,
-      categories: limited.map(([k]) => k),
-      values: limited.map(([, v]) => v),
-      themeColor: CHART_PALETTE[0],
-      colorByPoint: shouldColorByPoint(unitType),
-      palette: CHART_PALETTE,
-    });
-  }, [byUnit, unitType]);
+  const unitOptions = useMemo(() => {
+    let options;
+    if (unitType === "pie") {
+      options = buildPieOptions({
+        title: "Soft Services by Assigned User",
+        data: byAssignedUser,
+        palette: CHART_PALETTE,
+      });
+    } else {
+      const entries = toSortedEntries(byAssignedUser, "desc");
+      const limited = entries.length > 25 ? entries.slice(0, 25) : entries;
+      options = buildXYOptions({
+        title:
+          entries.length > 25
+            ? "Soft Services by Assigned User (Top 25)"
+            : "Soft Services by Assigned User",
+        type: unitType,
+        categories: limited.map(([k]) => k),
+        values: limited.map(([, v]) => Number(v?.count ?? v) || 0),
+        themeColor: CHART_PALETTE[0],
+        colorByPoint: shouldColorByPoint(unitType),
+        palette: CHART_PALETTE,
+      });
+    }
+    return withClickHandler(options, onUnitClickRef);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [byAssignedUser, unitType]);
 
   const Loading = () => (
-    <div className="h-[320px] flex items-center justify-center">
+    <div className="h-[280px] sm:h-[320px] flex items-center justify-center">
       <DNA visible height="120" width="120" ariaLabel="dna-loading" />
     </div>
   );
@@ -568,20 +768,94 @@ const SoftServiceHighCharts = () => {
   const floorTrend = calcTrendFromTotals(byFloor);
 
   return (
-    <div className="w-full px-3 pb-4">
+    <div className="w-full px-2 sm:px-3 pb-4 overflow-x-hidden">
+
+      {/* ── Date Filter Bar ── */}
+      <div className="flex flex-wrap items-center justify-end gap-2 mb-4">
+        {/* {isDateFilterActive && (
+          <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg font-medium">
+            📅 {fromDate} → {toDate}
+          </span>
+        )} */}
+        <button
+          onClick={() => { setTempFromDate(fromDate); setTempToDate(toDate); setFilterOpen(true); }}
+          className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition font-medium text-sm"
+        >
+          Filter by Date
+        </button>
+        <button
+          onClick={() => { setFromDate(""); setToDate(""); }}
+          className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition font-medium text-sm"
+        >
+          Clear Filter
+        </button>
+      </div>
+
+      {/* ── Date Filter Modal ── */}
+      {filterOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-5">
+            <h3 className="text-lg font-semibold text-gray-900">Filter Soft Services by Date</h3>
+            <p className="text-sm text-gray-500 mt-1">Choose start and end date.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={tempFromDate}
+                  onChange={(e) => setTempFromDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={tempToDate}
+                  onChange={(e) => setTempToDate(e.target.value)}
+                  className="w-full h-10 px-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2 justify-end">
+              <button
+                onClick={() => setFilterOpen(false)}
+                className="h-10 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-medium text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!tempFromDate || !tempToDate) { toast.error("Please select both dates"); return; }
+                  setFromDate(tempFromDate);
+                  setToDate(tempToDate);
+                  setFilterOpen(false);
+                }}
+                className="h-10 px-4 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-medium text-sm"
+              >
+                Apply Filter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ChartCard
           title="Soft Services"
-          subtitle="By Status"
+          subtitle="By Task Status"
           trendPercent={statusTrend.pct}
           trendDirection={statusTrend.dir}
-          onDownload={handleDownload}
+          onExcelDownload={handleDownload}
+          onChartDownload={() => downloadSingleChartPdf(statusChartRef, "SoftServices_By_Status")}
           chartType={statusType}
           setChartType={setStatusType}
           includeBar={false}
         >
           {byStatus && Object.keys(byStatus).length ? (
-            <HighchartsReact highcharts={Highcharts} options={statusOptions} />
+            <div ref={statusChartRef} className="min-w-[280px]">
+              <HighchartsReact highcharts={Highcharts} options={statusOptions} />
+            </div>
           ) : (
             <Loading />
           )}
@@ -592,16 +866,16 @@ const SoftServiceHighCharts = () => {
           subtitle="By Building"
           trendPercent={buildingTrend.pct}
           trendDirection={buildingTrend.dir}
-          onDownload={handleDownload}
+          onExcelDownload={handleDownload}
+          onChartDownload={() => downloadSingleChartPdf(buildingChartRef, "SoftServices_By_Building")}
           chartType={buildingType}
           setChartType={setBuildingType}
           includeBar={true}
         >
           {byBuilding && Object.keys(byBuilding).length ? (
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={buildingOptions}
-            />
+            <div ref={buildingChartRef} className="min-w-[280px]">
+              <HighchartsReact highcharts={Highcharts} options={buildingOptions} />
+            </div>
           ) : (
             <Loading />
           )}
@@ -612,13 +886,16 @@ const SoftServiceHighCharts = () => {
           subtitle="By Floor"
           trendPercent={floorTrend.pct}
           trendDirection={floorTrend.dir}
-          onDownload={handleDownload}
+          onExcelDownload={handleDownload}
+          onChartDownload={() => downloadSingleChartPdf(floorChartRef, "SoftServices_By_Floor")}
           chartType={floorType}
           setChartType={setFloorType}
           includeBar={true}
         >
           {byFloor && Object.keys(byFloor).length ? (
-            <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+            <div ref={floorChartRef} className="min-w-[280px]">
+              <HighchartsReact highcharts={Highcharts} options={floorOptions} />
+            </div>
           ) : (
             <Loading />
           )}
@@ -628,23 +905,138 @@ const SoftServiceHighCharts = () => {
       <div className="mt-6">
         <ChartCard
           title="Soft Services"
-          subtitle="By Unit"
+          subtitle="By Assigned User"
           footerText={
-            Object.keys(byUnit || {}).length > 25 ? "Showing top 25 units" : ""
+            Object.keys(byAssignedUser || {}).length > 25 ? "Showing top 25 users" : ""
           }
           footerDirection="down"
-          onDownload={handleDownload}
+          onExcelDownload={handleDownload}
+          onChartDownload={() => downloadSingleChartPdf(unitChartRef, "SoftServices_By_User")}
           chartType={unitType}
           setChartType={setUnitType}
           includeBar={false}
         >
-          {byUnit && Object.keys(byUnit).length ? (
-            <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+          {byAssignedUser && Object.keys(byAssignedUser).length ? (
+            <div ref={unitChartRef} className="min-w-[280px]">
+              <HighchartsReact highcharts={Highcharts} options={unitOptions} />
+            </div>
           ) : (
             <Loading />
           )}
         </ChartCard>
       </div>
+
+      <DetailPopup
+        isOpen={detailPopup.open}
+        onClose={() => setDetailPopup((p) => ({ ...p, open: false }))}
+        title={detailPopup.title}
+        subtitle={`${detailPopup.records.length} record(s) · Page ${detailPage} of ${detailTotalPages}`}
+        records={detailPopup.records}
+        loading={detailPopup.loading}
+        page={detailPage}
+        totalPages={detailTotalPages}
+        onPageChange={handlePageChange}
+        columns={
+          ["building", "floor", "assigned_user"].includes(detailFilter.countType)
+            ? [
+              {
+                key: "service_name",
+                label: "Service Name",
+                accessor: (r) => r.soft_service_name ?? r.name ?? "—",
+              },
+              {
+                key: "site_name",
+                label: "Site Name",
+                accessor: (r) =>
+                  r.site_name ?? "—",
+              },
+              {
+                key: "building_name",
+                label: "Block",
+                accessor: (r) =>
+                  r.building_name ?? r.building ?? r.site_building ?? "—",
+              },
+              {
+                key: "floor_name",
+                label: "Floor",
+                accessor: (r) =>
+                  r.floor_name ?? r.floor ?? r.level_name ?? "—",
+              },
+              {
+                key: "assigned_user",
+                label: "Assigned To",
+                accessor: (r) => {
+                  if (Array.isArray(r.assigned_to)) {
+                    return r.assigned_to.join(", ");
+                  }
+                  return r.assigned_name ?? r.assigned_user ?? "Unassigned";
+                },
+
+              },
+              {
+                key: "created_at",
+                label: "Created On",
+                accessor: (r) =>
+                  r.created_at ?? "—",
+              },
+
+            ]
+            : [
+              {
+                key: "service_name",
+                label: "Service Name",
+                accessor: (r) => r.soft_service_name ?? r.name ?? "—",
+              },
+              {
+                key: "checklist_name",
+                label: "Checklist",
+                accessor: (r) => r.checklist_name ?? "—",
+              },
+              {
+                key: "building_name",
+                label: "Block",
+                accessor: (r) =>
+                  r.building_name ?? r.building ?? r.site_building ?? "—",
+              },
+              {
+                key: "floor_name",
+                label: "Floor",
+                accessor: (r) =>
+                  r.floor_name ?? r.floor ?? r.level_name ?? "—",
+              },
+              {
+                key: "assigned_user",
+                label: "Assigned To",
+                accessor: (r) => {
+                  if (Array.isArray(r.assigned_to)) {
+                    return r.assigned_to.join(", ");
+                  }
+                  return r.assigned_name ?? r.assigned_user ?? "Unassigned";
+                },
+              },
+              {
+                key: "status",
+                label: "Status",
+                accessor: (r) => {
+                  const status = r.status ?? "—";
+                  return (
+                    <span
+                      className={
+                        status === "overdue"
+                          ? "text-red-600 font-semibold"
+                          : status === "complete"
+                            ? "text-green-600 font-semibold"
+                            : "text-yellow-600 font-semibold"
+                      }
+                    >
+                      {status}
+                    </span>
+                  );
+                },
+              },
+            ]
+        }
+      />
     </div>
   );
 };

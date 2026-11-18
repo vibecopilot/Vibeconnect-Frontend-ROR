@@ -26,6 +26,7 @@ function ReceiptInvoiceCam() {
   const [importModal, setImportModal] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [filterSearchData, setFilterSearchData] = useState([]);
+
   const columns = [
     {
       name: "Action",

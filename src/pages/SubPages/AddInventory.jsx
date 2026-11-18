@@ -238,12 +238,19 @@ const AddInventory = () => {
                 className="border p-1 px-4 border-gray-500 rounded-md"
               ></textarea>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-end gap-3 mt-4">
               <button
-                className="bg-black text-white p-2 px-4 rounded-md font-medium"
+              className="bg-black text-white p-2 px-4 rounded-md font-medium"
+              onClick={() => navigate("/assets/stock-items")}
+            >
+              Cancel
+            </button>
+              <button
+                className="text-white p-2 px-4 rounded-md font-medium"
+                style={{background:themeColor}}
                 onClick={handleAddInventory}
               >
-                Save
+                Submit
               </button>
             </div>
           </div>
