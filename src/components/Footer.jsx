@@ -6,9 +6,10 @@ const Footer = () => {
   const themeColor = useSelector((state) => state.theme.color)
   const location = useLocation();
   const isSurveyPage = location.pathname.includes('/survey/');
+  const isPublicChecklist = location.pathname.startsWith('/apps/checklist');
 
   useEffect(() => {
-    if (isSurveyPage) return;
+    if (isSurveyPage || isPublicChecklist) return;
     const footer = document.querySelector(".hideIt");
     if (!footer) return;
 
@@ -36,10 +37,10 @@ const Footer = () => {
       footer.removeEventListener('mouseenter', handleMouseEnter);
       footer.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, [isSurveyPage]);
+  }, [isSurveyPage, isPublicChecklist]);
 
   return (
-    !isSurveyPage && (
+    !isSurveyPage && !isPublicChecklist && (
       <footer className="hideIt fixed bottom-0 w-screen z-10 hidden md:block">
         <div style={{ background: themeColor }}>
           <p className="text-center text-white">

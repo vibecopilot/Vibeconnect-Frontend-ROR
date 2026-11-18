@@ -23,7 +23,7 @@ import axios from "axios";
 import { PenSquareIcon, Trash } from "lucide-react";
 import { BsPencil, BsPencilSquare, BsTrash } from "react-icons/bs";
 
-const AssociateAssetChecklist = () => {
+const AssociateAssetChecklist = ({ standalone = false }) => {
   const [assets, setAssets] = useState([]);
   const [selectedOption, setSelectedOption] = useState([]);
   const [selectedUserOption, setSelectedUserOption] = useState([]);
@@ -388,9 +388,11 @@ const AssociateAssetChecklist = () => {
 
   return (
     <section className="flex ">
-      <div className="hidden md:block">
-        <Navbar />
-      </div>
+      {!standalone && (
+        <div className="hidden md:block">
+          <Navbar />
+        </div>
+      )}
       <div className="p-4 overflow-hidden w-full my-2 flex mx-3 flex-col">
         <h2 className="text-lg font-medium border-b-2 border-gray-400 mb-2">
           Associate Checklist

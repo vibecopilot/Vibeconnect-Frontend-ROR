@@ -34,8 +34,9 @@ import { BsEye } from "react-icons/bs";
 import toast from "react-hot-toast";
 import { Filter } from "lucide-react";
 import SiteHeader from "../components/SiteHeader";
+import { withPublicParams } from "../utils/publicAuth";
 
-const Checklist = () => {
+const Checklist = ({ standalone = false }) => {
   const [checklists, setChecklists] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -187,6 +188,10 @@ const Checklist = () => {
     fetchChecklistCategories();
   }, [activeSiteId]); // ✅ re-fetch when site changes
 
+  /** Keep the app-provided token when navigating inside the public flow. */
+  const pagePath = (normalPath, publicPath) =>
+    standalone ? withPublicParams(publicPath) : normalPath;
+
   const columns = [
     {
       name: "Name",
@@ -232,7 +237,10 @@ const Checklist = () => {
       selector: (row) => (
         <div>
           <Link
-            to={`/assets/associate-checklist/${row.id}`}
+            to={pagePath(
+              `/assets/associate-checklist/${row.id}`,
+              `/apps/checklist/associate/${row.id}`
+            )}
             className=" px-4 bg-green-400 text-white rounded-full"
           >
             Associate
@@ -266,17 +274,27 @@ const Checklist = () => {
     <div className="flex items-center gap-4">
 
       {/* VIEW */}
-      <Link to={`/admin/edit-checklist/${row.id}?mode=view`}>
+      <Link
+        to={pagePath(
+          `/admin/edit-checklist/${row.id}?mode=view`,
+          `/apps/checklist/edit/${row.id}?mode=view`
+        )}
+      >
         <BsEye size={15} />
       </Link>
 
       {/* EDIT */}
-      <Link to={`/admin/edit-checklist/${row.id}?mode=edit`}>
+      <Link
+        to={pagePath(
+          `/admin/edit-checklist/${row.id}?mode=edit`,
+          `/apps/checklist/edit/${row.id}?mode=edit`
+        )}
+      >
         <BiEdit size={15} />
       </Link>
 
       {/* COPY */}
-      <Link to={`/admin/copy-checklist/${row.id}`}>
+      <Link to={pagePath(`/admin/copy-checklist/${row.id}`, `/apps/checklist/copy/${row.id}`)}>
         <FaCopy size={15} />
       </Link>
 
@@ -337,8 +355,9 @@ const Checklist = () => {
   };
 
   useEffect(() => {
-    Get_Background();
-  }, []);
+    // Public app pages are self-contained: no user background from localStorage.
+    if (!standalone) Get_Background();
+  }, [standalone]);
 
   const handleSearch = (e) => {
     const searchValue = e.target.value;
@@ -465,20 +484,28 @@ const Checklist = () => {
   return (
     <section
       className="flex"
-      style={{
-        background: `url(${selectedImage})no-repeat center center / cover`,
-      }}
+      style={
+        standalone
+          ? undefined
+          : {
+              background: `url(${selectedImage})no-repeat center center / cover`,
+            }
+      }
     >
-      <Navbar />
+      {!standalone && <Navbar />}
       <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
-        <SiteHeader
-          onSiteChange={(id) => {
-            setActiveSiteId(id); // triggers data useEffect
-            setChecklists([]);
-            setFilteredData([]);
-          }}
-        />
-        <AssetNav />
+        {standalone ? (
+          <h1 className="mb-3 text-xl font-semibold text-gray-800">Checklist</h1>
+        ) : (
+          <SiteHeader
+            onSiteChange={(id) => {
+              setActiveSiteId(id); // triggers data useEffect
+              setChecklists([]);
+              setFilteredData([]);
+            }}
+          />
+        )}
+        {!standalone && <AssetNav />}
         <div className="flex md:flex-row flex-col justify-between items-center my-2 gap-2  ">
           <input
             type="text"
@@ -489,7 +516,7 @@ const Checklist = () => {
           />
           <div className="md:flex grid grid-cols-2 sm:flex-row  flex-col gap-2">
             <Link
-              to={"/admin/add-checklist"}
+              to={pagePath("/admin/add-checklist", "/apps/checklist/add")}
               className="bg-black  text-sm rounded-lg flex justify-center font-semibold items-center gap-2 text-white py-2 px-4 transition-all duration-300 "
               style={{ background: themeColor }}
             >
