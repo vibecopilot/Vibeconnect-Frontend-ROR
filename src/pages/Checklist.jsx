@@ -3,33 +3,26 @@ import { IoAddCircleOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import {
   API_URL,
-  ChecklistImport,
-  downloadSampleChecklist,
   disableChecklistSchedule,
   editChecklist,
   enableChecklistSchedule,
-  exportChecklist,
   getChecklist,
-  getChecklistTemplate,
   getVibeBackground,
   getChecklistGroups,
 } from "../api";
 import DisableEnableScheduleModal from "../components/DisableEnableScheduleModal";
 import ScheduleStatusBadge from "../components/ScheduleStatusBadge";
 import Table from "../components/table/Table";
+import ChecklistImportExport from "../components/ChecklistImportExport";
 import { BiEdit } from "react-icons/bi";
-import { MdClose, MdDeleteForever, MdFileDownload } from "react-icons/md";
+import { MdDeleteForever } from "react-icons/md";
 import AssetNav from "../components/navbars/AssetNav";
 import Navbar from "../components/Navbar";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import { DNA } from "react-loader-spinner";
-import * as XLSX from "xlsx";
 import { useSelector } from "react-redux";
-import FileInputBox from "../containers/Inputs/FileInputBox";
-import { FiDownload, FiUpload } from "react-icons/fi";
 import { FaCheckCircle, FaCopy, FaDownload } from "react-icons/fa";
 import Switch from "../Buttons/Switch";
-import DatePicker from "react-datepicker";
 import { BsEye } from "react-icons/bs";
 import toast from "react-hot-toast";
 import { Filter } from "lucide-react";
@@ -44,16 +37,6 @@ const Checklist = ({ standalone = false }) => {
   const [activeSiteId, setActiveSiteId] = useState(
     () => getItemInLocalStorage("SITEID")
   );
-  const [showImport, setShowImportModal] = useState(false); // FIXED: Proper state name
-  const [showDownload, setShowDownloadModal] = useState(false); // FIXED: Proper state name
-  const openModalImport = () => setShowImportModal(true);
-  const closeModalImport = () => setShowImportModal(false);
-  const openModalDownload = () => setShowDownloadModal(true);
-  const closeModalDownload = () => setShowDownloadModal(false);
-  const [dateRange, setDateRange] = useState([null, null]);
-  const [startDate, endDate] = dateRange;
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [importStatus, setImportStatus] = useState("");
   const [showFilter, setShowFilter] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -67,10 +50,6 @@ const Checklist = ({ standalone = false }) => {
   });
   const [checklistGroups, setChecklistGroups] = useState([]);
   const [scheduleModal, setScheduleModal] = useState(null); // { mode: "disable"|"enable", checklist }
-
-  const handleFileChange = (files) => {
-    setSelectedFiles(files);
-  };
 
   const handleApprove = async (row) => {
     try {
@@ -101,51 +80,6 @@ const Checklist = ({ standalone = false }) => {
     await fetchChecklist();
     setScheduleModal(null);
     toast.success(res?.data?.message || `Checklist schedule ${mode}d successfully`);
-  };
-
-  const handleImportChecklist = async () => {
-    if (selectedFiles.length === 0) {
-      setImportStatus("No files selected.");
-      return;
-    }
-
-    const formData = new FormData();
-    selectedFiles.forEach((file) => {
-      formData.append("file", file);
-    });
-
-    try {
-      const response = await ChecklistImport(formData);
-      if (response.status === 200) {
-        // setImportStatus("Checklist successfully imported!");
-        toast.success("Checklist successfully imported!");
-        await fetchChecklist();
-        closeModalImport();
-      } else {
-        setImportStatus("Failed to import checklist.");
-      }
-    } catch (error) {
-      console.error("Error importing checklist:", error);
-      setImportStatus("An error occurred during import.");
-    }
-  };
-
-  const handleDownload = async () => {
-    try {
-      const response = await downloadSampleChecklist();
-      const blob = new Blob([response.data], {
-        type: response.headers["content-type"],
-      });
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = "sample_format_checklist.xlsx";
-      link.click();
-      window.URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.error("Failed to export checklist:", error);
-      alert("Error exporting checklist. Please try again.");
-    }
   };
 
   const themeColor = useSelector((state) => state.theme.color);
@@ -379,50 +313,6 @@ const Checklist = ({ standalone = false }) => {
     return date.toLocaleString();
   };
 
-  const handleExport = async () => {
-    if (!startDate || !endDate) {
-      alert("Please select both Start Date and End Date");
-      return;
-    }
-
-    try {
-      // Format dates properly (YYYY-MM-DD)
-      const formattedStart = startDate.toISOString().split("T")[0];
-      const formattedEnd = endDate.toISOString().split("T")[0];
-
-      console.log("Exporting with date range:", formattedStart, "to", formattedEnd);
-
-      const response = await exportChecklist(formattedStart, formattedEnd);
-
-      if (!response.data || (Array.isArray(response.data) && response.data.length === 0)) {
-        alert("No data found for the selected date range.");
-        return;
-      }
-
-      // Create blob and download
-      const blob = new Blob([response.data], {
-        type: response.headers["content-type"] || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.download = `checklist_report_${formattedStart}_to_${formattedEnd}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-
-      closeModalDownload();
-
-      // Optional: Reset date range after successful export
-      setDateRange([null, null]);
-    } catch (error) {
-      console.error("Failed to export checklist:", error);
-      alert("Error exporting checklist. Please check console for details.");
-    }
-  };
-
   const applyFilter = async () => {
     try {
       setLoading(true);
@@ -529,20 +419,11 @@ const Checklist = ({ standalone = false }) => {
             >
               <Filter size={20} />   Filter
             </button>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2"
-              onClick={openModalImport}
-              style={{ background: themeColor }}
-            >
-              <FiDownload size={15} /> Import
-            </button>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded flex justify-center items-center gap-2"
-              onClick={openModalDownload}
-              style={{ background: themeColor }}
-            >
-              <FiUpload size={15} /> Export
-            </button>
+            <ChecklistImportExport
+              ctype="routine"
+              onSuccess={fetchChecklist}
+              themeColor={themeColor}
+            />
           </div>
         </div>
         {loading ? (
@@ -563,42 +444,6 @@ const Checklist = ({ standalone = false }) => {
   </div>
         )}
       </div>
-      {showImport && ( // FIXED: Use correct state variable
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-1/2">
-            <h2 className="text-xl font-bold text-center mb-4">Bulk Upload</h2>
-            <FileInputBox
-              handleChange={handleFileChange}
-              fieldName="checklist"
-              isMulti={true}
-            />
-            <div className="mt-4 flex justify-end space-x-4">
-              <button
-                onClick={handleDownload}
-                className="bg-red-500 text-white px-4 py-2 rounded"
-                style={{ background: themeColor }}
-              >
-                Download Sample Format
-              </button>
-              <button
-                onClick={closeModalImport}
-                className="bg-red-500 text-white px-4 py-2 rounded"
-                style={{ background: themeColor }}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-green-500 text-white px-4 py-2 rounded"
-                style={{ background: themeColor }}
-                onClick={handleImportChecklist}
-              >
-                Import
-              </button>
-            </div>
-            {importStatus && <p className="mt-4 text-center">{importStatus}</p>}
-          </div>
-        </div>
-      )}
       {showFilter && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-xl w-[800px] shadow-lg relative">
@@ -726,63 +571,6 @@ const Checklist = ({ standalone = false }) => {
                 className="border px-6 py-2 rounded"
               >
                 Reset
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showDownload && ( // FIXED: Use correct state variable
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex z-10 justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h2 className="text-lg fw-bold mb-4 text-center">
-              <b>Export Checklist Report</b>{" "}
-            </h2>
-            <div className="flex gap-4 mt-8">
-              <div className="flex flex-col">
-                <label className="text-sm font-semibold mb-1">
-                  Start Date :
-                </label>
-                <DatePicker
-                  selected={startDate}
-                  onChange={(date) => setDateRange([date, endDate])}
-                  selectsStart
-                  startDate={startDate}
-                  endDate={endDate}
-                  placeholderText="Start Date"
-                  className="border p-2 rounded w-40"
-                  dateFormat="dd/MM/yyyy"
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-sm font-semibold mb-1">End Date :</label>
-                <DatePicker
-                  selected={endDate}
-                  onChange={(date) => setDateRange([startDate, date])}
-                  selectsEnd
-                  startDate={startDate}
-                  endDate={endDate}
-                  minDate={startDate}
-                  placeholderText="End Date"
-                  className="border p-2 rounded w-40"
-                  dateFormat="dd/MM/yyyy"
-                />
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end space-x-4">
-              <button
-                onClick={closeModalDownload}
-                className="bg-red-500 text-white px-4 py-3 rounded-lg flex"
-                style={{ background: themeColor }}
-              >
-                <MdClose className="h-5 w-5 mx-1" /> Cancel
-              </button>
-              <button
-                onClick={handleExport}
-                className="bg-green-500 text-white px-4 py-3 rounded-lg flex"
-                style={{ background: themeColor }}
-              >
-                <MdFileDownload className="h-5 w-5 mx-1" /> Export
               </button>
             </div>
           </div>

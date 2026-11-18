@@ -6,11 +6,10 @@ import Navbar from "../../components/Navbar";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import { Link } from "react-router-dom";
 import { IoAddCircleOutline } from "react-icons/io5";
-import * as XLSX from "xlsx";
-import { DNA } from "react-loader-spinner";
+import ChecklistImportExport from "../../components/ChecklistImportExport";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
-import { FaCopy, FaDownload } from "react-icons/fa";
+import { FaCopy } from "react-icons/fa";
 import SiteHeader from "../../components/SiteHeader";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 
@@ -87,19 +86,19 @@ const ServiceChecklist = () => {
       sortable: true,
     },
   ];
-  useEffect(() => {
+  const fetchServicesChecklist = async () => {
     try {
-      const fetchServicesChecklist = async () => {
-        const checklistResponse = await getServicesChecklist();
-        const sortedChecklists = checklistResponse.data.checklists.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        setFilteredChecklistData(sortedChecklists);
-        setChecklists(sortedChecklists);
-        console.log(checklistResponse);
-      };
-      fetchServicesChecklist();
+      const checklistResponse = await getServicesChecklist();
+      const sortedChecklists = checklistResponse.data.checklists.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setFilteredChecklistData(sortedChecklists);
+      setChecklists(sortedChecklists);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
+  };
+
+  useEffect(() => {
+    fetchServicesChecklist();
   }, [activeSiteId]); // ✅ re-fetch when site changes
   const handleChecklistSearch = (event) => {
     const searchValue = event.target.value;
@@ -112,36 +111,7 @@ const ServiceChecklist = () => {
       );
       setFilteredChecklistData(filteredResults);
       console.log(filteredResults);
-      console.log(filteredData);
     }
-  };
-
-  const dateFormat = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-  const exportToExcel = () => {
-    const mappedData = filteredChecklistData.map((check) => ({
-
-      "Checklist Name": check.name,
-      "Start Date": check.start_date,
-      "End Date": check.end_date,
-      "Frequency": check.frequency,
-      "Created On": dateFormat(check.created_at),
-      // "Question": check.questions.map(q => q.toString()).join(', ')
-    }));
-    const fileType =
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
-    const fileName = "Checklist_data.xlsx";
-    const ws = XLSX.utils.json_to_sheet(mappedData);
-    const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: fileType });
-    const url = URL.createObjectURL(data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
   };
 
   const themeColor = useSelector((state) => state.theme.color)
@@ -222,13 +192,11 @@ const ServiceChecklist = () => {
               <IoAddCircleOutline size={20} />
               Add
             </Link>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-              onClick={exportToExcel}
-              style={{ background: themeColor }}
-            >
-              Export
-            </button>
+            <ChecklistImportExport
+              ctype="soft_service"
+              onSuccess={fetchServicesChecklist}
+              themeColor={themeColor}
+            />
             {/* <button
     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
     onClick={handleDownloadQRCode}
