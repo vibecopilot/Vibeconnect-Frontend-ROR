@@ -54,8 +54,7 @@ const PatrollingDetails = () => {
     const doc = new jsPDF();
     const logoText = "Vibeconnect";
     try {
-      const response = await axios.get(
-        domainPrefix + details.qr_code_image_url,
+      const response = await axios.get(details.qr_code_image_url,
         { responseType: "blob" }
       );
       const blob = response.data;
@@ -187,7 +186,7 @@ const PatrollingDetails = () => {
       cell: (row) =>
         row.attachments && row.attachments.length > 0 ? (
           <a
-            href={domainPrefix + row.attachments[0].image_url}
+            href={row.attachments[0].image_url}
             target="_blank"
             rel="noopener noreferrer"
             className="text-blue-500 underline"
@@ -295,7 +294,7 @@ const PatrollingDetails = () => {
             <div className="mx-4 flex flex-col justify-between items-center gap-10">
               <div id="qrCodeElement">
                 <img
-                  src={domainPrefix + details.qr_code_image_url}
+                  src={details.qr_code_image_url}
                   alt="qr"
                   width={200}
                   className="border shadow-xl rounded-md"
