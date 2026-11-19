@@ -1106,16 +1106,12 @@ function App() {
           }
         />
 
-        {/* Public checklist opened from the mobile app with ?token=... .
-            These routes intentionally have no ProtectedAdminRoutes wrapper. */}
-        <Route path="/apps/checklist" element={<PublicChecklist view="list" />} />
-        <Route path="/apps/checklist/add" element={<PublicChecklist view="add" />} />
-        <Route path="/apps/checklist/edit/:id" element={<PublicChecklist view="edit" />} />
-        <Route path="/apps/checklist/copy/:id" element={<PublicChecklist view="copy" />} />
-        <Route
-          path="/apps/checklist/associate/:id"
-          element={<PublicChecklist view="associate" />}
-        />
+        {/* Public checklist submissions opened from the mobile app with
+            ?token=... . These routes intentionally have no ProtectedAdminRoutes
+            wrapper and no app shell. The admin configuration screens remain at
+            /assets/checklist. */}
+        <Route path="/apps/checklist" element={<PublicChecklist />} />
+        <Route path="/apps/checklist/:activityId" element={<PublicChecklist />} />
 
         <Route
           path="/dashboard"

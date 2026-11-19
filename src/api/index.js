@@ -1719,6 +1719,72 @@ export const getRoutineTaskStatus = async (
   return response.data;
 };
 
+// App-launched checklist submission APIs. The axios interceptor supplies the
+// URL token and site_id, so these helpers do not rely on stale localStorage.
+const ransackKey = (field, groupIndex = null, isArray = false) => {
+  const suffix = isArray ? "[]" : "";
+  if (groupIndex === null) return `q[${field}]${suffix}`;
+  return `q[groupings][${groupIndex}][${field}]${suffix}`;
+};
+
+export const getChecklistActivities = async ({
+  page = 1,
+  perPage = 15,
+  statuses = [],
+  categoryId = null,
+  frequency = null,
+  search = "",
+  startDate = null,
+} = {}) => {
+  const params = { page, per_page: perPage };
+  const term = (search || "").trim();
+
+  const applyFilters = (groupIndex = null) => {
+    if (statuses.length > 0) {
+      params[ransackKey("status_in", groupIndex, true)] = statuses;
+    }
+    if (categoryId) {
+      params[ransackKey("checklist_group_id_eq", groupIndex)] = categoryId;
+    }
+    if (frequency) {
+      params[ransackKey("checklist_frequency_eq", groupIndex)] = frequency;
+    }
+    if (startDate) {
+      params[ransackKey("start_time_gteq", groupIndex)] = startDate;
+    }
+  };
+
+  if (term) {
+    // Keep status/category/frequency as an AND inside every group, then OR the
+    // searchable fields together. This avoids widening the result set.
+    params["q[combinator]"] = "or";
+    ["checklist_name_cont", "site_asset_name_cont", "soft_service_name_cont"].forEach(
+      (field, groupIndex) => {
+        applyFilters(groupIndex);
+        params[ransackKey(field, groupIndex)] = term;
+      }
+    );
+  } else {
+    applyFilters();
+  }
+
+  return axiosInstance.get("/activities.json", { params });
+};
+
+export const getActivityDetails = async (activityId) =>
+  axiosInstance.get(`/activities/${activityId}.json`);
+
+export const getActivitySubmissions = async (activityId) =>
+  axiosInstance.get(`/submissions.json?q[activity_id_eq]=${activityId}`);
+
+export const createChecklistSubmission = async (data) =>
+  axiosInstance.post("/submissions.json", data);
+
+export const changeSiteForApp = async (siteId) =>
+  axiosInstance.get("/change_site_for_app.json", {
+    params: { siteid: siteId },
+  });
+
 // ...existing code...
 export const getPPMTask = async (page = 1, perPage = 100) =>
   axiosInstance.get("/activities.json?q[checklist_ctype_eq]=ppm", {
