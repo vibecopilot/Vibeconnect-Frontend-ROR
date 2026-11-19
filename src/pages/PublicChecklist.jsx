@@ -369,6 +369,7 @@ const SubmissionDetail = ({ activityId }) => {
   const [activity, setActivity] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [values, setValues] = useState({});
+  const [files, setFiles] = useState({});
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -423,6 +424,17 @@ const SubmissionDetail = ({ activityId }) => {
     () => new Set(answers.map((row) => String(row.question_id))),
     [answers]
   );
+  const attachmentsByQuestion = useMemo(() => {
+    const mapped = {};
+    answers.forEach((row) => {
+      const key = String(row.question_id);
+      const documents = Array.isArray(row.question_attachments) ? row.question_attachments : [];
+      if (documents.length > 0) {
+        mapped[key] = [...(mapped[key] || []), ...documents];
+      }
+    });
+    return mapped;
+  }, [answers]);
   const alreadyAnswered =
     questions.length > 0 && questions.every((question) => answeredIds.has(String(question.id)));
   const isComplete =
@@ -432,6 +444,27 @@ const SubmissionDetail = ({ activityId }) => {
 
   const setValue = (questionId, value) => {
     setValues((current) => ({ ...current, [String(questionId)]: value }));
+  };
+
+  const handleFiles = (questionId, event) => {
+    const selected = Array.from(event.target.files || []);
+    if (selected.length === 0) return;
+
+    const key = String(questionId);
+    setFiles((current) => ({
+      ...current,
+      [key]: [...(current[key] || []), ...selected],
+    }));
+    event.target.value = "";
+  };
+
+  const removeFile = (questionId, fileIndex) => {
+    const key = String(questionId);
+    setFiles((current) => {
+      const remaining = [...(current[key] || [])];
+      remaining.splice(fileIndex, 1);
+      return { ...current, [key]: remaining };
+    });
   };
 
   const handleSubmit = async (event) => {
@@ -444,18 +477,31 @@ const SubmissionDetail = ({ activityId }) => {
     const questionsArr = {};
 
     for (const [index, question] of pendingQuestions.entries()) {
-      const answer = values[String(question.id)];
+      const key = String(question.id);
+      const label = question.name || `Question ${index + 1}`;
+      const answer = values[key];
+      const selectedFiles = files[key] || [];
       const hasAnswer = answer !== undefined && answer !== null && String(answer).trim() !== "";
 
       if (!hasAnswer && question.question_mandatory) {
-        const message = `Please answer: ${question.name || `Question ${index + 1}`}`;
+        const message = `Please answer: ${label}`;
         setError(message);
         toast.error(message);
         return;
       }
-      if (!hasAnswer) continue;
+      if (question.image_mandatory && selectedFiles.length === 0) {
+        const message = `Please add a photo for: ${label}`;
+        setError(message);
+        toast.error(message);
+        return;
+      }
+      if (!hasAnswer && selectedFiles.length === 0) continue;
 
-      questionsArr[String(index)] = { id: question.id, option: answer };
+      questionsArr[String(index)] = {
+        id: question.id,
+        option: hasAnswer ? answer : "",
+        files: selectedFiles,
+      };
     }
 
     if (Object.keys(questionsArr).length === 0) {
@@ -465,21 +511,31 @@ const SubmissionDetail = ({ activityId }) => {
       return;
     }
 
-    const payload = {
-      submission: {
-        checklist_id: activity.checklist_id,
-        activity_id: activity.id,
-        asset_id: activity.asset_id || undefined,
-        soft_service_id: activity.soft_service_id || undefined,
-        user_id: userId || undefined,
-        comment,
-      },
-      questions_arr: questionsArr,
+    const formData = new FormData();
+    const appendSubmissionField = (field, value) => {
+      if (value !== undefined && value !== null && value !== "") {
+        formData.append(`submission[${field}]`, value);
+      }
     };
+
+    appendSubmissionField("checklist_id", activity.checklist_id);
+    appendSubmissionField("activity_id", activity.id);
+    appendSubmissionField("asset_id", activity.asset_id);
+    appendSubmissionField("soft_service_id", activity.soft_service_id);
+    appendSubmissionField("user_id", userId);
+    appendSubmissionField("comment", comment);
+
+    Object.entries(questionsArr).forEach(([index, answer]) => {
+      formData.append(`questions_arr[${index}][id]`, answer.id);
+      formData.append(`questions_arr[${index}][option]`, answer.option);
+      answer.files.forEach((file) => {
+        formData.append(`questions_arr[${index}][attachfiles][]`, file);
+      });
+    });
 
     try {
       setSubmitting(true);
-      await createChecklistSubmission(payload);
+      await createChecklistSubmission(formData);
       setSubmitted(true);
       toast.success("Checklist submitted successfully");
     } catch (submitError) {
@@ -597,6 +653,8 @@ const SubmissionDetail = ({ activityId }) => {
                       const answer = values[questionKey] ?? "";
                       const options = answerOptions(question);
                       const label = question.name || `Question ${questionIndex + 1}`;
+                      const selectedFiles = files[questionKey] || [];
+                      const existingDocuments = attachmentsByQuestion[questionKey] || [];
 
                       return (
                         <div key={questionKey} className={answered ? "opacity-70" : ""}>
@@ -677,6 +735,78 @@ const SubmissionDetail = ({ activityId }) => {
                               className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400 disabled:bg-slate-50"
                             />
                           )}
+
+                          <div className="mt-3">
+                            <p className="text-xs text-slate-500">
+                              {question.image_mandatory
+                                ? "Photo required *"
+                                : "Photos (optional)"}
+                            </p>
+
+                            {!answered && (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                <label className="cursor-pointer rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-indigo-300">
+                                  Choose photo
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={(event) => handleFiles(question.id, event)}
+                                  />
+                                </label>
+                                {/* <label className="cursor-pointer rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-indigo-300">
+                                  Take photo
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    className="hidden"
+                                    onChange={(event) => handleFiles(question.id, event)}
+                                  />
+                                </label> */}
+                              </div>
+                            )}
+
+                            {selectedFiles.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {selectedFiles.map((file, fileIndex) => (
+                                  <span
+                                    key={`${file.name}-${fileIndex}`}
+                                    className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs text-indigo-700"
+                                  >
+                                    {file.name}
+                                    <button
+                                      type="button"
+                                      onClick={() => removeFile(question.id, fileIndex)}
+                                      className="ml-1 font-semibold text-red-500"
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {existingDocuments.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {existingDocuments.map((document, documentIndex) => (
+                                  <a
+                                    key={document.id ?? documentIndex}
+                                    href={document.document}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    <img
+                                      src={document.document}
+                                      alt="checklist attachment"
+                                      className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
+                                    />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
