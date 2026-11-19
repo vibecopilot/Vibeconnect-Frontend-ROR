@@ -10,6 +10,7 @@ import {
   getActivitySubmissions,
   getChecklistActivities,
   getChecklistGroups,
+  getSiteAssets,
   getSiteData,
 } from "../api";
 import { updatePublicAuth, withPublicParams } from "../utils/publicAuth";
@@ -97,6 +98,8 @@ const SubmissionList = () => {
   const [category, setCategory] = useState("");
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [frequency, setFrequency] = useState("");
+  const [assetId, setAssetId] = useState("");
+  const [assetOptions, setAssetOptions] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -136,6 +139,33 @@ const SubmissionList = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchAssets = async () => {
+      try {
+        // site_id is injected by the public axios interceptor; one request is
+        // enough for the site's asset dropdown.
+        const response = await getSiteAssets(undefined, 1, 200);
+        const data = response?.data ?? response;
+        const rows = asArray(data?.site_assets ?? data);
+        const options = rows
+          .map((row) => ({ id: String(row.id), name: row.name }))
+          .filter((option) => option.name)
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        if (!cancelled) setAssetOptions(options);
+      } catch (assetError) {
+        console.error("Unable to load assets:", assetError);
+      }
+    };
+
+    fetchAssets();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const buildParams = useCallback(
     (pageNumber) => ({
       page: pageNumber,
@@ -143,10 +173,11 @@ const SubmissionList = () => {
       statuses: ["pending", "overdue"],
       categoryId: category || null,
       frequency: frequency || null,
+      assetId: assetId || null,
       search: debouncedSearch,
       startDate: new Date().toISOString().split("T")[0],
     }),
-    [category, debouncedSearch, frequency]
+    [assetId, category, debouncedSearch, frequency]
   );
 
   useEffect(() => {
@@ -233,7 +264,7 @@ const SubmissionList = () => {
         </div>
 
         <div className="mb-4 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <input
               type="search"
               value={search}
@@ -241,6 +272,19 @@ const SubmissionList = () => {
               placeholder="Search checklist, asset or service"
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
             />
+
+            <select
+              value={assetId}
+              onChange={(event) => setAssetId(event.target.value)}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-400"
+            >
+              <option value="">All assets</option>
+              {assetOptions.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
 
             <select
               value={category}
@@ -269,7 +313,7 @@ const SubmissionList = () => {
             </select>
           </div>
 
-          {(search || category || frequency) && (
+          {(search || category || frequency || assetId) && (
             <button
               type="button"
               onClick={() => {
@@ -277,6 +321,7 @@ const SubmissionList = () => {
                 setDebouncedSearch("");
                 setCategory("");
                 setFrequency("");
+                setAssetId("");
               }}
               className="mt-2 text-xs font-medium text-indigo-600 hover:text-indigo-800"
             >
@@ -298,12 +343,12 @@ const SubmissionList = () => {
         ) : tasks.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
             <p className="text-base font-medium text-slate-700">
-              {search || category || frequency
+              {search || category || frequency || assetId
                 ? "No checklists match these filters"
                 : "No pending checklists"}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              {search || category || frequency
+              {search || category || frequency || assetId
                 ? "Try clearing a filter to see more results."
                 : "You are all caught up for today."}
             </p>

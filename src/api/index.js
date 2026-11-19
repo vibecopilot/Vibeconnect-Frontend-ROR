@@ -1733,6 +1733,7 @@ export const getChecklistActivities = async ({
   statuses = [],
   categoryId = null,
   frequency = null,
+  assetId = null,
   search = "",
   startDate = null,
 } = {}) => {
@@ -1749,13 +1750,16 @@ export const getChecklistActivities = async ({
     if (frequency) {
       params[ransackKey("checklist_frequency_eq", groupIndex)] = frequency;
     }
+    if (assetId) {
+      params[ransackKey("asset_id_eq", groupIndex)] = assetId;
+    }
     if (startDate) {
       params[ransackKey("start_time_gteq", groupIndex)] = startDate;
     }
   };
 
   if (term) {
-    // Keep status/category/frequency as an AND inside every group, then OR the
+    // Keep status/category/frequency/asset as an AND inside every group, then OR the
     // searchable fields together. This avoids widening the result set.
     params["q[combinator]"] = "or";
     ["checklist_name_cont", "site_asset_name_cont", "soft_service_name_cont"].forEach(
