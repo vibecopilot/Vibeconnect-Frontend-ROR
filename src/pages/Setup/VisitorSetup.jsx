@@ -9,6 +9,7 @@ import axios from "axios";
 import {
   getVisitorCategories,
 } from "../../api";
+import { fetchAllPages, MAX_PER_PAGE } from "../../api/pagination";
 
 import SetupNavbar from "../../components/navbars/SetupNavbar";
 import Table from "../../components/table/Table";
@@ -159,18 +160,9 @@ function VisitorSetup() {
 
       const fetchVisitorCategoriesData = async () => {
         try {
-          const res = await getVisitorCategories(
-            1,
-            100
+          let data = await fetchAllPages((page) =>
+            getVisitorCategories(page, MAX_PER_PAGE)
           );
-
-          let data =
-            res.data?.visitor_categories ||
-            res.data?.data?.visitor_categories ||
-            (Array.isArray(res.data)
-              ? res.data
-              : []) ||
-            [];
 
           // ✅ SITE FILTER
           if (activeSiteId) {

@@ -3,9 +3,12 @@ import {
   getServicesRoutineList,
   getSoftServiceStatus,
 } from "../../api";
+import { MAX_PER_PAGE, fetchAllPages } from "../../api/pagination";
 import Table from "../../components/table/Table";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
+import { FaClipboardCheck } from "react-icons/fa";
+import ChecklistSubmissionForm from "../../components/ChecklistSubmissionForm";
 import Services from "../Services";
 import Navbar from "../../components/Navbar";
 import * as XLSX from "xlsx";
@@ -17,6 +20,8 @@ import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ServicesTask = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
+  // Task whose checklist submission form is open in the modal.
+  const [submitTask, setSubmitTask] = useState(null);
   const [filteredRoutineData, setFilteredRoutineData] = useState([]);
   const [routines, setRoutines] = useState([]);
 
@@ -84,11 +89,31 @@ const ServicesTask = () => {
   const routineColumn = [
     {
       name: "Action",
-      cell: (row) => (
-        <Link to={`/service/checklist/${row.soft_service_id}/${row.id}`}>
-          <BsEye size={15} />
-        </Link>
-      ),
+      cell: (row) => {
+        const status = String(row.status || "").toLowerCase();
+        const canSubmit = status === "pending" || status === "overdue";
+
+        return (
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/service/checklist/${row.soft_service_id}/${row.id}`}
+              title="View details"
+            >
+              <BsEye size={15} />
+            </Link>
+            {canSubmit && (
+              <button
+                type="button"
+                title="Fill and submit checklist"
+                onClick={() => setSubmitTask(row)}
+                className="flex items-center gap-1 rounded bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+              >
+                <FaClipboardCheck size={14} /> Submit
+              </button>
+            )}
+          </div>
+        );
+      },
     },
     {
       name: "Service Name",
@@ -174,9 +199,9 @@ const ServicesTask = () => {
       const start = startDate ? `${startDate}T00:00:00` : "";
       const end = endDate ? `${endDate}T23:59:59` : "";
 
-      const res = await getServicesRoutineList(1, 10000, start, end);
-
-      const data = res.data.activities || [];
+      const data = await fetchAllPages((page) =>
+        getServicesRoutineList(page, MAX_PER_PAGE, start, end)
+      );
 
       const counts = {
         all: data.length,
@@ -257,9 +282,10 @@ const ServicesTask = () => {
       let data = [];
 
       if (selectedStatus === "all") {
-        // ✅ fetch ALL records (no pagination limit)
-        const res = await getServicesRoutineList(1, 10000, start, end);
-        data = res.data.activities || [];
+        // ✅ fetch ALL records in 15-record pages
+        data = await fetchAllPages((page) =>
+          getServicesRoutineList(page, MAX_PER_PAGE, start, end)
+        );
       } else {
         // ✅ already returns full data
         const res = await getSoftServiceStatus(
@@ -431,6 +457,50 @@ const ServicesTask = () => {
           </div>
         )}
       </div>
+
+      {/* -------- SUBMISSION FORM MODAL (soft-service tasks) -------- */}
+      {submitTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Checklist submission form"
+        >
+          <div className="my-6 w-full max-w-4xl rounded-xl bg-white shadow-xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-xl border-b border-slate-200 bg-white px-5 py-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Submit checklist
+                </p>
+                <p className="text-xs text-slate-500">
+                  {submitTask.checklist_name || "Checklist"} ·{" "}
+                  {submitTask.soft_service_name || "Service"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSubmitTask(null)}
+                aria-label="Close submission form"
+                className="text-2xl leading-none text-slate-500 hover:text-slate-800"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="max-h-[calc(100vh-11rem)] overflow-y-auto p-5">
+              <ChecklistSubmissionForm
+                key={submitTask.id}
+                activityId={submitTask.id}
+                onClose={() => setSubmitTask(null)}
+                onSubmitted={() => {
+                  fetchData();
+                  fetchStatusCounts();
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

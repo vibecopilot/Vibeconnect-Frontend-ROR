@@ -25,6 +25,7 @@ import {
   getStaffPunchedOutToday,
 } from "../../api";
 import { dateFormat } from "../../utils/dateUtils";
+import { fetchAllPages, MAX_PER_PAGE } from "../../api/pagination";
 import image from "/profile.png";
 import { color } from "highcharts";
 import { MdQrCode } from "react-icons/md";
@@ -279,32 +280,8 @@ const [originalHistoryStaff, setOriginalHistoryStaff] = useState([]);
     const toastId = toast.loading("Downloading staff export. Please wait...");
 
     try {
-      const EXPORT_PER_PAGE = 200; // can increase if backend allows
-      let page = 1;
-      let allRows = [];
-      let totalPagesFromApi = 1;
-
-      // fetch first page
-      const firstRes = await getStaff();
-      const firstData = firstRes?.data || {};
-      const firstList = Array.isArray(firstData.staffs) ? firstData.staffs : [];
-      allRows = allRows.concat(firstList);
-
-      // detect total pages
-      if (firstData.total_pages) {
-        totalPagesFromApi = firstData.total_pages;
-      } else if (firstData.total_count) {
-        totalPagesFromApi =
-          Math.ceil(firstData.total_count / EXPORT_PER_PAGE) || 1;
-      }
-
-      // fetch remaining pages
-      for (page = 2; page <= totalPagesFromApi; page++) {
-        const res = await getStaff(page, EXPORT_PER_PAGE);
-        const data = res?.data || {};
-        const list = Array.isArray(data.staffs) ? data.staffs : [];
-        allRows = allRows.concat(list);
-      }
+      // Fetch the entire staff list in 15-record pages.
+      const allRows = await fetchAllPages((page) => getStaff(page, MAX_PER_PAGE));
 
       // optional: if search is active, export filtered results
       let exportRows = allRows;

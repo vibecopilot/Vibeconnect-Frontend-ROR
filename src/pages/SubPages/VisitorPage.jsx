@@ -29,6 +29,7 @@ import toast from "react-hot-toast";
 import image from "/profile.png";
 import SelfRegistration from "./SelfRegistration";
 import { getBuildings } from "../../api";
+import { MAX_PER_PAGE } from "../../api/pagination";
 
 const VisitorPage = () => {
   const [page, setPage] = useState("all");
@@ -236,7 +237,7 @@ const actualFormat = (dateString) => {
       let allRows = [];
       let pageNum = 1;
       let hasMoreData = true;
-      const itemsPerPage = 1000; // Large page size to minimize API calls
+      const itemsPerPage = MAX_PER_PAGE;
 
       // Build filters based on current page and selected visitor
       let filters = {};
@@ -398,7 +399,7 @@ const actualFormat = (dateString) => {
       let allRows = [];
       let pageNum = 1;
       let hasMoreData = true;
-      const itemsPerPage = 1000;
+      const itemsPerPage = MAX_PER_PAGE;
 
       // Build filters from current history filter state
       const filters = {};

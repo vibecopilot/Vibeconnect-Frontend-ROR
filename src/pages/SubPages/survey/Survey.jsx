@@ -7,6 +7,7 @@ import { HiChevronDown } from "react-icons/hi";
 import Navbar from "../../../components/Navbar";
 import Table from "../../../components/table/Table";
 import { getSurveys } from "../../../api";
+import { fetchAllPages, MAX_PER_PAGE } from "../../../api/pagination";
 
 function Survey() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -15,7 +16,6 @@ function Survey() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState({ page: 1, per_page: 100 });
 
   const statusRef = useRef(null);
   const ownerRef = useRef(null);
@@ -93,10 +93,11 @@ function Survey() {
   const fetchSurveys = async () => {
     setLoading(true);
     try {
-      const params = { page: filters.page, per_page: filters.per_page };
+      const params = {};
       if (searchQuery) params["q[survey_title_cont]"] = searchQuery;
-      const res = await getSurveys(params);
-      const list = res.data?.survey ?? res.data ?? [];
+      const list = await fetchAllPages((page) =>
+        getSurveys({ page, per_page: MAX_PER_PAGE, ...params })
+      );
       setData(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error("Failed to fetch surveys", err);
@@ -108,7 +109,7 @@ function Survey() {
 
   useEffect(() => {
     fetchSurveys();
-  }, [filters.page, filters.per_page, searchQuery]);
+  }, [searchQuery]);
 
   const responseCount = (row) => {
     const responses = row.survey_responses;

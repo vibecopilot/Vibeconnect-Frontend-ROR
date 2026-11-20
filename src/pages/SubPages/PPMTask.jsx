@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import Navbar from "../../components/Navbar";
 import AssetNav from "../../components/navbars/AssetNav";
 import { API_URL, getVibeBackground } from "../../api";
+import { clampPerPage } from "../../api/pagination";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import TablePagination from "@mui/material/TablePagination";
 import { Filter } from "lucide-react";
@@ -63,7 +64,7 @@ const PPMTask = () => {
   /* ---------------- FETCH TASKS ---------------- */
   const fetchPPMTask = useCallback(async (currentPage, currentRows, currentStatus, currentMonth, currentSearch) => {
     try {
-      let url = `https://admin.vibecopilot.ai/activities.json?q[checklist_ctype_eq]=ppm&token=${token}&page=${currentPage + 1}&per_page=${currentRows}`;
+      let url = `https://admin.vibecopilot.ai/activities.json?q[checklist_ctype_eq]=ppm&token=${token}&page=${currentPage + 1}&per_page=${clampPerPage(currentRows)}`;
 
       if (currentSearch) {
         url += `&q[search_cont]=${encodeURIComponent(currentSearch)}`;
@@ -278,7 +279,7 @@ const PPMTask = () => {
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleChangeRowsPerPage}
-            rowsPerPageOptions={[10, 25, 50, 100]}
+            rowsPerPageOptions={[10, 15]}
             showFirstButton
             showLastButton
           />

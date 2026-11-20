@@ -6,6 +6,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import toast from "react-hot-toast";
 import ModalWrapper from "../../containers/modals/ModalWrapper";
 import { getCalendarActivities } from "../../api";
+import { fetchAllPages } from "../../api/pagination";
 import "../style/Calendar.css";
 import {
   FaCalendarAlt,
@@ -170,11 +171,11 @@ function PPMCalendarDashboard() {
     if (!startStr || !endStr) return;
 
     try {
-      const data = await getCalendarActivities(startStr, endStr);
-
-      const rawList = Array.isArray(data?.activities)
-        ? data.activities
-        : data?.data?.activities || [];
+      // This calendar filters, counts and exports the full date-range dataset,
+      // so fetch every page in 15-record chunks.
+      const rawList = await fetchAllPages((page) =>
+        getCalendarActivities(startStr, endStr, null, page)
+      );
 
       const parseDate = (val) => {
         if (!val) return null;

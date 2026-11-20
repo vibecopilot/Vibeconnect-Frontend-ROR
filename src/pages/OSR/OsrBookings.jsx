@@ -604,7 +604,7 @@ const AdminBookings = () => {
                       setCurrentPage(1); // Reset to first page
                     }}
                   >
-                    {[10, 25, 50, 100].map((size) => (
+                    {[10, 15].map((size) => (
                       <option key={size} value={size}>
                         {size}
                       </option>

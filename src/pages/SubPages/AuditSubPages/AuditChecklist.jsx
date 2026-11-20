@@ -7,6 +7,7 @@ import { PiPlusCircle } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import { MdDownload } from "react-icons/md";
 import { getRoutineTask } from "../../../api";
+import { MAX_PER_PAGE } from "../../../api/pagination";
 
 const AuditChecklist = () => {
   const [data, setData] = useState([]);
@@ -30,7 +31,7 @@ const AuditChecklist = () => {
 
       const res = await getRoutineTask(null, null, statusFilter, {
         page,
-        per_page: 20, // 🔥 increase records per page
+        per_page: MAX_PER_PAGE, // server-paginated table
       });
 
       const list = res?.data?.activities || [];
