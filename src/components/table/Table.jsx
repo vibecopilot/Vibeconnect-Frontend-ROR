@@ -89,7 +89,7 @@ const Table = ({
         paginationTotalRows={pagination ? totalRows : 0}
         paginationDefaultPage={pagination ? currentPage : 1}
         paginationPerPage={pagination ? rowsPerPage : 10}
-        paginationRowsPerPageOptions={pagination ? [10, 25, 50, 100] : []}
+        paginationRowsPerPageOptions={pagination ? [10, 15] : []}
         fixedHeader
         selectableRowsHighlight
         selectableRows={selectableRow}

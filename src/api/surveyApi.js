@@ -1,13 +1,14 @@
 import axiosInstance from "./axiosInstance";
 import { getItemInLocalStorage } from "../utils/localStorage";
+import { clampPerPage, MAX_PER_PAGE } from "./pagination";
 
 const token = getItemInLocalStorage("TOKEN");
 
 /** Surveys */
 export const getSurveys = async (params = {}) => {
-  const { page = 1, per_page = 100, ...rest } = params;
+  const { page = 1, per_page = MAX_PER_PAGE, ...rest } = params;
   return axiosInstance.get("/surveys.json", {
-    params: { token, page, per_page, ...rest },
+    params: { token, page, per_page: clampPerPage(per_page), ...rest },
   });
 };
 

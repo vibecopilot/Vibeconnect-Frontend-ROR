@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { domainPrefix, getServicesTaskDetails } from "../../../api";
+import { API_URL, getServicesTaskDetails } from "../../../api";
+import ChecklistSubmissionForm from "../../../components/ChecklistSubmissionForm";
 import { useParams } from "react-router-dom";
+
+// Attachfile#document_url returns a signed absolute URL; only prefix legacy
+// relative paths with the Rails host.
+const attachmentUrl = (document) => {
+  if (!document) return "";
+  if (/^(https?:\/\/|data:)/i.test(document)) return document;
+  return `${API_URL}${document.startsWith("/") ? "" : "/"}${document}`;
+};
 
 const ServiceTaskDetails = () => {
   const { serviceId, activityId } = useParams();
@@ -15,15 +24,7 @@ const ServiceTaskDetails = () => {
     fetchTaskDetails();
   }, [serviceId, activityId]);
 
-  if (taskDetails.length === 0)  {
-    return (
-      <div className="flex  justify-center items-center w-full h-screen p-2">
-        <p>No details available</p>
-      </div>
-    );
-  }
-
-  const { soft_service_name, checklist_name, created_at } = taskDetails[0];
+  const { soft_service_name, checklist_name, created_at } = taskDetails[0] || {};
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
@@ -49,8 +50,24 @@ const ServiceTaskDetails = () => {
           <p>{checklist_name}</p>
         </div>
       </div>
+      {/* Submission form — same form used by the public and asset task flows */}
+      <section className="w-full my-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold text-slate-900">
+            Submit checklist
+          </h2>
+          <p className="text-xs text-slate-500">
+            Answer pending questions and submit this soft-service task.
+          </p>
+        </div>
+        <ChecklistSubmissionForm activityId={activityId} />
+      </section>
+
       <div className="w-full my-2">
-       
+        {taskDetails.length === 0 && (
+          <p className="text-center text-gray-500">No details available</p>
+        )}
+
         {taskDetails.map((task, index) => (
           <div key={task.id}>
             
@@ -65,6 +82,12 @@ const ServiceTaskDetails = () => {
                   <p className="font-medium">Answer :</p>
                   <p>{task.value}</p>
                 </div>
+                {task.comment && (
+                  <div className="flex gap-4 items-center bg-yellow-100 p-2 rounded-md">
+                    <p className="font-medium">Comment :</p>
+                    <p>{task.comment}</p>
+                  </div>
+                )}
 
                 {/* Question Attachments */}
                 {task.question_attachments && task.question_attachments.length > 0 && (
@@ -74,10 +97,10 @@ const ServiceTaskDetails = () => {
                       {task.question_attachments.map((attachment, idx) => (
                         <div key={attachment.id || idx} className="relative">
                           <img
-                            src={domainPrefix + attachment.document}
+                            src={attachmentUrl(attachment.document)}
                             alt={`Question attachment ${idx + 1}`}
                             className="w-full h-32 object-cover rounded-md border border-gray-300 cursor-pointer hover:opacity-80"
-                            onClick={() => window.open(attachment.document, '_blank')}
+                            onClick={() => window.open(attachmentUrl(attachment.document), '_blank')}
                           />
                         </div>
                       ))}
@@ -93,10 +116,10 @@ const ServiceTaskDetails = () => {
                       {task.submission_attachments.map((attachment, idx) => (
                         <div key={attachment.id || idx} className="relative">
                           <img
-                            src={domainPrefix + attachment.document}
+                            src={attachmentUrl(attachment.document)}
                             alt={`Submission attachment ${idx + 1}`}
                             className="w-full h-32 object-cover rounded-md border border-gray-300 cursor-pointer hover:opacity-80"
-                            onClick={() => window.open(attachment.document, '_blank')}
+                            onClick={() => window.open(attachmentUrl(attachment.document), '_blank')}
                           />
                         </div>
                       ))}

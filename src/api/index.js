@@ -4,6 +4,7 @@ import axiosInstance from "./axiosInstance";
 import HrmsAuth from "./HrmsAuth";
 import vibeAuth from "./vibeAuth";
 import axios from "axios";
+import { clampPerPage, MAX_PER_PAGE } from "./pagination";
 // import DigestFetch from "digest-fetch";
 export const API_URL = "https://admin.vibecopilot.ai";
 export const vibeMedia = "https://admin.vibecopilot.ai/api/media/";
@@ -107,7 +108,7 @@ export const getPerPageSiteAsset = (
     params: {
       token: token,
       page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
       building_id: building,
       floor_id: floor,
       unit_id: unit,
@@ -169,7 +170,7 @@ export const getFilteredSiteAssets = async (filters = {}, page = 1, perPage = 10
   const params = {
     token: token,
     page: page,
-    per_page: perPage,
+    per_page: clampPerPage(perPage),
   };
 
   if (filters.building_id) params["q[building_id_eq]"] = filters.building_id;
@@ -228,17 +229,17 @@ export const getSiteAssets = async (siteId, page = 1, perPage = 10) =>
       token: token,
       site_id: siteId,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
     },
   });
 
 /** Fetch asset list for dashboard drill-down (card_filter: in_use | breakdown | all) */
-export const getAssetsDrill = async (cardFilter = "all", page = 1, perPage = 100) =>
+export const getAssetsDrill = async (cardFilter = "all", page = 1, perPage = MAX_PER_PAGE) =>
   axiosInstance.get("/site_assets.json", {
     params: {
       token: token,
       page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
       ...(cardFilter && cardFilter !== "all" ? { card_filter: cardFilter } : {}),
     },
   });
@@ -344,7 +345,7 @@ export {
 // Konstruct Updates
 export const getKonstructUpdates = async (page = 1, perPage = 10) =>
   axiosInstance.get("/konstruct_updates.json", {
-    params: { token, page, per_page: perPage },
+    params: { token, page, per_page: clampPerPage(perPage) },
   });
 
 export const getKonstructUpdate = async (id) =>
@@ -553,7 +554,7 @@ export const getFitoutRequest = async (page, per_page) =>
   axiosInstance.get(`/fitout_request.json`, {
     params: {
       token: token,
-      per_page: per_page,
+      per_page: clampPerPage(per_page),
       page: page,
     },
   });
@@ -930,7 +931,7 @@ export const getAdminComplaints = async (
   const params = {
     token: token,
     page: page,
-    per_page: perPage,
+    per_page: clampPerPage(perPage),
     // Keep seeing merged (secondary) tickets here regardless of the merge feature
     // introduced for another frontend sharing this backend - this app has no UI to
     // view or reach a merged-away ticket otherwise, so it must not silently disappear.
@@ -1017,7 +1018,7 @@ export const getAdminPerPageComplaints = async (page, perPage, search) =>
   axiosInstance.get(`/pms/admin/complaints.json`, {
     params: {
       token: token,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
       page: page,
       search: search,
       // See merged (secondary) tickets too - this app has no way to reach one otherwise.
@@ -1333,8 +1334,8 @@ export const getAMC = async (page = 1, perPage = 10) =>
   axiosInstance.get("/asset_amcs.json", {
     params: {
       token: token,
-      Page: page,
-      Per_Page: perPage,
+      page: page,
+      per_page: clampPerPage(perPage),
     },
   });
 export const postAMC = async (data) =>
@@ -1696,7 +1697,7 @@ export const getRoutineTaskStatus = async (
   const params = {
     token,
     page,
-    per_page: perPage,
+    per_page: clampPerPage(perPage),
   };
 
   if (status) {
@@ -1737,7 +1738,7 @@ export const getChecklistActivities = async ({
   search = "",
   startDate = null,
 } = {}) => {
-  const params = { page, per_page: perPage };
+  const params = { page, per_page: clampPerPage(perPage) };
   const term = (search || "").trim();
 
   const applyFilters = (groupIndex = null) => {
@@ -1779,7 +1780,12 @@ export const getActivityDetails = async (activityId) =>
   axiosInstance.get(`/activities/${activityId}.json`);
 
 export const getActivitySubmissions = async (activityId) =>
-  axiosInstance.get(`/submissions.json?q[activity_id_eq]=${activityId}`);
+  axiosInstance.get("/submissions.json", {
+    params: {
+      "q[activity_id_eq]": activityId,
+      mine: true,
+    },
+  });
 
 export const createChecklistSubmission = async (data) =>
   axiosInstance.post("/submissions.json", data);
@@ -1790,12 +1796,12 @@ export const changeSiteForApp = async (siteId) =>
   });
 
 // ...existing code...
-export const getPPMTask = async (page = 1, perPage = 100) =>
+export const getPPMTask = async (page = 1, perPage = MAX_PER_PAGE) =>
   axiosInstance.get("/activities.json?q[checklist_ctype_eq]=ppm", {
     params: {
       token: token,
       page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
     },
   });
 export const getRoutineTaskDetails = async (assetId, activityId) =>
@@ -1867,13 +1873,13 @@ export const getPPMCalendar = async (startdate, enddate) =>
   });
 
 /** Fetch all calendar activities (PPM, routine, soft services) for a date range */
-export const getCalendarActivities = async (startdate, enddate, siteIds = null) =>
+export const getCalendarActivities = async (startdate, enddate, siteIds = null, page = 1) =>
   axiosInstance.get("/activities.json", {
     params: {
       token: token,
       "q[checklist_ctype_eq]": "ppm",
-      page: 1,
-      per_page: 1000, // Adjust as needed to fetch all activities
+      page,
+      per_page: MAX_PER_PAGE,
       startdate,
       enddate,
       ...(siteIds && siteIds.length ? { site_ids: Array.isArray(siteIds) ? siteIds.join(",") : siteIds } : {}),
@@ -2227,7 +2233,7 @@ export const getHsns = async (page = 1, perPage = 10) =>
     params: {
       token: token,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
     },
   });
 export const getHsnDetails = async (id) =>
@@ -2482,7 +2488,7 @@ export const getStaff = async (
   const params = {
     token: token,
     page,
-    per_page: perPage,
+    per_page: clampPerPage(perPage),
   };
 
   if (staffInOut === "IN") {
@@ -2548,12 +2554,12 @@ export const putStaffApproval = async (id, data) =>
     },
   });
 /** Fetch staff list for dashboard drill-down */
-export const getStaffDrill = async (siteId, limit = 100) =>
+export const getStaffDrill = async (siteId, limit = MAX_PER_PAGE, page = 1) =>
   axiosInstance.get("/staffs.json", {
     params: {
       token: token,
-      per_page: limit,
-      page: 1,
+      per_page: clampPerPage(limit),
+      page,
       ...(siteId && { site_id: siteId }),
     },
   });
@@ -2564,7 +2570,7 @@ export const getStaffPunchedInToday = async (page = 1, perPage = 10, siteId) =>
     params: {
       token: token,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
       ...(siteId && { site_id: siteId }),
     },
   });
@@ -2575,7 +2581,7 @@ export const getStaffPunchedOutToday = async (page = 1, perPage = 10, siteId) =>
     params: {
       token: token,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
       ...(siteId && { site_id: siteId }),
     },
   });
@@ -2628,7 +2634,7 @@ export const getSecurityGuardVisitors = async (page = 1, perpage = 10) =>
     params: {
       token: token,
       page: page,
-      per_page: perpage,
+      per_page: clampPerPage(perpage),
       "q[user_type_eq]": "security_guard",
     },
   });
@@ -2698,7 +2704,7 @@ export const RmbAttendance = async (page = 1, perPage = 10) =>
       token: token,
       rmb: true,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
     },
   });
 
@@ -3149,7 +3155,7 @@ export const getAssetPPMList = async (page = 1, perPage = 10) =>
     params: {
       token: token,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
     },
   });
 export const getServicesPPMDetails = async (id) =>
@@ -3166,7 +3172,7 @@ export const getServicesRoutineList = async (
   startDate = null,
   endDate = null,
 ) => {
-  let url = `/activities.json?q[soft_service_id_null]=0&per_page=${perpage}&page=${page}`;
+  let url = `/activities.json?q[soft_service_id_null]=0&per_page=${clampPerPage(perpage)}&page=${page}`;
 
   if (startDate) {
     url += `&q[start_time_gteq]=${startDate}`;
@@ -3609,7 +3615,7 @@ export const getExpectedVisitor = async (
   const params = {
     token: token,
     page: page,
-    per_page: perPage,
+    per_page: clampPerPage(perPage),
   };
 
   // Add dynamic filters
@@ -3762,7 +3768,7 @@ export const getVisitorApprovals = async (page = 1, perPage = 10) =>
     params: {
       token: token,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
     },
   });
 export const visitorApproval = async (id, data) =>
@@ -3775,7 +3781,7 @@ export const getVisitorHistory = async (page = 1, perPage = 10, filters = {}) =>
   const params = {
     token: token,
     page: page,
-    per_page: perPage,
+    per_page: clampPerPage(perPage),
   };
 
   if (filters.dateFrom) params["q[approval_date_gteq]"] = filters.dateFrom;
@@ -4168,8 +4174,8 @@ export const getBuildings = async (page = 1, perpage = 10) =>
   axiosInstance.get("/buildings.json", {
     params: {
       token: token,
-      Page: page,
-      Per_Page: perpage,
+      page: page,
+      per_page: clampPerPage(perpage),
     },
   });
 
@@ -11578,7 +11584,7 @@ export const getCamBillingData = async (page = 1, perPage = 10) =>
     params: {
       token: token,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
     },
   });
 
@@ -11952,7 +11958,7 @@ export const getPets = async (page = 1, perPage = 10) =>
     params: {
       token: token,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
     },
   });
 
@@ -12036,12 +12042,12 @@ export const deleteVisitorCategory = async (id) =>
   });
 
 // Visitor Categories API
-export const getVisitorCategories = async (page = 1, perpage = 100) =>
+export const getVisitorCategories = async (page = 1, perpage = MAX_PER_PAGE) =>
   axiosInstance.get("/visitor_categories.json", {
     params: {
       token: token, // token imported or retrieved from localStorage
-      Page: page,
-      Per_Page: perpage,
+      page: page,
+      per_page: clampPerPage(perpage),
       t: Date.now(),
     },
   });
@@ -12073,8 +12079,8 @@ export const getVisitorSubCategories = async (page = 1, perpage = 10) =>
   axiosInstance.get("/visitor_sub_categories.json", {
     params: {
       token: token,
-      Page: page,
-      Per_Page: perpage,
+      page: page,
+      per_page: clampPerPage(perpage),
     },
   });
 
@@ -12342,7 +12348,7 @@ export const getAmenitiesBooking = async (
     params: {
       token: token,
       page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
       site_id: siteId,
       "q[search_cont]": search, // add this
       _t: new Date().getTime(),
@@ -12407,7 +12413,7 @@ export const getAmenities = async (page = 1, perPage = 10, siteId = 47) =>
     params: {
       token: token,
       page: page,
-      per_page: perPage,
+      per_page: clampPerPage(perPage),
       site_id: siteId,
     },
   });
@@ -12575,12 +12581,12 @@ export const getVisitorAnalytics = async (start_date, end_date, siteId) =>
       ...(siteId && { site_id: siteId }),
     },
   });
-export const getVisitorsDrill = async (filter, siteId, limit = 50) =>
+export const getVisitorsDrill = async (filter, siteId, limit = MAX_PER_PAGE) =>
   axiosInstance.get("/visitors/visitors_drill.json", {
     params: {
       token: getItemInLocalStorage("TOKEN"),
       filter,
-      limit,
+      limit: clampPerPage(limit),
       ...(siteId && { site_id: siteId }),
     },
   });

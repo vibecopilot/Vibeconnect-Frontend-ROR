@@ -825,6 +825,7 @@ import {
 import TrialBalanceReport from "./pages/Accounting/Reports/TrialBalanceReport.jsx";
 // Visitor overstay alert polling
 import { getExpectedVisitor } from "./api";
+import { MAX_PER_PAGE } from "./api/pagination";
 import VisitorAlertSetup from "./pages/Setup/VisitorAlertSetup.jsx";
 import FitOutList from "./pages/FitOut/FitOutList.jsx";
 import FitOutSetup from "./pages/FitOut/FitOutSetup.jsx";
@@ -949,7 +950,7 @@ function App() {
 
     const poll = async () => {
       try {
-        const resp = await getExpectedVisitor(1, 100, { visitorInOut: "IN" });
+        const resp = await getExpectedVisitor(1, MAX_PER_PAGE, { visitorInOut: "IN" });
         const visitors = extractVisitors(resp);
         const now = Date.now();
         visitors.forEach((v) => {
