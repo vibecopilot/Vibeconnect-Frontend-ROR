@@ -12,6 +12,7 @@ import {
   postFitoutRequest,
   putFitoutRequest,
 } from "../../api";
+import { fetchAllPages, MAX_PER_PAGE } from "../../api/pagination";
 
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
@@ -74,9 +75,9 @@ const FitOutRequestEditPage = () => {
 
       // Fetch Request Details
 
-      const response = await getFitoutRequest(1, 100);
-
-      const requests = response?.data?.fitout_requests || [];
+      const requests = await fetchAllPages((page) =>
+        getFitoutRequest(page, MAX_PER_PAGE)
+      );
 
       const selectedRequest = requests.find(
         (item) => item.id === parseInt(id)

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getInvoices, deleteInvoice } from '../../api/accounting';
+import { MAX_PER_PAGE } from '../../api/pagination';
 import AccountingNavbar from '../../components/navbars/AccountingNavbar';
 import Navbar from '../../components/Navbar';
 
@@ -16,7 +17,7 @@ const Invoices = () => {
     search: ''
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = MAX_PER_PAGE;
 
   useEffect(() => {
     fetchInvoices();

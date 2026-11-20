@@ -15,6 +15,7 @@ import {
   getStaffPunchedOutToday,
   getRegisteredVehicle,
 } from "../../api";
+import { fetchAllPages, MAX_PER_PAGE } from "../../api/pagination";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import DetailPopup from "../../components/DetailPopup";
 import {
@@ -894,9 +895,7 @@ const VisitorsAnalyticsDashboard = () => {
       let columns = staffColumns;
 
       if (type === "total") {
-        res = await getStaffDrill(siteId, 100);
-        const list = res?.data?.staffs ?? res?.data ?? [];
-        records = Array.isArray(list) ? list : [];
+        records = await fetchAllPages((page) => getStaffDrill(siteId, MAX_PER_PAGE, page));
         columns = staffColumns;
       } else if (type === "in") {
         res = await getStaffPunchedInToday(siteId);

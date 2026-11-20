@@ -9,6 +9,7 @@ import { MdOpenInNew } from "react-icons/md";
 
 import Navbar from "../../components/Navbar";
 import { domainPrefix, getFitoutRequest } from "../../api";
+import { fetchAllPages, MAX_PER_PAGE } from "../../api/pagination";
 
 const RequestDetails = () => {
   const { id } = useParams();
@@ -34,9 +35,9 @@ const RequestDetails = () => {
     try {
       setLoading(true);
 
-      const response = await getFitoutRequest(1, 100);
-
-      const requests = response?.data?.fitout_requests || [];
+      const requests = await fetchAllPages((page) =>
+        getFitoutRequest(page, MAX_PER_PAGE)
+      );
 
       const selectedRequest = requests.find(
         (item) => item.id === parseInt(id)

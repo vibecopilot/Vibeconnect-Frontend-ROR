@@ -378,6 +378,7 @@
 import React, { useState, useEffect } from "react";
 import { getLedgers, getTaxRates, getBillingConfigurations } from "../../api/accounting";
 import { getBuildings, getFloors, getUnits, getUnitDetails, getSetupUsersByUnit, getHsns, getSites } from "../../api/index";
+import { fetchAllPages, MAX_PER_PAGE } from "../../api/pagination";
 
 const InvoiceModal = ({ invoice, onClose, onSave }) => {
   const [ledgers, setLedgers] = useState([]);
@@ -771,8 +772,10 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
 
   const fetchHsnCodes = async () => {
     try {
-      const response = await getHsns(1, 1000); // Fetch all HSN codes
-      setHsnCodes(response.data.data || response.data.hsns || response.data || []);
+      const hsns = await fetchAllPages((page) =>
+        getHsns(page, MAX_PER_PAGE)
+      );
+      setHsnCodes(hsns);
     } catch (error) {
       console.error("Failed to fetch HSN codes", error);
     }

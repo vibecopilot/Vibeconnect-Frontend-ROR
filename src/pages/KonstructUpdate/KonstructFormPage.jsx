@@ -16,6 +16,7 @@ import {
   getSetupUsersByFloor,
   getSetupUsersByUnit,
 } from "../../api";
+import { MAX_PER_PAGE } from "../../api/pagination";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import FileInputBox from "../../containers/Inputs/FileInputBox";
 import toast from "react-hot-toast";
@@ -163,7 +164,7 @@ const KonstructFormPage = () => {
     };
     const fetchBuildings = async () => {
       try {
-        const res = await getBuildings(1, 1000);
+        const res = await getBuildings(1, MAX_PER_PAGE);
         const list = Array.isArray(res.data) ? res.data : [];
         setFilterBuildings(list);
       } catch (err) {

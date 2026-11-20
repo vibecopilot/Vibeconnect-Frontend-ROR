@@ -5,6 +5,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import "./style/Calendar.css";
 import { API_URL, getPPMTask, getVibeBackground } from "../api";
+import { MAX_PER_PAGE, fetchAllPages } from "../api/pagination";
 import toast from "react-hot-toast";
 import ModalWrapper from "../containers/modals/ModalWrapper";
 import Navbar from "../components/Navbar";
@@ -48,24 +49,11 @@ const PPMCalendar = () => {
     const toastId = toast.loading("Loading PPM tasks...");
 
     try {
-      // Fetch first page to get total_pages
-      const firstResponse = await getPPMTask(1, 100);
-      const firstData = firstResponse?.data;
-      const totalPages = firstData?.total_pages || 1;
-      let activities = firstData?.activities || [];
-
-      // Fetch remaining pages concurrently
-      if (totalPages > 1) {
-        const pagePromises = [];
-        for (let page = 2; page <= totalPages; page++) {
-          pagePromises.push(getPPMTask(page, 100));
-        }
-        const remainingResponses = await Promise.all(pagePromises);
-        remainingResponses.forEach((resp) => {
-          const pageActivities = resp?.data?.activities || [];
-          activities = activities.concat(pageActivities);
-        });
-      }
+      // The calendar (and its date-range filter) needs every PPM task, so
+      // load all pages in 15-record chunks.
+      const activities = await fetchAllPages((page) =>
+        getPPMTask(page, MAX_PER_PAGE)
+      );
 
       const formattedEvents = activities.map((task) => {
         // FIX: Use only the DATE portion of start_time to avoid UTC timezone shift.

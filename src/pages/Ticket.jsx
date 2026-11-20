@@ -1007,12 +1007,7 @@ const Ticket = () => {
                 paginationTotalRows={totalRows}
                 paginationPerPage={perPage}
                 paginationDefaultPage={currentPage}
-                paginationRowsPerPageOptions={[
-                  10,
-                  20,
-                  30,
-                  50,
-                ]}
+                paginationRowsPerPageOptions={[10, 15]}
                 onChangePage={handlePageChange}
                 onChangeRowsPerPage={
                   handlePerRowsChange

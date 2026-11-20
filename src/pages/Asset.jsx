@@ -25,6 +25,7 @@ import {
   updateBreakdown,
 } from "../api";
 import axiosInstance from "../api/axiosInstance";
+import { clampPerPage } from "../api/pagination";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import AMC from "./SubPages/AMC";
 import Meter from "./Meter";
@@ -427,7 +428,7 @@ const Asset = () => {
         if (selectedVendor) searchQuery += `&q[vendor_id_eq]=${selectedVendor}`;
       }
 
-      const response = await axiosInstance.get(`/site_assets.json?token=${token}&page=${pageNo}&per_page=${perPage}&${searchQuery}`);
+      const response = await axiosInstance.get(`/site_assets.json?token=${token}&page=${pageNo}&per_page=${clampPerPage(perPage)}&${searchQuery}`);
 
       setFilteredData(response.data.site_assets);
       setTotal(response.data.total_count);
@@ -954,7 +955,7 @@ const Asset = () => {
                 onChange={handlePageChange}
                 showSizeChanger
                 onShowSizeChange={handlePageChange}
-                pageSizeOptions={["10", "20", "50", "100"]}
+                pageSizeOptions={["10", "15"]}
               />
             </div>
           </>

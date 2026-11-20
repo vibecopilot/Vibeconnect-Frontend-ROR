@@ -15,6 +15,7 @@ import {
   UsersImport,
   UsersSampleDownload,
 } from "../../api";
+import { MAX_PER_PAGE } from "../../api/pagination";
 import { Link } from "react-router-dom";
 import { BsEye } from "react-icons/bs";
 import {
@@ -405,11 +406,7 @@ const UserSetup = () => {
 
         const [buildingResponse, floorResponse, unitResponse] =
           await Promise.all([
-            getBuildings({
-              ...params,
-              Page: 1,
-              Per_Page: 1000,
-            }),
+            getBuildings(1, MAX_PER_PAGE),
             getAllFloors(params),
             getAllUnits(params),
           ]);
