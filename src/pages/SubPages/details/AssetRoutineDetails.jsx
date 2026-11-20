@@ -4,6 +4,14 @@ import { domainPrefix, getPmsAdmins, getRoutineTaskDetails } from "../../../api"
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
+// Attachfile#document_url returns a signed absolute URL; only prefix legacy
+// relative paths with the Rails host.
+const attachmentUrl = (document) => {
+  if (!document) return "";
+  if (/^(https?:\/\/|data:)/i.test(document)) return document;
+  return `${domainPrefix}${document.startsWith("/") ? "" : "/"}${document}`;
+};
+
 const AssetRoutineDetails = () => {
   const { assetId, activityId } = useParams();
 
@@ -177,6 +185,13 @@ const AssetRoutineDetails = () => {
               </p>
             </div>
 
+            {task.comment && (
+              <div className="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                <p className="text-gray-500 text-sm">Comment</p>
+                <p className="font-medium text-yellow-800">{task.comment}</p>
+              </div>
+            )}
+
             <div>
               <p className="text-gray-500 text-sm mb-2">Attachments</p>
 
@@ -185,12 +200,12 @@ const AssetRoutineDetails = () => {
                   task.question_attachments.map((attachment, i) => (
                     <img
                       key={i}
-                      src={domainPrefix + attachment.document}
+                      src={attachmentUrl(attachment.document)}
                       alt={`Attachment ${i + 1}`}
                       className="w-40 h-28 object-cover rounded-lg cursor-pointer hover:scale-105 transition"
                       onClick={() =>
                         window.open(
-                          domainPrefix + attachment.document,
+                          attachmentUrl(attachment.document),
                           "_blank"
                         )
                       }

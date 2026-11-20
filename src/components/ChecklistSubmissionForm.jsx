@@ -2,10 +2,19 @@ import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
+  API_URL,
   createChecklistSubmission,
   getActivityDetails,
   getActivitySubmissions,
 } from "../api";
+
+// Attachfile#document_url is a signed absolute URL. Older rows may still be
+// relative paths, so only prefix those.
+const attachmentUrl = (document) => {
+  if (!document) return "";
+  if (/^(https?:\/\/|data:)/i.test(document)) return document;
+  return `${API_URL}${document.startsWith("/") ? "" : "/"}${document}`;
+};
 
 const asArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -95,11 +104,28 @@ const ChecklistSubmissionForm = ({
   const [answers, setAnswers] = useState([]);
   const [values, setValues] = useState({});
   const [files, setFiles] = useState({});
+  const [comments, setComments] = useState({});
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  const applyAnswerRows = (rows) => {
+    const prefilled = {};
+    const prefilledComments = {};
+
+    rows.forEach((row) => {
+      if (row.question_id === undefined || row.question_id === null) return;
+      const key = String(row.question_id);
+      if (prefilled[key] === undefined) prefilled[key] = row.value ?? "";
+      if (row.comment) prefilledComments[key] = row.comment;
+    });
+
+    setAnswers(rows);
+    setValues(prefilled);
+    setComments(prefilledComments);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -116,17 +142,9 @@ const ChecklistSubmissionForm = ({
 
         const activityData = activityResponse?.data ?? activityResponse;
         const answerRows = asArray(answersResponse?.data ?? answersResponse);
-        const prefilled = {};
-
-        answerRows.forEach((row) => {
-          if (row.question_id === undefined || row.question_id === null) return;
-          const key = String(row.question_id);
-          if (prefilled[key] === undefined) prefilled[key] = row.value ?? "";
-        });
 
         setActivity(activityData);
-        setAnswers(answerRows);
-        setValues(prefilled);
+        applyAnswerRows(answerRows);
       } catch (fetchError) {
         if (!cancelled) setError(errorMessage(fetchError));
       } finally {
@@ -145,13 +163,23 @@ const ChecklistSubmissionForm = ({
     () => groups.flatMap((group) => (Array.isArray(group.questions) ? group.questions : [])),
     [groups]
   );
+  const answerByQuestion = useMemo(() => {
+    const mapped = {};
+    answers.forEach((row) => {
+      if (row.question_id === undefined || row.question_id === null) return;
+      const key = String(row.question_id);
+      if (!mapped[key]) mapped[key] = row;
+    });
+    return mapped;
+  }, [answers]);
   const answeredIds = useMemo(
-    () => new Set(answers.map((row) => String(row.question_id))),
-    [answers]
+    () => new Set(Object.keys(answerByQuestion)),
+    [answerByQuestion]
   );
   const attachmentsByQuestion = useMemo(() => {
     const mapped = {};
     answers.forEach((row) => {
+      if (row.question_id === undefined || row.question_id === null) return;
       const key = String(row.question_id);
       const documents = Array.isArray(row.question_attachments) ? row.question_attachments : [];
       if (documents.length > 0) {
@@ -169,6 +197,10 @@ const ChecklistSubmissionForm = ({
 
   const setValue = (questionId, value) => {
     setValues((current) => ({ ...current, [String(questionId)]: value }));
+  };
+
+  const setQuestionComment = (questionId, value) => {
+    setComments((current) => ({ ...current, [String(questionId)]: value }));
   };
 
   const handleFiles = (questionId, event) => {
@@ -225,6 +257,7 @@ const ChecklistSubmissionForm = ({
       questionsArr[String(index)] = {
         id: question.id,
         option: hasAnswer ? answer : "",
+        comment: comments[key] || "",
         files: selectedFiles,
       };
     }
@@ -254,6 +287,7 @@ const ChecklistSubmissionForm = ({
     Object.entries(questionsArr).forEach(([index, answer]) => {
       formData.append(`questions_arr[${index}][id]`, answer.id);
       formData.append(`questions_arr[${index}][option]`, answer.option);
+      formData.append(`questions_arr[${index}][comment]`, answer.comment);
       answer.files.forEach((file) => {
         formData.append(`questions_arr[${index}][attachfiles][]`, file);
       });
@@ -262,6 +296,16 @@ const ChecklistSubmissionForm = ({
     try {
       setSubmitting(true);
       await createChecklistSubmission(formData);
+
+      // Reload the saved answers so comments and uploaded attachments can be
+      // shown immediately in the read-only submitted summary below.
+      try {
+        const response = await getActivitySubmissions(activityId);
+        applyAnswerRows(asArray(response?.data ?? response));
+      } catch (refreshError) {
+        console.error("Unable to refresh submissions:", refreshError);
+      }
+
       setSubmitted(true);
       toast.success("Checklist submitted successfully");
       if (onSubmitted) onSubmitted({ activityId, activity });
@@ -273,6 +317,109 @@ const ChecklistSubmissionForm = ({
       setSubmitting(false);
     }
   };
+
+  const renderSubmittedSummary = () => (
+    <div className="rounded-xl border border-emerald-200 bg-white shadow-sm">
+      <div className="border-b border-emerald-100 p-5 text-center">
+        <p className="text-lg font-semibold text-emerald-700">Checklist submitted</p>
+        <p className="mt-2 text-sm text-slate-600">
+          {submitted
+            ? "Your answers have been recorded."
+            : "This checklist has already been completed."}
+        </p>
+        <div className="mt-5 flex items-center justify-center gap-4">
+          {backLink}
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
+            >
+              Done
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-4 p-4 sm:p-5">
+        {groups.length === 0 && (
+          <p className="text-center text-sm text-slate-500">No questions configured</p>
+        )}
+        {groups.map((group, groupIndex) => {
+          const groupQuestions = Array.isArray(group.questions) ? group.questions : [];
+          if (groupQuestions.length === 0) return null;
+          const heading =
+            group.group || (group.group_id ? `Group ${group.group_id}` : null);
+
+          return (
+            <section
+              key={group.group_id ?? `summary-group-${groupIndex}`}
+              className="rounded-lg border border-slate-100 p-3"
+            >
+              {heading && (
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                  {heading}
+                </h3>
+              )}
+              <div className="space-y-3">
+                {groupQuestions.map((question, questionIndex) => {
+                  const key = String(question.id);
+                  const row = answerByQuestion[key];
+                  const documents = attachmentsByQuestion[key] || [];
+
+                  return (
+                    <div key={key} className="rounded-lg bg-slate-50 p-3">
+                      <p className="text-sm font-medium text-slate-800">
+                        {question.name || `Question ${questionIndex + 1}`}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                        <p>
+                          <span className="text-slate-500">Answer: </span>
+                          <span className="font-semibold text-emerald-700">
+                            {row?.value || "—"}
+                          </span>
+                        </p>
+                        <p>
+                          <span className="text-slate-500">Comment: </span>
+                          <span className="font-medium text-slate-700">
+                            {row?.comment || "—"}
+                          </span>
+                        </p>
+                      </div>
+                      <div className="mt-3">
+                        <p className="text-xs text-slate-500">Attachments</p>
+                        {documents.length > 0 ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {documents.map((document, documentIndex) => (
+                              <a
+                                key={document.id ?? documentIndex}
+                                href={attachmentUrl(document.document)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="block"
+                              >
+                                <img
+                                  src={attachmentUrl(document.document)}
+                                  alt={`Attachment ${documentIndex + 1}`}
+                                  className="h-20 w-20 rounded-lg border border-slate-200 object-cover hover:scale-105 transition"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="mt-1 text-xs text-slate-400">No attachments</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -318,26 +465,7 @@ const ChecklistSubmissionForm = ({
       </div>
 
       {isComplete ? (
-        <div className="rounded-xl border border-emerald-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-lg font-semibold text-emerald-700">Checklist submitted</p>
-          <p className="mt-2 text-sm text-slate-600">
-            {submitted
-              ? "Your answers have been recorded."
-              : "This checklist has already been completed."}
-          </p>
-          <div className="mt-5 flex items-center justify-center gap-4">
-            {backLink}
-            {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-              >
-                Done
-              </button>
-            )}
-          </div>
-        </div>
+        renderSubmittedSummary()
       ) : questions.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <p className="text-base font-medium text-slate-700">No questions configured</p>
@@ -516,18 +644,43 @@ const ChecklistSubmissionForm = ({
                               {existingDocuments.map((document, documentIndex) => (
                                 <a
                                   key={document.id ?? documentIndex}
-                                  href={document.document}
+                                  href={attachmentUrl(document.document)}
                                   target="_blank"
                                   rel="noreferrer"
                                 >
                                   <img
-                                    src={document.document}
+                                    src={attachmentUrl(document.document)}
                                     alt="checklist attachment"
                                     className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
                                   />
                                 </a>
                               ))}
                             </div>
+                          )}
+                        </div>
+
+                        <div className="mt-3">
+                          <label
+                            htmlFor={`question-comment-${questionKey}`}
+                            className="text-xs font-medium text-slate-600"
+                          >
+                            Comment (optional)
+                          </label>
+                          {answered ? (
+                            <p className="mt-1 text-xs text-slate-600">
+                              {answerByQuestion[questionKey]?.comment || "No comment"}
+                            </p>
+                          ) : (
+                            <input
+                              id={`question-comment-${questionKey}`}
+                              type="text"
+                              value={comments[questionKey] || ""}
+                              onChange={(event) =>
+                                setQuestionComment(question.id, event.target.value)
+                              }
+                              placeholder="Add a note for this question"
+                              className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+                            />
                           )}
                         </div>
                       </div>
@@ -543,7 +696,7 @@ const ChecklistSubmissionForm = ({
               htmlFor="submission-comment"
               className="text-sm font-medium text-slate-800"
             >
-              Comment
+              Overall comment (optional)
             </label>
             <textarea
               id="submission-comment"
