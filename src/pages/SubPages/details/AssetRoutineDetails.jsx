@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ChecklistSubmissionForm from "../../../components/ChecklistSubmissionForm";
 import { domainPrefix, getPmsAdmins, getRoutineTaskDetails } from "../../../api";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -44,7 +45,7 @@ const AssetRoutineDetails = () => {
           toast.success("Schedule Details fetched successfully");
         } else {
           setTaskDetails([]);
-          toast.error("No details found");
+          // toast.error("No details found");
         }
       } catch (error) {
         toast.dismiss();
@@ -103,25 +104,12 @@ const AssetRoutineDetails = () => {
     );
   }
 
-  if (!taskDetails || taskDetails.length === 0) {
-    return (
-      <div className="flex justify-center items-center w-full h-screen bg-gray-50">
-        <div className="bg-white p-8 rounded-xl shadow-md text-center">
-          <p className="text-gray-400 text-xl font-semibold">
-            No Submission Done Yet!
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-
   const {
     asset_name,
     checklist_name,
     created_at,
     user_name,
-  } = taskDetails[0];
+  } = taskDetails[0] || {};
 
   return (
     <div className="flex flex-col p-6 bg-gray-50 min-h-screen">
@@ -150,8 +138,26 @@ const AssetRoutineDetails = () => {
         </div>
       </div>
 
+      {/* Submission form — same form used by the app-launched public flow */}
+      <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold text-slate-900">
+            Submit checklist
+          </h2>
+          <p className="text-xs text-slate-500">
+            Answer pending questions and submit this task.
+          </p>
+        </div>
+        <ChecklistSubmissionForm activityId={activityId} />
+      </section>
+
       {/* Questions */}
       <div className="mt-6 space-y-5">
+        {taskDetails.length === 0 && (
+          <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 text-center text-gray-500">
+            No Submission Done Yet!
+          </div>
+        )}
         {taskDetails.map((task, index) => (
           <div
             key={task.id || index}

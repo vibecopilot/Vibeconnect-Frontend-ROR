@@ -7,8 +7,9 @@ import toast from "react-hot-toast";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import Navbar from "../components/Navbar";
 import AssetNav from "../components/navbars/AssetNav";
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { FaCheckCircle, FaClipboardCheck, FaTimesCircle } from "react-icons/fa";
 import SiteHeader from "../components/SiteHeader";
+import ChecklistSubmissionForm from "../components/ChecklistSubmissionForm";
 
 const RoutineTask = () => {
   const [tasks, setTasks] = useState([]);
@@ -35,6 +36,9 @@ const RoutineTask = () => {
   // const [endDate, setEndDate] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+
+  // Task whose checklist submission form is open in the modal.
+  const [submitTask, setSubmitTask] = useState(null);
 
   const [statusCounts, setStatusCounts] = useState({
     all: 0,
@@ -220,12 +224,32 @@ const RoutineTask = () => {
 
   const RoutineColumns = [
     {
-      name: "View",
-      cell: (row) => (
-        <Link to={`/assets/routine-task-details/${row.asset_id}/${row.id}`}>
-          <BsEye size={16} />
-        </Link>
-      ),
+      name: "Action",
+      cell: (row) => {
+        const status = String(row.status || "").toLowerCase();
+        const canSubmit = status === "pending" || status === "overdue";
+
+        return (
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/assets/routine-task-details/${row.asset_id}/${row.id}`}
+              title="View details"
+            >
+              <BsEye size={16} />
+            </Link>
+           {/* {canSubmit && (
+              <button
+                type="button"
+                title="Fill and submit checklist"
+                onClick={() => setSubmitTask(row)}
+                className="flex items-center gap-1 rounded bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+              >
+                <FaClipboardCheck size={14} /> Submit
+              </button>
+            )} */}
+          </div>
+        );
+      },
     },
     { name: "ID", selector: (row) => row.id, sortable: true },
     { name: "Asset Name", selector: (row) => row.asset_name, sortable: true },
@@ -461,6 +485,53 @@ const RoutineTask = () => {
           <Table columns={RoutineColumns} data={filteredData} isPagination />
         )}
       </div>
+
+      {/* -------- SUBMISSION FORM MODAL (pending / overdue tasks) -------- */}
+      {submitTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Checklist submission form"
+        >
+          <div className="my-6 w-full max-w-4xl rounded-xl bg-white shadow-xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-xl border-b border-slate-200 bg-white px-5 py-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Submit checklist
+                </p>
+                <p className="text-xs text-slate-500">
+                  {submitTask.checklist_name || "Checklist"} ·{" "}
+                  {submitTask.asset_name || "Asset"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSubmitTask(null)}
+                aria-label="Close submission form"
+                className="text-2xl leading-none text-slate-500 hover:text-slate-800"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="max-h-[calc(100vh-11rem)] overflow-y-auto p-5">
+              <ChecklistSubmissionForm
+                key={submitTask.id}
+                activityId={submitTask.id}
+                onClose={() => setSubmitTask(null)}
+                onSubmitted={() =>
+                  fetchTasks(
+                    selectedStatus === "all" ? null : selectedStatus,
+                    startDate || null,
+                    endDate || null
+                  )
+                }
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
