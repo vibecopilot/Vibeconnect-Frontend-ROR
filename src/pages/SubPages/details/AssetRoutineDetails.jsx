@@ -1,16 +1,8 @@
 import React, { useEffect, useState } from "react";
 import ChecklistSubmissionForm from "../../../components/ChecklistSubmissionForm";
-import { domainPrefix, getPmsAdmins, getRoutineTaskDetails } from "../../../api";
+import { getPmsAdmins, getRoutineTaskDetails } from "../../../api";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-
-// Attachfile#document_url returns a signed absolute URL; only prefix legacy
-// relative paths with the Rails host.
-const attachmentUrl = (document) => {
-  if (!document) return "";
-  if (/^(https?:\/\/|data:)/i.test(document)) return document;
-  return `${domainPrefix}${document.startsWith("/") ? "" : "/"}${document}`;
-};
 
 const AssetRoutineDetails = () => {
   const { assetId, activityId } = useParams();
@@ -159,77 +151,6 @@ const AssetRoutineDetails = () => {
         <ChecklistSubmissionForm activityId={activityId} />
       </section>
 
-      {/* Questions */}
-      <div className="mt-6 space-y-5">
-        {taskDetails.length === 0 && (
-          <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 text-center text-gray-500">
-            No Submission Done Yet!
-          </div>
-        )}
-        {taskDetails.map((task, index) => (
-          <div
-            key={task.id || index}
-            className="bg-white rounded-xl shadow-md p-5 border border-gray-100"
-          >
-            <div className="mb-3">
-              <p className="text-gray-500 text-sm">Question</p>
-              <p className="font-medium text-gray-800">
-                {task.question_name || "-"}
-              </p>
-            </div>
-
-            <div className="mb-4 bg-green-50 p-3 rounded-lg border border-green-200">
-              <p className="text-gray-500 text-sm">Answer</p>
-              <p className="font-semibold text-green-700">
-                {task.value || "-"}
-              </p>
-            </div>
-
-            {task.comment && (
-              <div className="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                <p className="text-gray-500 text-sm">Comment</p>
-                <p className="font-medium text-yellow-800">{task.comment}</p>
-              </div>
-            )}
-
-            <div className="mb-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
-              <p>
-                <span className="font-medium">Submitted by :</span>{" "}
-                {task.user_name || "-"}
-              </p>
-              <p>
-                <span className="font-medium">Submitted at :</span>{" "}
-                {task.created_at ? dateFormat(task.created_at) : "-"}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-gray-500 text-sm mb-2">Attachments</p>
-
-              <div className="flex gap-4 flex-wrap">
-                {task.question_attachments?.length > 0 ? (
-                  task.question_attachments.map((attachment, i) => (
-                    <img
-                      key={i}
-                      src={attachmentUrl(attachment.document)}
-                      alt={`Attachment ${i + 1}`}
-                      className="w-40 h-28 object-cover rounded-lg cursor-pointer hover:scale-105 transition"
-                      onClick={() =>
-                        window.open(
-                          attachmentUrl(attachment.document),
-                          "_blank"
-                        )
-                      }
-                    />
-                  ))
-                ) : (
-                  <p className="text-gray-400">No Attachments</p>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
     <div className="bg-white shadow-md rounded-xl p-4 mt-4 border">
 
   <div className="flex flex-col gap-3">

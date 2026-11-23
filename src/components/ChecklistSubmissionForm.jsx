@@ -105,6 +105,7 @@ const ChecklistSubmissionForm = ({
   const [values, setValues] = useState({});
   const [files, setFiles] = useState({});
   const [comments, setComments] = useState({});
+  const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -143,6 +144,7 @@ const ChecklistSubmissionForm = ({
         const answerRows = asArray(answersResponse?.data ?? answersResponse);
 
         setActivity(activityData);
+        setComment(activityData?.overall_comment || "");
         applyAnswerRows(answerRows);
       } catch (fetchError) {
         if (!cancelled) setError(errorMessage(fetchError));
@@ -237,7 +239,9 @@ const ChecklistSubmissionForm = ({
       const label = question.name || `Question ${index + 1}`;
       const answer = values[key];
       const selectedFiles = files[key] || [];
+      const answerComment = comments[key] || "";
       const hasAnswer = answer !== undefined && answer !== null && String(answer).trim() !== "";
+      const hasComment = String(answerComment).trim() !== "";
 
       if (!hasAnswer && question.question_mandatory) {
         const message = `Please answer: ${label}`;
@@ -251,12 +255,14 @@ const ChecklistSubmissionForm = ({
         toast.error(message);
         return;
       }
-      if (!hasAnswer && selectedFiles.length === 0) continue;
+      // A comment on its own is still a valid answer row — don't drop it just
+      // because no option/file was provided.
+      if (!hasAnswer && selectedFiles.length === 0 && !hasComment) continue;
 
       questionsArr[String(index)] = {
         id: question.id,
         option: hasAnswer ? answer : "",
-        comment: comments[key] || "",
+        comment: answerComment,
         files: selectedFiles,
       };
     }
@@ -281,8 +287,9 @@ const ChecklistSubmissionForm = ({
     appendSubmissionField("soft_service_id", activity.soft_service_id);
     // The Rails user is resolved from the token server-side; never send a
     // mobile-app / Vibe user id as submission[user_id].
-    // Only per-question comments are sent — a single overall comment would be
-    // copied onto every question by the API and show on all of them.
+    // The overall comment is stored on the activity by the API, not copied
+    // onto each question submission.
+    appendSubmissionField("comment", comment);
 
     Object.entries(questionsArr).forEach(([index, answer]) => {
       formData.append(`questions_arr[${index}][id]`, answer.id);
@@ -318,8 +325,20 @@ const ChecklistSubmissionForm = ({
     }
   };
 
-  const renderSubmittedSummary = () => (
-    <div className="rounded-xl border border-emerald-200 bg-white shadow-sm">
+  const renderSubmittedSummary = () => {
+    // Show submitter details once for the whole submission, not on each question.
+    const submittedRows = Object.values(answerByQuestion);
+    const submitterNames = [
+      ...new Set(submittedRows.map((row) => row?.user_name).filter(Boolean)),
+    ];
+    const submittedAt = submittedRows
+      .map((row) => row?.created_at)
+      .filter(Boolean)
+      .sort()
+      .pop();
+
+    return (
+      <div className="rounded-xl border border-emerald-200 bg-white shadow-sm">
       <div className="border-b border-emerald-100 p-5 text-center">
         <p className="text-lg font-semibold text-emerald-700">Checklist submitted</p>
         <p className="mt-2 text-sm text-slate-600">
@@ -327,6 +346,31 @@ const ChecklistSubmissionForm = ({
             ? "Your answers have been recorded."
             : "This checklist has already been completed."}
         </p>
+        {(submitterNames.length > 0 || submittedAt) && (
+          <div className="mt-3 space-y-0.5 text-sm text-slate-600">
+            {submitterNames.length > 0 && (
+              <p>
+                Submitted by:{" "}
+                <span className="font-semibold text-slate-800">
+                  {submitterNames.join(", ")}
+                </span>
+              </p>
+            )}
+            {submittedAt && (
+              <p className="text-xs text-slate-500">
+                Submitted at: {formatDateTime(submittedAt)}
+              </p>
+            )}
+          </div>
+        )}
+        {comment && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-left">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+              Overall comment
+            </p>
+            <p className="mt-1 text-sm text-slate-700">{comment}</p>
+          </div>
+        )}
         <div className="mt-5 flex items-center justify-center gap-4">
           {backLink}
           {onClose && (
@@ -386,9 +430,6 @@ const ChecklistSubmissionForm = ({
                           </span>
                         </p>
                       </div>
-                      <p className="mt-2 text-xs text-slate-500">
-                        Submitted by {row?.user_name || "—"} · {formatDateTime(row?.created_at)}
-                      </p>
                       <div className="mt-3">
                         <p className="text-xs text-slate-500">Attachments</p>
                         {documents.length > 0 ? (
@@ -413,7 +454,7 @@ const ChecklistSubmissionForm = ({
                           <p className="mt-1 text-xs text-slate-400">No attachments</p>
                         )}
                       </div>
-                    </div>
+                  </div>
                   );
                 })}
               </div>
@@ -421,8 +462,9 @@ const ChecklistSubmissionForm = ({
           );
         })}
       </div>
-    </div>
-  );
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -693,6 +735,23 @@ const ChecklistSubmissionForm = ({
               </section>
             );
           })}
+
+          <div>
+            <label
+              htmlFor="submission-comment"
+              className="text-sm font-medium text-slate-800"
+            >
+              Overall comment (optional)
+            </label>
+            <textarea
+              id="submission-comment"
+              rows={3}
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              placeholder="Add a note for the whole submission"
+              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
+            />
+          </div>
 
           <button
             type="submit"
