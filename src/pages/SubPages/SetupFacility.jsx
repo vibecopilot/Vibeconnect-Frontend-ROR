@@ -135,6 +135,9 @@ const SetupFacility = () => {
     razorpay_secret: "",
     razorpay_account_id: "",
     gst_no: "",
+    // GST percentage and its CGST/SGST split (gst_no is the GSTIN string).
+    gst: "",
+    sgst: "",
     cancellation_policy: "",
     book_before: "",
     book_before_days: "",
@@ -188,6 +191,17 @@ const SetupFacility = () => {
     } else {
       setFacilityError("");
     }
+  };
+
+  // GST is stored as the total rate; CGST and SGST are equal halves for
+  // intra-state bookings, so keep `sgst` in sync whenever GST changes.
+  const handleGstChange = (e) => {
+    const gst = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      gst,
+      sgst: gst === "" ? "" : String(Number(gst) / 2),
+    }));
   };
 
   const handleDropdownChange1 = (e) => {
@@ -1816,23 +1830,34 @@ const SetupFacility = () => {
                 />
               </div>
               <div className="my-2 flex flex-col gap-2">
-                <label htmlFor="" className="font-medium">
-                  GST
+                <label htmlFor="gst_no" className="font-medium">
+                  GST No
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="gst_no"
                   id="gst_no"
                   className="border border-gray-400 rounded p-2 outline-none"
+                  placeholder="GSTIN"
+                  value={formData.gst_no || ""}
+                  onChange={handleChange1}
+                />
+              </div>
+              <div className="my-2 flex flex-col gap-2">
+                <label htmlFor="gst" className="font-medium">
+                  GST (%)
+                </label>
+                <input
+                  type="number"
+                  name="gst"
+                  id="gst"
+                  className="border border-gray-400 rounded p-2 outline-none"
                   placeholder="GST(%)"
-                  min={18}
+                  min={0}
+                  max={100}
+                  step="0.5"
                   value={formData.gst || ""}
-                  onChange={(e) =>
-                    setFormData((prevState) => ({
-                      ...prevState,
-                      gst: e.target.value, // ✅ Correctly updates gst in formData
-                    }))
-                  }
+                  onChange={handleGstChange}
                 />
               </div>
             </div>
