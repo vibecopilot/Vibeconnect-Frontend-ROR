@@ -2035,7 +2035,7 @@ const EditAmenitySetup = () => {
                   }
                 />
               </div>
-              {/* <div className="my-2 flex flex-col gap-2">
+              <div className="my-2 flex flex-col gap-2">
                 <label htmlFor="gst" className="font-medium">
                   GST (%)
                 </label>
@@ -2045,6 +2045,9 @@ const EditAmenitySetup = () => {
                   id="gst"
                   className="border rounded-md p-2"
                   placeholder="GST %"
+                  min={0}
+                  max={100}
+                  step="0.5"
                   value={formData.amenity.gst || ""}
                   onChange={(e) =>
                     setFormData((prevState) => ({
@@ -2052,6 +2055,8 @@ const EditAmenitySetup = () => {
                       amenity: {
                         ...prevState.amenity,
                         gst: e.target.value,
+                        // Keep the intra-state split in sync with the total rate.
+                        sgst: e.target.value === "" ? "" : String(Number(e.target.value) / 2),
                       },
                     }))
                   }
@@ -2067,6 +2072,8 @@ const EditAmenitySetup = () => {
                   id="sgst"
                   className="border rounded-md p-2"
                   placeholder="SGST %"
+                  min={0}
+                  step="0.5"
                   value={formData.amenity.sgst || ""}
                   onChange={(e) =>
                     setFormData((prevState) => ({
@@ -2078,7 +2085,7 @@ const EditAmenitySetup = () => {
                     }))
                   }
                 />
-              </div> */}
+              </div>
             </div>
           </div>
         </div>

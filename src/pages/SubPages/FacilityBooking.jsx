@@ -58,7 +58,8 @@ const FacilityBooking = () => {
     booking_date: "",
     site_id: siteId,
     amount: "",
-    gst_no: 0,
+    // GST percentage configured in Setup > Workspace Booking (not the GSTIN).
+    gst: 0,
     member_adult: 0,
     guest_adult: 0,
     no_of_members: 0,
@@ -132,7 +133,9 @@ const FacilityBooking = () => {
   const calculateBookingAmount = (facility, formData) => {
     if (facility?.fixed_amount) {
       const fixedAmount = Number(facility?.fixed_amount) || 0;
-      const taxPercentage = Number(facility?.gst_no) || 0;
+      // `gst` is the GST percentage; `gst_no` is the GSTIN string and must
+      // never be parsed as a number for tax calculations.
+      const taxPercentage = Number(facility?.gst) || 0;
       const taxAmount = (fixedAmount * taxPercentage) / 100;
       const totalAmount = fixedAmount + taxAmount;
       return totalAmount;
@@ -282,11 +285,6 @@ const FacilityBooking = () => {
           online: selectedFacility.online_payment_enabled ?? false,
         });
 
-        setFormData((prev) => ({
-          ...prev,
-          gst_no: selectedFacility.gst_no,
-          prices: newPrices,
-        }));
         const newPrices = {
           member_price_adult: selectedFacility.member_price_adult ?? 0,
           guest_price_adult: selectedFacility.guest_price_adult ?? 0,
@@ -294,7 +292,7 @@ const FacilityBooking = () => {
 
         setFormData((prevFormData) => ({
           ...prevFormData,
-          gst_no: selectedFacility.gst_no,
+          gst: Number(selectedFacility.gst) || 0,
           prices: newPrices,
         }));
 
@@ -358,7 +356,7 @@ const FacilityBooking = () => {
     //   + updatedFormData.tenant_child * prices.tenant_price_child;
     const totalBeforeTax = memberTotal + guestTotal; //+ tenantTotal;
     // Assuming `tax_no` comes from the fetched data (e.g., tax rate is 12%)
-    const taxAmount = calculateGST(totalBeforeTax, formData.gst_no || 0); // If no tax, use 0
+    const taxAmount = calculateGST(totalBeforeTax, formData.gst || 0); // If no tax, use 0
     const finalAmount = totalBeforeTax + taxAmount;
     // Update formData and the total amount
     setFormData({
@@ -1229,7 +1227,7 @@ const FacilityBooking = () => {
                   type="text"
                   id="tax"
                   name="tax"
-                  value={formData.gst_no} // Display tax amount
+                  value={formData.gst} // GST % configured on the facility
                   disabled
                   className="flex p-2 border border-grey-300 rounded"
                 />

@@ -595,7 +595,7 @@ const handleInvoice = async () => {
             <Field label="Active" value={amenity?.active ? "Yes" : "No"} />
             <Field label="Min People" value={amenity?.min_people} />
             <Field label="Max People" value={amenity?.max_people} />
-            <Field label="GST (%)" value={amenity?.gst_no} />
+            <Field label="GST (%)" value={amenity?.gst} />
           </div>
         </div>
 
