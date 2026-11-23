@@ -192,6 +192,17 @@ const AssetRoutineDetails = () => {
               </div>
             )}
 
+            <div className="mb-4 flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500">
+              <p>
+                <span className="font-medium">Submitted by :</span>{" "}
+                {task.user_name || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Submitted at :</span>{" "}
+                {task.created_at ? dateFormat(task.created_at) : "-"}
+              </p>
+            </div>
+
             <div>
               <p className="text-gray-500 text-sm mb-2">Attachments</p>
 
