@@ -11,6 +11,7 @@ import {
   getLogin,
   getSetupUsers,
   getSiteData,
+  getAmenityPriceQuote,
   postAmenitiesBooking,
 } from "../../api";
 import { useSelector } from "react-redux";
@@ -21,6 +22,7 @@ import { error } from "highcharts";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { MdClose } from "react-icons/md";
+import { formatMinutes, rupees } from "../../utils/blockPricing";
 const FacilityBooking = () => {
   const navigate = useNavigate();
   const today = new Date();
@@ -43,6 +45,7 @@ const FacilityBooking = () => {
   const [terms, setTerms] = useState("No terms available.");
   const [gstNo, setGstNo] = useState(null);
   const [amountt, setAmountt] = useState("");
+  const [priceQuote, setPriceQuote] = useState(null);
   const [cancellationPolicy, setCancellationPolicy] = useState(
     "No cancellation policy available."
   );
@@ -194,10 +197,37 @@ const FacilityBooking = () => {
     fetchUnits();
   }, []);
 
+  const isBlockPricing = !!facility?.block_pricing;
+
   useEffect(() => {
+    if (isBlockPricing) return;
     const bookingAmount = calculateBookingAmount(facility, formData);
     setAmountt(bookingAmount);
   }, [facility, formData, selectedSlotIds]);
+
+  useEffect(() => {
+    if (!isBlockPricing || selectedSlotIds.length === 0) {
+      setPriceQuote(null);
+      if (isBlockPricing) setAmountt("");
+      return;
+    }
+    let cancelled = false;
+    getAmenityPriceQuote(facility.id, selectedSlotIds)
+      .then((response) => {
+        if (cancelled) return;
+        setPriceQuote(response.data);
+        setAmountt(response.data.total);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setPriceQuote(null);
+        setAmountt("");
+        toast.error(err?.response?.data?.error || "Could not calculate the price");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isBlockPricing, facility?.id, selectedSlotIds]);
 
   useEffect(() => {
     setSelectedSlotIds([]);
@@ -479,6 +509,10 @@ const FacilityBooking = () => {
     }
     if (Array.isArray(slots) && slots.length > 0 && selectedSlotIds.length === 0) {
       toast.error("Please select a slot for this facility.");
+      return;
+    }
+    if (isBlockPricing && !priceQuote) {
+      toast.error("Please wait for the price to be calculated.");
       return;
     }
 
@@ -1056,10 +1090,11 @@ const FacilityBooking = () => {
                       }
                     />
                   </div> */}
-                  <div>
-                    {selectedSlotIds.length > 1 ? "Total (per slot)" : "Total"}: {formData.member_adult * prices.member_price_adult}
-                    {/* + formData.member_child * prices.member_price_child} */}
-                  </div>
+                  {!isBlockPricing && (
+                    <div>
+                      {selectedSlotIds.length > 1 ? "Total (per slot)" : "Total"}: {formData.member_adult * prices.member_price_adult}
+                    </div>
+                  )}
                 </div>
 
                 {/* Guest Fields */}
@@ -1099,10 +1134,11 @@ const FacilityBooking = () => {
                       }
                     />
                   </div> */}
-                  <div>
-                    {selectedSlotIds.length > 1 ? "Total (per slot)" : "Total"}: {formData.guest_adult * prices.guest_price_adult}
-                    {/* + formData.guest_child * prices.guest_price_child} */}
-                  </div>
+                  {!isBlockPricing && (
+                    <div>
+                      {selectedSlotIds.length > 1 ? "Total (per slot)" : "Total"}: {formData.guest_adult * prices.guest_price_adult}
+                    </div>
+                  )}
                 </div>
 
                 {/* Tenant Fields */}
@@ -1151,7 +1187,26 @@ const FacilityBooking = () => {
               </div>
 
               {/* Final Amount */}
-              {selectedSlotIds.length > 1 && (() => {
+              {isBlockPricing && priceQuote && (
+                <div className="flex justify-end">
+                  <div className="text-sm text-gray-700 bg-gray-50 border rounded-md px-3 py-2 text-right">
+                    <p>
+                      Duration: {formatMinutes(priceQuote.minutes)} | Base ({formatMinutes(priceQuote.base_minutes)}): {rupees(priceQuote.base_amount)}
+                    </p>
+                    {priceQuote.extra_blocks > 0 && (
+                      <p>
+                        Extra time: {priceQuote.extra_blocks} × {rupees(priceQuote.extra_rate)} per {formatMinutes(priceQuote.extra_duration_minutes)} = {rupees(priceQuote.extra_amount)}
+                      </p>
+                    )}
+                    <p>
+                      {rupees(priceQuote.subtotal)}
+                      {priceQuote.gst_percent ? ` + ${priceQuote.gst_percent}% GST ${rupees(priceQuote.tax)}` : ""} ={" "}
+                      <span className="font-semibold">{rupees(priceQuote.total)}</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+              {!isBlockPricing && selectedSlotIds.length > 1 && (() => {
                 const perSlot = perSlotAmount(facility, formData);
                 const count = selectedSlotIds.length;
                 const subtotal = perSlot * count;

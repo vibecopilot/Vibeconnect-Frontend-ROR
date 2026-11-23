@@ -11,9 +11,18 @@ import { postFacilitySetup, generateAmenitySlots, saveAmenitySlotConfig } from "
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import BlockPricingFields from "../../containers/BlockPricingFields";
+import {
+  appendBlockPricing,
+  emptyBlockPricing,
+  isBlockPricingFeatureOn,
+  validateBlockPricing,
+} from "../../utils/blockPricing";
 
 const SetupFacility = () => {
   const siteId = getItemInLocalStorage("SITEID");
+  const blockPricingFeatureOn = isBlockPricingFeatureOn();
+  const [blockPricing, setBlockPricing] = useState(emptyBlockPricing);
 
   const [allowMultipleSlots, setAllowMultipleSlots] = useState("no");
 
@@ -751,6 +760,14 @@ const SetupFacility = () => {
   const handleAddFacility = async (e) => {
     e.preventDefault();
 
+    if (blockPricingFeatureOn) {
+      const blockPricingError = validateBlockPricing(blockPricing);
+      if (blockPricingError) {
+        toast.error(blockPricingError);
+        return;
+      }
+    }
+
     const sendData = new FormData();
 
     // ── Basic info ────────────────────────────────────────────────────────────
@@ -801,6 +818,9 @@ const SetupFacility = () => {
     // ── Fixed / Flat ──────────────────────────────────────────────────────────
     sendData.append("amenity[is_fixed]", formData.is_fixed ? "true" : "false");
     sendData.append("amenity[fixed_amount]", formData.fixed_amount || "");
+    if (blockPricingFeatureOn) {
+      appendBlockPricing(sendData, blockPricing);
+    }
 
     // ── Member ────────────────────────────────────────────────────────────────
     sendData.append("amenity[member]", formData.member ? "true" : "false");
@@ -1779,6 +1799,11 @@ const SetupFacility = () => {
                 )}
               </div>
             </div>
+            {blockPricingFeatureOn && (
+              <div className="col-span-full">
+                <BlockPricingFields value={blockPricing} onChange={setBlockPricing} />
+              </div>
+            )}
           </div>
         </div>
         <div className="bg-blue-50 border-y mt-3">

@@ -4,13 +4,17 @@ import Navbar from "../../../components/Navbar";
 import {
     amenityInvoicePdf,
   domainPrefix,
+  extendAmenityBooking,
   getAmenitiesBookingById,
+  getAmenityPriceQuote,
+  getFacilitySlots,
   postPaymentBookings,
   updateAmenityBook,
 } from "../../../api";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { FaFileInvoice } from "react-icons/fa";
+import { formatMinutes, isAmenityAdmin, rupees } from "../../../utils/blockPricing";
 
 const BookingDetails = () => {
   const { id } = useParams();
@@ -40,6 +44,80 @@ const BookingDetails = () => {
   const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showExtend, setShowExtend] = useState(false);
+  const [extendOptions, setExtendOptions] = useState([]);
+  const [extendCount, setExtendCount] = useState(0);
+  const [extendQuote, setExtendQuote] = useState(null);
+  const [extending, setExtending] = useState(false);
+
+  const openExtend = async () => {
+    const amenityInfo = bookingDetails?.amenity;
+    const bookedSlots = bookingDetails?.slots || [];
+    if (!amenityInfo || bookedSlots.length === 0) return;
+    try {
+      const ordered = [...(amenityInfo.amenity_slots || [])].sort(
+        (a, b) =>
+          (a.start_hr - b.start_hr) || ((a.start_min || 0) - (b.start_min || 0)) || (a.id - b.id),
+      );
+      const lastPosition = ordered.findIndex(
+        (slot) => slot.id === bookedSlots[bookedSlots.length - 1].id,
+      );
+      const response = await getFacilitySlots(amenityInfo.id, bookingDetails.booking_date);
+      const available = response?.data?.slots || [];
+      const next = [];
+      let position = lastPosition + 1;
+      while (lastPosition >= 0) {
+        const slot = available.find((s) => s.position === position);
+        if (!slot) break;
+        next.push(slot);
+        position += 1;
+      }
+      if (next.length === 0) {
+        toast.error("No free slots right after this booking");
+        return;
+      }
+      setExtendOptions(next);
+      setExtendCount(0);
+      setExtendQuote(null);
+      setShowExtend(true);
+    } catch (err) {
+      toast.error("Could not load free slots");
+    }
+  };
+
+  const chooseExtendCount = async (count) => {
+    setExtendCount(count);
+    setExtendQuote(null);
+    if (!count) return;
+    const slotIds = [
+      ...(bookingDetails.slots || []).map((slot) => slot.id),
+      ...extendOptions.slice(0, count).map((slot) => slot.id),
+    ];
+    try {
+      const response = await getAmenityPriceQuote(bookingDetails.amenity.id, slotIds);
+      setExtendQuote(response.data);
+    } catch (err) {
+      toast.error(err?.response?.data?.error || "Could not calculate the price");
+    }
+  };
+
+  const confirmExtend = async () => {
+    if (!extendCount || extending) return;
+    setExtending(true);
+    try {
+      await extendAmenityBooking(
+        id,
+        extendOptions.slice(0, extendCount).map((slot) => slot.id),
+      );
+      toast.success("Booking extended");
+      setShowExtend(false);
+      await fetchData();
+    } catch (err) {
+      toast.error(err?.response?.data?.errors?.[0] || "Could not extend the booking");
+    } finally {
+      setExtending(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -324,6 +402,32 @@ const handleInvoice = async () => {
                     Capture Payment
                   </button>
                 )}
+              {bookingDetails.amenity?.block_pricing &&
+                isAmenityAdmin() &&
+                !["cancelled", "refunded", "rejected"].includes(bookingDetails.status) && (
+                  <button
+                    className="rounded-md text-white p-2 w-[150px] cursor-pointer bg-indigo-500"
+                    onClick={openExtend}
+                  >
+                    Extend
+                  </button>
+                )}
+              {bookingDetails.status === "paid" && Number(bookingDetails.balance_due) > 0 && (
+                <button
+                  className="rounded-md text-white p-2 w-[150px] cursor-pointer"
+                  style={{ background: themeColor }}
+                  onClick={() => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      total_amount: bookingDetails.balance_due,
+                      paid_amount: "",
+                    }));
+                    setShowModal(true);
+                  }}
+                >
+                  Collect Balance
+                </button>
+              )}
               {bookingDetails.status === "paid" && (
                 <>
                   <button className="w-[150px] flex items-center justify-center gap-2 bg-blue-500 text-white p-2 rounded-md"
@@ -380,6 +484,58 @@ const handleInvoice = async () => {
                 )}
               </div>
             </div>
+
+            {showExtend && (
+              <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white p-6 rounded-md w-96">
+                  <h2 className="text-xl font-bold mb-4">Extend Booking</h2>
+                  <div className="flex flex-col gap-4">
+                    <p className="text-sm text-gray-600">
+                      Current slots: {bookingDetails.slot_time_range}
+                    </p>
+                    <label>
+                      Extend until
+                      <select
+                        className="border p-2 rounded w-full"
+                        value={extendCount}
+                        onChange={(e) => chooseExtendCount(Number(e.target.value))}
+                      >
+                        <option value={0}>Select end time</option>
+                        {extendOptions.map((slot, index) => (
+                          <option key={slot.id} value={index + 1}>
+                            {slot.end_time} (+{index + 1} slot{index ? "s" : ""})
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {extendQuote && (
+                      <div className="text-sm bg-gray-50 border rounded-md p-3">
+                        <p>New duration: {formatMinutes(extendQuote.minutes)}</p>
+                        <p>New total: {rupees(extendQuote.total)}</p>
+                        <p className="font-semibold">
+                          Additional amount: {rupees(Math.max(extendQuote.total - (Number(bookingDetails.amount) || 0), 0))}
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex justify-end gap-2">
+                      <button
+                        className="bg-blue-500 text-white p-2 rounded-md disabled:opacity-60"
+                        disabled={!extendQuote || extending}
+                        onClick={confirmExtend}
+                      >
+                        {extending ? "Extending..." : "Confirm"}
+                      </button>
+                      <button
+                        className="bg-gray-500 text-white p-2 rounded-md"
+                        onClick={() => setShowExtend(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {showModal && (
               <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
@@ -552,6 +708,37 @@ const handleInvoice = async () => {
             value={hasAmount ? `₹ ${formatRupees(totalAmount)}` : "-"}
           />
         </div>
+
+        {booking.price_breakdown && (
+          <div className="bg-gray-100 p-5 rounded mt-4 grid grid-cols-4 gap-5">
+            <Field label="Duration" value={formatMinutes(booking.price_breakdown.minutes)} />
+            <Field
+              label={`Base (${formatMinutes(booking.price_breakdown.base_minutes)})`}
+              value={rupees(booking.price_breakdown.base_amount)}
+            />
+            <Field
+              label="Extra time"
+              value={
+                booking.price_breakdown.extra_blocks > 0
+                  ? `${booking.price_breakdown.extra_blocks} × ${rupees(booking.price_breakdown.extra_rate)} = ${rupees(booking.price_breakdown.extra_amount)}`
+                  : "-"
+              }
+            />
+            <Field
+              label={`GST (${booking.price_breakdown.gst_percent || 0}%)`}
+              value={rupees(booking.price_breakdown.tax)}
+            />
+            <Field label="Paid" value={rupees(booking.paid_total)} />
+            <Field label="Balance Due" value={rupees(booking.balance_due)} />
+            {(booking.extensions || []).map((extension) => (
+              <Field
+                key={extension.id}
+                label={`Extended ${extension.created_at?.split("T")[0]}`}
+                value={`+${formatMinutes(extension.added_minutes)}, ${rupees(extension.previous_amount)} → ${rupees(extension.new_amount)}${extension.extended_by ? ` by ${extension.extended_by}` : ""}`}
+              />
+            ))}
+          </div>
+        )}
 
         {/* FACILITY INFORMATION */}
         <div className="mt-8">
