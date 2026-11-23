@@ -105,7 +105,6 @@ const ChecklistSubmissionForm = ({
   const [values, setValues] = useState({});
   const [files, setFiles] = useState({});
   const [comments, setComments] = useState({});
-  const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -282,7 +281,8 @@ const ChecklistSubmissionForm = ({
     appendSubmissionField("soft_service_id", activity.soft_service_id);
     // The Rails user is resolved from the token server-side; never send a
     // mobile-app / Vibe user id as submission[user_id].
-    appendSubmissionField("comment", comment);
+    // Only per-question comments are sent — a single overall comment would be
+    // copied onto every question by the API and show on all of them.
 
     Object.entries(questionsArr).forEach(([index, answer]) => {
       formData.append(`questions_arr[${index}][id]`, answer.id);
@@ -386,6 +386,9 @@ const ChecklistSubmissionForm = ({
                           </span>
                         </p>
                       </div>
+                      <p className="mt-2 text-xs text-slate-500">
+                        Submitted by {row?.user_name || "—"} · {formatDateTime(row?.created_at)}
+                      </p>
                       <div className="mt-3">
                         <p className="text-xs text-slate-500">Attachments</p>
                         {documents.length > 0 ? (
@@ -690,23 +693,6 @@ const ChecklistSubmissionForm = ({
               </section>
             );
           })}
-
-          <div>
-            <label
-              htmlFor="submission-comment"
-              className="text-sm font-medium text-slate-800"
-            >
-              Overall comment (optional)
-            </label>
-            <textarea
-              id="submission-comment"
-              rows={3}
-              value={comment}
-              onChange={(event) => setComment(event.target.value)}
-              placeholder="Optional"
-              className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-indigo-400"
-            />
-          </div>
 
           <button
             type="submit"
