@@ -45,6 +45,9 @@ const EditAsset = () => {
   const [assetSubGoups, setAssetSubGroups] = useState([]);
   const [parentAssets, setParentAssets] = useState([]);
   const { id } = useParams();
+  const [qrLogo, setQrLogo] = useState(null);
+  const [existingLogoUrl, setExistingLogoUrl] = useState("");
+  const [removeLogo, setRemoveLogo] = useState(false);
   const [formData, setFormData] = useState({
     site_id: "",
     building_id: "",
@@ -114,6 +117,7 @@ const EditAsset = () => {
         }));
 
         setConsumptionData(initialConsumptionData);
+        setExistingLogoUrl(details.data.logo_url || "");
         // setFormData(details.data);
         setFormData((prevFormData) => ({
           ...prevFormData,
@@ -478,6 +482,12 @@ const EditAsset = () => {
         const f = file?.file || file;
         if (f instanceof File) formDataSend.append("other_files[]", f);
       });
+
+      if (qrLogo instanceof File) {
+        formDataSend.append("logo", qrLogo);
+      } else if (removeLogo) {
+        formDataSend.append("remove_logo", "true");
+      }
 
       await EditSiteAsset(formDataSend, id);
 
@@ -1635,6 +1645,43 @@ const EditAsset = () => {
             Attachments
           </h2>
           <div className="flex flex-col gap-2">
+            <div>
+              <p className="border-b border-black my-1 font-semibold">
+                QR Code Logo
+              </p>
+              <p className="mb-2 text-xs text-gray-500">
+                This logo will be printed in the centre of every QR code for
+                this asset.
+              </p>
+              {existingLogoUrl && !removeLogo && (
+                <div className="my-2 flex items-center gap-3">
+                  <img
+                    src={existingLogoUrl}
+                    alt="Current QR logo"
+                    className="h-16 w-16 rounded border object-contain"
+                  />
+                  <label className="flex items-center gap-2 text-sm text-red-600">
+                    <input
+                      type="checkbox"
+                      checked={removeLogo}
+                      onChange={(event) => {
+                        setRemoveLogo(event.target.checked);
+                        if (event.target.checked) setQrLogo(null);
+                      }}
+                    />
+                    Remove current logo
+                  </label>
+                </div>
+              )}
+              <FileInputBox
+                handleChange={(files) => {
+                  setQrLogo(files[0] || null);
+                  if (files.length) setRemoveLogo(false);
+                }}
+                fieldName="qr-logo"
+                fileType="image/*"
+              />
+            </div>
             <div>
               <p className="border-b border-black my-1 font-semibold">
                 Purchase Invoice

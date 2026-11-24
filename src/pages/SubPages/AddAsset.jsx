@@ -34,6 +34,7 @@ const AddAsset = () => {
   const [addSupplierModal, showAddSupplierMOdal] = useState(false);
   const [vendors, setVendors] = useState([]);
   const [formData, setFormData] = useState(initialAddAssetFormData);
+  const [qrLogo, setQrLogo] = useState(null);
   const [assetGroups, setAssetGroup] = useState([]);
   const [assetSubGoups, setAssetSubGroups] = useState([]);
   const [parentAsset, setParentAsset] = useState([]);
@@ -395,6 +396,9 @@ const AddAsset = () => {
         const actualFile = file?.file || file;
         formDataSend.append("other_files[]", actualFile);
       });
+      if (qrLogo) {
+        formDataSend.append("logo", qrLogo);
+      }
 
       formDataSend.append("site_asset[uom]", formData.unit);
       formDataSend.append(
@@ -1560,6 +1564,20 @@ const AddAsset = () => {
             Attachments
           </h2>
           <div className="flex flex-col gap-2">
+            <div>
+              <p className="border-b border-black my-1 font-semibold">
+                QR Code Logo
+              </p>
+              <p className="mb-2 text-xs text-gray-500">
+                This logo will be printed in the centre of every QR code for
+                this asset.
+              </p>
+              <FileInputBox
+                handleChange={(files) => setQrLogo(files[0] || null)}
+                fieldName="qr-logo"
+                fileType="image/*"
+              />
+            </div>
             <div>
               <p className="border-b border-black my-1 font-semibold">
                 Purchase Invoice

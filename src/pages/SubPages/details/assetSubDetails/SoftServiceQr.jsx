@@ -8,7 +8,7 @@ const SoftServiceQr = ({ onClose, QR, softId }) => {
     console.log(softId);
     toast.loading("Qr code downloading please wait!");
     try {
-      const response = await softServiceDownloadQrCode(softId);
+      const response = await softServiceDownloadQrCode([softId]);
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");

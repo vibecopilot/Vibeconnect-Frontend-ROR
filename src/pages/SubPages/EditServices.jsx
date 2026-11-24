@@ -21,6 +21,9 @@ const EditService = () => {
   const themeColor = useSelector((state) => state.theme.color);
   const { id } = useParams();
   const navigate = useNavigate();
+  const [qrLogo, setQrLogo] = useState(null);
+  const [existingLogoUrl, setExistingLogoUrl] = useState("");
+  const [removeLogo, setRemoveLogo] = useState(false);
   const [formData, setFormData] = useState({
     site_id: "",
     building_id: "",
@@ -39,6 +42,7 @@ const EditService = () => {
     const fetchServiceDetails = async () => {
       const ServiceDetailsResponse = await getSoftServicesDetails(id);
       setFormData(ServiceDetailsResponse.data);
+      setExistingLogoUrl(ServiceDetailsResponse.data.logo_url || "");
       fetchFloor(ServiceDetailsResponse.data.building_id);
       getUnit(ServiceDetailsResponse.data.floor_id);
       console.log(ServiceDetailsResponse);
@@ -161,6 +165,11 @@ const EditService = () => {
           dataToSend.append("attachfiles[]", file);
         }
       });
+      if (qrLogo instanceof File) {
+        dataToSend.append("logo", qrLogo);
+      } else if (removeLogo) {
+        dataToSend.append("remove_logo", "true");
+      }
       const serviceResponse = await EditSoftServices(dataToSend, id);
       console.log(serviceResponse);
       toast.dismiss();
@@ -280,11 +289,51 @@ const EditService = () => {
             <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
               Attachments
             </h2>
-            <FileInputBox
-              handleChange={(files) => handleFileChange(files, "attachments")}
-              fieldName={"attachments"}
-              isMulti={true}
-            />
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="font-medium border-b mb-2">QR Code Logo</p>
+                <p className="mb-2 text-xs text-gray-500">
+                  This logo will be printed in the centre of every QR code for
+                  this service.
+                </p>
+                {existingLogoUrl && !removeLogo && (
+                  <div className="my-2 flex items-center gap-3">
+                    <img
+                      src={existingLogoUrl}
+                      alt="Current QR logo"
+                      className="h-16 w-16 rounded border object-contain"
+                    />
+                    <label className="flex items-center gap-2 text-sm text-red-600">
+                      <input
+                        type="checkbox"
+                        checked={removeLogo}
+                        onChange={(event) => {
+                          setRemoveLogo(event.target.checked);
+                          if (event.target.checked) setQrLogo(null);
+                        }}
+                      />
+                      Remove current logo
+                    </label>
+                  </div>
+                )}
+                <FileInputBox
+                  handleChange={(files) => {
+                    setQrLogo(files[0] || null);
+                    if (files.length) setRemoveLogo(false);
+                  }}
+                  fieldName="qr-logo"
+                  fileType="image/*"
+                />
+              </div>
+              <div>
+                <p className="font-medium border-b mb-2">Other Attachments</p>
+                <FileInputBox
+                  handleChange={(files) => handleFileChange(files, "attachments")}
+                  fieldName={"attachments"}
+                  isMulti={true}
+                />
+              </div>
+            </div>
             <div className="flex my-5 justify-end gap-3">
               <button
                 className="bg-black text-white p-1 px-4 rounded-md font-medium"

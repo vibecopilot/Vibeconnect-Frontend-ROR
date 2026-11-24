@@ -337,6 +337,28 @@ const ChecklistSubmissionForm = ({
       .sort()
       .pop();
 
+    // newest submission first (descending by submitted timestamp)
+    const submittedTime = (question) =>
+      answerByQuestion[String(question.id)]?.created_at || "";
+    const summaryGroups = groups
+      .map((group) => ({
+        ...group,
+        questions: (Array.isArray(group.questions) ? [...group.questions] : []).sort(
+          (a, b) => submittedTime(b).localeCompare(submittedTime(a))
+        ),
+      }))
+      .sort((a, b) => {
+        const latest = (group) =>
+          group.questions.reduce(
+            (max, question) => {
+              const time = submittedTime(question);
+              return time > max ? time : max;
+            },
+            ""
+          );
+        return latest(b).localeCompare(latest(a));
+      });
+
     return (
       <div className="rounded-xl border border-emerald-200 bg-white shadow-sm">
       <div className="border-b border-emerald-100 p-5 text-center">
@@ -389,8 +411,8 @@ const ChecklistSubmissionForm = ({
         {groups.length === 0 && (
           <p className="text-center text-sm text-slate-500">No questions configured</p>
         )}
-        {groups.map((group, groupIndex) => {
-          const groupQuestions = Array.isArray(group.questions) ? group.questions : [];
+        {summaryGroups.map((group, groupIndex) => {
+          const groupQuestions = group.questions;
           if (groupQuestions.length === 0) return null;
           const heading =
             group.group || (group.group_id ? `Group ${group.group_id}` : null);

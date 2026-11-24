@@ -15,7 +15,8 @@ const AddService = () => {
   const userId = getItemInLocalStorage("UserId");
   const [groups, setGroups] = useState([]);
   const [subgroups, setSubGroups] = useState([]);
- 
+  const [qrLogo, setQrLogo] = useState(null);
+  
   const [formData, setFormData] = useState({
     site_id: siteId,
     building_id: "",
@@ -172,6 +173,9 @@ const handleFileChange = (files, fieldName) => {
           dataToSend.append("attachfiles[]", file);
         }
       });
+      if (qrLogo instanceof File) {
+        dataToSend.append("logo", qrLogo);
+      }
       const serviceResponse = await postSoftServices(dataToSend);
       console.log(serviceResponse);
       navigate("/services/soft-service");
@@ -332,11 +336,28 @@ const handleFileChange = (files, fieldName) => {
           <h2 className="border-b text-center text-xl border-black mb-6 font-bold">
             Attachments
           </h2>
-          <FileInputBox
-            handleChange={(files) => handleFileChange(files, "attachments")}
-            fieldName={"attachments"}
-            isMulti={true}
-          />
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="font-medium border-b mb-2">QR Code Logo</p>
+              <p className="mb-2 text-xs text-gray-500">
+                This logo will be printed in the centre of every QR code for
+                this service.
+              </p>
+              <FileInputBox
+                handleChange={(files) => setQrLogo(files[0] || null)}
+                fieldName="qr-logo"
+                fileType="image/*"
+              />
+            </div>
+            <div>
+              <p className="font-medium border-b mb-2">Other Attachments</p>
+              <FileInputBox
+                handleChange={(files) => handleFileChange(files, "attachments")}
+                fieldName={"attachments"}
+                isMulti={true}
+              />
+            </div>
+          </div>
          <div className="md:flex grid md:grid-cols-2 gap-2 my-5 justify-center">
   <button
     className="bg-black text-white p-2 px-4 rounded-md font-medium"
