@@ -48,6 +48,9 @@ const EditAsset = () => {
   const [qrLogo, setQrLogo] = useState(null);
   const [existingLogoUrl, setExistingLogoUrl] = useState("");
   const [removeLogo, setRemoveLogo] = useState(false);
+  const [aboveQrLogo, setAboveQrLogo] = useState(null);
+  const [existingAboveLogoUrl, setExistingAboveLogoUrl] = useState("");
+  const [removeAboveLogo, setRemoveAboveLogo] = useState(false);
   const [formData, setFormData] = useState({
     site_id: "",
     building_id: "",
@@ -118,6 +121,7 @@ const EditAsset = () => {
 
         setConsumptionData(initialConsumptionData);
         setExistingLogoUrl(details.data.logo_url || "");
+        setExistingAboveLogoUrl(details.data.above_logo_url || "");
         // setFormData(details.data);
         setFormData((prevFormData) => ({
           ...prevFormData,
@@ -487,6 +491,11 @@ const EditAsset = () => {
         formDataSend.append("logo", qrLogo);
       } else if (removeLogo) {
         formDataSend.append("remove_logo", "true");
+      }
+      if (aboveQrLogo instanceof File) {
+        formDataSend.append("above_logo", aboveQrLogo);
+      } else if (removeAboveLogo) {
+        formDataSend.append("remove_above_logo", "true");
       }
 
       await EditSiteAsset(formDataSend, id);
@@ -1647,7 +1656,7 @@ const EditAsset = () => {
           <div className="flex flex-col gap-2">
             <div>
               <p className="border-b border-black my-1 font-semibold">
-                QR Code Logo
+                QR Code Logo (inside QR)
               </p>
               <p className="mb-2 text-xs text-gray-500">
                 This logo will be printed in the centre of every QR code for
@@ -1679,6 +1688,42 @@ const EditAsset = () => {
                   if (files.length) setRemoveLogo(false);
                 }}
                 fieldName="qr-logo"
+                fileType="image/*"
+              />
+            </div>
+            <div>
+              <p className="border-b border-black my-1 font-semibold">
+                QR Header Logo (above QR)
+              </p>
+              <p className="mb-2 text-xs text-gray-500">
+                This logo will be printed above every QR code for this asset.
+              </p>
+              {existingAboveLogoUrl && !removeAboveLogo && (
+                <div className="my-2 flex items-center gap-3">
+                  <img
+                    src={existingAboveLogoUrl}
+                    alt="Current QR header logo"
+                    className="h-16 w-24 rounded border object-contain"
+                  />
+                  <label className="flex items-center gap-2 text-sm text-red-600">
+                    <input
+                      type="checkbox"
+                      checked={removeAboveLogo}
+                      onChange={(event) => {
+                        setRemoveAboveLogo(event.target.checked);
+                        if (event.target.checked) setAboveQrLogo(null);
+                      }}
+                    />
+                    Remove current header logo
+                  </label>
+                </div>
+              )}
+              <FileInputBox
+                handleChange={(files) => {
+                  setAboveQrLogo(files[0] || null);
+                  if (files.length) setRemoveAboveLogo(false);
+                }}
+                fieldName="qr-above-logo"
                 fileType="image/*"
               />
             </div>

@@ -35,6 +35,7 @@ const AddAsset = () => {
   const [vendors, setVendors] = useState([]);
   const [formData, setFormData] = useState(initialAddAssetFormData);
   const [qrLogo, setQrLogo] = useState(null);
+  const [aboveQrLogo, setAboveQrLogo] = useState(null);
   const [assetGroups, setAssetGroup] = useState([]);
   const [assetSubGoups, setAssetSubGroups] = useState([]);
   const [parentAsset, setParentAsset] = useState([]);
@@ -398,6 +399,9 @@ const AddAsset = () => {
       });
       if (qrLogo) {
         formDataSend.append("logo", qrLogo);
+      }
+      if (aboveQrLogo) {
+        formDataSend.append("above_logo", aboveQrLogo);
       }
 
       formDataSend.append("site_asset[uom]", formData.unit);
@@ -1566,7 +1570,7 @@ const AddAsset = () => {
           <div className="flex flex-col gap-2">
             <div>
               <p className="border-b border-black my-1 font-semibold">
-                QR Code Logo
+                QR Code Logo (inside QR)
               </p>
               <p className="mb-2 text-xs text-gray-500">
                 This logo will be printed in the centre of every QR code for
@@ -1575,6 +1579,19 @@ const AddAsset = () => {
               <FileInputBox
                 handleChange={(files) => setQrLogo(files[0] || null)}
                 fieldName="qr-logo"
+                fileType="image/*"
+              />
+            </div>
+            <div>
+              <p className="border-b border-black my-1 font-semibold">
+                QR Header Logo (above QR)
+              </p>
+              <p className="mb-2 text-xs text-gray-500">
+                This logo will be printed above every QR code for this asset.
+              </p>
+              <FileInputBox
+                handleChange={(files) => setAboveQrLogo(files[0] || null)}
+                fieldName="qr-above-logo"
                 fileType="image/*"
               />
             </div>
