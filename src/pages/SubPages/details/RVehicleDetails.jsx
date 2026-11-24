@@ -193,6 +193,10 @@ const RVehicleDetails = () => {
             <p className="">{details.category}</p>
           </div>
           <div className="grid grid-cols-2 ">
+            <p className="font-semibold text-sm">Vehicle In/Out : </p>
+            <p className="">{details.vehicle_in_out}</p>
+          </div>
+          <div className="grid grid-cols-2 ">
             <p className="font-semibold text-sm">Registration No. : </p>
             <p className="">{details.registration_number}</p>
           </div>
@@ -220,18 +224,47 @@ const RVehicleDetails = () => {
             <p className="font-semibold text-sm">Created on : </p>
             <p className="text-sm">{FormattedDateToShowProperly(details.created_at)}</p>
           </div>
-           <div className="grid grid-cols-2 ">
+          <div className="grid grid-cols-2 ">
             <p className="font-semibold text-sm">Updated on : </p>
             <p className="text-sm">{FormattedDateToShowProperly(details.updated_at)}</p>
           </div>
         </div>
       </div>
+{details.registered_vehicle_attachments?.length > 0 && (
+  <div className="mt-4 border rounded-md p-4 bg-white">
+    <h3 className="font-semibold mb-3 text-lg">
+      Vehicle Attachments
+    </h3>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {details.registered_vehicle_attachments.map((file) => (
+        <a
+          key={file.id}
+          href={file.document}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border rounded-lg overflow-hidden shadow-sm block"
+        >
+          <img
+            src={file.document}
+            alt="Vehicle Attachment"
+            className="w-full h-52 object-cover cursor-pointer hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              e.target.style.display = "none";
+            }}
+          />
+        </a>
+      ))}
+    </div>
+  </div>
+)}
+
       {qrCode && (
         <ModalWrapper onclose={() => setQrCode(false)}>
           <div className="mx-4 flex flex-col justify-between items-center gap-10">
             <div id="qrCodeElement">
               <img
-                src={domainPrefix + details.qr_code_image_url}
+                src={details.qr_code_image_url}
                 alt="qr"
                 width={200}
                 className="border shadow-xl rounded-md"
@@ -240,7 +273,7 @@ const RVehicleDetails = () => {
             <button
               className="px-4 w-full border-2 border-black rounded-md flex justify-center items-center gap-2 py-1"
               onClick={handlePrintQRCode}
-              // onClick={() => downloadFile(QR)}
+            // onClick={() => downloadFile(QR)}
             >
               <FaQrcode />
               Print QR Code

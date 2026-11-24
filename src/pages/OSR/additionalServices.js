@@ -1,6 +1,7 @@
 import axiosInstance from "../../api/axiosInstance";
 import axiosInstance2 from "../../api/axiosInstance2";
 import { getItemInLocalStorage } from "../../utils/localStorage";
+import { clampPerPage } from "../../api/pagination";
 
 export const unitConfigurationService = {
   getAll: () => {
@@ -227,7 +228,7 @@ export const serviceBookingService = {
   getAll: (page = 1, perPage = 10) => {
     const token = getItemInLocalStorage("TOKEN");
     const cleanToken = token ? token.replace('Bearer ', '') : '';
-    return axiosInstance.get(`/service_bookings.json?token=${cleanToken}&page=${page}&per_page=${perPage}`);
+    return axiosInstance.get(`/service_bookings.json?token=${cleanToken}&page=${page}&per_page=${clampPerPage(perPage)}`);
   },
   getById: (id) => {
     const token = getItemInLocalStorage("TOKEN");

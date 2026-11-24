@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { PiPlus } from "react-icons/pi";
 import { useSelector } from "react-redux";
 import jsPDF from "jspdf";
-import esicCard from "/esic card.jpg"
+import esicCard from "/esic card.jpg";
 
 const WorkspaceESIC = () => {
   const themeColor = useSelector((state) => state.theme.color);

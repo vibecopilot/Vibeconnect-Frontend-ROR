@@ -22,7 +22,7 @@ const JournalEntries = () => {
     setLoading(true);
     try {
       const data = await getJournalEntries(filters);
-      setEntries(data);
+      setEntries(data.data || data);
     } catch (error) {
       console.error('Error fetching journal entries:', error);
     } finally {

@@ -26,39 +26,39 @@ function CAMBilling() {
   const [billingPeriod, setBillingPeriod] = useState([null, null]);
   const [importModal, setImportModal] = useState(false);
   const [filter, setFilter] = useState(false);
-  const [camBilling, setComBilling] = useState([]);
+    const [isFiltered, setIsFiltered] = useState(false);
+  const [camBilling, setCamBilling] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [page, setPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+    const [loading, setLoading] = useState(false);
+
 
   const RECORDS_PER_PAGE = 10;
 
-  const fetchCamBilling = async (pageNo = 1) => {
+// ✅ Proper server-side fetch
+   const fetchCamBilling = async (pageNo = 1) => {
     try {
+      setLoading(true);
       const response = await getCamBillingData(pageNo, RECORDS_PER_PAGE);
+      const data = response.data;
 
-      const {
-        cam_bills,
-        total_count,
-        current_page,
-      } = response.data;
+      setCamBilling(data?.cam_bills || []);
+      setTotalRecords(data?.total_count || 0);
+      setIsFiltered(false);
 
-      setComBilling(cam_bills);
-      setFilteredData(cam_bills);
-      setTotalRecords(total_count);
-      setPage(current_page);
     } catch (err) {
       toast.error("Failed to load data");
-    }
-  };
-
+    } finally {
+      setLoading(false);
+    }  };
 
   useEffect(() => {
     fetchCamBilling(page);
   }, [page]);
 
-  const columns = [
+   const columns = [
     {
       name: "Action",
       cell: (row) => (
@@ -71,7 +71,8 @@ function CAMBilling() {
     },
     {
       name: "Flat",
-      selector: (row, index) => row.flat_id,
+      // Safe navigation for nested flat object
+      selector: (row) => row?.flat?.name || "N/A",
       sortable: true,
     },
     {
@@ -100,13 +101,26 @@ function CAMBilling() {
       sortable: true,
     },
     {
-      name: "Amount Paid",
-      selector: (row) => row.amount_paid,
-      sortable: true,
+        name: "Amount Paid",
+    selector: (row) => {
+      // If payments array exists, calculate total paid
+      if (row?.payments?.length > 0) {
+        return row.payments.reduce(
+          (sum, payment) => sum + (payment.paid_amount || 0),
+          0
+        );
+      }
+
+      // Otherwise fallback to amount_paid field
+      return row.amount_paid || 0;
     },
+    sortable: true,
+  },
+
+
     {
       name: "Payment Status",
-      selector: (row) => row.payment_status,
+      selector: (row) => row.payment_status || "-",
       sortable: true,
     },
     {
@@ -134,7 +148,7 @@ function CAMBilling() {
   };
 
   const handleDownload = async () => {
-    if (selectedRows.length === 0) {
+    if (!selectedRows.length) {
       return toast.error("Please select at least one data.");
     }
 
@@ -229,43 +243,89 @@ function CAMBilling() {
     !formData.block || !formData.floor_name || !units.length;
   const navigate = useNavigate();
 
-  const handleFilterData = async () => {
+   const handleFilterData = async () => {
     try {
+      setLoading(true);
+
       const [startDate, endDate] = billingPeriod;
+
+      const formattedStart = startDate
+        ? new Date(startDate).toISOString().split("T")[0]
+        : "";
+
+      const formattedEnd = endDate
+        ? new Date(endDate).toISOString().split("T")[0]
+        : "";
+
       const resp = await gatCamBillFilter(
-        formData.block,
-        formData.floor_name,
-        formData.flat,
-        formData.status,
-        startDate,
-        endDate,
-        formData.dueDate
+        formData.block || "",
+        formData.floor_name || "",
+        formData.flat || "",
+        formData.status || "",
+        formattedStart,
+        formattedEnd,
+        formData.dueDate || ""
       );
-      setFilteredData(resp.data); // Assuming filter returns list directly or adapt based on actual response
-      setFilter(false);
+
+      const filteredList = Array.isArray(resp.data?.cam_bills)
+        ? resp.data.cam_bills
+        : [];
+
+      setFilteredData(filteredList);
+      setIsFiltered(true);
+      setTotalRecords(filteredList.length); // important
+
+      if (filteredList.length === 0) {
+        toast("No records found");
+      }
+
     } catch (error) {
-      console.error("Error filtering data:", error);
       toast.error("Error filtering data");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSearch = (e) => {
-    const searchValue = e.target.value;
-    setSearchText(searchValue);
 
-    if (searchValue.trim() === "") {
-      setFilteredData(camBilling);
-    } else {
-      const filterResult = camBilling.filter(
-        (item) =>
-          item?.invoice_number
-            ?.toLowerCase()
-            .includes(searchValue.toLowerCase()) ||
-          item?.status?.toLowerCase().includes(searchValue.toLowerCase())
-      );
-      setFilteredData(filterResult);
+    const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+
+    if (!value.trim()) {
+      setIsFiltered(false);
+      return;
     }
+
+    const sourceData = isFiltered ? filteredData : camBilling;
+
+    const result = sourceData.filter(
+      (item) =>
+        item?.invoice_number?.toLowerCase().includes(value.toLowerCase()) ||
+        item?.payment_status?.toLowerCase().includes(value.toLowerCase())
+    );
+
+    setFilteredData(result);
+    setIsFiltered(true);
+    setTotalRecords(result.length);
   };
+
+   const handleReset = () => {
+    setFormData({
+      block: "",
+      floor_name: "",
+      flat: "",
+      status: "",
+      dueDate: "",
+    });
+
+    setBillingPeriod([null, null]);
+    setFloors([]);
+    setUnits([]);
+    setSearchText("");
+    setFilteredData(camBilling); // restore original data
+  };
+  const tableData = isFiltered ? filteredData : camBilling;
+
 
   const getStatusButton = (status) => {
     if (status === "pending" || status === "recall" || status === null) {
@@ -380,7 +440,7 @@ function CAMBilling() {
                 onChange={handleChange}
                 className="border p-1 px-4 border-gray-500 rounded-md"
               >
-                <option value="" selected>
+                <option value="">
                   Select Payment Status
                 </option>
                 <option value="paid">Paid</option>
@@ -394,7 +454,6 @@ function CAMBilling() {
                 name="dueDate"
                 value={formData.dueDate}
                 onChange={handleChange}
-                placeholder="Enter Date of supply"
                 className="border p-1 px-4 border-gray-500 rounded-md"
               />
             </div>
@@ -421,28 +480,24 @@ function CAMBilling() {
             </button>
             <button
               className="bg-red-400 p-1 px-4 text-white rounded-md"
-              onClick={() => {
-                setPage(1); // Reset to page 1
-                fetchCamBilling(1); // Refetch initial data
-                setFilter(!filter);
-              }}
-            >
+              onClick={handleReset}>
               Reset
             </button>
           </div>
         )}
 
-        {/* Table Component */}
-        <Table
+        {/* ✅ TABLE WITH CORRECT PAGINATION */}
+           <Table
           columns={columns}
-          data={filteredData}
+          data={tableData}
           selectableRow={true}
           onSelectedRows={handleSelectedRows}
-          isPagination={true}
-          currentPage={page}
-          totalRecords={totalRecords}
-          recordsPerPage={10}
-          onPageChange={(pageNo) => setPage(pageNo)}
+          progressPending={loading}
+          pagination
+          paginationServer   // 🔥 VERY IMPORTANT
+          paginationTotalRows={totalRecords}  // 🔥 This shows 58 total
+          paginationPerPage={RECORDS_PER_PAGE}
+          onChangePage={(page) => setPage(page)}
         />
 
 

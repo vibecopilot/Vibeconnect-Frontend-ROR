@@ -66,6 +66,16 @@ const PPM = () => {
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
   };
+
+  useEffect(() => {
+    if (startDate && endDate) {
+      setFilteredPPMData(
+        filterByDateRange(ppmData, startDate, endDate)
+      );
+    } else {
+      setFilteredPPMData(ppmData);
+    }
+  }, [ppmData, startDate, endDate]);
   // Decrease date by 1 day
   const handlePrevDate = () => {
     const prevDate = new Date(selectedDate);
@@ -94,18 +104,21 @@ const PPM = () => {
       year: "numeric",
     });
   };
-  const filterByDateRange = (data) => {
-    if (startDate && endDate) {
-      console.log(data);
-      return data.filter((item) => {
-        console.log(item.start_time);
-        const itemDate = new Date(item.start_time).setHours(0, 0, 0, 0);
-        const start = startDate.setHours(0, 0, 0, 0);
-        const end = endDate.setHours(23, 59, 59, 999);
-        return itemDate >= start && itemDate <= end;
-      });
+  const filterByDateRange = (data, start, end) => {
+    if (!start || !end) {
+      return data;
     }
-    return data;
+
+    const startDateObj = new Date(start);
+    startDateObj.setHours(0, 0, 0, 0);
+
+    const endDateObj = new Date(end);
+    endDateObj.setHours(23, 59, 59, 999);
+
+    return data.filter((item) => {
+      const itemDate = new Date(item.start_time);
+      return itemDate >= startDateObj && itemDate <= endDateObj;
+    });
   };
 
   const PPMColumn = [
@@ -168,21 +181,19 @@ const PPM = () => {
       <div className="w-full my-2">
         <div className="flex items-center gap-4 border-b border-gray-200">
           <button
-            className={`font-medium ${
-              ppmFor === "schedule"
+            className={`font-medium ${ppmFor === "schedule"
                 ? "text-black border-b border-black"
                 : "text-gray-400"
-            }`}
+              }`}
             onClick={() => setPPMFor("schedule")}
           >
             Schedule
           </button>
           <button
-            className={`font-medium ${
-              ppmFor === "logs"
+            className={`font-medium ${ppmFor === "logs"
                 ? "border-b border-black text-black"
                 : "text-gray-400"
-            }`}
+              }`}
             onClick={() => setPPMFor("logs")}
           >
             Logs
@@ -206,13 +217,20 @@ const PPM = () => {
                 startDate={startDate}
                 endDate={endDate}
                 onChange={(update) => {
-                  setStartDate(update[0]);
-                  setEndDate(update[1]);
-                  setFilteredPPMData(filterByDateRange(ppmData));
+                  const [start, end] = update;
+
+                  setStartDate(start);
+                  setEndDate(end);
+
+                  if (start && end) {
+                    setFilteredPPMData(filterByDateRange(ppmData, start, end));
+                  } else {
+                    setFilteredPPMData(ppmData);
+                  }
                 }}
                 isClearable={true}
                 placeholderText="Search by Date range"
-                className="p-2 border-gray-300 rounded-md w-64  my-2 outline-none border"
+                className="p-2 border-gray-300 rounded-md w-64 my-2 outline-none border"
               />
             </div>
             <Table columns={PPMColumn} data={filteredPPMData} />

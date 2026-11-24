@@ -6,17 +6,22 @@ import Navbar from "../../components/Navbar";
 import { BiEdit, BiFilterAlt } from "react-icons/bi";
 import { Link } from "react-router-dom";
 import { IoAddCircleOutline } from "react-icons/io5";
-import * as XLSX from "xlsx";
-import { DNA } from "react-loader-spinner";
+import ChecklistImportExport from "../../components/ChecklistImportExport";
 import { useSelector } from "react-redux";
 import { BsEye } from "react-icons/bs";
-import { FaCopy, FaDownload } from "react-icons/fa";
+import { FaCopy } from "react-icons/fa";
+import SiteHeader from "../../components/SiteHeader";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const ServiceChecklist = () => {
   const [searchChecklistText, setSearchChecklistCheck] = useState("");
   const [filteredChecklistData, setFilteredChecklistData] = useState([]);
   const [checklists, setChecklists] = useState([]);
   const [filter, setFilter] = useState(false);
+  // ── reactive site ID — updated by SiteHeader on site switch ──
+  const [activeSiteId, setActiveSiteId] = useState(
+    () => getItemInLocalStorage("SITEID")
+  );
   const checklistColumn = [
     {
       name: "Action",
@@ -29,7 +34,7 @@ const ServiceChecklist = () => {
             <BsEye size={15} />
           </Link>
           <Link to={`/admin/copy-checklist/service/${row.id}`}>
-          <FaCopy size={15}/>
+            <FaCopy size={15} />
           </Link>
         </div>
       ),
@@ -81,20 +86,20 @@ const ServiceChecklist = () => {
       sortable: true,
     },
   ];
-  useEffect(() => {
+  const fetchServicesChecklist = async () => {
     try {
-      const fetchServicesChecklist = async () => {
-        const checklistResponse = await getServicesChecklist();
-        const sortedChecklists = checklistResponse.data.checklists.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        setFilteredChecklistData(sortedChecklists);
-        setChecklists(sortedChecklists);
-        console.log(checklistResponse);
-      };
-      fetchServicesChecklist();
+      const checklistResponse = await getServicesChecklist();
+      const sortedChecklists = checklistResponse.data.checklists.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setFilteredChecklistData(sortedChecklists);
+      setChecklists(sortedChecklists);
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
-  }, []);
+  };
+
+  useEffect(() => {
+    fetchServicesChecklist();
+  }, [activeSiteId]); // ✅ re-fetch when site changes
   const handleChecklistSearch = (event) => {
     const searchValue = event.target.value;
     setSearchChecklistCheck(searchValue);
@@ -106,43 +111,21 @@ const ServiceChecklist = () => {
       );
       setFilteredChecklistData(filteredResults);
       console.log(filteredResults);
-      console.log(filteredData);
     }
   };
 
-  const dateFormat = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-  const exportToExcel = () => {
-    const mappedData = filteredChecklistData.map((check) => ({
-     
-      "Checklist Name": check.name,
-      "Start Date": check.start_date,
-      "End Date": check.end_date,
-      "Frequency": check.frequency,
-      "Created On": dateFormat(check.created_at),
-      // "Question": check.questions.map(q => q.toString()).join(', ')
-    }));
-    const fileType =
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
-    const fileName = "Checklist_data.xlsx";
-    const ws = XLSX.utils.json_to_sheet(mappedData);
-    const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: fileType });
-    const url = URL.createObjectURL(data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
-  };
-
-  const themeColor = useSelector((state)=> state.theme.color)
+  const themeColor = useSelector((state) => state.theme.color)
   return (
     <section className="flex ">
       <Navbar />
-      <div className="p-4 overflow-hidden w-full my-2 flex mx-3 flex-col">
+      <div className=" overflow-hidden w-full flex mx-3 flex-col">
+        <SiteHeader
+          onSiteChange={(id) => {
+            setActiveSiteId(id); // triggers data useEffect
+            setChecklists([]);
+            setFilteredChecklistData([]);
+          }}
+        />
         <Services />
         {/* {filter && (
           <div className="flex items-center justify-center gap-2">
@@ -204,18 +187,16 @@ const ServiceChecklist = () => {
             <Link
               to={"/services/add-service-checklist"}
               className="bg-black  rounded-lg flex font-semibold  items-center gap-2 text-white p-2 "
-              style={{background: themeColor}}
+              style={{ background: themeColor }}
             >
               <IoAddCircleOutline size={20} />
               Add
             </Link>
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"
-              onClick={exportToExcel}
-              style={{background: themeColor}}
-            >
-              Export
-            </button>
+            <ChecklistImportExport
+              ctype="soft_service"
+              onSuccess={fetchServicesChecklist}
+              themeColor={themeColor}
+            />
             {/* <button
     className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
     onClick={handleDownloadQRCode}
@@ -228,15 +209,10 @@ const ServiceChecklist = () => {
         {checklists.length !== 0 ? (
           <Table columns={checklistColumn} data={filteredChecklistData} />
         ) : (
-          <div className="flex justify-center items-center h-full">
-            <DNA
-              visible={true}
-              height="120"
-              width="120"
-              ariaLabel="dna-loading"
-              wrapperStyle={{}}
-              wrapperClass="dna-wrapper"
-            />
+          <div className="flex justify-center items-center w-full h-full min-h-[200px]">
+            <p className="text-sm text-gray-500 font-medium">
+              No checklists found
+            </p>
           </div>
         )}
       </div>

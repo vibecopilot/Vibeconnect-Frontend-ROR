@@ -12,7 +12,7 @@ import { MdFastfood } from "react-icons/md";
 import { FaCheck, FaNetworkWired } from "react-icons/fa";
 import { FiClock } from "react-icons/fi";
 import toast from "react-hot-toast";
-import vibeLogo from "/bio.png"
+import vibeLogo from "/bio.png";
 const EmployeeDashboard = () => {
   const [completedTasks, setCompletedTasks] = useState([]);
   const tasks = [

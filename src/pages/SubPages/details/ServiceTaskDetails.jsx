@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { domainPrefix, getServicesTaskDetails } from "../../../api";
+import { getServicesTaskDetails } from "../../../api";
+import ChecklistSubmissionForm from "../../../components/ChecklistSubmissionForm";
 import { useParams } from "react-router-dom";
 
 const ServiceTaskDetails = () => {
@@ -15,15 +16,7 @@ const ServiceTaskDetails = () => {
     fetchTaskDetails();
   }, [serviceId, activityId]);
 
-  if (taskDetails.length === 0)  {
-    return (
-      <div className="flex  justify-center items-center w-full h-screen p-2">
-        <p>No details available</p>
-      </div>
-    );
-  }
-
-  const { soft_service_name, checklist_name, created_at } = taskDetails[0];
+  const { soft_service_name, checklist_name, created_at } = taskDetails[0] || {};
   const dateFormat = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-GB", {
@@ -43,72 +36,25 @@ const ServiceTaskDetails = () => {
           <p className="font-medium">Service Name :</p>
           <p>{soft_service_name}</p>
         </div>
-        <p>{dateFormat(created_at)}</p>
+        <p>{created_at ? dateFormat(created_at) : ""}</p>
         <div className="grid grid-cols-2">
           <p className="font-medium">Checklist Name :</p>
           <p>{checklist_name}</p>
         </div>
       </div>
-      <div className="w-full my-2">
-       
-        {taskDetails.map((task, index) => (
-          <div key={task.id}>
-            
-              <>
-              <div className="my-4 flex flex-col bg-gray-100 shadow-custom-all-sides p-2 rounded-md gap-2">
+      {/* Submission form — same form used by the public and asset task flows */}
+      <section className="w-full my-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold text-slate-900">
+            Submit checklist
+          </h2>
+          <p className="text-xs text-slate-500">
+            Answer pending questions and submit this soft-service task.
+          </p>
+        </div>
+        <ChecklistSubmissionForm activityId={activityId} />
+      </section>
 
-                <div className="flex gap-4 items-center">
-                  <p className="font-medium">Question :</p>
-                  <p>{task.question_name}</p>
-                </div>
-                <div className="flex gap-4 items-center bg-green-200 p-2 rounded-md">
-                  <p className="font-medium">Answer :</p>
-                  <p>{task.value}</p>
-                </div>
-
-                {/* Question Attachments */}
-                {task.question_attachments && task.question_attachments.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    <p className="font-medium">Question Attachments:</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {task.question_attachments.map((attachment, idx) => (
-                        <div key={attachment.id || idx} className="relative">
-                          <img
-                            src={domainPrefix + attachment.document}
-                            alt={`Question attachment ${idx + 1}`}
-                            className="w-full h-32 object-cover rounded-md border border-gray-300 cursor-pointer hover:opacity-80"
-                            onClick={() => window.open(attachment.document, '_blank')}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Submission Attachments */}
-                {task.submission_attachments && task.submission_attachments.length > 0 && (
-                  <div className="flex flex-col gap-2">
-                    <p className="font-medium">Submission Attachments:</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {task.submission_attachments.map((attachment, idx) => (
-                        <div key={attachment.id || idx} className="relative">
-                          <img
-                            src={domainPrefix + attachment.document}
-                            alt={`Submission attachment ${idx + 1}`}
-                            className="w-full h-32 object-cover rounded-md border border-gray-300 cursor-pointer hover:opacity-80"
-                            onClick={() => window.open(attachment.document, '_blank')}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                </div>
-              </>
-            
-          </div>
-        ))}
-      </div>
     </div>
   );
 };

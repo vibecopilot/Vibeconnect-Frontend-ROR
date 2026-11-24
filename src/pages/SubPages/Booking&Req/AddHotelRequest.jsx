@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { getItemInLocalStorage } from "../../../utils/localStorage";
 import { FaCheck } from "react-icons/fa";
 import Select from "react-select";
+import { MdClose } from "react-icons/md";
 const AddHotelRequest = () => {
   const siteId = getItemInLocalStorage("SITEID");
   const [users, setUsers] = useState([]);
@@ -95,7 +96,7 @@ const AddHotelRequest = () => {
       const HotelreqResp = await postHotelRequest(sendData);
       toast.success("Hotel Request Added");
       navigate("/admin/booking-request/hotel-request");
-      console.log("Hotel request Response", HotelreqResp);
+      // console.log("Hotel request Response", HotelreqResp);
     } catch (error) {
       console.log(error);
     }
@@ -188,6 +189,8 @@ const AddHotelRequest = () => {
               name="booking_confirmation_number"
               value={formData.booking_confirmation_number}
               onChange={handleChange}
+              maxLength={10}
+              minLength={10}
               className="border p-2 px-4 border-gray-500 rounded-md"
               placeholder="Enter Mobile Number"
             />
@@ -343,12 +346,18 @@ const AddHotelRequest = () => {
             rows="3"
           ></textarea>
         </div>
-        <div className="flex gap-5 justify-center items-center my-4">
+        <div className="flex gap-5 justify-end items-center my-4 gap-3">
           <button
             onClick={handleHotelRequest}
             className="bg-green-400 text-white flex items-center gap-2 font-semibold py-2 px-4 rounded-md"
           >
             <FaCheck /> Submit
+          </button>
+          <button
+            onClick={() => navigate("/admin/booking-request/hotel-request")}
+            className="bg-red-500 text-white flex items-center gap-2 font-semibold py-2 px-4 rounded-md"
+          >
+            <MdClose /> Cancel
           </button>
         </div>
       </div>

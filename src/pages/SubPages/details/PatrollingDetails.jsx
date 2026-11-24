@@ -12,7 +12,6 @@ import ModalWrapper from "../../../containers/modals/ModalWrapper";
 import Navbar from "../../../components/Navbar";
 import { domainPrefix, getPatrollingDetails } from "../../../api";
 import {
-  convertToIST,
   dateTimeFormat,
   SendDateFormat,
 } from "../../../utils/dateUtils";
@@ -24,6 +23,21 @@ const PatrollingDetails = () => {
   const [qrCode, setQrCode] = useState(false);
   const [details, setDetails] = useState({});
   const { id } = useParams();
+
+  const formatTime = (time) => {
+  if (!time) return "-";
+  const date = new Date(time);
+
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const formattedHour = hours % 12 || 12;
+
+  return `${formattedHour.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")} ${period}`;
+};
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -40,8 +54,7 @@ const PatrollingDetails = () => {
     const doc = new jsPDF();
     const logoText = "Vibeconnect";
     try {
-      const response = await axios.get(
-        domainPrefix + details.qr_code_image_url,
+      const response = await axios.get(details.qr_code_image_url,
         { responseType: "blob" }
       );
       const blob = response.data;
@@ -143,8 +156,8 @@ const PatrollingDetails = () => {
 
   const PatrollingColumn = [
     {
-      name: " Name",
-      selector: (row) => row.user_name,
+      name: "User",
+      selector: (row) => row.user_id || "-",
       sortable: true,
     },
     {
@@ -155,7 +168,7 @@ const PatrollingDetails = () => {
     {
       name: "Actual Time",
       selector: (row) =>
-        row.actual_time ? dateTimeFormat(row.actual_time) : "",
+        row.actual_time ? dateTimeFormat(row.actual_time) : "-",
       sortable: true,
     },
     {
@@ -165,13 +178,24 @@ const PatrollingDetails = () => {
     },
     {
       name: "Remark",
-      selector: (row) => row.remark,
+      selector: (row) => row.comment || "-",
       sortable: true,
     },
     {
       name: "Attachment",
-      selector: (row) => row.attachment,
-      sortable: true,
+      cell: (row) =>
+        row.attachments && row.attachments.length > 0 ? (
+          <a
+            href={row.attachments[0].image_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 underline"
+          >
+            View
+          </a>
+        ) : (
+          "No File"
+        ),
     },
   ];
 
@@ -233,11 +257,11 @@ const PatrollingDetails = () => {
             )}
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Start Time : </p>
-              <p className="">{convertToIST(details.start_time)}</p>
+            <p>{formatTime(details.start_time)}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">End Time : </p>
-              <p className="">{convertToIST(details.end_time)}</p>
+            <p>{formatTime(details.end_time)}</p>
             </div>
             <div className="grid grid-cols-2 ">
               <p className="font-semibold text-sm">Created on : </p>
@@ -270,7 +294,7 @@ const PatrollingDetails = () => {
             <div className="mx-4 flex flex-col justify-between items-center gap-10">
               <div id="qrCodeElement">
                 <img
-                  src={domainPrefix + details.qr_code_image_url}
+                  src={details.qr_code_image_url}
                   alt="qr"
                   width={200}
                   className="border shadow-xl rounded-md"
@@ -279,7 +303,7 @@ const PatrollingDetails = () => {
               <button
                 className="px-4 w-full border-2 border-black rounded-md flex justify-center items-center gap-2 py-1"
                 onClick={handlePrintQRCode}
-                // onClick={() => downloadFile(QR)}
+              // onClick={() => downloadFile(QR)}
               >
                 <FaQrcode />
                 Print QR Code

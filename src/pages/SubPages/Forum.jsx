@@ -23,6 +23,7 @@ import {
 import { PiBookBookmark, PiEye } from "react-icons/pi";
 import { FormattedDateToShowProperly } from "../../utils/dateUtils";
 import { toast } from "react-hot-toast";
+import SiteHeader from "../../components/SiteHeader";
 
 function Forum() {
   const themeColor = useSelector((state) => state.theme.color);
@@ -161,7 +162,11 @@ function Forum() {
   return (
     <section className="flex">
       <Navbar />
-      <div className="p-4 w-full my-2 flex md:mx-2 overflow-hidden flex-col">
+      <div className="p-2 w-full  flex md:mx-2 overflow-hidden flex-col">
+        {/* Site Header */}
+        <SiteHeader
+          onSiteChange={fetchForums}
+        />
         <Communication />
         <div className="flex justify-end md:flex-row flex-col my-2 gap-3">
           <Link
@@ -310,23 +315,23 @@ function Forum() {
                           key={forum.id}
                           onClick={() => handleLikeToggle(forum.id)}
                           className="flex items-center focus:outline-none"
-                          // aria-label={
-                          //   userLikes[forum.id] ? "Unlike post" : "Like post"
-                          // }
+                        // aria-label={
+                        //   userLikes[forum.id] ? "Unlike post" : "Like post"
+                        // }
                         >
                           <div className="relative">
                             <FaRegHeart
                               size={22}
-                               className="relative z-10"
+                              className="relative z-10"
                               style={{
-                                color:likes[forum.id] > 0 ? "red" : "black",
+                                color: likes[forum.id] > 0 ? "red" : "black",
                                 transition: "color 0.2s ease",
                               }}
                             />
                             <div
                               className="absolute inset-0 z-0"
                               style={{
-                                backgroundColor: likes[forum.id] > 0 
+                                backgroundColor: likes[forum.id] > 0
                                   ? "red"
                                   : "white",
                                 clipPath:

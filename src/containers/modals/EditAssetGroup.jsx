@@ -31,9 +31,11 @@ const EditAssetGroup = ({ id, onclose }) => {
         group_for: "asset",
       });
       console.log(editGroup);
+      toast.success("Asset group updated successfully");
       onclose();
     } catch (error) {
       console.log(error);
+      toast.error("Failed to update asset group");
     }
   };
   return (

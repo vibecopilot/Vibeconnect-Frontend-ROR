@@ -1,6 +1,6 @@
 import React from 'react'
 import Account from './Account'
-import vibe from "/vibe.jpeg"
+import vibe from "/vibe.jpeg";
 
 const Organisation = () => {
   return (
