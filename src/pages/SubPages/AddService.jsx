@@ -16,6 +16,7 @@ const AddService = () => {
   const [groups, setGroups] = useState([]);
   const [subgroups, setSubGroups] = useState([]);
   const [qrLogo, setQrLogo] = useState(null);
+  const [aboveQrLogo, setAboveQrLogo] = useState(null);
   
   const [formData, setFormData] = useState({
     site_id: siteId,
@@ -175,6 +176,9 @@ const handleFileChange = (files, fieldName) => {
       });
       if (qrLogo instanceof File) {
         dataToSend.append("logo", qrLogo);
+      }
+      if (aboveQrLogo instanceof File) {
+        dataToSend.append("above_logo", aboveQrLogo);
       }
       const serviceResponse = await postSoftServices(dataToSend);
       console.log(serviceResponse);
@@ -338,7 +342,7 @@ const handleFileChange = (files, fieldName) => {
           </h2>
           <div className="flex flex-col gap-4">
             <div>
-              <p className="font-medium border-b mb-2">QR Code Logo</p>
+              <p className="font-medium border-b mb-2">QR Code Logo (inside QR)</p>
               <p className="mb-2 text-xs text-gray-500">
                 This logo will be printed in the centre of every QR code for
                 this service.
@@ -346,6 +350,17 @@ const handleFileChange = (files, fieldName) => {
               <FileInputBox
                 handleChange={(files) => setQrLogo(files[0] || null)}
                 fieldName="qr-logo"
+                fileType="image/*"
+              />
+            </div>
+            <div>
+              <p className="font-medium border-b mb-2">QR Header Logo (above QR)</p>
+              <p className="mb-2 text-xs text-gray-500">
+                This logo will be printed above every QR code for this service.
+              </p>
+              <FileInputBox
+                handleChange={(files) => setAboveQrLogo(files[0] || null)}
+                fieldName="qr-above-logo"
                 fileType="image/*"
               />
             </div>
