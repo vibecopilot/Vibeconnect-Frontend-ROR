@@ -45,20 +45,58 @@ const SiteHeader = ({ onSiteChange }) => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleSiteChange = async (id, name) => {
-    try {
-      await siteChange(id);
-      setItemInLocalStorage("SITEID", id);
-      setItemInLocalStorage("SITENAME", name);
-      setSiteName(name);
-      setActiveSiteId(id);
-      setSiteOpen(false);
-      window.dispatchEvent(new Event("site-change"));
-      if (onSiteChange) onSiteChange(id, name);
-    } catch (err) {
-      console.error("Site change error:", err);
+ 
+const handleSiteChange = async (id, name) => {
+  try {
+    // Call site-change API
+    const response = await siteChange(id);
+
+    // Support Axios response and direct response formats
+    const data = response?.data ?? response;
+
+    if (!data) {
+      throw new Error("Invalid site change API response");
     }
-  };
+
+    // Get selected site details
+    const selectedSiteId = data?.site?.id ?? data?.siteid ?? id;
+    const selectedSiteName = data?.site?.name ?? name;
+
+    // Get site-specific features
+    const features = Array.isArray(data?.features)
+      ? data.features
+      : [];
+
+    // Update localStorage
+    setItemInLocalStorage("SITEID", selectedSiteId);
+    setItemInLocalStorage("SITENAME", selectedSiteName);
+    setItemInLocalStorage("FEATURES", features);
+
+    // Update SiteHeader state
+    setSiteName(selectedSiteName);
+    setActiveSiteId(selectedSiteId);
+    setSiteOpen(false);
+
+    // Notify Navbar and other components
+    window.dispatchEvent(
+      new CustomEvent("site-change", {
+        detail: {
+          siteId: selectedSiteId,
+          siteName: selectedSiteName,
+          features,
+        },
+      })
+    );
+
+    // Optional callback
+    if (onSiteChange) {
+      onSiteChange(selectedSiteId, selectedSiteName);
+    }
+  } catch (err) {
+    console.error("Site change error:", err);
+  }
+};
+
 
   return (
     <header className="px-3 pt-3 mb-3">

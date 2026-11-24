@@ -108,27 +108,62 @@ const Navbar = () => {
     getAllowedFeatures();
   }, []);
 
-  useEffect(() => {
-    const syncLocalStorage = () => {
-      setSiteIdState(getItemInLocalStorage("SITEID"));
-      setUserEmail(getItemInLocalStorage("USEREMAIL") || "");
-    };
+  
+useEffect(() => {
+  const syncLocalStorage = () => {
+    setSiteIdState(getItemInLocalStorage("SITEID"));
+    setUserEmail(getItemInLocalStorage("USEREMAIL") || "");
 
-    syncLocalStorage();
-    const handleStorage = (event) => {
-      if (!event || event.key === "SITEID" || event.key === "USEREMAIL") {
-        syncLocalStorage();
-      }
-    };
+    // Read the newly selected site's features
+    const storedFeatures = getItemInLocalStorage("FEATURES");
 
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener("site-change", syncLocalStorage);
+    setFeat(
+      Array.isArray(storedFeatures)
+        ? storedFeatures.map((feature) => feature.feature_name)
+        : []
+    );
+  };
 
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("site-change", syncLocalStorage);
-    };
-  }, []);
+  // Initial load
+  syncLocalStorage();
+
+  // Listen for site changes
+  const handleSiteChange = (event) => {
+    const newFeatures = event?.detail?.features;
+
+    setSiteIdState(
+      event?.detail?.siteId ?? getItemInLocalStorage("SITEID")
+    );
+
+    setUserEmail(getItemInLocalStorage("USEREMAIL") || "");
+
+    if (Array.isArray(newFeatures)) {
+      setFeat(
+        newFeatures.map((feature) => feature.feature_name)
+      );
+    } else {
+      syncLocalStorage();
+    }
+  };
+
+  const handleStorage = (event) => {
+    if (
+      !event ||
+      ["SITEID", "USEREMAIL", "FEATURES"].includes(event.key)
+    ) {
+      syncLocalStorage();
+    }
+  };
+
+  window.addEventListener("storage", handleStorage);
+  window.addEventListener("site-change", handleSiteChange);
+
+  return () => {
+    window.removeEventListener("storage", handleStorage);
+    window.removeEventListener("site-change", handleSiteChange);
+  };
+}, []);
+
 
   const handleLogout = () => {
     const keysToRemove = [
@@ -176,12 +211,19 @@ const Navbar = () => {
 
   const showAssetDashboard = feat.includes("asset_dashboard");
 
-  const getAllowedFeatures = () => {
-    const storedFeatures = getItemInLocalStorage("FEATURES");
-    if (storedFeatures) {
-      setFeat(storedFeatures.map((feature) => feature.feature_name));
-    }
-  };
+ 
+const getAllowedFeatures = () => {
+  const storedFeatures = getItemInLocalStorage("FEATURES");
+
+  if (Array.isArray(storedFeatures)) {
+    setFeat(
+      storedFeatures.map((feature) => feature.feature_name)
+    );
+  } else {
+    setFeat([]);
+  }
+};
+
 
   const firstName = getItemInLocalStorage("Name");
   const lastName = getItemInLocalStorage("LASTNAME");
