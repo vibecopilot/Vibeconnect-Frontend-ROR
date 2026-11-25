@@ -43,6 +43,16 @@ const unitNameMapFromAllocationRows = (rows) => {
   return map;
 };
 
+const isGstCategory = (cat) => /cgst|sgst|igst|gst/i.test(cat);
+
+const formatBillMonth = (row) => {
+  if (!row?.month) return "-";
+  return new Date(Number(row.year), Number(row.month) - 1, 1).toLocaleDateString(
+    "en-US",
+    { month: "short", year: "numeric" },
+  );
+};
+
 const CAMBills = () => {
   const [loading, setLoading] = useState(false);
   const [year, setYear] = useState(new Date().getFullYear());
@@ -152,7 +162,9 @@ const CAMBills = () => {
         selectedIncomeCategories.length ===
           (Array.isArray(incomeCategories) ? incomeCategories : []).length
       ) {
-        totalIncome = Number(incomeTotal?.invoiced || 0);
+        totalIncome =
+          Number(incomeTotal?.invoiced || 0) +
+          Number(incomeBreakdown?.incomeEntries || 0);
       } else {
         (Array.isArray(selectedIncomeCategories)
           ? selectedIncomeCategories
@@ -369,7 +381,7 @@ const CAMBills = () => {
     try {
       const { startMonth, endMonth, isCustom, customYear } = getPeriodParams();
       const effectiveYear = isCustom ? customYear : year;
-      const params = { year: effectiveYear, month: startMonth };
+      const params = { year: effectiveYear, month: startMonth, end_month: endMonth };
       if (siteId) params.site_id = siteId;
       const res = await getCamBills(params);
       const rows = res?.data?.data || res?.data || [];
@@ -483,7 +495,6 @@ const CAMBills = () => {
         const backendTotal = Number(totalData.total || 0);
         const categoriesHash = totalData.categories || {};
         // Filter out all GST-related categories
-        const isGstCategory = (cat) => /cgst|sgst|igst|gst/i.test(cat);
         let categoriesFromBackend = Object.keys(categoriesHash)
           .filter((c) => Boolean(c) && !isGstCategory(c))
           .sort();
@@ -695,47 +706,40 @@ const CAMBills = () => {
           0,
         );
 
-        // Build categories - use backend categories as primary source, merge with frontend data
+        // Build categories. The backend now returns every income source
+        // (IncomeEntry, invoices, received payments, receipts and journal
+        // income), so it is the primary source. Frontend data is used only as
+        // a fallback when that request fails or returns nothing.
         const byCategory = {};
-
-        // Add backend income categories first (includes journal entry credit lines by ledger name)
         if (
           typeof backendIncomeCategories === "object" &&
           backendIncomeCategories !== null
         ) {
           Object.entries(backendIncomeCategories).forEach(([cat, amount]) => {
-            if (cat) {
-              byCategory[cat] = Number(amount || 0);
-            }
+            if (cat) byCategory[cat] = Number(amount || 0);
           });
         }
+        const hasBackendCategories = Object.keys(byCategory).length > 0;
 
-        // Process income entries for categories (frontend supplement)
-        if (Array.isArray(incomeEntries)) {
-          incomeEntries.forEach((entry) => {
-            const cat = entry.source_type || entry.category || "Other Income";
-            if (!byCategory[cat]) {
+        if (!hasBackendCategories) {
+          if (Array.isArray(incomeEntries)) {
+            incomeEntries.forEach((entry) => {
+              const cat = entry.source_type || entry.category || "Other Income";
               byCategory[cat] =
                 (byCategory[cat] || 0) + Number(entry.amount || 0);
-            }
-          });
-        }
-
-        // Process invoices for categories (frontend supplement)
-        if (Array.isArray(filteredInvoices)) {
-          filteredInvoices.forEach((inv) => {
-            const cat = inv.invoice_type || inv.category || "Invoices";
-            if (!byCategory[cat]) {
+            });
+          }
+          if (Array.isArray(filteredInvoices)) {
+            filteredInvoices.forEach((inv) => {
+              const cat = inv.invoice_type || inv.category || "Invoices";
               byCategory[cat] =
                 (byCategory[cat] || 0) +
                 Number(inv.total_amount || inv.amount || 0);
-            }
-          });
-        }
-
-        // Add payments as a category
-        if (paymentsTotal > 0 && !byCategory["Payments Received"]) {
-          byCategory["Payments Received"] = paymentsTotal;
+            });
+          }
+          if (paymentsTotal > 0) {
+            byCategory["Payments Received"] = paymentsTotal;
+          }
         }
 
         const newIncomeCategories = Object.keys(byCategory)
@@ -746,24 +750,13 @@ const CAMBills = () => {
           : [];
         setIncomeCategories(safeIncomeCategories);
 
-        // Initialize selected categories if empty or update with new categories
-        if (
-          selectedIncomeCategories.length === 0 &&
-          safeIncomeCategories.length > 0
-        ) {
-          setSelectedIncomeCategories(safeIncomeCategories);
-        } else {
-          // Keep only valid selections
-          const validSelected = selectedIncomeCategories.filter((c) =>
-            safeIncomeCategories.includes(c),
-          );
-          if (validSelected.length === 0 && safeIncomeCategories.length > 0) {
-            setSelectedIncomeCategories(safeIncomeCategories);
-          } else if (validSelected.length !== selectedIncomeCategories.length) {
-            setSelectedIncomeCategories(
-              validSelected.length > 0 ? validSelected : safeIncomeCategories,
-            );
-          }
+        // Empty selection means "All income" and keeps the canonical total.
+        // Dropdown values are available for explicit filtering only.
+        const validSelected = selectedIncomeCategories.filter((c) =>
+          safeIncomeCategories.includes(c),
+        );
+        if (validSelected.length !== selectedIncomeCategories.length) {
+          setSelectedIncomeCategories(validSelected);
         }
 
         setIncomeBreakdown({
@@ -1051,7 +1044,8 @@ const CAMBills = () => {
       safeSelectedIncomeCategories.length === safeIncomeCategories.length
     ) {
       return (
-        Number(incomeTotal?.invoiced || 0) + Number(incomeBreakdown?.total || 0)
+        Number(incomeTotal?.invoiced || 0) +
+        Number(incomeBreakdown?.incomeEntries || 0)
       );
     }
     let total = 0;
@@ -2157,6 +2151,9 @@ const CAMBills = () => {
                       Unit
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
+                      Month
+                    </th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
                       Area (sqft)
                     </th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
@@ -2181,7 +2178,7 @@ const CAMBills = () => {
                     .length === 0 ? (
                     <tr>
                       <td
-                        colSpan="9"
+                        colSpan="10"
                         className="px-3 py-8 text-center text-gray-500"
                       >
                         {billsViewMode === "preview"
@@ -2206,6 +2203,9 @@ const CAMBills = () => {
                           <span className="ml-2 text-xs text-gray-500">
                             #{r.unit_id}
                           </span>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
+                          {formatBillMonth(r)}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">
                           {Number(r.carpet_area_sqft || 0).toFixed(2)}
