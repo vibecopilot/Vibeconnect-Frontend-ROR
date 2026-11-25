@@ -376,9 +376,11 @@
 
   // export default InvoiceModal;
 import React, { useState, useEffect } from "react";
-import { getLedgers, getTaxRates, getBillingConfigurations } from "../../api/accounting";
+import { getLedgers, getTaxRates, getBillingConfigurations, getUnitCamConfigs } from "../../api/accounting";
 import { getBuildings, getFloors, getUnits, getUnitDetails, getSetupUsersByUnit, getHsns, getSites } from "../../api/index";
 import { fetchAllPages, MAX_PER_PAGE } from "../../api/pagination";
+import { getItemInLocalStorage } from "../../utils/localStorage";
+import ParineeInvoicePreview from "./ParineeInvoicePreview";
 
 const InvoiceModal = ({ invoice, onClose, onSave }) => {
   const [ledgers, setLedgers] = useState([]);
@@ -390,6 +392,7 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
   const [hsnCodes, setHsnCodes] = useState([]);
   const [siteInfo, setSiteInfo] = useState({});
   const [billingConfig, setBillingConfig] = useState({});
+  const [camUnitConfigs, setCamUnitConfigs] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState("");
   const [selectedFloor, setSelectedFloor] = useState("");
   const [selectedUnit, setSelectedUnit] = useState("");
@@ -639,6 +642,7 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
     fetchHsnCodes();
     fetchSiteInfo();
     fetchBillingConfig();
+    fetchCamUnitConfigs();
     
     if (invoice) {
       const resolvedInvoiceUnitId = invoice.unit_id || invoice.unit?.id || "";
@@ -804,6 +808,15 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
       
     } catch (error) {
       console.error("Failed to fetch billing configuration", error);
+    }
+  };
+
+  const fetchCamUnitConfigs = async () => {
+    try {
+      const response = await getUnitCamConfigs();
+      setCamUnitConfigs(response.data?.data || response.data || []);
+    } catch (error) {
+      console.error("Failed to fetch CAM unit configurations", error);
     }
   };
 
@@ -1328,6 +1341,12 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
 
   const totals = calculateTotals();
   const amountInWords = convertAmountToWords(totals.total);
+
+  // Site 160 (Parinee) uses the same two-table format in the modal preview
+  // as in the generated PDF. Other sites keep the existing tax invoice preview.
+  const activeSiteId =
+    invoice?.site_id || invoice?.site?.id || getItemInLocalStorage("SITEID") || siteInfo?.id;
+  const isParineePreview = String(activeSiteId) === "160";
 
   // When a payment mode is selected, default the payment amount to the
   // invoice total so the user does not have to type it manually.
@@ -2307,7 +2326,19 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
               </div> */}
             </div>
 
-            {/* Enhanced Preview Content - EXACTLY MATCHING THE SCREENSHOT */}
+            {isParineePreview ? (
+              <ParineeInvoicePreview
+                invoice={invoice}
+                formData={formData}
+                billingConfig={billingConfig}
+                siteInfo={siteInfo}
+                unitDetails={unitDetails}
+                camUnitConfigs={camUnitConfigs}
+                totals={totals}
+                paymentData={paymentData}
+                unitName={unitName}
+              />
+            ) : (
             <div className="border border-gray-800 bg-white">
               {/* Company Header Section */}
               <div className="border-b border-gray-800">
@@ -2534,6 +2565,7 @@ const InvoiceModal = ({ invoice, onClose, onSave }) => {
                 </table>
               </div>
             </div>
+            )}
 
             {/* Action Buttons for Preview */}
             <div className="flex justify-end gap-4 mt-6 pt-6 border-t border-gray-200">
