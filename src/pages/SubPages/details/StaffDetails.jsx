@@ -263,7 +263,7 @@ const StaffDetails = () => {
 
       {qrModal && (
         <VisitorQRCode
-          QR={domainPrefix + details.qr_code_image_url}
+          QR={ details.qr_code_image_url}
           onClose={() => setQrmodal(false)}
         />
       )}
