@@ -4213,6 +4213,38 @@ export const updateBuilding = async (id, formData) =>
     },
   });
 
+
+export const BuildingImport = async (formData) =>
+  axiosInstance.post(`/buildings/import.json`, formData, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const FloorImport = async (formData) =>
+  axiosInstance.post(`/floors/import.json`, formData, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const UnitImport = async (formData) =>
+  axiosInstance.post(`/units/import.json`, formData, {
+    params: {
+      token: token,
+    },
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  
 export const getSites = async () =>
   axiosInstance.get(`/sites.json`, {
     params: {
