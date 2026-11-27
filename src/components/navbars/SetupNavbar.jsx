@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { getItemInLocalStorage } from "../../utils/localStorage";
 import Navbar from "../Navbar";
+import CompanyLogo from "../CompanyLogo";
 import { ImFileText2, ImFolder } from "react-icons/im";
 
 const SetupNavbar = () => {
@@ -38,6 +39,13 @@ const SetupNavbar = () => {
       <Navbar />
       <div className="w-64 border-r  bg-white  p-4 my-8">
         <ul className="space-y-4">
+          <li className="flex items-center gap-2 pb-2 border-b border-gray-200">
+            <CompanyLogo
+              className="h-8 w-8 object-contain rounded-md border border-gray-200 p-0.5"
+              showName
+              nameClassName="font-bold text-base text-gray-800 truncate"
+            />
+          </li>
           <li className="font-bold text-lg">Setups</li>
 
           <li>

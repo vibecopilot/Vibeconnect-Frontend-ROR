@@ -6,6 +6,7 @@ import { FaBuilding } from "react-icons/fa";
 import { setPublicAuth, clearPublicAuth } from "../api/axiosInstance";
 import { getSiteData, siteChange } from "../api";
 
+import CompanyLogo from "../components/CompanyLogo";
 import HighchartsComponent from "../components/HighCharts";
 import TicketDashboard from "./SubPages/TicketDashboard";
 import SoftServiceHighCharts from "../components/SoftServicesHighCharts";
@@ -141,10 +142,12 @@ const AppDashboard = () => {
               style={{ background: BRAND_COLOR }}
               className="w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-[0_8px_24px_rgba(79,70,229,0.25)]"
             >
-              {/* Logo */}
-              <h1 className="text-white font-bold text-base sm:text-lg whitespace-nowrap tracking-tight">
-                Vibe Connect
-              </h1>
+              {/* Company logo */}
+              <CompanyLogo
+                className="h-9 w-9 object-contain bg-white rounded-md p-1 shrink-0"
+                showName
+                nameClassName="text-white font-bold text-base sm:text-lg whitespace-nowrap tracking-tight"
+              />
 
               {/* Site selector */}
               <div className="relative" ref={dropdownRef}>
