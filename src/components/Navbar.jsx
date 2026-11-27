@@ -245,11 +245,18 @@ const getAllowedFeatures = () => {
             open ? "justify-between" : "justify-center"
           }`}
         >
-          <div className={open ? "min-w-0 flex-1" : ""}>
+          <div
+            className={
+              open ? "min-w-0 flex-1 flex justify-center" : ""
+            }
+          >
             <CompanyLogo
-              className="h-9 w-9 object-contain bg-white rounded p-1 shrink-0"
+              className={`${
+                open ? "max-h-16 max-w-36" : "max-h-9 max-w-12"
+              } h-auto w-auto object-contain bg-white rounded p-0 shrink-0`}
               showName={open}
-              nameClassName="text-white text-sm font-semibold truncate"
+              stacked={open}
+              nameClassName="text-white text-sm font-semibold text-center truncate"
             />
           </div>
           <HiMenuAlt3
