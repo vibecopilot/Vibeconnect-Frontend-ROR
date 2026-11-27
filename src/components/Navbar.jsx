@@ -6,6 +6,7 @@ import { PiFiles, PiSignOutBold } from "react-icons/pi";
 import { getItemInLocalStorage } from "../utils/localStorage";
 import { FaMoneyBillTrendUp } from "react-icons/fa6";
 import image from "/profile.png";
+import CompanyLogo from "./CompanyLogo";
 
 import {
   BsBroadcast,
@@ -239,7 +240,18 @@ const getAllowedFeatures = () => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div className={`py-3 flex ${open ? "justify-end" : "justify-center"}`}>
+        <div
+          className={`py-2 flex items-center gap-2 ${
+            open ? "justify-between" : "justify-center"
+          }`}
+        >
+          <div className={open ? "min-w-0 flex-1" : ""}>
+            <CompanyLogo
+              className="h-9 w-9 object-contain bg-white rounded p-1 shrink-0"
+              showName={open}
+              nameClassName="text-white text-sm font-semibold truncate"
+            />
+          </div>
           <HiMenuAlt3
             size={26}
             className="cursor-pointer "

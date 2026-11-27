@@ -4,6 +4,7 @@ import { FaBuilding } from "react-icons/fa";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
 import { getSiteData, siteChange } from "../api";
 import { getItemInLocalStorage, setItemInLocalStorage } from "../utils/localStorage";
+import CompanyLogo from "./CompanyLogo";
 
 /**
  * SiteHeader — shared branded header with a site-switcher dropdown.
@@ -104,9 +105,11 @@ const handleSiteChange = async (id, name) => {
         style={{ background: themeColor }}
         className="w-full rounded-2xl px-4 py-3 flex items-center justify-between gap-3 shadow-[0_8px_24px_rgba(15,23,42,0.06)]"
       >
-        <h1 className="text-white font-semibold text-base sm:text-lg">
-          Vibe Connect
-        </h1>
+        <CompanyLogo
+          className="h-9 w-9 object-contain bg-white rounded-md p-1 shrink-0"
+          showName
+          nameClassName="text-white font-semibold text-base sm:text-lg truncate"
+        />
 
         <div className="relative" ref={siteDropdownRef}>
           <button

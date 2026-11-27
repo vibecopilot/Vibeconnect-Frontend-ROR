@@ -4155,7 +4155,9 @@ export const getCompanies = async () =>
   axiosInstance.get(`/sites/company_list.json`, {
     params: {
       token: token,
+      _ts: Date.now(),
     },
+    headers: { "Cache-Control": "no-cache" },
   });
 export const createCompany = async (data) =>
   axiosInstance.post(`/companies.json`, data, {
@@ -4163,6 +4165,33 @@ export const createCompany = async (data) =>
       token: token,
     },
   });
+
+// Company logo (uploaded in Setup, shown in the app header/sidebar)
+export const getCompanyLogo = async (companyId) =>
+  axiosInstance.get(`/companies/${companyId}/logo.json`, {
+    params: { _ts: Date.now() },
+    headers: { "Cache-Control": "no-cache" },
+  });
+
+export const getCurrentCompanyLogo = async (companyId) =>
+  axiosInstance.get(`/companies/current_logo.json`, {
+    params: {
+      ...(companyId ? { company_id: companyId } : {}),
+      _ts: Date.now(),
+    },
+    headers: { "Cache-Control": "no-cache" },
+  });
+
+export const uploadCompanyLogo = async (companyId, data) =>
+  axiosInstance.post(`/companies/${companyId}/upload_logo.json`, data, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+export const removeCompanyLogo = async (companyId) =>
+  axiosInstance.delete(`/companies/${companyId}/remove_logo.json`);
+
 export const getAllFeature = async () =>
   axiosInstance.get(`/sites/all_features.json`, {
     params: {
