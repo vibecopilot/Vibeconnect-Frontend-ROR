@@ -11,11 +11,13 @@ import defaultLogo from "../pages/SVG/VCLogo.svg";
  * Props:
  *   className      — classes for the <img> element
  *   showName       — also render the company name next to the logo
+ *   stacked        — place the name below the logo
  *   nameClassName  — classes for the company name
  */
 const CompanyLogo = ({
   className = "h-9 w-9 object-contain",
   showName = false,
+  stacked = false,
   nameClassName = "text-white text-sm font-semibold truncate",
 }) => {
   const [logoUrl, setLogoUrl] = useState(null);
@@ -57,7 +59,11 @@ const CompanyLogo = ({
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0">
+    <div
+      className={`flex min-w-0 gap-2 ${
+        stacked ? "flex-col items-center" : "items-center"
+      }`}
+    >
       <img
         key={logoUrl || "default"}
         src={logoUrl || defaultLogo}
