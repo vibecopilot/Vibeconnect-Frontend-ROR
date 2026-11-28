@@ -1,246 +1,525 @@
-import { useState, useEffect } from 'react';
-import { getJournalEntries, deleteJournalEntry, postJournalEntry } from '../../api/accounting';
-import { Link } from 'react-router-dom';
-import AccountingNavbar from '../../components/navbars/AccountingNavbar';
-import Navbar from '../../components/Navbar';
+import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import {
+  getJournalEntries,
+  getJournalEntry,
+  createJournalEntry,
+  updateJournalEntry,
+  deleteJournalEntry,
+  postJournalEntry,
+  cancelJournalEntry,
+  bulkPostJournalEntries,
+} from "../../api/accounting";
+import JournalEntryModal from "./JournalEntryModal";
+import Navbar from "../../components/Navbar";
+import { FaEdit, FaEye, FaFirstdraft, FaTrash } from "react-icons/fa";
+import { TbFlagCancel } from "react-icons/tb";
+import { getItemInLocalStorage } from "../../utils/localStorage";
 
 const JournalEntries = () => {
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    site_id: '',
-    status: '',
-    date_from: '',
-    date_to: ''
-  });
+  const userType = getItemInLocalStorage("USERTYPE");
+  const isAdmin = userType === "pms_admin";
+  const isAccountingUser = userType === "accounting_emp";
+  const canCreate = isAdmin || isAccountingUser;
+  const canEditDelete = isAdmin;
+  const [journalEntries, setJournalEntries] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewEntry, setViewEntry] = useState(null);
+  const [selectedEntryIds, setSelectedEntryIds] = useState([]);
+
+  // Month mapping
+  const getMonthName = (monthValue) => {
+    if (!monthValue) return "-";
+
+    // If already a month name, return it
+    if (typeof monthValue === "string" && isNaN(monthValue)) {
+      return monthValue;
+    }
+
+    // Convert number to month name
+    const monthMap = {
+      1: "January",
+      2: "February",
+      3: "March",
+      4: "April",
+      5: "May",
+      6: "June",
+      7: "July",
+      8: "August",
+      9: "September",
+      10: "October",
+      11: "November",
+      12: "December",
+    };
+
+    return monthMap[parseInt(monthValue)] || monthValue;
+  };
 
   useEffect(() => {
-    fetchEntries();
-  }, [filters]);
+    fetchJournalEntries();
+  }, []);
 
-  const fetchEntries = async () => {
+  const fetchJournalEntries = async () => {
     setLoading(true);
     try {
-      const data = await getJournalEntries(filters);
-      setEntries(data.data || data);
+      const response = await getJournalEntries();
+      setJournalEntries(response.data.data || response.data);
     } catch (error) {
-      console.error('Error fetching journal entries:', error);
+      toast.error("Failed to fetch journal entries");
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleCreate = () => {
+    setSelectedEntry(null);
+    setIsModalOpen(true);
+  };
+
+  const handleView = async (entry) => {
+    try {
+      const res = await getJournalEntry(entry.id);
+      const full = res?.data?.data || res?.data || entry;
+      setViewEntry(full);
+      setIsViewModalOpen(true);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load journal entry details");
+    }
+  };
+
+  const handleEdit = async (entry) => {
+    try {
+      const res = await getJournalEntry(entry.id);
+      const full = res?.data?.data || res?.data || entry;
+      setSelectedEntry(full);
+      setIsModalOpen(true);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to load journal entry details");
+    }
+  };
+
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this journal entry?')) {
-      try {
-        await deleteJournalEntry(id);
-        fetchEntries();
-      } catch (error) {
-        console.error('Error deleting entry:', error);
-        alert('Failed to delete entry. Only draft entries can be deleted.');
-      }
+    if (!window.confirm("Are you sure you want to delete this journal entry?"))
+      return;
+
+    try {
+      await deleteJournalEntry(id);
+      toast.success("Journal entry deleted successfully");
+      fetchJournalEntries();
+    } catch (error) {
+      toast.error("Failed to delete journal entry");
+      console.error(error);
     }
   };
 
   const handlePost = async (id) => {
-    if (window.confirm('Post this journal entry? This action cannot be undone.')) {
-      try {
-        await postJournalEntry(id);
-        fetchEntries();
-        alert('Journal entry posted successfully');
-      } catch (error) {
-        console.error('Error posting entry:', error);
-        alert('Failed to post entry. Make sure it is balanced.');
-      }
+    if (!window.confirm("Are you sure you want to post this journal entry?"))
+      return;
+
+    try {
+      await postJournalEntry(id);
+      toast.success("Journal entry posted successfully");
+      fetchJournalEntries();
+    } catch (error) {
+      toast.error("Failed to post journal entry");
+      console.error(error);
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      draft: 'bg-gray-100 text-gray-800',
-      posted: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+  const handleCancel = async (id) => {
+    if (!window.confirm("Are you sure you want to cancel this journal entry?"))
+      return;
+
+    try {
+      await cancelJournalEntry(id);
+      toast.success("Journal entry cancelled successfully");
+      fetchJournalEntries();
+    } catch (error) {
+      toast.error("Failed to cancel journal entry");
+      console.error(error);
+    }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 2
-    }).format(amount);
+  const toggleEntrySelection = (id) => {
+    setSelectedEntryIds((prev) =>
+      prev.includes(id) ? prev.filter((eid) => eid !== id) : [...prev, id]
+    );
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-IN');
+  const handleSelectAllDraft = () => {
+    const draftIds = filteredEntries
+      .filter((e) => e.status === "draft")
+      .map((e) => e.id);
+    const allSelected = draftIds.every((id) => selectedEntryIds.includes(id));
+    if (allSelected) {
+      setSelectedEntryIds([]);
+    } else {
+      setSelectedEntryIds(draftIds);
+    }
+  };
+
+  const handleBulkPost = async () => {
+    const draftIds = selectedEntryIds.filter((id) => {
+      const entry = journalEntries.find((e) => e.id === id);
+      return entry && entry.status === "draft";
+    });
+    if (draftIds.length === 0) {
+      toast.error("No draft entries selected");
+      return;
+    }
+    if (
+      !window.confirm(
+        `Are you sure you want to post ${draftIds.length} journal entr${
+          draftIds.length === 1 ? "y" : "ies"
+        }?`
+      )
+    )
+      return;
+    try {
+      const res = await bulkPostJournalEntries(draftIds);
+      const result = res.data;
+      if (result.posted?.length > 0) {
+        toast.success(
+          `${result.posted.length} journal entr${
+            result.posted.length === 1 ? "y" : "ies"
+          } posted successfully`
+        );
+      }
+      if (result.failed?.length > 0) {
+        toast.error(
+          `${result.failed.length} entr${
+            result.failed.length === 1 ? "y" : "ies"
+          } failed: ${result.failed.map((f) => f.error).join(", ")}`
+        );
+      }
+      setSelectedEntryIds([]);
+      fetchJournalEntries();
+    } catch (error) {
+      toast.error("Failed to bulk post journal entries");
+      console.error(error);
+    }
+  };
+
+  const handleSave = async (data) => {
+    try {
+      if (selectedEntry) {
+        await updateJournalEntry(selectedEntry.id, data);
+        toast.success("Journal entry updated successfully");
+      } else {
+        await createJournalEntry(data);
+        toast.success("Journal entry created successfully");
+      }
+      setIsModalOpen(false);
+      fetchJournalEntries();
+    } catch (error) {
+      toast.error("Failed to save journal entry");
+      console.error(error);
+    }
+  };
+
+  const filteredEntries = journalEntries.filter((entry) => {
+    const search = searchTerm.trim().toLowerCase();
+
+    const matchesStatus = statusFilter ? entry.status === statusFilter : true;
+    if (!search) return matchesStatus;
+
+    // Format entry date in multiple searchable forms
+    let entryDateSearch = "";
+    if (entry.entry_date) {
+      const d = new Date(entry.entry_date);
+      entryDateSearch = [
+        d.toISOString().split("T")[0], // 2024-01-12
+        d.toLocaleDateString(), // 12/01/2024
+        d.getFullYear().toString(), // 2024
+        d.toLocaleString("default", { month: "long" }), // January
+        d.toLocaleString("default", { month: "short" }), // Jan
+      ]
+        .join(" ")
+        .toLowerCase();
+    }
+
+    const searchableText = [
+      entry.reference,
+      entry.entry_number,
+      entry.invoice_number,
+      entry.description,
+      entry.narration,
+      entry.entry_type,
+      entry.expense_year,
+      getMonthName(entry.expense_month),
+      entryDateSearch,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return matchesStatus && searchableText.includes(search);
+  });
+
+  const draftCount = selectedEntryIds.filter((id) => {
+    const e = journalEntries.find((je) => je.id === id);
+    return e && e.status === "draft";
+  }).length;
+
+  const createdByLabel = (createdBy) => {
+    if (!createdBy) return "-";
+    const name = [createdBy.firstname, createdBy.lastname]
+      .filter(Boolean)
+      .join(" ");
+    return name || "-";
   };
 
   return (
     <section className="flex">
       <Navbar />
-      <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <AccountingNavbar />
-        <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Journal Entries</h1>
-        <Link
-          to="/accounting/journal-entries/create"
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Create Entry
-        </Link>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      <div className="w-full flex mx-3 mb-10 flex-col overflow-hidden p-6 bg-white/80 mt-2">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">Journal Entries</h1>
+            {isAdmin && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200">
+                Full Access
+              </span>
+            )}
+            {isAccountingUser && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                Create Only
+              </span>
+            )}
+          </div>
+          {canCreate && (
+            <button
+              onClick={handleCreate}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              <option value="">All Statuses</option>
-              <option value="draft">Draft</option>
-              <option value="posted">Posted</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Site</label>
-            <select
-              value={filters.site_id}
-              onChange={(e) => setFilters(prev => ({ ...prev, site_id: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Sites</option>
-              {/* Add site options */}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date From</label>
-            <input
-              type="date"
-              value={filters.date_from}
-              onChange={(e) => setFilters(prev => ({ ...prev, date_from: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date To</label>
-            <input
-              type="date"
-              value={filters.date_to}
-              onChange={(e) => setFilters(prev => ({ ...prev, date_to: e.target.value }))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              + Add Journal Entry
+            </button>
+          )}
         </div>
-      </div>
 
-      {/* Entries Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="mb-4 flex flex-wrap gap-4 items-center">
+          <input
+            type="text"
+            placeholder="Search journal entries..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full md:w-[320px] px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2 border rounded bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">All Status</option>
+            <option value="draft">Draft</option>
+            <option value="posted">Posted</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+
+          {selectedEntryIds.length > 0 && (
+            <button
+              onClick={handleBulkPost}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+            >
+              Bulk Post ({draftCount})
+            </button>
+          )}
+        </div>
+
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-lg text-gray-500">Loading...</div>
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Entry #</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Description</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Debit</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Credit</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Created By</th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-                  <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Actions</th>
+                  <th className="px-2 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={
+                        filteredEntries.filter((e) => e.status === "draft").length > 0 &&
+                        filteredEntries
+                          .filter((e) => e.status === "draft")
+                          .every((e) => selectedEntryIds.includes(e.id))
+                      }
+                      onChange={handleSelectAllDraft}
+                      className="h-4 w-4"
+                    />
+                  </th>
+                  <th className="px-6 py-3">Date</th>
+                  <th className="px-6 py-3">Invoice Number</th>
+                  <th className="px-6 py-3">Invoice Date</th>
+                  <th className="px-6 py-3">Expense Month</th>
+                  <th className="px-6 py-3">Expense Year</th>
+                  <th className="px-6 py-3">Description</th>
+                  <th className="px-6 py-3">Total Amount</th>
+                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {entries.length === 0 ? (
+
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredEntries.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center py-12 text-gray-500">
+                    <td colSpan="11" className="text-center py-4 text-gray-500">
                       No journal entries found
                     </td>
                   </tr>
                 ) : (
-                  entries.map((entry) => (
-                    <tr key={entry.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm">
-                        <Link
-                          to={`/accounting/journal-entries/${entry.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
+                  filteredEntries.map((entry) => (
+                    <tr key={entry.id} className="hover:bg-gray-50">
+                      <td className="px-2 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedEntryIds.includes(entry.id)}
+                          onChange={() => toggleEntrySelection(entry.id)}
+                          className="h-4 w-4"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        {new Date(entry.entry_date).toLocaleDateString()}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {entry.invoice_number || "-"}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {entry.invoice_date
+                          ? new Date(entry.invoice_date).toLocaleDateString()
+                          : "-"}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {getMonthName(entry.expense_month)}
+                      </td>
+
+                      <td className="px-6 py-4">{entry.expense_year || "-"}</td>
+
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {entry.description || entry.narration || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        ₹
+                        {(
+                          parseFloat(
+                            entry.total_amount ??
+                            entry.total_debit ??
+                            entry.total_credit ??
+                            0
+                          ) || 0
+                        ).toFixed(2)}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${
+                            entry.status === "posted"
+                              ? "bg-green-100 text-green-800"
+                              : entry.status === "cancelled"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
                         >
-                          {entry.entry_number}
-                        </Link>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
-                        {formatDate(entry.entry_date)}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
-                        {entry.description || '-'}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-right text-gray-700">
-                        {formatCurrency(entry.total_debit)}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-right text-gray-700">
-                        {formatCurrency(entry.total_credit)}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-700">
-                        {entry.created_by_name || '-'}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(entry.status)}`}>
                           {entry.status}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Link
-                            to={`/accounting/journal-entries/${entry.id}`}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="View"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </Link>
-                          {entry.status === 'draft' && (
-                            <>
+
+                      <td className="px-6 py-4 text-right text-sm font-medium">
+                        {entry.status === "draft" && (
+                          <>
+                            <button
+                              onClick={() =>
+                                canEditDelete ? handlePost(entry.id) : undefined
+                              }
+                              disabled={!canEditDelete}
+                              title={!canEditDelete ? "Only Admin can post" : "Post"}
+                              className={
+                                canEditDelete
+                                  ? "text-gray-600 hover:text-green-900 mr-3"
+                                  : "text-gray-300 cursor-not-allowed mr-3"
+                              }
+                            >
+                              <FaFirstdraft className="inline mr-1" />
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                canEditDelete ? handleEdit(entry) : undefined
+                              }
+                              disabled={!canEditDelete}
+                              title={!canEditDelete ? "Only Admin can edit" : "Edit"}
+                              className={
+                                canEditDelete
+                                  ? "text-blue-600 hover:text-blue-900 mr-3"
+                                  : "text-gray-300 cursor-not-allowed mr-3"
+                              }
+                            >
+                              <FaEdit className="inline mr-1" />
+                            </button>
+                          </>
+                        )}
+
+                        {entry.status === "posted" && (
+                          <>
+                            {canEditDelete && (
                               <button
-                                onClick={() => handlePost(entry.id)}
-                                className="text-green-600 hover:text-green-800"
-                                title="Post Entry"
+                                onClick={() => handleEdit(entry)}
+                                className="text-blue-600 hover:text-blue-900 mr-3"
+                                title="Edit"
                               >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <FaEdit className="inline mr-1" />
                               </button>
-                              <button
-                                onClick={() => handleDelete(entry.id)}
-                                className="text-red-600 hover:text-red-800"
-                                title="Delete"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            </>
-                          )}
-                        </div>
+                            )}
+                            <button
+                              onClick={() => handleView(entry)}
+                              className="text-blue-600 hover:text-blue-900 mr-3"
+                              title="View Details"
+                            >
+                              <FaEye className="inline mr-1" />
+                            </button>
+                            <button
+                              onClick={() =>
+                                canEditDelete ? handleCancel(entry.id) : undefined
+                              }
+                              disabled={!canEditDelete}
+                              title={!canEditDelete ? "Only Admin can cancel" : "Cancel"}
+                              className={
+                                canEditDelete
+                                  ? "text-red-600 hover:text-orange-900 mr-3"
+                                  : "text-gray-300 cursor-not-allowed mr-3"
+                              }
+                            >
+                              <TbFlagCancel className="inline mr-1" />
+                            </button>
+                          </>
+                        )}
+
+                        <button
+                          onClick={() =>
+                            canEditDelete ? handleDelete(entry.id) : undefined
+                          }
+                          disabled={!canEditDelete}
+                          title={!canEditDelete ? "Only Admin can delete" : "Delete"}
+                          className={
+                            canEditDelete
+                              ? "text-red-600 hover:text-red-900"
+                              : "text-gray-300 cursor-not-allowed"
+                          }
+                        >
+                          <FaTrash className="inline mr-1" />
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -249,8 +528,282 @@ const JournalEntries = () => {
             </table>
           </div>
         )}
-      </div>
-        </div>
+
+        {isModalOpen && (
+          <JournalEntryModal
+            entry={selectedEntry}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleSave}
+          />
+        )}
+
+        {/* View Modal for Posted Entries */}
+        {isViewModalOpen && viewEntry && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 my-8 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">Journal Entry Details</h2>
+                <button
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    setViewEntry(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Entry Info */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-xs text-gray-500 mb-1">Entry Number</p>
+                  <p className="font-medium">
+                    {viewEntry.entry_number || viewEntry.reference || "-"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-xs text-gray-500 mb-1">Entry Date</p>
+                  <p className="font-medium">
+                    {viewEntry.entry_date
+                      ? new Date(viewEntry.entry_date).toLocaleDateString()
+                      : "-"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-xs text-gray-500 mb-1">Status</p>
+                  <span
+                    className={`px-2 py-1 rounded text-xs ${
+                      viewEntry.status === "posted"
+                        ? "bg-green-100 text-green-800"
+                        : viewEntry.status === "cancelled"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {viewEntry.status}
+                  </span>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-xs text-gray-500 mb-1">Total Amount</p>
+                  <p className="font-medium text-green-600">
+                    ₹
+                    {(
+                      parseFloat(
+                        viewEntry.total_amount ??
+                        viewEntry.total_debit ??
+                        viewEntry.total_credit ??
+                        0
+                      ) || 0
+                    ).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Invoice Details */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-xs text-gray-500 mb-1">Invoice Number</p>
+                  <p className="font-medium">
+                    {viewEntry.invoice_number || "-"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-xs text-gray-500 mb-1">Invoice Date</p>
+                  <p className="font-medium">
+                    {viewEntry.invoice_date
+                      ? new Date(viewEntry.invoice_date).toLocaleDateString()
+                      : "-"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-xs text-gray-500 mb-1">Expense Month</p>
+                  <p className="font-medium">
+                    {getMonthName(viewEntry.expense_month)}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded">
+                  <p className="text-xs text-gray-500 mb-1">Expense Year</p>
+                  <p className="font-medium">{viewEntry.expense_year || "-"}</p>
+                </div>
+              </div>
+
+              {/* Description */}
+              {(viewEntry.description || viewEntry.narration) && (
+                <div className="mb-6">
+                  <p className="text-xs text-gray-500 mb-1">Description</p>
+                  <div className="bg-gray-50 p-3 rounded">
+                    <p className="text-gray-700">
+                      {viewEntry.description || viewEntry.narration}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Journal Entry Lines */}
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3">Journal Entry Lines</h3>
+                <div className="border rounded overflow-hidden">
+                  <table className="min-w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                          Ledger
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                          Debit
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                          Credit
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {(
+                        viewEntry.entry_lines ||
+                        viewEntry.journal_entry_lines ||
+                        viewEntry.lines ||
+                        []
+                      ).map((line, idx) => {
+                        // Handle different API formats
+                        let debitAmount = 0;
+                        let creditAmount = 0;
+
+                        if (line.entry_side === "debit") {
+                          debitAmount = line.amount ?? 0;
+                        } else if (line.entry_side === "credit") {
+                          creditAmount = line.amount ?? 0;
+                        } else {
+                          debitAmount =
+                            line.debit ?? line.amount_debit ?? line.debit_amount ?? 0;
+                          creditAmount =
+                            line.credit ??
+                            line.amount_credit ??
+                            line.credit_amount ??
+                            0;
+                        }
+
+                        return (
+                          <tr key={line.id || idx} className="hover:bg-gray-50">
+                            <td className="px-4 py-3">
+                              {line.ledger?.name ||
+                                line.ledger_name ||
+                                `Ledger #${line.ledger_id}`}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {parseFloat(debitAmount) > 0
+                                ? `₹${parseFloat(debitAmount).toFixed(2)}`
+                                : "-"}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              {parseFloat(creditAmount) > 0
+                                ? `₹${parseFloat(creditAmount).toFixed(2)}`
+                                : "-"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {/* Totals Row */}
+                      <tr className="bg-gray-100 font-semibold">
+                        <td className="px-4 py-3 text-right">Total:</td>
+                        <td className="px-4 py-3 text-right text-green-600">
+                          ₹
+                          {(
+                            viewEntry.entry_lines ||
+                            viewEntry.journal_entry_lines ||
+                            viewEntry.lines ||
+                            []
+                          )
+                            .reduce((sum, line) => {
+                              if (line.entry_side === "debit")
+                                return sum + (parseFloat(line.amount) || 0);
+                              return (
+                                sum +
+                                (parseFloat(
+                                  line.debit ??
+                                    line.amount_debit ??
+                                    line.debit_amount
+                                ) || 0)
+                              );
+                            }, 0)
+                            .toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-red-600">
+                          ₹
+                          {(
+                            viewEntry.entry_lines ||
+                            viewEntry.journal_entry_lines ||
+                            viewEntry.lines ||
+                            []
+                          )
+                            .reduce((sum, line) => {
+                              if (line.entry_side === "credit")
+                                return sum + (parseFloat(line.amount) || 0);
+                              return (
+                                sum +
+                                (parseFloat(
+                                  line.credit ??
+                                    line.amount_credit ??
+                                    line.credit_amount
+                                ) || 0)
+                              );
+                            }, 0)
+                            .toFixed(2)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Timestamps */}
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-500 border-t pt-4">
+                <div>
+                  <span className="font-medium">Created:</span>{" "}
+                  {viewEntry.created_at
+                    ? new Date(viewEntry.created_at).toLocaleString()
+                    : "-"}
+                  <div>
+                    <span className="font-medium"> Created By: </span>
+                    {createdByLabel(viewEntry.created_by)}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-medium">Updated:</span>{" "}
+                  {viewEntry.updated_at
+                    ? new Date(viewEntry.updated_at).toLocaleString()
+                    : "-"}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 mt-6">
+                {canEditDelete && (
+                  <button
+                    onClick={() => {
+                      setIsViewModalOpen(false);
+                      const entryData = viewEntry;
+                      setViewEntry(null);
+                      handleEdit(entryData);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    Edit
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    setViewEntry(null);
+                  }}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );
