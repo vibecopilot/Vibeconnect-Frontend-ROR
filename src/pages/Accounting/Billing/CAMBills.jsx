@@ -124,7 +124,19 @@ const CAMBills = () => {
   const [unitWiseIncome, setUnitWiseIncome] = useState({});
 
   // Billing configuration (society maintenance charges %)
-  const [billingConfig, setBillingConfig] = useState(null);
+  const [billingConfigs, setBillingConfigs] = useState([]);
+  const billingConfig = useMemo(() => {
+    const list = Array.isArray(billingConfigs)
+      ? billingConfigs
+      : billingConfigs
+        ? [billingConfigs]
+        : [];
+    return (
+      list.find((config) => String(config?.site_id) === String(siteId)) ||
+      list[0] ||
+      null
+    );
+  }, [billingConfigs, siteId]);
   const societyMaintenancePercent = useMemo(() => {
     return billingConfig?.management_fees_enabled ? Number(billingConfig?.society_maintenance_percent || 0) : 0;
   }, [billingConfig]);
@@ -360,17 +372,9 @@ const CAMBills = () => {
           siteList[0]?.id || siteList[0]?.site_id || siteList[0]?.value;
         if (firstId) setSiteId(String(firstId));
       }
-      // Load billing configuration for society maintenance percent
-      const bcData = bcRes?.data;
-      if (Array.isArray(bcData) && bcData.length > 0) {
-        setBillingConfig(bcData[0]);
-      } else if (
-        bcData &&
-        typeof bcData === "object" &&
-        !Array.isArray(bcData)
-      ) {
-        setBillingConfig(bcData);
-      }
+      // Load billing configurations; the active site's config is selected by
+      // the billingConfig memo above.
+      setBillingConfigs(bcRes?.data?.data ?? bcRes?.data ?? []);
     } catch (e) {
       console.error(e);
       toast.error("Failed to load CAM settings or unit configs");
