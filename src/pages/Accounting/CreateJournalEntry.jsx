@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createJournalEntry, getLedgers } from '../../api/accounting';
-import AccountingNavbar from '../../components/navbars/AccountingNavbar';
 import Navbar from '../../components/Navbar';
 
 const CreateJournalEntry = () => {
@@ -130,7 +129,6 @@ const CreateJournalEntry = () => {
     <section className="flex">
       <Navbar />
       <div className="w-full flex mx-3 flex-col overflow-hidden">
-        <AccountingNavbar />
         <div className="p-6 bg-gray-50 min-h-screen">
           {/* Header */}
           <div className="mb-6">
